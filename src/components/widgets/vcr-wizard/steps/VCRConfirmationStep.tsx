@@ -64,7 +64,7 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
     queryKey: ['vcr-confirmation-stats', vcrId],
     queryFn: async () => {
       const client = supabase as any;
-      const [systems, training, procedures, criticalDocs, registers, logsheets, cmms, spares] =
+      const [systems, training, procedures, criticalDocs, registers, logsheets, maintenance] =
         await Promise.all([
           client.from('p2a_handover_point_systems').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
           client.from('p2a_vcr_training').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
@@ -72,8 +72,7 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
           client.from('p2a_vcr_critical_docs').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
           client.from('p2a_vcr_register_selections').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
           client.from('p2a_vcr_logsheets').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
-          client.from('p2a_vcr_cmms').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
-          client.from('p2a_vcr_spares').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
+          client.from('p2a_vcr_maintenance_deliverables').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId).eq('is_applicable', true),
         ]);
       return {
         systems: systems.count || 0,
@@ -82,8 +81,7 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
         criticalDocs: criticalDocs.count || 0,
         registers: registers.count || 0,
         logsheets: logsheets.count || 0,
-        cmms: cmms.count || 0,
-        spares: spares.count || 0,
+        maintenance: maintenance.count || 0,
       };
     },
   });
@@ -178,8 +176,7 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
     { key: 'procedures',  label: 'Procedures',         icon: BookOpen,       count: stats.procedures,                   iconClass: 'text-emerald-500' },
     { key: 'docs',        label: 'Critical Docs',      icon: FileText,       count: stats.criticalDocs,                 iconClass: 'text-amber-500' },
     { key: 'reglog',      label: 'Reg. & Logsheets',   icon: ClipboardList,  count: stats.registers + stats.logsheets,  iconClass: 'text-cyan-500' },
-    { key: 'cmms',        label: 'CMMS',               icon: Wrench,         count: stats.cmms,                         iconClass: 'text-amber-500' },
-    { key: 'spares',      label: '2Y Spares',          icon: Package,        count: stats.spares,                       iconClass: 'text-teal-500' },
+    { key: 'maintenance', label: 'Maintenance Systems', icon: Wrench,         count: stats.maintenance,                  iconClass: 'text-amber-500' },
   ];
 
   const issues: string[] = [];
@@ -188,8 +185,7 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
   if (stats.procedures === 0) issues.push('No procedures');
   if (stats.criticalDocs === 0) issues.push('No critical documents');
   if (stats.registers + stats.logsheets === 0) issues.push('No registers or logsheets');
-  if (stats.cmms === 0) issues.push('No CMMS items');
-  if (stats.spares === 0) issues.push('No 2Y spares');
+  if (stats.maintenance === 0) issues.push('No maintenance deliverables marked applicable');
 
   const hasIssues = issues.length > 0;
   const unresolvedApprovers = (approvers || []).filter(a => !a.user_id).length;

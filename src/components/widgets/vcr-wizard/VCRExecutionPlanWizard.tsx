@@ -49,7 +49,7 @@ import { CriticalDocumentsStep } from './steps/CriticalDocumentsStep';
 import { RegistersLogsheetsStep } from './steps/RegistersLogsheetsStep';
 import { InspectionTestPlanStep } from './steps/InspectionTestPlanStep';
 import { ApproversStep } from './steps/ApproversStep';
-import { CMMSSparesStep } from './steps/CMMSSparesStep';
+import { MaintenanceSystemsStep } from './steps/MaintenanceSystemsStep';
 import { VCRConfirmationStep } from './steps/VCRConfirmationStep';
 import { Layers, CheckCircle2, Eye } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -74,7 +74,7 @@ const STEPS: WizardShellStep[] = [
   { id: 'procedures',          label: 'Procedures',              icon: BookOpen,       color: 'text-emerald-500' },
   { id: 'critical-docs',       label: 'Critical Documents',      icon: FileText,       color: 'text-amber-500' },
   { id: 'registers-logsheets', label: 'Registers & Logsheets',   icon: ClipboardList,  color: 'text-cyan-500' },
-  { id: 'cmms-spares',         label: 'CMMS & Spares',           icon: Wrench,         color: 'text-amber-500' },
+  { id: 'cmms-spares',         label: 'Maintenance Systems',     icon: Wrench,         color: 'text-amber-500' },
   { id: 'approvers',           label: 'Approvers',               icon: UserCheck,      color: 'text-primary' },
   { id: 'checklist',           label: 'VCR Checklist',           icon: ClipboardCheck, color: 'text-violet-500' },
   { id: 'review',              label: 'Review and Submit',       icon: CheckCircle2,   color: 'text-emerald-500' },
@@ -213,15 +213,14 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   const { data: stepCounts = {} } = useQuery({
     queryKey: ['vcr-wizard-step-counts', vcr.id],
     queryFn: async () => {
-      const [systems, training, procedures, criticalDocs, registers, logsheets, cmms, spares] = await Promise.all([
+      const [systems, training, procedures, criticalDocs, registers, logsheets, maintenance] = await Promise.all([
         (supabase as any).from('p2a_handover_point_systems').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
         (supabase as any).from('p2a_vcr_training').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
         (supabase as any).from('p2a_vcr_procedures').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
         (supabase as any).from('p2a_vcr_critical_docs').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
         (supabase as any).from('p2a_vcr_register_selections').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
         (supabase as any).from('p2a_vcr_logsheets').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
-        (supabase as any).from('p2a_vcr_cmms').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
-        (supabase as any).from('p2a_vcr_spares').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
+        (supabase as any).from('p2a_vcr_maintenance_deliverables').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id).eq('is_applicable', true),
       ]);
       return {
         0: systems.count || 0,
@@ -229,7 +228,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         3: procedures.count || 0,
         4: criticalDocs.count || 0,
         5: (registers.count || 0) + (logsheets.count || 0),
-        6: (cmms.count || 0) + (spares.count || 0),
+        6: maintenance.count || 0,
       } as Record<number, number>;
     },
     enabled: open,
@@ -286,7 +285,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       case 3: return <ProceduresStep vcrId={vcr.id} />;
       case 4: return <CriticalDocumentsStep vcrId={vcr.id} projectCode={effectiveProjectCode} />;
       case 5: return <RegistersLogsheetsStep vcrId={vcr.id} />;
-      case 6: return <CMMSSparesStep vcrId={vcr.id} />;
+      case 6: return <MaintenanceSystemsStep vcrId={vcr.id} />;
       case 7: return <ApproversStep vcrId={vcr.id} />;
       case 8: return <VCRItemsStep vcrId={vcr.id} />;
       case 9: return <VCRConfirmationStep vcrId={vcr.id} vcrName={vcr.name} vcrCode={vcr.vcr_code} />;

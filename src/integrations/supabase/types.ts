@@ -7732,6 +7732,47 @@ export type Database = {
         }
         Relationships: []
       }
+      p2a_vcr_maintenance_deliverables: {
+        Row: {
+          comments: string | null
+          created_at: string
+          created_by: string | null
+          deliverable_type: string
+          handover_point_id: string
+          id: string
+          is_applicable: boolean
+          updated_at: string
+        }
+        Insert: {
+          comments?: string | null
+          created_at?: string
+          created_by?: string | null
+          deliverable_type: string
+          handover_point_id: string
+          id?: string
+          is_applicable?: boolean
+          updated_at?: string
+        }
+        Update: {
+          comments?: string | null
+          created_at?: string
+          created_by?: string | null
+          deliverable_type?: string
+          handover_point_id?: string
+          id?: string
+          is_applicable?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_vcr_maintenance_deliverables_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_points"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       p2a_vcr_operational_registers: {
         Row: {
           created_at: string
