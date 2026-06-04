@@ -31,6 +31,7 @@ import {
   Plus,
   ClipboardCheck,
   Clock,
+  Pencil,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { StepCircle } from '@/components/widgets/shared/StepCircle';
@@ -722,7 +723,7 @@ const StepReview: React.FC<{
       </div>
 
       {/* Title + Objective card — hero treatment (no redundant icon; description as body text) */}
-      <div className="p-4 rounded-xl border bg-gradient-to-br from-primary/5 via-transparent to-transparent relative">
+      <div className="group p-4 rounded-xl border bg-gradient-to-br from-primary/5 via-transparent to-transparent relative">
         <EditLink onClick={() => goToStep(0)} />
         <p className="text-base font-semibold text-foreground leading-tight pr-12">
           {title || <span className="text-muted-foreground/50 italic font-normal">Not specified</span>}
@@ -819,14 +820,15 @@ const StepReview: React.FC<{
   );
 };
 
-/* ───── Edit link (top-right of a review card) ───── */
+/* ───── Edit icon button (top-right of a review card, visible on hover) ───── */
 const EditLink: React.FC<{ onClick: () => void }> = ({ onClick }) => (
   <button
     type="button"
     onClick={onClick}
-    className="absolute top-2.5 right-3 text-[11px] font-medium text-primary hover:underline transition-colors"
+    aria-label="Edit"
+    className="absolute top-2 right-2 p-1.5 rounded-md text-primary opacity-0 group-hover:opacity-100 focus:opacity-100 hover:bg-primary/10 transition-opacity"
   >
-    Edit
+    <Pencil className="w-3.5 h-3.5" />
   </button>
 );
 
@@ -840,7 +842,7 @@ const ReviewCard: React.FC<{
   onEdit?: () => void;
 }> = ({ icon: Icon, label, children, empty, fullWidth, onEdit }) => (
   <div className={cn(
-    'relative p-3 rounded-lg border bg-card',
+    'group relative p-3 rounded-lg border bg-card',
     fullWidth && 'col-span-2'
   )}>
     {onEdit && <EditLink onClick={onEdit} />}
@@ -855,3 +857,4 @@ const ReviewCard: React.FC<{
     )}
   </div>
 );
+
