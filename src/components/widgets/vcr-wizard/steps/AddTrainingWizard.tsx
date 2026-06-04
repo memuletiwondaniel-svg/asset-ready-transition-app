@@ -328,6 +328,7 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
               durationDays={durationDays}
               tentativeDate={tentativeDate}
               formatDisplayDate={formatDisplayDate}
+              goToStep={goToStep}
             />
           )}
         </div>
