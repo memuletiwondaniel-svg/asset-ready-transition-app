@@ -343,6 +343,21 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
                 </TooltipContent>
               </Tooltip>
             )}
+            {totalCount > 0 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => setConfirmClearAll(true)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Clear all selections</TooltipContent>
+              </Tooltip>
+            )}
             <Button variant="outline" size="sm" onClick={() => setAssaiOpen(true)} className="gap-1.5">
               <img src={assaiIcon} alt="" className="w-4 h-4 object-contain" /> Check Assai
             </Button>
