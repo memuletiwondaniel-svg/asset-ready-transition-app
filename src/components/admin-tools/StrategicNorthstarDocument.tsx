@@ -82,7 +82,7 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
               <p className="text-sm text-muted-foreground">Living document — ORSH → ORIP evolution & strategic positioning</p>
               <div className="flex items-center gap-1.5 mt-1">
                 <Calendar className="h-3 w-3 text-muted-foreground/70" />
-                <span className="text-xs text-muted-foreground/70">Last updated: April 2026 — Hannah removed. Agent family: Bob, Selma, Fred, Ivan, Zain, Alex.</span>
+                <span className="text-xs text-muted-foreground/70">Last updated: June 2026 — Agent family: Bob, Selma, Fred, Ivan, Alex. Hannah planned.</span>
               </div>
             </div>
           </div>
@@ -491,7 +491,7 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
               { label: 'Multi-Tenant Isolation', value: 'Row-level security, tenant-stamped data, subdomain resolution', status: 'active' },
               { label: 'Enterprise Auditability', value: 'Database-triggered audit trails, retention policies, compliance reporting', status: 'active' },
               { label: 'Open-Source Stack', value: 'React, TypeScript, Vite, PostgreSQL — zero vendor lock-in', status: 'active' },
-              { label: 'RLS Performance Hardening', value: '416 policies optimized with subquery pattern; permissive policy consolidation — zero advisor warnings', status: 'active' },
+              { label: 'RLS Performance Hardening', value: 'Optimized RLS policies with subquery pattern; permissive policy consolidation — zero advisor warnings', status: 'active' },
               { label: 'Credential Security', value: 'Leaked password protection, OTP hardened to 10min expiry, bcrypt hashing', status: 'active' },
             ]} />
           </Section>
@@ -507,15 +507,15 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
 
             <StatusTable rows={[
               { label: 'ORA Plan', value: 'Operational Readiness Assessment — activity planning, PDCA lifecycle, schedule management → Readiness Index data source', status: 'active' },
-              { label: 'P2A Handover', value: 'Project-to-Asset handover with VCRs, systems, subsystems, ITP → System readiness scoring input', status: 'active' },
+              { label: 'P2A Handover', value: 'Project-to-Asset handover via P2A and VCR wizards, with Critical Documents verification gate, systems, subsystems, ITP → System readiness scoring input', status: 'active' },
               { label: 'PSSR', value: 'Pre-Startup Safety Reviews with checklists and multi-level approvals → Safety readiness dimension', status: 'active' },
-              { label: 'ORM', value: 'Operations Readiness Manpower — deliverable tracking, resource planning → Resource readiness dimension', status: 'active' },
-              { label: 'Training', value: 'Training plan management with cost tracking, materials, approvals → Competency readiness dimension', status: 'active' },
-              { label: 'Certificates', value: 'Statement of Fitness (SoF), PAC, FAC issuance → Formal readiness gate', status: 'active' },
+              { label: 'ORM', value: 'Operations Readiness Maintenance — CMMS development, spares, procedures, deliverable tracking → Resource & maintenance readiness dimension', status: 'active' },
+              { label: 'Training & CD&A', value: 'Training plan management plus Competence Development & Assurance — cost tracking, materials, approvals, competence gaps → Competency readiness dimension', status: 'active' },
+              { label: 'Certificates', value: 'Statement of Fitness (SoF) with multi-level signature workflows, PAC, FAC issuance → Formal readiness gate', status: 'active' },
               { label: 'Task Manager', value: 'Unified task inbox with auto-generated tasks from all modules → Action closeout velocity metric', status: 'active' },
-              { label: 'Admin Tools', value: '28+ management tools (users, roles, security, audit, config) → Governance & compliance layer', status: 'active' },
-              { label: 'DMS', value: 'Document Intelligence build sequence defined — 9 phases from data model through project knowledge reading. Phase 1 (data model) ready to execute. Selma (Document AI Agent) confirmed live with 13 tools and excellent performance on document readiness analysis.', status: 'active' },
-              { label: 'AI CoPilot (Bob)', value: 'Multi-agent AI running on Claude Sonnet 4.5 (Anthropic). Bob CoPilot, Selma (Document Agent), Fred (Commissioning) and Ivan (Technical Authority) all live. Autonomous training loop v5.0 active. Phase 2 agents (Zain, Alex) in build queue.', status: 'active' },
+              { label: 'Admin Tools & Tenant Setup', value: '28+ management tools (users, roles, security, audit, config) plus Tenant Setup Wizard for new-organisation provisioning → Governance & compliance layer', status: 'active' },
+              { label: 'DMS', value: 'Document Intelligence build sequence defined — 9 phases from data model through project knowledge reading. Selma (Document AI Agent) live with strong document readiness analysis.', status: 'active' },
+              { label: 'AI CoPilot (Bob)', value: 'Multi-agent AI running on Claude Sonnet 4.5 (Anthropic). Bob CoPilot, Selma (Document Agent), Fred (Commissioning) and Ivan (Technical Authority) all live. Autonomous training loop v5.0 active. Hannah and Alex on roadmap.', status: 'active' },
             ]} />
 
             <Card className="bg-amber-500/5 border-amber-500/20 mt-4">
@@ -560,7 +560,7 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
                 <strong className="text-foreground">ORSH Strategic North Star</strong> — Living Document
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Last updated: 24 March 2026 — ORM Agent removed. Agent family confirmed: Bob, Selma, Fred, Hannah, Ivan, Zain, Alex.
+                Last updated: June 2026 — Agent family confirmed live: Bob, Selma, Fred, Ivan, Alex. Hannah on roadmap.
               </p>
             </CardContent>
           </Card>
