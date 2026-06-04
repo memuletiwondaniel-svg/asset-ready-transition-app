@@ -363,11 +363,13 @@ export async function handleGetHandoverCertificateStatus(
   const certType = args.certificate_type || "MCC";
 
   try {
-    const typeId = CERTIFICATE_TYPE_IDS[certType];
-    const gate = CERTIFICATE_GATES[certType] || 1;
+    const spec = getHandoverCertSpec(certType);
+    const typeId = spec?.typeId;
+    const gate = spec?.gate ?? null;
+    const groupBy = spec?.groupBy ?? "SubSystem";
 
     if (!typeId) {
-      // TypeID not yet captured — use search page approach
+      // TypeID not in contract — use search page approach
       const session = await getSession(supabaseClient, projectCode);
       const { html, url, cookies } = await session.navigateTo(
         "GoCompletions/Handovers/HandoverSearch.aspx"
@@ -389,18 +391,16 @@ export async function handleGetHandoverCertificateStatus(
         found: rows.length > 0,
         project: projectCode,
         certificate_type: certType,
-        note: `TypeID GUID for ${certType} not yet captured. Using generic handover search.`,
+        note: `TypeID GUID for ${certType} not in HANDOVER_CERTS contract. Using generic handover search.`,
         certificates: rows.slice(0, 50),
       };
     }
 
-    // Build URL with TypeID GUID. DAC variants need per-discipline rows; use
-    // GroupBy=SubSystem,Discipline (collapsing to SubSystem hides the
-    // per-discipline fan-out the DAC handover actually tracks).
+    // Build URL from contract. Terminal certs (RFSU/RFOC/FAC) have gate=null
+    // and must NOT include &HandoverGate (no numbered gate exists for them).
     const session = await getSession(supabaseClient, projectCode);
-    const isDac = /DAC$/i.test(certType);
-    const groupBy = isDac ? "SubSystem,Discipline" : "SubSystem";
-    const pagePath = `GoCompletions/Handovers/HandoverSearch.aspx?TypeID=${typeId}&HandoverGate=${gate}&GroupBy=${encodeURIComponent(groupBy)}&IsPartialHandover=False&IsMultiHandover=False&IsProcedure=False&HasInterimDate=False&AdditionalFilters=`;
+    const gateParam = gate !== null ? `&HandoverGate=${gate}` : "";
+    const pagePath = `GoCompletions/Handovers/HandoverSearch.aspx?TypeID=${typeId}${gateParam}&GroupBy=${encodeURIComponent(groupBy)}&IsPartialHandover=False&IsMultiHandover=False&IsProcedure=False&HasInterimDate=False&AdditionalFilters=`;
     const navResp = await session.navigateTo(pagePath);
     let pageHtml = navResp.html;
     const pageUrl = navResp.url;
