@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import {
   Search, Layers, Trash2, Flame, Snowflake, ChevronRight, ChevronDown,
-  Plus, RefreshCw, CheckCircle2, Info, Lock,
+  Plus, RefreshCw, CheckCircle2, Info, Lock, Database, Upload,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
