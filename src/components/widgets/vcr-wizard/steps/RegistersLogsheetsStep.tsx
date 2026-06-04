@@ -167,7 +167,7 @@ export const RegistersLogsheetsStep: React.FC<RegistersLogsheetsStepProps> = ({ 
           <p className="text-[13px] text-muted-foreground mt-2 max-w-[380px] leading-[1.5]">
             Capture the operational Registers and Logsheets required for this VCR. Common examples: LOLC Register, Spade &amp; Blind Register, Override Register, daily operations Logsheets.
           </p>
-          <Button variant="outline" size="sm" onClick={openAdd} className="mt-4 gap-1.5">
+          <Button size="sm" onClick={openAdd} className="mt-4 gap-1.5">
             <Plus className="w-3.5 h-3.5" /> Add first item
           </Button>
         </div>
