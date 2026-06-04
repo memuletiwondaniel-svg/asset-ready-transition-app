@@ -668,7 +668,7 @@ export async function paginateByStatusSplit(
             allDocs.push(doc);
           }
         }
-        if (result.docs.length >= ctx.PAGE_CAP) {
+        if (result.docs.length >= (ctx.detectedPageSize ?? ctx.PAGE_CAP)) {
           await paginateFilteredSearch(ctx, params, { status_code: sc }, result, seen, allDocs);
         }
       } catch (subErr) {
