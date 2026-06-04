@@ -56,7 +56,7 @@ const LIFECYCLE_STYLE: Record<
   },
 };
 
-const SOF_SIGNED_COLOR = '#0F6E56';
+const GATE_SIGNED_COLOR = '#0F6E56';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
