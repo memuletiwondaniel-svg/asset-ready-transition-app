@@ -208,10 +208,11 @@ export const CheckAssaiModal: React.FC<CheckAssaiModalProps> = ({
         <div className="flex items-center gap-2 flex-wrap">
           <Tabs value={filters.tier} onValueChange={(v) => updateTier(v as any)}>
             <TabsList className="h-8">
-              <TabsTrigger value="all" className="text-xs px-3 h-7">All</TabsTrigger>
-              <TabsTrigger value="Tier 1" className="text-xs px-3 h-7">Tier 1</TabsTrigger>
-              <TabsTrigger value="Tier 2" className="text-xs px-3 h-7">Tier 2</TabsTrigger>
-              <TabsTrigger value="RLMU" className="text-xs px-3 h-7">RLMU</TabsTrigger>
+              <TabsTrigger value="all" className="text-xs px-3 h-7 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-medium">All</TabsTrigger>
+              <TabsTrigger value="Tier 1" className="text-xs px-3 h-7 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-medium">Tier 1</TabsTrigger>
+              <TabsTrigger value="Tier 2" className="text-xs px-3 h-7 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-medium">Tier 2</TabsTrigger>
+              <TabsTrigger value="RLMU" className="text-xs px-3 h-7 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-medium">RLMU</TabsTrigger>
+
             </TabsList>
           </Tabs>
 
