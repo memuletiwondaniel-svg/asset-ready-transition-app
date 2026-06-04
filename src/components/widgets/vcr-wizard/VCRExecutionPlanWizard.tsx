@@ -204,10 +204,9 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     })();
   }, [open, user?.id, vcr.id, queryClient]);
 
-  // Query step data counts for completion
-  // New order:
-  // 0:Systems 1:Training 2:Procedures 3:Critical Docs
-  // 4:Registers+Logsheets 5:CMMS+Spares 6:ITP 7:Approvers 8:VCR Checklist 9:Review
+  // Query step data counts for completion. Current order:
+  // 0:Systems 1:W&HP(itp) 2:Training 3:Procedures 4:Critical Docs
+  // 5:Registers+Logsheets 6:CMMS+Spares 7:Approvers 8:VCR Checklist 9:Review
   const { data: stepCounts = {} } = useQuery({
     queryKey: ['vcr-wizard-step-counts', vcr.id],
     queryFn: async () => {
@@ -223,11 +222,11 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       ]);
       return {
         0: systems.count || 0,
-        1: training.count || 0,
-        2: procedures.count || 0,
-        3: criticalDocs.count || 0,
-        4: (registers.count || 0) + (logsheets.count || 0),
-        5: (cmms.count || 0) + (spares.count || 0),
+        2: training.count || 0,
+        3: procedures.count || 0,
+        4: criticalDocs.count || 0,
+        5: (registers.count || 0) + (logsheets.count || 0),
+        6: (cmms.count || 0) + (spares.count || 0),
       } as Record<number, number>;
     },
     enabled: open,
@@ -235,10 +234,9 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   });
 
   const isStepComplete = (idx: number): boolean => {
-    // ITP (6), Approvers (7), VCR Checklist (8), Review (9) have no count-based data.
-    // They count as complete only after the user has visited AND navigated away
-    // (explicit Continue / Back / sidebar click to another step).
-    if (idx === 6 || idx === 7 || idx === 8 || idx === 9) {
+    // Visit-based completion for steps without count data:
+    // W&HP (1, formerly ITP), Approvers (7), VCR Checklist (8), Review (9).
+    if (idx === 1 || idx === 7 || idx === 8 || idx === 9) {
       return visitedSteps.has(idx) && idx !== currentStep;
     }
     return (stepCounts[idx] || 0) > 0;
@@ -279,13 +277,13 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
 
   const renderStep = () => {
     switch (currentStep) {
-      case 0: return <SystemsStep vcrId={vcr.id} projectCode={projectCode} />;
-      case 1: return <TrainingStep vcrId={vcr.id} />;
-      case 2: return <ProceduresStep vcrId={vcr.id} />;
-      case 3: return <CriticalDocumentsStep vcrId={vcr.id} projectCode={projectCode} />;
-      case 4: return <RegistersLogsheetsStep vcrId={vcr.id} />;
-      case 5: return <CMMSSparesStep vcrId={vcr.id} />;
-      case 6: return <InspectionTestPlanStep vcrId={vcr.id} projectCode={projectCode} />;
+      case 0: return <SystemsStep vcrId={vcr.id} projectCode={effectiveProjectCode} />;
+      case 1: return <InspectionTestPlanStep vcrId={vcr.id} projectCode={effectiveProjectCode} />;
+      case 2: return <TrainingStep vcrId={vcr.id} />;
+      case 3: return <ProceduresStep vcrId={vcr.id} />;
+      case 4: return <CriticalDocumentsStep vcrId={vcr.id} projectCode={effectiveProjectCode} />;
+      case 5: return <RegistersLogsheetsStep vcrId={vcr.id} />;
+      case 6: return <CMMSSparesStep vcrId={vcr.id} />;
       case 7: return <ApproversStep vcrId={vcr.id} />;
       case 8: return <VCRItemsStep vcrId={vcr.id} />;
       case 9: return <VCRConfirmationStep vcrId={vcr.id} vcrName={vcr.name} vcrCode={vcr.vcr_code} />;
