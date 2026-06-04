@@ -820,14 +820,15 @@ const StepReview: React.FC<{
   );
 };
 
-/* ───── Edit link (top-right of a review card) ───── */
+/* ───── Edit icon button (top-right of a review card, visible on hover) ───── */
 const EditLink: React.FC<{ onClick: () => void }> = ({ onClick }) => (
   <button
     type="button"
     onClick={onClick}
-    className="absolute top-2.5 right-3 text-[11px] font-medium text-primary hover:underline transition-colors"
+    aria-label="Edit"
+    className="absolute top-2 right-2 p-1.5 rounded-md text-primary opacity-0 group-hover:opacity-100 focus:opacity-100 hover:bg-primary/10 transition-opacity"
   >
-    Edit
+    <Pencil className="w-3.5 h-3.5" />
   </button>
 );
 
@@ -841,7 +842,7 @@ const ReviewCard: React.FC<{
   onEdit?: () => void;
 }> = ({ icon: Icon, label, children, empty, fullWidth, onEdit }) => (
   <div className={cn(
-    'relative p-3 rounded-lg border bg-card',
+    'group relative p-3 rounded-lg border bg-card',
     fullWidth && 'col-span-2'
   )}>
     {onEdit && <EditLink onClick={onEdit} />}
@@ -856,3 +857,4 @@ const ReviewCard: React.FC<{
     )}
   </div>
 );
+
