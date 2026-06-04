@@ -438,11 +438,38 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
   }
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="space-y-4">
-      {/* No-systems warning — checklist may be wrong until systems are selected */}
+      {/* Step header */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="text-base font-semibold leading-tight">VCR Items</h3>
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <p className="text-xs text-muted-foreground">
+              Review the VCR checklist for this VCR Execution Plan.
+            </p>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className="text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+                  aria-label="Guidance"
+                >
+                  <HelpCircle className="w-3.5 h-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="max-w-xs text-xs">
+                Expand each category to review items. Click any item to edit its content, delivering or approving parties. Mark non-applicable items as N/A.
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        </div>
+      </div>
+
+      {/* No-systems warning — calm icon, amber accent retained */}
       {linkedSystemsCount === 0 && (
-        <div className="flex items-start gap-2.5 rounded-lg border border-amber-500/40 bg-amber-500/5 px-3.5 py-2.5">
-          <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2">
+          <HelpCircle className="w-3.5 h-3.5 text-amber-600/80 shrink-0 mt-0.5" />
           <div className="text-xs leading-relaxed">
             <span className="font-medium text-amber-700 dark:text-amber-400">Select systems first to load the correct checklist.</span>{' '}
             <span className="text-muted-foreground">
@@ -452,16 +479,7 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
         </div>
       )}
 
-      {/* Guidance note */}
-      <div className="flex items-start gap-2.5 rounded-lg border border-border bg-muted/40 px-3.5 py-2.5">
-        <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-        <div className="text-xs text-muted-foreground leading-relaxed">
-          <span className="font-medium text-foreground">Review the VCR checklist below.</span>{' '}
-          Expand each category to review items. Click any item to edit its content, delivering or approving parties. Mark non-applicable items as N/A.
-        </div>
-      </div>
-
-      {/* Header */}
+      {/* Search + counts + Add */}
       <div className="flex items-center gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -479,7 +497,7 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
         <Button
           variant="outline"
           size="sm"
-          className="gap-1.5 shrink-0"
+          className="gap-1.5 shrink-0 text-muted-foreground border-dashed hover:border-solid hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors"
           onClick={() => setAddSheetOpen(true)}
         >
           <Plus className="w-3.5 h-3.5" />
