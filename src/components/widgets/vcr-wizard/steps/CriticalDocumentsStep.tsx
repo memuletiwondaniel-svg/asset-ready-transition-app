@@ -292,7 +292,7 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
 
   return (
     <TooltipProvider>
-      <div className="space-y-3">
+      <div className="flex flex-col h-full min-h-0 space-y-3">
         {/* Header row */}
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div className="space-y-0.5">
