@@ -1097,7 +1097,7 @@ const EditItemForm: React.FC<{
                 </button>
               </TooltipTrigger>
               <TooltipContent side="left">
-                {expanded ? 'Hide partner holder' : 'Show both holders'}
+                {expanded ? 'Show delivering holder' : 'Show B2B partner holder'}
               </TooltipContent>
             </Tooltip>
           )}
