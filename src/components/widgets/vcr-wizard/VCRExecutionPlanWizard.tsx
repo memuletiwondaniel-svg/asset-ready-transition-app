@@ -165,9 +165,10 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     })();
   }, [open, user?.id, vcr.id, queryClient]);
 
-  // Query step data counts for completion (after Phase B reorder + merge)
-  // 0:Items 1:Systems 2:Training 3:Procedures 4:Critical Docs
-  // 5:Registers+Logsheets 6:CMMS+Spares 7:ITP 8:Approvers 9:Review
+  // Query step data counts for completion
+  // New order:
+  // 0:Systems 1:Training 2:Procedures 3:Critical Docs
+  // 4:Registers+Logsheets 5:CMMS+Spares 6:ITP 7:Approvers 8:VCR Checklist 9:Review
   const { data: stepCounts = {} } = useQuery({
     queryKey: ['vcr-wizard-step-counts', vcr.id],
     queryFn: async () => {
@@ -182,12 +183,12 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         (supabase as any).from('p2a_vcr_spares').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
       ]);
       return {
-        1: systems.count || 0,
-        2: training.count || 0,
-        3: procedures.count || 0,
-        4: criticalDocs.count || 0,
-        5: (registers.count || 0) + (logsheets.count || 0),
-        6: (cmms.count || 0) + (spares.count || 0),
+        0: systems.count || 0,
+        1: training.count || 0,
+        2: procedures.count || 0,
+        3: criticalDocs.count || 0,
+        4: (registers.count || 0) + (logsheets.count || 0),
+        5: (cmms.count || 0) + (spares.count || 0),
       } as Record<number, number>;
     },
     enabled: open,
@@ -195,8 +196,8 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   });
 
   const isStepComplete = (idx: number): boolean => {
-    // Items (0), ITP (7), Approvers (8), Review (9) — completion based on visit
-    if (idx === 0 || idx === 7 || idx === 8 || idx === 9) return visitedSteps.has(idx);
+    // ITP (6), Approvers (7), VCR Checklist (8), Review (9) — visit-based
+    if (idx === 6 || idx === 7 || idx === 8 || idx === 9) return visitedSteps.has(idx);
     return (stepCounts[idx] || 0) > 0;
   };
 
