@@ -323,6 +323,11 @@ const ProcedureDetailPanel: React.FC<{
             <div>
               <SheetTitle className="text-base font-semibold leading-tight">{item.title}</SheetTitle>
               <p className="text-xs text-muted-foreground mt-0.5">{typeConfig.label}</p>
+              {item.document_number && (
+                <p className="font-mono text-[11px] text-muted-foreground mt-1">
+                  {item.document_number}
+                </p>
+              )}
             </div>
           </div>
           <button
