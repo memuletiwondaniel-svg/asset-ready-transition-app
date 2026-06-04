@@ -507,8 +507,12 @@ Deno.serve(async (req) => {
                 || (String(c.sub_system || c.SubSystem || "").trim() || null);
               const objectId = String(
                 c.certificate_ref || c.Ref || c.Certificate || c.raw?.Ref || ""
-              ).trim();
-              const discipline = String(c.discipline || c.raw?.Discipline || "").trim();
+              ).replace(/&nbsp;/g, "").trim();
+              const discipline = String(c.discipline || c.raw?.Discipline || "").replace(/&nbsp;/g, "").trim();
+              // Skip placeholder/empty grid rows (HandoverSearch renders an
+              // empty &nbsp; row when a register has no entries — e.g.
+              // RFSU/RFOC pending). Surface as "milestone pending" via
+              // absent row, not as a junk row in gohub_certificates.
               if (!objectId) continue;
               const key = `${certType}|${objectId}|${discipline}`;
               if (seen.has(key)) continue;
