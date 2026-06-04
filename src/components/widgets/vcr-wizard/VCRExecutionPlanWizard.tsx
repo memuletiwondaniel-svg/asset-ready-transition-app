@@ -395,7 +395,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         canGoBack: currentStep > 0,
         saveAndExitLabel: 'Save & Exit',
         submitLabel: 'Done',
-        onSubmit: currentStep === STEPS.length - 1 ? handleDone : undefined,
+        onSubmit: undefined,
       }}
     >
       <div className="p-3 sm:p-6">
