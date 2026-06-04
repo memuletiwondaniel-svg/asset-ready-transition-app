@@ -179,7 +179,7 @@ async function runCanary(supabase: any): Promise<{ ok: boolean; checks: any[]; a
 
     // 3. Cert Accepted Dates (immutable 2019 facts)
     try {
-      const dates = await probeCertDates(session);
+      const dates = await probeCertDates(supabase);
       checks.push({ name: "HandoverSearch.cert_accepted_dates", ok: true, dates });
       for (const [k, expected] of Object.entries(CANARY_ORACLE.expected_cert_dates)) {
         const got = parseAcceptedDateToIso(dates[k]);
