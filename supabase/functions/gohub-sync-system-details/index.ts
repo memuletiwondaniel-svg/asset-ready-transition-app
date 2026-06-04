@@ -332,207 +332,99 @@ Deno.serve(async (req) => {
     const creds = await getGoCompletionsCredentials(supa);
     const session = new GocSessionManager(creds.portalUrl, creds.username, creds.password, tileName);
 
-    // ── Discovery branch ───────────────────────────────────────
-    // body.discover=true: probe the CompletionsGrid ASMX surface to find
-    // the WebMethod that populates the subsystem-detail ITRS tab.
-    // No writes. Returns method list + JS proxy + sample sub GUID.
-    if (body.discover) {
-      const disc: any = { asmx_base: null, help_page: null, js_proxy: null, page_scripts: [], itr_method_candidates: [], sample_subsystem: null, probe_results: [] };
-      try {
-        const grid = await session.getGridPage();
-        const asmxBase = resolveAsmxServiceUrl(grid.html, grid.url);
-        disc.asmx_base = asmxBase;
-        const cookies = session.getCookies();
-        const origin = new URL(grid.url).origin;
-
-        const authedGet = async (url: string) => {
-          try {
-            const r = await fetch(url, {
-              headers: {
-                Cookie: formatCookies(cookies),
-                "User-Agent": BROWSER_UA,
-                Referer: grid.url,
-                Accept: "text/html,application/javascript,*/*",
-              },
-            });
-            const t = await r.text();
-            return { status: r.status, contentType: r.headers.get("content-type"), body: t };
-          } catch (e: any) {
-            return { status: null, contentType: null, body: "", error: String(e?.message || e).slice(0, 200) };
-          }
-        };
-
-        // 1. ASMX help page (no method) — lists every WebMethod
-        if (asmxBase) {
-          const help = await authedGet(asmxBase);
-          // pull method names from anchor list and from <li> entries
-          const methodSet = new Set<string>();
-          const reA = /href=["'][^"']*CompletionsGrid\.asmx\?op=([A-Za-z0-9_]+)["']/gi;
-          let m: RegExpExecArray | null;
-          while ((m = reA.exec(help.body)) !== null) methodSet.add(m[1]);
-          disc.help_page = {
-            status: help.status,
-            contentType: help.contentType,
-            methods: Array.from(methodSet).sort(),
-            excerpt: help.body.slice(0, 2048),
-          };
-          disc.itr_method_candidates = Array.from(methodSet)
-            .filter((n) => /itr|inspection|itp|test/i.test(n))
-            .sort();
-
-          // 2. /js proxy — has parameter names per method
-          const jsProxy = await authedGet(asmxBase + "/js");
-          // capture per-method signature blocks: `MethodName:function(p1,p2,...,onSuccess...)`
-          const sigs: any[] = [];
-          const sigRe = /([A-Za-z0-9_]+)\s*:\s*function\s*\(([^)]*)\)/g;
-          while ((m = sigRe.exec(jsProxy.body)) !== null) {
-            sigs.push({ method: m[1], params: m[2].split(",").map((s) => s.trim()).filter(Boolean) });
-          }
-          disc.js_proxy = {
-            status: jsProxy.status,
-            contentType: jsProxy.contentType,
-            length: jsProxy.body.length,
-            signatures: sigs.filter((s) => methodSet.has(s.method)),
+    // ── GetSystems (once) → rollup totals + subsystem GUID map ──
+    // The CompletionsGrid ASMX call that backs the rollup also returns
+    // every subsystem's GUID nested under SubSystem[]. Reuse it for both
+    // the rollup snapshot AND the per-subsystem ITR pulls below; do NOT
+    // re-fetch GetSystems per subsystem.
+    const bySub: Record<string, { total: number; complete: number; guid: string | null }> = {};
+    try {
+      // GetSystems requires the itrClass param — sending `{}` returns 500.
+      const sysResp: any = await session.callMethod("GetSystems", { itrClass: "All" });
+      const arr: any[] = Array.isArray(sysResp)
+        ? sysResp
+        : (sysResp?.Items || sysResp?.data || sysResp?.results || sysResp?.Systems || []);
+      for (const sys of arr) {
+        const subs: any[] = sys.SubSystem || sys.SubSystems || sys.Subsystems
+          || sys.SubsystemList || sys.subSystems || [];
+        for (const sub of subs) {
+          const num = String(sub.Number || sub.SubSystemNumber || sub.Name || "").trim();
+          if (!num) continue;
+          bySub[num] = {
+            total: Number(sub.ITRs ?? sub.TotalITRs ?? 0),
+            complete: Number(sub.ITRsComp ?? sub.ITRsCompleted ?? sub.CompleteITRs ?? 0),
+            guid: String(sub.ID || sub.Id || sub.SubSystemID || sub.GUID || "") || null,
           };
         }
-
-        // 3. scripts referenced from the grid page that might call ITR methods
-        const scriptSrcs: string[] = [];
-        const srcRe = /<script[^>]*src=["']([^"']+)["']/gi;
-        let s: RegExpExecArray | null;
-        while ((s = srcRe.exec(grid.html)) !== null) {
-          const src = s[1];
-          if (/CompletionsGrid|SubSystem|ITR|Detail|Modal/i.test(src)) scriptSrcs.push(src);
-        }
-        for (const src of scriptSrcs.slice(0, 8)) {
-          const abs = src.startsWith("http") ? src : new URL(src, grid.url).toString();
-          const js = await authedGet(abs);
-          // search for ASMX method calls / fetches involving "ITR"
-          const hits: string[] = [];
-          const callRe = /(?:CompletionsGrid\.asmx\/[A-Za-z0-9_]+|\.([A-Za-z0-9_]*[Ii][Tt][Rr][A-Za-z0-9_]*)\s*\()/g;
-          let h: RegExpExecArray | null;
-          while ((h = callRe.exec(js.body)) !== null && hits.length < 20) hits.push(h[0]);
-          disc.page_scripts.push({
-            url: abs,
-            status: js.status,
-            length: js.body.length,
-            hits: Array.from(new Set(hits)),
-          });
-        }
-
-        // 4. GetSystems → grab one subsystem (preferably the override target if present)
-        const sysResp = await session.callMethod("GetSystems", { itrClass: "All" });
-        const arr: any[] = Array.isArray(sysResp)
-          ? sysResp
-          : (sysResp?.Items || sysResp?.data || sysResp?.results || sysResp?.Systems || []);
-        const targetSub = overrideSubs?.[0] || subsystems[0];
-        let foundSub: any = null;
-        let foundSys: any = null;
-        for (const sys of arr) {
-          const subs = sys.SubSystem || sys.SubSystems || sys.Subsystems || sys.SubsystemList || sys.subSystems || [];
-          for (const sub of subs) {
-            const num = String(sub.Number || sub.SubSystemNumber || sub.Name || "").trim();
-            if (num === targetSub) { foundSub = sub; foundSys = sys; break; }
-          }
-          if (foundSub) break;
-        }
-        if (foundSub) {
-          disc.sample_subsystem = {
-            looking_for: targetSub,
-            number: foundSub.Number ?? foundSub.SubSystemNumber ?? foundSub.Name,
-            keys: Object.keys(foundSub),
-            full: foundSub,
-            parent_system_keys: foundSys ? Object.keys(foundSys) : null,
-            parent_system_id: foundSys?.ID || foundSys?.Id || foundSys?.SystemID || null,
-          };
-        } else {
-          disc.sample_subsystem = { looking_for: targetSub, found: false, total_systems: arr.length };
-        }
-
-        // 5. Probe likely ITR methods if we have a sub GUID. Try a few payload shapes.
-        const subGuid = foundSub?.ID || foundSub?.Id || foundSub?.SubSystemID || foundSub?.GUID || null;
-        const sysGuid = foundSys?.ID || foundSys?.Id || foundSys?.SystemID || null;
-        if (subGuid) {
-          const candidates = Array.from(new Set([
-            ...(disc.itr_method_candidates as string[]),
-            "GetSubSystemITRs", "GetITRs", "GetSubSystemITR", "GetSubSystemITRList",
-            "GetITRsForSubSystem", "GetITRList", "GetTagITRs", "GetSubSystemInspections",
-          ]));
-          // JS proxy signature: GetSubSystemTagITRList(subSystemID, className).
-          // ASMX ScriptService matches JSON keys case-sensitively, and `className`
-          // is the right param (not `itrClass` — that's GetSystems).
-          const payloads = [
-            { subSystemID: subGuid, className: "All" },
-            { subSystemID: subGuid, className: "A" },
-            { subSystemID: subGuid, className: "B" },
-            { subSystemID: subGuid, className: "" },
-            { subSystemID: subGuid },
-          ];
-          for (const name of candidates) {
-            for (const payload of payloads) {
-              const diag: any[] = [];
-              try {
-                const r = await session.callMethod(name, payload, diag);
-                const ok = r !== null && r !== undefined;
-                disc.probe_results.push({
-                  method: name,
-                  payload,
-                  ok,
-                  status: diag[0]?.status,
-                  contentType: diag[0]?.contentType,
-                  body_excerpt: diag[0]?.body2kb?.slice(0, 400),
-                  result_kind: Array.isArray(r) ? `array(${r.length})` : (r && typeof r === "object") ? `object(${Object.keys(r).join(",").slice(0, 120)})` : typeof r,
-                  result_sample: Array.isArray(r) ? r.slice(0, 2) : (r && typeof r === "object") ? r : r,
-                });
-                if (ok && (Array.isArray(r) ? r.length : (typeof r === "object" && Object.keys(r).length))) {
-                  // first hit is good enough; try other payloads to find best
-                }
-              } catch (e: any) {
-                disc.probe_results.push({ method: name, payload, error: String(e?.message || e).slice(0, 200) });
-              }
-            }
-          }
-        }
-      } catch (e: any) {
-        disc.error = String(e?.message || e).slice(0, 300);
       }
-      report.discovery = disc;
-      return new Response(JSON.stringify(report, null, 2), {
-        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      report.rollup_subsystems_seen = Object.keys(bySub).length;
+    } catch (e: any) {
+      report.errors.push(`getsystems: ${String(e?.message || e).slice(0, 200)}`);
     }
 
-
-
-    // ── Per-subsystem: TagSearch + Punch ──
+    // ── Per-subsystem: ITRs (CompletionsGrid ASMX) + Punch ──
     for (const ss of subsystems) {
       report.subsystems_attempted++;
       const perSs: any = { subsystem: ss, itr: null, punch: null };
+      const rollup = bySub[ss];
+      const subGuid = rollup?.guid || null;
       try {
-        const tag = await scrapeTagSearch(session, ss, debug);
-        const items = tag.items || [];
-        const aCount = items.filter((i: any) => i.ab_phase === "A").length;
-        const bCount = items.filter((i: any) => i.ab_phase === "B").length;
-        const outstanding = items.filter((i: any) => i.status === "open").length;
-        perSs.itr = { ok: tag.ok, count: items.length, a: aCount, b: bCount, outstanding, reason: (tag as any).reason };
-        if (debug) perSs.debug = (tag as any).debug;
-        if (tag.ok && items.length && !dryRun) {
-          const payload = tag.items.map((it) => ({
-            project_code: projectCode, subsystem_number: ss, ...it,
-            last_synced_at: new Date().toISOString(),
-          }));
-          const { error } = await supa.from("gohub_itr_items")
-            .upsert(payload, { onConflict: "project_code,subsystem_number,tag_guid,itr_code" });
-          if (error) perSs.itr.upsert_error = error.message;
-          else report.itr_items_upserted += payload.length;
+        if (!subGuid) {
+          perSs.itr = { ok: false, reason: "subsystem not found in GetSystems rollup" };
+        } else {
+          const itr = await scrapeSubSystemITRs(session, ss, subGuid);
+          const items = itr.items || [];
+          const aCount = items.filter((i: any) => i.ab_phase === "A").length;
+          const bCount = items.filter((i: any) => i.ab_phase === "B").length;
+          const complete = items.filter((i: any) => i.status === "complete").length;
+          const outstanding = items.filter((i: any) => i.status === "open").length;
+          perSs.itr = {
+            ok: itr.ok,
+            count: items.length,
+            a: aCount,
+            b: bCount,
+            complete,
+            outstanding,
+            ab_sum_matches_total: aCount + bCount === items.length,
+            rollup_total: rollup?.total ?? null,
+            rollup_complete: rollup?.complete ?? null,
+            matches_rollup: rollup ? (items.length === rollup.total && complete === rollup.complete) : null,
+            reason: (itr as any).reason,
+            subsystem_guid: subGuid,
+          };
+          if (itr.ok && items.length && !dryRun) {
+            const payload = items.map((it) => ({
+              project_code: projectCode, subsystem_number: ss, ...it,
+              last_synced_at: new Date().toISOString(),
+            }));
+            const { error } = await supa.from("gohub_itr_items")
+              .upsert(payload, { onConflict: "project_code,subsystem_number,tag_guid,itr_code" });
+            if (error) perSs.itr.upsert_error = error.message;
+            else report.itr_items_upserted += payload.length;
+          }
         }
       } catch (e: any) { perSs.itr = { ok: false, error: String(e?.message || e).slice(0, 200) }; }
 
       try {
         const punch = await scrapePunch(session, ss);
-        perSs.punch = { ok: punch.ok, count: punch.items?.length || 0, reason: (punch as any).reason };
-        if (punch.ok && punch.items.length && !dryRun) {
-          const payload = punch.items.map((it) => ({
+        const items = punch.items || [];
+        // Category and open/closed splits — punch is "closed" only when both
+        // Cleared Date and Accepted Date are present (per gate contract).
+        const catA = items.filter((i: any) => /^a$/i.test(String(i.category))).length;
+        const catB = items.filter((i: any) => /^b$/i.test(String(i.category))).length;
+        const closed = items.filter((i: any) => i.cleared_date && i.accepted_date).length;
+        const open = items.length - closed;
+        perSs.punch = {
+          ok: punch.ok,
+          count: items.length,
+          category_a: catA,
+          category_b: catB,
+          open,
+          closed,
+          reason: (punch as any).reason,
+        };
+        if (punch.ok && items.length && !dryRun) {
+          const payload = items.map((it) => ({
             project_code: projectCode, subsystem_number: ss, ...it,
             last_synced_at: new Date().toISOString(),
           }));
@@ -547,7 +439,24 @@ Deno.serve(async (req) => {
       report.per_subsystem.push(perSs);
     }
 
-    // ── Certificates pass via Fred handler (MCC, MCC-DAC, PCC, PCDAC, RFC, RFSU, RFO, RFOC) ──
+    // ── Rollup snapshot writeback (uses bySub built above) ──
+    const now = new Date().toISOString();
+    for (const ss of subsystems) {
+      const r = bySub[ss];
+      if (!r) continue;
+      if (dryRun) { report.rollup_updated++; continue; }
+      const { error } = await supa
+        .from("p2a_systems")
+        .update({
+          gohub_rollup_total_itrs: r.total,
+          gohub_rollup_complete_itrs: r.complete,
+          gohub_rollup_synced_at: now,
+        })
+        .eq("system_id", ss);
+      if (!error) report.rollup_updated++;
+    }
+
+    // ── Certificates pass via Fred handler (MCC, MCC-DAC, PCC, PCDAC, RFC, RFSU, RFOC) ──
     if (!body.skip_certs) {
       const certTypes = ["MCC", "MCC-DAC", "PCC", "PCDAC", "RFC", "RFSU", "RFOC"];
       for (const certType of certTypes) {
@@ -598,80 +507,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // ── Rollup snapshot from GetSystems (authoritative totals per §4) ──
-    // Unwrap aligned with _shared/fred/handlers handleGetCompletionStatus:
-    // top-level may be array OR { Items | data | results | Systems }.
-    // Subsystem children may be SubSystem | SubSystems | Subsystems | SubsystemList.
-    try {
-      const diagSync: any[] = [];
-      // GetSystems requires the itrClass param — sending `{}` returns 500.
-      const sysRespRaw = await session.callMethod("GetSystems", { itrClass: "All" }, debug ? diagSync : undefined);
-      // Keep a parallel empty-payload probe in debug mode so regressions are visible.
-      let diagFred: any[] = [];
-      let fredRespRaw: any = null;
-      if (debug) {
-        try { fredRespRaw = await session.callMethod("GetSystems", {}, diagFred); }
-        catch (e: any) { diagFred.push({ url: "<exception>", status: null, contentType: null, body2kb: "", error: String(e?.message || e).slice(0, 300) }); }
-      }
-      const sysResp: any = (sysRespRaw && typeof sysRespRaw === "object" && "d" in (sysRespRaw as any))
-        ? (sysRespRaw as any).d
-        : sysRespRaw;
-      const arr: any[] = Array.isArray(sysResp)
-        ? sysResp
-        : (sysResp?.Items || sysResp?.data || sysResp?.results || sysResp?.Systems || []);
-      if (debug) {
-        const rawStr = (() => { try { return JSON.stringify(sysRespRaw); } catch { return String(sysRespRaw); } })();
-        const outerKeys = (sysRespRaw && typeof sysRespRaw === "object") ? Object.keys(sysRespRaw as any) : ["<non-object>"];
-        const topKeys = Array.isArray(sysResp) ? ["<array>"] : Object.keys(sysResp || {});
-        const first = arr[0] || null;
-        const firstKeys = first ? Object.keys(first) : [];
-        const subKey = first ? (["SubSystem","SubSystems","Subsystems","SubsystemList","subSystems"].find((k) => Array.isArray((first as any)[k]))) : null;
-        report.getsystems_top_keys = {
-          outer_keys: outerKeys,
-          unwrapped_d: outerKeys.includes("d"),
-          top: topKeys,
-          first_system_keys: firstKeys,
-          subsystem_array_key: subKey,
-          array_length: arr.length,
-          raw_excerpt: rawStr.slice(0, 2048),
-        };
-        report.getsystems_diag = {
-          sync_call: { payload: {}, attempts: diagSync, returned_null: sysRespRaw === null },
-          fred_call: { payload: { itrClass: "All" }, attempts: diagFred, returned_null: fredRespRaw === null },
-        };
-      }
-      const bySub: Record<string, { total: number; complete: number }> = {};
-      for (const sys of arr) {
-        const subs: any[] = sys.SubSystem || sys.SubSystems || sys.Subsystems
-          || sys.SubsystemList || sys.subSystems || [];
-        for (const sub of subs) {
-          const num = String(sub.Number || sub.SubSystemNumber || sub.Name || "").trim();
-          if (!num) continue;
-          bySub[num] = {
-            total: Number(sub.ITRs ?? sub.TotalITRs ?? 0),
-            complete: Number(sub.ITRsComp ?? sub.ITRsCompleted ?? sub.CompleteITRs ?? 0),
-          };
-        }
-      }
-      report.rollup_subsystems_seen = Object.keys(bySub).length;
-      const now = new Date().toISOString();
-      for (const ss of subsystems) {
-        const r = bySub[ss];
-        if (!r) continue;
-        if (dryRun) { report.rollup_updated++; continue; }
-        const { error } = await supa
-          .from("p2a_systems")
-          .update({
-            gohub_rollup_total_itrs: r.total,
-            gohub_rollup_complete_itrs: r.complete,
-            gohub_rollup_synced_at: now,
-          })
-          .eq("system_id", ss);
-        if (!error) report.rollup_updated++;
-      }
-    } catch (e: any) {
-      report.errors.push(`rollup: ${String(e?.message || e).slice(0, 200)}`);
-    }
 
     return new Response(JSON.stringify(report, null, 2), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
