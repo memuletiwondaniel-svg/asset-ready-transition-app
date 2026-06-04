@@ -291,6 +291,34 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
     }
   };
 
+  const clearAllMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await (supabase as any)
+        .from('vcr_document_requirements')
+        .delete()
+        .eq('vcr_id', vcrId);
+      if (error) throw error;
+      // Shadow clear of legacy table (best-effort)
+      const { error: cErr } = await (supabase as any)
+        .from('p2a_vcr_critical_docs')
+        .delete()
+        .eq('handover_point_id', vcrId);
+      if (cErr) console.warn('shadow p2a_vcr_critical_docs clear warning:', cErr.message);
+    },
+    onSuccess: () => {
+      setPendingSelections(new Set());
+      setPendingRemovals(new Set());
+      queryClient.invalidateQueries({ queryKey: ['vcr-doc-requirements', vcrId] });
+      queryClient.invalidateQueries({ queryKey: ['vcr-critical-docs', vcrId] });
+      queryClient.invalidateQueries({ queryKey: ['vcr-wizard-step-counts', vcrId] });
+      toast.success('All critical documents cleared');
+      setConfirmClearAll(false);
+    },
+    onError: (e: any) => {
+      toast.error(e?.message || 'Failed to clear');
+    },
+  });
+
   return (
     <TooltipProvider>
       <div className="flex flex-col h-full min-h-0 space-y-3">
