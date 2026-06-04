@@ -365,7 +365,8 @@ export async function callAsmxMethod(
   gridPageUrl: string,
   gridHtml: string,
   methodName: string,
-  body: Record<string, any> = {}
+  body: Record<string, any> = {},
+  diag?: Array<{ url: string; status: number | null; contentType: string | null; body2kb: string; error?: string }>
 ): Promise<{ data: any; cookies: Record<string, string> }> {
   const asmxBaseUrl = resolveAsmxServiceUrl(gridHtml, gridPageUrl);
   const origin = new URL(gridPageUrl).origin;
@@ -398,6 +399,12 @@ export async function callAsmxMethod(
 
       const text = await response.text();
       cookies = parseCookiesFromResponse(response, cookies);
+      if (diag) diag.push({
+        url,
+        status: response.status,
+        contentType: response.headers.get("content-type"),
+        body2kb: text.slice(0, 2048),
+      });
 
       if (response.status === 200 && text.length > 10) {
         let data = JSON.parse(text);
@@ -408,6 +415,7 @@ export async function callAsmxMethod(
       }
     } catch (e) {
       console.log(`ASMX error for ${url}: ${e}`);
+      if (diag) diag.push({ url, status: null, contentType: null, body2kb: "", error: String(e).slice(0, 300) });
     }
   }
   return { data: null, cookies };
@@ -639,9 +647,13 @@ export class GocSessionManager {
     return result;
   }
 
-  async callMethod(methodName: string, body: Record<string, any> = {}): Promise<any> {
+  async callMethod(
+    methodName: string,
+    body: Record<string, any> = {},
+    diag?: Array<{ url: string; status: number | null; contentType: string | null; body2kb: string; error?: string }>
+  ): Promise<any> {
     const grid = await this.getGridPage();
-    const result = await callAsmxMethod(grid.cookies, grid.url, grid.html, methodName, body);
+    const result = await callAsmxMethod(grid.cookies, grid.url, grid.html, methodName, body, diag);
     this.cookies = result.cookies;
     return result.data;
   }

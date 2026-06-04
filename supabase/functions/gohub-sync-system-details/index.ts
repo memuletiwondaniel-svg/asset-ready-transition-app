@@ -448,8 +448,15 @@ Deno.serve(async (req) => {
     // top-level may be array OR { Items | data | results | Systems }.
     // Subsystem children may be SubSystem | SubSystems | Subsystems | SubsystemList.
     try {
-      const sysRespRaw = await session.callMethod("GetSystems", {});
-      // ASMX wraps the payload in `{ d: ... }`. Unwrap before traversing.
+      const diagSync: any[] = [];
+      const sysRespRaw = await session.callMethod("GetSystems", {}, debug ? diagSync : undefined);
+      // Also probe Fred-shaped payload for side-by-side diff.
+      let diagFred: any[] = [];
+      let fredRespRaw: any = null;
+      if (debug) {
+        try { fredRespRaw = await session.callMethod("GetSystems", { itrClass: "All" }, diagFred); }
+        catch (e: any) { diagFred.push({ url: "<exception>", status: null, contentType: null, body2kb: "", error: String(e?.message || e).slice(0, 300) }); }
+      }
       const sysResp: any = (sysRespRaw && typeof sysRespRaw === "object" && "d" in (sysRespRaw as any))
         ? (sysRespRaw as any).d
         : sysRespRaw;
@@ -471,6 +478,10 @@ Deno.serve(async (req) => {
           subsystem_array_key: subKey,
           array_length: arr.length,
           raw_excerpt: rawStr.slice(0, 2048),
+        };
+        report.getsystems_diag = {
+          sync_call: { payload: {}, attempts: diagSync, returned_null: sysRespRaw === null },
+          fred_call: { payload: { itrClass: "All" }, attempts: diagFred, returned_null: fredRespRaw === null },
         };
       }
       const bySub: Record<string, { total: number; complete: number }> = {};
