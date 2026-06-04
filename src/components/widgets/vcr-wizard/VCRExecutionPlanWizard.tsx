@@ -60,7 +60,6 @@ interface VCRExecutionPlanWizardProps {
 }
 
 const STEPS: WizardShellStep[] = [
-  { id: 'items',               label: 'VCR Items',            icon: ClipboardCheck, color: 'text-violet-500' },
   { id: 'systems',             label: 'Systems',              icon: Layers,         color: 'text-orange-500' },
   { id: 'training',            label: 'Training',             icon: GraduationCap,  color: 'text-blue-500' },
   { id: 'procedures',          label: 'Procedures',           icon: BookOpen,       color: 'text-emerald-500' },
@@ -69,6 +68,7 @@ const STEPS: WizardShellStep[] = [
   { id: 'cmms-spares',         label: 'CMMS & Spares',        icon: Wrench,         color: 'text-amber-500' },
   { id: 'itp',                 label: 'Inspection Test Plan', icon: ClipboardList,  color: 'text-orange-500' },
   { id: 'approvers',           label: 'Approvers',            icon: UserCheck,      color: 'text-primary' },
+  { id: 'checklist',           label: 'VCR Checklist',        icon: ClipboardCheck, color: 'text-violet-500' },
   { id: 'review',              label: 'Review and Submit',    icon: CheckCircle2,   color: 'text-emerald-500' },
 ];
 
