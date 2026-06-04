@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { WizardShell, WizardShellStep } from '../shared/WizardShell';
+import { WizardSubtitle } from '../shared/WizardSubtitle';
 import { ProjectOverviewStep } from './steps/ProjectOverviewStep';
 import { SystemsImportStep, WizardSystem } from './steps/SystemsImportStep';
 import { VCRCreationStep, WizardVCR } from './steps/VCRCreationStep';
