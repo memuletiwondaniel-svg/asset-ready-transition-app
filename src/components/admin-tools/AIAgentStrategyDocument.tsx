@@ -862,11 +862,11 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
           <Card className="bg-muted/30 border-border">
             <CardContent className="pt-4">
               <p className="text-xs text-muted-foreground text-center">
-                <strong className="text-foreground">AI Agent Strategy & Training — Living Document v6.0</strong>
+                <strong className="text-foreground">AI Agent Strategy & Training — Living Document v6.1</strong>
                 <br />
                 Continuously updated as new agents are built, tools added, and training strategy evolves.
                 <br />
-                Last updated: April 2026 — Hannah removed. Confirmed agent family (6): Bob (CoPilot), Selma (Document Intelligence), Fred (Commissioning & Hardware Readiness), Ivan (Technical Authority), Hannah (Training & Competence), Alex (Maintenance & Inspection System Build).
+                Last updated: June 2026 — Live (4): Bob (CoPilot), Selma (Document Intelligence), Fred (Commissioning & Hardware Readiness), Ivan (Technical Authority). Planned (2): Hannah (Training & Competence), Alex (Maintenance & Inspection System Build).
               </p>
             </CardContent>
           </Card>
