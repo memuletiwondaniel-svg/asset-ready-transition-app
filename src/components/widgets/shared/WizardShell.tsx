@@ -12,6 +12,7 @@ import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { WizardNavigation } from '../p2a-wizard/WizardNavigation';
+import { StepCircle } from './StepCircle';
 
 export interface WizardShellStep {
   id: string;
@@ -211,20 +212,19 @@ export const WizardShell: React.FC<WizardShellProps> = ({
                           isActive ? 'bg-primary/10' : 'hover:bg-muted/40'
                         )}
                       >
-                        <div className="relative shrink-0">
-                          <div className={cn(
-                            'w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-semibold transition-colors border',
+                        <StepCircle
+                          state={
                             isActive
-                              ? 'bg-primary text-primary-foreground border-primary'
+                              ? 'current'
                               : isComplete
-                                ? 'bg-transparent border-emerald-500 text-emerald-600 dark:text-emerald-400'
+                                ? 'completed'
                                 : isSkippedMandatory
-                                  ? 'bg-transparent border-2 border-amber-500 text-amber-600 dark:text-amber-400'
-                                  : 'bg-background border-border text-muted-foreground'
-                          )}>
-                            {idx + 1}
-                          </div>
-                        </div>
+                                  ? 'skipped'
+                                  : 'pending'
+                          }
+                          number={idx + 1}
+                          size="small"
+                        />
                         <span className={cn(
                           'truncate text-xs flex-1 min-w-0',
                           isActive

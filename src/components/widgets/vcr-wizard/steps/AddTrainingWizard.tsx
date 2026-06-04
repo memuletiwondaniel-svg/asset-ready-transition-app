@@ -28,12 +28,12 @@ import {
   Monitor,
   MapPin,
   Globe,
-  Sparkles,
   Plus,
   ClipboardCheck,
   Clock,
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { StepCircle } from '@/components/widgets/shared/StepCircle';
 
 const DELIVERY_METHODS = [
   { id: 'Onsite', label: 'Onsite', description: 'At the project site', icon: MapPin },
@@ -41,16 +41,17 @@ const DELIVERY_METHODS = [
   { id: 'Online', label: 'Online', description: 'Virtual / remote delivery', icon: Monitor },
 ];
 
+// Display labels only — underlying persisted identifiers are unchanged.
+// Order is the canonical render order for the audience chip row.
 const SUGGESTED_AUDIENCES = [
-  'Operations Team',
-  'Maintenance – Electrical',
-  'Maintenance – Mechanical',
-  'Maintenance – Instrumentation',
-  'Operations Supervisors',
-  'Site Engineers',
-  'HSE Team',
-  'Process Engineering',
-  'Control Room Operators',
+  'Shift Supv.',
+  'Site Engr.',
+  'Control Room Operator',
+  'Field Operator',
+  'Instrumentation',
+  'Electrical',
+  'Static',
+  'Rotating',
   'Management',
   'Contractors',
 ];
@@ -229,8 +230,14 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
               const isActive = i === step;
               const complete = isStepComplete(i) && !isActive;
               const incomplete = isStepIncomplete(i);
-              const isUnreachable = i > highestStep && !isActive;
               const blocked = step === 0 && !canProceed(0) && i > 0;
+              const circleState = isActive
+                ? 'current'
+                : complete
+                  ? 'completed'
+                  : incomplete
+                    ? 'skipped'
+                    : 'pending';
               return (
                 <React.Fragment key={s.id}>
                   <button
@@ -240,22 +247,13 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
                       blocked && 'cursor-not-allowed opacity-50'
                     )}
                   >
-                    <div className={cn(
-                      'w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-300 border-2',
-                      complete && 'border-emerald-500 bg-emerald-500 text-white shadow-sm shadow-emerald-500/25',
-                      isActive && 'border-primary bg-primary text-primary-foreground shadow-md shadow-primary/30 scale-110',
-                      incomplete && !isActive && 'border-amber-400 bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-500',
-                      !complete && !isActive && !incomplete && isUnreachable && 'border-border bg-muted/50 text-muted-foreground/50',
-                      !complete && !isActive && !incomplete && !isUnreachable && 'border-border bg-muted/80 text-muted-foreground'
-                    )}>
-                      {complete ? <Check className="w-4 h-4" /> : i + 1}
-                    </div>
+                    <StepCircle state={circleState} number={i + 1} size="small" />
                     <span className={cn(
                       'text-[10px] font-medium leading-tight text-center max-w-[64px] whitespace-nowrap truncate transition-colors',
                       complete && 'text-emerald-600 dark:text-emerald-400',
                       isActive && 'text-foreground font-semibold',
                       incomplete && !isActive && 'text-amber-600 dark:text-amber-400',
-                      !complete && !isActive && !incomplete && 'text-muted-foreground/40'
+                      !complete && !isActive && !incomplete && 'text-muted-foreground/60'
                     )}>
                       {s.title}
                     </span>
@@ -362,15 +360,12 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
               size="sm"
               onClick={isLastStep ? handleSubmit : () => goToStep(step + 1)}
               disabled={!canProceed(step) || (isLastStep && (isSaving || !allStepsComplete))}
-              className={cn(
-                'gap-1.5',
-                isLastStep && 'bg-emerald-600 hover:bg-emerald-700 text-white'
-              )}
+              className="gap-1.5"
             >
               {isSaving ? (
                 <><Loader2 className="w-4 h-4 animate-spin" />Creating...</>
               ) : isLastStep ? (
-                <><Sparkles className="w-4 h-4" />Create Training</>
+                'Create Training'
               ) : (
                 <>Continue<ChevronRight className="w-4 h-4" /></>
               )}
@@ -515,22 +510,25 @@ const StepAudienceSystems: React.FC<{
       </label>
       <p className="text-[10px] text-muted-foreground -mt-1">Who should attend this training?</p>
       <div className="flex flex-wrap gap-1.5">
-        {SUGGESTED_AUDIENCES.map(a => (
-          <Badge
-            key={a}
-            variant={targetAudience.includes(a) ? 'default' : 'outline'}
-            className={cn(
-              'cursor-pointer text-[11px] transition-all',
-              targetAudience.includes(a)
-                ? 'bg-blue-500 hover:bg-blue-600 border-blue-500'
-                : 'hover:bg-accent'
-            )}
-            onClick={() => toggleAudience(a)}
-          >
-            {targetAudience.includes(a) && <Check className="w-3 h-3 mr-0.5" />}
-            {a}
-          </Badge>
-        ))}
+        {SUGGESTED_AUDIENCES.map(a => {
+          const selected = targetAudience.includes(a);
+          return (
+            <Badge
+              key={a}
+              variant="outline"
+              className={cn(
+                'cursor-pointer text-[11px] transition-all gap-1',
+                selected
+                  ? 'bg-primary/10 text-primary border-primary/30 hover:bg-primary/15'
+                  : 'hover:bg-accent'
+              )}
+              onClick={() => toggleAudience(a)}
+            >
+              {selected && <Check className="w-3 h-3" />}
+              {a}
+            </Badge>
+          );
+        })}
       </div>
       {/* Custom audience entries */}
       {targetAudience.filter(a => !SUGGESTED_AUDIENCES.includes(a)).length > 0 && (
@@ -580,10 +578,9 @@ const StepAudienceSystems: React.FC<{
     {/* Applicable Systems */}
     <div className="space-y-2.5">
       <div className="flex items-center justify-between">
-        <label className="text-[11px] uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
-          <Layers className="w-3.5 h-3.5" />
+        <label className="text-[11px] uppercase tracking-wide font-semibold text-muted-foreground">
           Applicable Systems
-          <span className="text-[10px] normal-case font-normal">(optional)</span>
+          <span className="text-[10px] normal-case font-normal ml-1">(optional)</span>
         </label>
         {selectedSystemIds.length > 0 && (
           <Badge variant="secondary" className="text-[10px] bg-blue-500/10 text-blue-500">
@@ -715,27 +712,13 @@ const StepReview: React.FC<{
 }> = ({ title, overview, provider, deliveryMethods, targetAudience, selectedSystemIds, allSystems, durationDays, tentativeDate, formatDisplayDate }) => {
   const selectedSystems = allSystems.filter(s => selectedSystemIds.includes(s.id));
 
-  const completedFields = [title, overview, provider, deliveryMethods.length > 0, targetAudience.length > 0, selectedSystems.length > 0, durationDays, tentativeDate].filter(Boolean).length;
-  const totalFields = 8;
-
   return (
     <div className="space-y-4">
-      {/* Header with completion indicator */}
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-semibold text-foreground">Review your training item</p>
-          <p className="text-xs text-muted-foreground mt-0.5">Confirm the details below before creating.</p>
-        </div>
-        <Badge
-          variant={completedFields >= 3 ? 'default' : 'secondary'}
-          className={cn(
-            'text-[10px] font-mono shrink-0',
-            completedFields >= 5 && 'bg-emerald-500 hover:bg-emerald-600 text-white'
-          )}
-        >
-          {completedFields}/{totalFields} completed
-        </Badge>
+      <div>
+        <p className="text-sm font-semibold text-foreground">Review your training item</p>
+        <p className="text-xs text-muted-foreground mt-0.5">Confirm the details below before creating.</p>
       </div>
+
 
       {/* Title card — hero treatment */}
       <div className="p-4 rounded-xl border bg-gradient-to-br from-primary/5 via-transparent to-transparent">

@@ -303,7 +303,7 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
               className="pl-9"
             />
           </div>
-          <Badge variant="outline">{rows.length} systems</Badge>
+          {rows.length > 0 && <Badge variant="outline">{rows.length} systems</Badge>}
           {hcCount > 0 && (
             <Badge variant="outline" className="border-orange-300 text-orange-600 gap-1">
               <Flame className="w-3 h-3" />
