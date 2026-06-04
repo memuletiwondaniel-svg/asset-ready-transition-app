@@ -723,7 +723,7 @@ const StepReview: React.FC<{
       </div>
 
       {/* Title + Objective card — hero treatment (no redundant icon; description as body text) */}
-      <div className="p-4 rounded-xl border bg-gradient-to-br from-primary/5 via-transparent to-transparent relative">
+      <div className="group p-4 rounded-xl border bg-gradient-to-br from-primary/5 via-transparent to-transparent relative">
         <EditLink onClick={() => goToStep(0)} />
         <p className="text-base font-semibold text-foreground leading-tight pr-12">
           {title || <span className="text-muted-foreground/50 italic font-normal">Not specified</span>}
