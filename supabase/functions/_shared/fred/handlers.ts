@@ -436,6 +436,8 @@ export async function handleGetHandoverCertificateStatus(
     }
 
 
+
+
     // Filter by subsystem if specified (client-side belt + suspenders).
     let filtered = rows;
     if (args.sub_system) {
@@ -462,6 +464,7 @@ export async function handleGetHandoverCertificateStatus(
       total_certificates: filtered.length,
       postback_fired: postbackFired,
       group_by: groupBy,
+
       certificates: filtered.slice(0, 200).map(r => ({
         certificate_ref: r[certType] || r.Certificate || r.Ref || Object.values(r)[0],
         sub_system: r["Sub System"] || r.SubSystem,
