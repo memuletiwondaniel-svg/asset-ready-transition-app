@@ -102,14 +102,14 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
               <p className="text-sm text-muted-foreground">Living document — covers all workflows, codes, tables, roles, and automations</p>
               <div className="flex items-center gap-1.5 mt-1">
                 <Calendar className="h-3 w-3 text-muted-foreground/70" />
-                <span className="text-xs text-muted-foreground/70">Last updated: 24 March 2026</span>
+                <span className="text-xs text-muted-foreground/70">Last updated: June 2026</span>
               </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <DocumentDownloadButton contentRef={contentRef} fileName="ORSH-Platform-Guide" />
             <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-              v2.0 — March 2026
+              v2.1 — June 2026
             </Badge>
           </div>
         </div>
@@ -161,10 +161,10 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
                 { name: 'ORA Plan', desc: 'Operations Readiness Assessment — activity planning via PDCA workflow' },
                 { name: 'P2A Handover', desc: 'Project-to-Asset handover plans with VCRs, systems, and subsystems' },
                 { name: 'PSSR', desc: 'Pre-Startup Safety Reviews with checklists, approvals, and SoF generation' },
-                { name: 'ORM', desc: 'Operations Readiness Manpower — deliverable tracking and resource planning' },
-                { name: 'Training', desc: 'Training plan management with cost tracking, materials, and approvals' },
+                { name: 'OR Maintenance', desc: 'Operations Readiness Maintenance — CMMS development, spares, procedures, deliverable tracking' },
+                { name: 'Competence Management (CD&A)', desc: 'Competence Development & Assurance — gap analysis, training plans, evidence tracking, approvals' },
                 { name: 'DMS', desc: 'Document Management System — metadata config, numbering, gap analysis' },
-                { name: 'Task Manager', desc: 'Unified task inbox with auto-generated tasks from all modules' },
+                { name: 'My Tasks', desc: 'Unified task inbox with auto-generated tasks from all modules' },
                 { name: 'AI CoPilot (Bob)', desc: 'Multi-agent AI assistant with specialist sub-agents and autonomous training' },
                 { name: 'Admin Tools', desc: 'User management, roles, security, audit, and platform configuration' },
               ].map(m => (
@@ -300,6 +300,7 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
             <p className="font-medium text-foreground mt-4">VCR Prerequisite Status Flow</p>
             <InfoTable headers={['Status', 'Description']} rows={[
               ['NOT_STARTED', 'Item not yet initiated'],
+              ['PENDING', 'Awaiting delivering party action'],
               ['IN_PROGRESS', 'Delivering party working on item'],
               ['READY_FOR_REVIEW', 'Submitted for approving party review'],
               ['ACCEPTED', 'Approved by approving party'],
@@ -340,10 +341,11 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
             <p><code className="bg-muted px-1 rounded text-xs">PSSR-{'{PLANT}'}-{'{SEQ}'}</code> — e.g., <code className="bg-muted px-1 rounded text-xs">PSSR-BNGL-001</code>, <code className="bg-muted px-1 rounded text-xs">PSSR-CS-001</code></p>
 
             <p className="font-medium text-foreground mt-4">PSSR Status Flow</p>
-            <FlowDiagram steps={['DRAFT', 'PENDING_LEAD_REVIEW', 'UNDER_REVIEW', 'PSSR Approvers', 'SoF Approvers', 'COMPLETED']} />
+            <FlowDiagram steps={['DRAFT', 'PENDING', 'PENDING_LEAD_REVIEW', 'UNDER_REVIEW', 'PSSR Approvers', 'SoF Approvers', 'COMPLETED']} />
 
             <InfoTable headers={['Status', 'Description', 'Who']} rows={[
               ['DRAFT', 'Creator building the PSSR (checklist, scope, team)', 'PSSR Creator'],
+              ['PENDING', 'Awaiting submission for review', 'PSSR Creator'],
               ['PENDING_LEAD_REVIEW', 'Submitted for lead review (auto-generates task)', 'PSSR Lead'],
               ['UNDER_REVIEW', 'Lead approved — checklist items being executed', 'All parties'],
               ['COMPLETED', 'All approvers signed off', 'System'],
@@ -351,7 +353,7 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
 
             <p className="font-medium text-foreground mt-4">PSSR Checklist System</p>
             <ul className="list-disc pl-5 space-y-1">
-              <li>Master checklist items organized by <strong className="text-foreground">11 categories</strong>: General (GN), Process Safety (PS), Organization (OR), Health & Safety (HS), Emergency Response (ER), PACO (IN), Static (MS), Rotating (MR), Civil (CX), Elect (EL), Documentation (DC)</li>
+              <li>Master checklist items organized by category, including modern Integrity groupings — <strong className="text-foreground">Design Integrity, Technical Integrity, Operating Integrity</strong> — alongside legacy categories such as General (GN), Process Safety (PS), Organization (OR), Health & Safety (HS), Emergency Response (ER), PACO (IN), Static (MS), Rotating (MR), Civil (CX), Elect (EL), Documentation (DC)</li>
               <li>Each item has a <strong className="text-foreground">unique ID</strong>: <code className="bg-muted px-1 rounded text-xs">{'{CAT_REF}'}-{'{SEQ}'}</code> (e.g., <code className="bg-muted px-1 rounded text-xs">GN-01</code>, <code className="bg-muted px-1 rounded text-xs">PS-03</code>)</li>
               <li>Items assigned to <strong className="text-foreground">delivering party</strong> (who does the work) and <strong className="text-foreground">approving party</strong> (who reviews)</li>
               <li>Responses: <code className="bg-muted px-1 rounded text-xs">YES</code>, <code className="bg-muted px-1 rounded text-xs">NO</code>, <code className="bg-muted px-1 rounded text-xs">NA</code></li>
@@ -478,7 +480,7 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
           <Section id="dms" icon={<FileText className="h-5 w-5 text-primary" />} title="9. Document Management System (DMS)">
             <p>The DMS provides centralized configuration for all document metadata, numbering conventions, and readiness analysis.</p>
 
-            <p className="font-medium text-foreground mt-3">DMS Configuration Tabs (9 tabs)</p>
+            <p className="font-medium text-foreground mt-3">DMS Configuration Tabs (10 tabs)</p>
             <InfoTable headers={['Tab', 'Table', 'Purpose']} rows={[
               ['Document', 'dms_document_types', 'Document types with code, discipline, tier, RLMU, acceptable status'],
               ['Discipline', 'dms_disciplines', 'Engineering discipline codes (Electrical, Mechanical, Civil, etc.)'],
@@ -488,6 +490,7 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
               ['Site', 'dms_sites', 'Site definitions with comments'],
               ['Unit', 'dms_units', 'Operational unit codes'],
               ['Status Code', 'dms_status_codes', 'Document lifecycle statuses with revision suffixes'],
+              ['Acronyms', 'dms_acronyms', 'Project / discipline acronym dictionary'],
               ['Configuration', 'dms_numbering_segments', 'Visual numbering builder for document ID format'],
             ]} />
 
@@ -632,7 +635,7 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
 
               <Card className="bg-muted/30 border-border border-dashed">
                 <CardContent className="pt-4">
-                  <h3 className="text-sm font-semibold text-muted-foreground mb-2">5. Zain — Training & Competence Development (Planned)</h3>
+                  <h3 className="text-sm font-semibold text-muted-foreground mb-2">5. Hannah — Training & Competence (Planned)</h3>
                   <p className="text-xs text-muted-foreground">Claude Haiku — competence management, OperatorSuite integration, training gap analysis.</p>
                 </CardContent>
               </Card>
@@ -1141,7 +1144,7 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
           <div className="text-center text-xs text-muted-foreground py-6 border-t border-border">
             <p><strong className="text-foreground">ORSH Platform Guide — Living Document</strong></p>
             <p>Updated continuously as new features, workflows, and tables are added.</p>
-            <p>Last updated: April 2026 — Hannah removed. Agent family: Bob, Selma, Fred, Ivan, Zain, Alex.</p>
+            <p>Last updated: June 2026 — Agent family live: Bob, Selma, Fred, Ivan. Planned: Hannah, Alex.</p>
           </div>
         </div>
       </div>
