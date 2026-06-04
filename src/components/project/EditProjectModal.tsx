@@ -30,6 +30,7 @@ import WizardStepProjectScope from './wizard/WizardStepProjectScope';
 import WizardStepProjectTeam from './wizard/WizardStepProjectTeam';
 import WizardStepMilestonesDocuments from './wizard/WizardStepMilestonesDocuments';
 import WizardStepProjectReview from './wizard/WizardStepProjectReview';
+import { DocumentNumberingDefaults } from './wizard/DocumentNumberingDefaults';
 
 interface EditProjectModalProps {
   open: boolean;
@@ -47,6 +48,9 @@ interface FormData {
   plant_id: string;
   field_id: string;
   station_id: string;
+  default_plant_code: string | null;
+  default_site_code: string | null;
+  default_unit_code: string | null;
 }
 
 interface TeamMember {
@@ -118,6 +122,9 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
     plant_id: '',
     field_id: '',
     station_id: '',
+    default_plant_code: null,
+    default_site_code: null,
+    default_unit_code: null,
   });
   const [scopeDescription, setScopeDescription] = useState('');
   const [scopeAttachments, setScopeAttachments] = useState<Attachment[]>([]);
@@ -150,6 +157,9 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
       plant_id: project.plant_id || '',
       field_id: project.field_id || '',
       station_id: project.station_id || '',
+      default_plant_code: project.default_plant_code ?? null,
+      default_site_code: project.default_site_code ?? null,
+      default_unit_code: project.default_unit_code ?? null,
     });
     setScopeDescription(project.project_scope || '');
     setScopeAttachments([]);
@@ -358,7 +368,10 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
           plant_id: formData.plant_id || null,
           field_id: formData.field_id || null,
           station_id: formData.station_id || null,
-        },
+          default_plant_code: formData.default_plant_code || null,
+          default_site_code: formData.default_site_code || null,
+          default_unit_code: formData.default_unit_code || null,
+        } as any,
       });
 
       // 2. Locations
@@ -466,11 +479,26 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
     switch (currentStep) {
       case 1:
         return (
-          <WizardStepProjectInfo
-            formData={formData}
-            onFormDataChange={handleFormDataChange}
-            currentProjectId={project?.id}
-          />
+          <div className="space-y-6">
+            <WizardStepProjectInfo
+              formData={formData}
+              onFormDataChange={handleFormDataChange}
+              currentProjectId={project?.id}
+            />
+            <DocumentNumberingDefaults
+              projectKey={
+                formData.project_id_prefix && formData.project_id_number
+                  ? `${formData.project_id_prefix}-${formData.project_id_number}`
+                  : undefined
+              }
+              value={{
+                default_plant_code: formData.default_plant_code,
+                default_site_code: formData.default_site_code,
+                default_unit_code: formData.default_unit_code,
+              }}
+              onChange={(next) => handleFormDataChange(next)}
+            />
+          </div>
         );
       case 2:
         return (
