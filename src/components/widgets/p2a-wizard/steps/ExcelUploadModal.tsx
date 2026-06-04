@@ -65,7 +65,7 @@ export const ExcelUploadModal: React.FC<ExcelUploadModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md z-[200]">
+      <DialogContent className="sm:max-w-md z-[200]" overlayClassName="z-[199] bg-black/70 backdrop-blur-sm">
         <DialogHeader>
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary/10">
