@@ -547,7 +547,7 @@ const TypeCard: React.FC<{
     className={cn(
       'text-left rounded-md border px-3 py-2.5 transition-colors',
       active
-        ? 'border-info bg-info/10'
+        ? 'border-[#9CC4E8] bg-[#E6F1FB]'
         : 'border-border hover:bg-muted/40',
     )}
   >
