@@ -162,25 +162,25 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
     s.system_id?.toLowerCase().includes(systemSearch.toLowerCase())
   );
 
-  // Step completion checks — all mandatory fields must be filled
+  // Only step 0 has required fields (Title + Objective & Justification).
+  // Steps 1–3 have no required fields and are therefore always considered complete.
   const isStepComplete = (i: number): boolean => {
-    if (i === 0) return title.trim().length > 0;
-    if (i === 1) return provider.trim().length > 0 && deliveryMethods.length > 0;
-    if (i === 2) return targetAudience.length > 0 && selectedSystemIds.length > 0;
-    if (i === 3) return durationDays !== '';
+    if (i === 0) return title.trim().length > 0 && overview.trim().length > 0;
+    if (i === 1 || i === 2 || i === 3) return true;
     return false;
   };
 
-  // A step is incomplete if user has passed it but it has no data
+  // "skipped-mandatory" only applies to steps with required fields. Only step 0 qualifies.
   const isStepIncomplete = (i: number): boolean => {
+    if (i !== 0) return false;
     return (visitedSteps.has(i) || i < highestStep) && !isStepComplete(i) && i < step;
   };
 
-  // All steps (0-3) must be complete to allow submission
-  const allStepsComplete = [0, 1, 2, 3].every(i => isStepComplete(i));
+  // Submission allowed once step 0's required fields are filled.
+  const allStepsComplete = isStepComplete(0);
 
   const canProceed = (s: number) => {
-    if (s === 0) return title.trim().length > 0;
+    if (s === 0) return title.trim().length > 0 && overview.trim().length > 0;
     return true;
   };
 
