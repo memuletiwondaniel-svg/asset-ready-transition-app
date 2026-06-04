@@ -480,6 +480,7 @@ Deno.serve(async (req) => {
             total: res?.total_certificates ?? certs.length,
             note: res?.note ?? null,
             error: res?.error ?? null,
+            diag: res?.diag ?? null,
           });
           if (!certs.length) continue;
           report.cert_pass.ok++;
