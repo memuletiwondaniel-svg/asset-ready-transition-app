@@ -1177,26 +1177,23 @@ const EditItemForm: React.FC<{
             )}
           </div>
 
-          {/* Guidance Notes — collapsible, no inner scroll */}
-          <div className="border-t border-border/40 pt-4">
+          {/* Guidance Notes — collapsible, label-left aligned with peers */}
+          <div className="border-t border-border/40 pt-4 relative">
             <button
               type="button"
               onClick={() => setGuidanceOpen(o => !o)}
-              className="w-full flex items-center gap-2 text-left group"
+              className="w-full flex items-center text-left group"
             >
-              {guidanceOpen ? (
-                <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-              ) : (
-                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-              )}
-              <span className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium shrink-0">
+              <span className="absolute -left-5 top-4 flex items-center">
+                {guidanceOpen ? (
+                  <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                ) : (
+                  <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+                )}
+              </span>
+              <span className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
                 Guidance Notes
               </span>
-              {!guidanceOpen && (
-                <span className="text-[11px] text-muted-foreground/70 truncate flex-1 min-w-0 normal-case font-normal">
-                  {guidancePreview}
-                </span>
-              )}
             </button>
             {guidanceOpen && (
               <div className="mt-2">
@@ -1210,7 +1207,7 @@ const EditItemForm: React.FC<{
             )}
           </div>
 
-          {/* Delivering Party — single row, B2B-collapse pattern */}
+          {/* Delivering Party — header + single row, no standalone dropdown */}
           <div className="border-t border-border/40 pt-4">
             <div className="flex items-center justify-between mb-1">
               <Label className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
@@ -1224,42 +1221,58 @@ const EditItemForm: React.FC<{
                 </PopoverTrigger>
                 <PopoverContent side="left" align="end" collisionPadding={16} className="w-64 p-2 z-[200]">
                   <Input
-                    placeholder="Search team members..."
+                    placeholder="Search role or team member..."
                     value={deliveringSearch}
                     onChange={(e) => setDeliveringSearch(e.target.value)}
                     className="h-8 text-xs mb-2"
                   />
-                  <div className="max-h-48 overflow-y-auto space-y-0.5">
-                    {availableDeliveringCandidates.map(user => (
-                      <button
-                        key={user.user_id}
-                        onClick={() => { void handleAddDeliveringUser(user.user_id); }}
-                        className="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-muted/60 transition-colors"
-                      >
-                        <div className="font-medium truncate">{user.full_name}</div>
-                        {user.role_name && (
-                          <div className="text-[10px] text-muted-foreground truncate">{user.role_name}</div>
-                        )}
-                      </button>
-                    ))}
-                    {availableDeliveringCandidates.length === 0 && (
-                      <p className="text-xs text-muted-foreground text-center py-4">No members available</p>
+                  <div className="max-h-64 overflow-y-auto space-y-2">
+                    {!deliveringParty && (
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground px-1 pb-1">Select role</p>
+                        <div className="space-y-0.5">
+                          {roles
+                            .filter(r => !deliveringSearch || r.name.toLowerCase().includes(deliveringSearch.toLowerCase()))
+                            .map(r => (
+                              <button
+                                key={r.id}
+                                onClick={() => { setDeliveringParty(r.id); setDeliveringSearch(''); }}
+                                className="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-muted/60 transition-colors"
+                              >
+                                {r.name}
+                              </button>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+                    {deliveringParty && (
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground px-1 pb-1">
+                          Add member to {getRoleName(deliveringParty)}
+                        </p>
+                        <div className="space-y-0.5">
+                          {availableDeliveringCandidates.map(user => (
+                            <button
+                              key={user.user_id}
+                              onClick={() => { void handleAddDeliveringUser(user.user_id); }}
+                              className="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-muted/60 transition-colors"
+                            >
+                              <div className="font-medium truncate">{user.full_name}</div>
+                              {user.role_name && (
+                                <div className="text-[10px] text-muted-foreground truncate">{user.role_name}</div>
+                              )}
+                            </button>
+                          ))}
+                          {availableDeliveringCandidates.length === 0 && (
+                            <p className="text-xs text-muted-foreground text-center py-4">No members available</p>
+                          )}
+                        </div>
+                      </div>
                     )}
                   </div>
                 </PopoverContent>
               </Popover>
             </div>
-
-            <Select value={deliveringParty} onValueChange={setDeliveringParty}>
-              <SelectTrigger className="text-sm h-8">
-                <SelectValue placeholder="Select role" />
-              </SelectTrigger>
-              <SelectContent className="z-[200]">
-                {roles.map(r => (
-                  <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
 
             {displayDeliveringUsers.length > 0 ? (
               <div className="mt-1">
@@ -1299,8 +1312,11 @@ const EditItemForm: React.FC<{
               </div>
             ) : deliveringParty ? (
               <p className="text-[11px] italic text-muted-foreground mt-1.5">No users assigned to this role</p>
-            ) : null}
+            ) : (
+              <p className="text-[11px] italic text-muted-foreground mt-1.5">No delivering party assigned</p>
+            )}
           </div>
+
 
           {/* Approving Parties — collapsible (default expanded) */}
           <div className="border-t border-border/40 pt-4">
