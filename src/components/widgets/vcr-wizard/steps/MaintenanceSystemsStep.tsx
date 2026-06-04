@@ -137,7 +137,7 @@ export const MaintenanceSystemsStep: React.FC<MaintenanceSystemsStepProps> = ({ 
               <div
                 key={def.type}
                 className={cn(
-                  'px-4 py-2.5 transition-colors',
+                  'group/row px-4 py-2.5 transition-colors',
                   idx > 0 && 'border-t border-border/40',
                   applicable && 'bg-muted/20'
                 )}
@@ -158,7 +158,7 @@ export const MaintenanceSystemsStep: React.FC<MaintenanceSystemsStepProps> = ({ 
                       <button
                         type="button"
                         onClick={() => setNotesOpen((p) => ({ ...p, [def.type]: true }))}
-                        className="mt-1.5 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        className="mt-1.5 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-opacity opacity-0 group-hover/row:opacity-100 focus:opacity-100"
                       >
                         <Plus className="w-3 h-3" />
                         Add note
