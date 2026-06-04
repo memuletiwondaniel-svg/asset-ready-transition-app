@@ -50,7 +50,11 @@ import { ProjectVCR } from '@/hooks/useProjectVCRs';
 import { getVCRColor } from '@/components/p2a-workspace/utils/vcrColors';
 import { format, differenceInDays } from 'date-fns';
 import { useHandoverPointSystems } from '@/components/p2a-workspace/hooks/useP2AHandoverPoints';
-import SOFCertificate from '@/components/handover/SOFCertificate';
+import SOFCertificateLegacy from '@/components/handover/SOFCertificate';
+import { SOFCertificate as SOFCertificateInteractive } from '@/components/sof/SOFCertificate';
+import { useVCRSoFApprovers } from '@/hooks/useVCRSoFApprovers';
+import { useUserSignature } from '@/hooks/useUserSignature';
+
 import PACCertificate from '@/components/handover/PACCertificate';
 import { SystemDetailSheet } from '@/components/p2a-workspace/systems/SystemDetailSheet';
 import { VCRTrainingTab } from '@/components/p2a-workspace/handover-points/VCRTrainingTab';
@@ -72,7 +76,9 @@ interface VCRDetailOverlayProps {
   vcr: ProjectVCR;
   projectName?: string;
   projectCode?: string;
+  initialTab?: string;
 }
+
 
 type NavItem = {
   id: string;
@@ -1296,10 +1302,15 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
   vcr,
   projectName = '',
   projectCode = '',
+  initialTab,
 }) => {
   const { id: projectId } = useParams<{ id: string }>();
-  const [activeNav, setActiveNav] = useState('overview');
+  const [activeNav, setActiveNav] = useState(initialTab || 'overview');
+  React.useEffect(() => {
+    if (initialTab) setActiveNav(initialTab);
+  }, [initialTab]);
   const vcrColor = getVCRColor(vcr.vcr_code);
+
   const displayCode = shortCode(vcr.vcr_code);
   const isComplete = vcr.progress === 100;
   const [cardOrder, setCardOrder] = useState<string[]>(['overview', 'progress', 'approvals']);
