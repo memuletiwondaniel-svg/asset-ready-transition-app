@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import {
   Search, Layers, Trash2, Flame, Snowflake, ChevronRight, ChevronDown,
-  Plus, RefreshCw, CheckCircle2, Info, Lock,
+  Plus, RefreshCw, CheckCircle2, Info, Lock, Database, Upload,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -267,8 +267,8 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
 
   return (
     <div className="space-y-4">
-      {/* ── Finalize banner ───────────────────────────────────────── */}
-      {isFinalized ? (
+      {/* ── Finalize success banner (only when finalized) ────────── */}
+      {isFinalized && (
         <div className="flex items-center gap-2 rounded-md border border-emerald-500/40 bg-emerald-500/5 px-3 py-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
           <div className="text-[12px] leading-snug flex-1">
@@ -289,81 +289,104 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
             </Button>
           )}
         </div>
-      ) : (
-        <div className="flex items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/5 px-3 py-2">
-          <Info className="w-4 h-4 text-amber-600 shrink-0" />
-          <div className="text-[12px] leading-snug flex-1">
-            <span className="font-semibold text-amber-700 dark:text-amber-400">
-              {rows.length > 0 ? 'Pre-populated from preliminary P2A assignment.' : 'No systems assigned yet.'}
-            </span>{' '}
-            <span className="text-muted-foreground">
-              Review, adjust, then finalize. Finalizing is required before submitting the VCR Execution Plan for approval.
-            </span>
-          </div>
-          <Button
-            size="sm"
-            className="h-7 text-xs gap-1.5"
-            onClick={() => finalizeMutation.mutate(true)}
-            disabled={finalizeMutation.isPending || rows.length === 0}
-            title={rows.length === 0 ? 'Add at least one system before finalizing' : 'Mark this system list as final'}
-          >
-            <Lock className="w-3 h-3" />
-            Finalize
-          </Button>
-        </div>
       )}
 
-      <div className="flex items-center gap-3 flex-wrap">
-
-        <div className="relative flex-1 min-w-[220px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search systems / subsystems..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <Badge variant="outline">{rows.length} systems</Badge>
-        {hcCount > 0 && (
-          <Badge variant="outline" className="border-orange-300 text-orange-600 gap-1">
-            <Flame className="w-3 h-3" />
-            {hcCount} HC
-          </Badge>
-        )}
-        <Button
-          size="icon"
-          variant="outline"
-          onClick={handleSync}
-          disabled={syncing}
-          title="Sync GoCompletions"
-          aria-label="Sync GoCompletions"
-          className="h-8 w-8"
-        >
-          <RefreshCw className={cn("w-3.5 h-3.5", syncing && "animate-spin")} />
-        </Button>
-        {rows.length > 0 && (
+      {/* ── Populated state: search + count + actions ────────────── */}
+      {rows.length > 0 && (
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="relative flex-1 min-w-[220px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search systems / subsystems..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Badge variant="outline">{rows.length} systems</Badge>
+          {hcCount > 0 && (
+            <Badge variant="outline" className="border-orange-300 text-orange-600 gap-1">
+              <Flame className="w-3 h-3" />
+              {hcCount} HC
+            </Badge>
+          )}
+          <Button
+            size="icon"
+            variant="outline"
+            onClick={handleSync}
+            disabled={syncing}
+            title="Sync GoCompletions"
+            aria-label="Sync GoCompletions"
+            className="h-8 w-8"
+          >
+            <RefreshCw className={cn("w-3.5 h-3.5", syncing && "animate-spin")} />
+          </Button>
           <Button size="sm" onClick={() => setPickerOpen(true)} className="gap-1.5">
             <Plus className="w-3.5 h-3.5" />
             Add System
           </Button>
-        )}
-      </div>
+          {!isFinalized && !isLocked && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 text-xs gap-1.5"
+              onClick={() => finalizeMutation.mutate(true)}
+              disabled={finalizeMutation.isPending}
+              title="Mark this system list as final"
+            >
+              <Lock className="w-3 h-3" />
+              Finalize
+            </Button>
+          )}
+        </div>
+      )}
 
       {rows.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <div className="w-14 h-14 rounded-full bg-orange-500/10 flex items-center justify-center mb-3">
-              <Layers className="w-7 h-7 text-orange-500" />
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col items-center text-center pt-6 pb-2 shrink-0">
+            <div className="w-16 h-16 rounded-2xl bg-muted/70 flex items-center justify-center mb-4 ring-1 ring-border/60">
+              <Database className="h-7 w-7 text-muted-foreground" />
             </div>
-            <h3 className="font-medium">No Systems Mapped</h3>
-            <p className="text-xs text-muted-foreground mt-1 mb-4">Add systems or subsystems to this VCR.</p>
-            <Button size="sm" onClick={() => setPickerOpen(true)} className="gap-1.5">
-              <Plus className="w-3.5 h-3.5" />
-              Add System
-            </Button>
-          </CardContent>
-        </Card>
+            <p className="text-lg font-semibold tracking-tight">No systems yet</p>
+            <p className="text-sm text-muted-foreground mt-1.5 max-w-md">
+              Pick an import method below to get started, or add systems to this VCR.
+            </p>
+          </div>
+          <div className="grid grid-cols-3 gap-3 shrink-0">
+            <button
+              onClick={() => setPickerOpen(true)}
+              className="group relative flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+            >
+              <div className="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center group-hover:bg-amber-500/20 transition-colors">
+                <Database className="h-4 w-4 text-amber-600" />
+              </div>
+              <span className="font-medium text-xs">CMS Import</span>
+              <span className="text-[10px] text-muted-foreground leading-tight text-center">
+                Import from GoCompletions CMS
+              </span>
+            </button>
+            <button
+              onClick={() => setPickerOpen(true)}
+              className="group relative flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+            >
+              <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
+                <Upload className="h-4 w-4 text-emerald-600" />
+              </div>
+              <span className="font-medium text-xs">Upload Excel</span>
+              <span className="text-[10px] text-muted-foreground leading-tight text-center">Import spreadsheet</span>
+            </button>
+            <button
+              onClick={() => setPickerOpen(true)}
+              className="group relative flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+            >
+              <div className="w-9 h-9 rounded-lg bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
+                <Plus className="h-4 w-4 text-blue-600" />
+              </div>
+              <span className="font-medium text-xs">Add Manually</span>
+              <span className="text-[10px] text-muted-foreground leading-tight text-center">Enter details</span>
+            </button>
+          </div>
+        </div>
       ) : (
         <ScrollArea className="h-[calc(min(90vh,780px)-320px)]">
           <div className="space-y-2 pr-3">
