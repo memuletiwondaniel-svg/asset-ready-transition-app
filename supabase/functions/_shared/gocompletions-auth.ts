@@ -598,30 +598,39 @@ export function parseRadGridTable(html: string, headerOverrides?: string[]): Gri
   }
 
 
-  // Extract headers
+  // Extract headers — prefer standalone `<th class="rgHeader">` cells (the
+  // CompletionsGrid layout). Fall back to the legacy thead / `<tr rgHeader>`
+  // scrape for grids that follow that older pattern.
   const headers: string[] = [];
-  const headerRowMatch = tableHtml.match(/<thead[^>]*>([\s\S]*?)<\/thead>/i)
-    || tableHtml.match(/<tr[^>]*class="[^"]*rgHeader[^"]*"[^>]*>([\s\S]*?)<\/tr>/i);
-  
-  if (headerRowMatch) {
-    const thRegex = /<t[hd][^>]*>([\s\S]*?)<\/t[hd]>/gi;
-    let thMatch;
-    while ((thMatch = thRegex.exec(headerRowMatch[1])) !== null) {
-      const text = thMatch[1].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
-      headers.push(text);
+  const thRgRe = /<th\b[^>]*class="[^"]*\brgHeader\b[^"]*"[^>]*>([\s\S]*?)<\/th>/gi;
+  let thRgMatch: RegExpExecArray | null;
+  while ((thRgMatch = thRgRe.exec(tableHtml)) !== null) {
+    const text = thRgMatch[1].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+    headers.push(text);
+  }
+  if (headers.length === 0) {
+    const headerRowMatch = tableHtml.match(/<thead[^>]*>([\s\S]*?)<\/thead>/i)
+      || tableHtml.match(/<tr[^>]*class="[^"]*rgHeader[^"]*"[^>]*>([\s\S]*?)<\/tr>/i);
+    if (headerRowMatch) {
+      const thRegex = /<t[hd][^>]*>([\s\S]*?)<\/t[hd]>/gi;
+      let thMatch;
+      while ((thMatch = thRegex.exec(headerRowMatch[1])) !== null) {
+        const text = thMatch[1].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+        headers.push(text);
+      }
     }
   }
 
   const effectiveHeaders = headerOverrides || headers;
-  if (effectiveHeaders.length === 0) return rows;
 
-  // Extract data rows
-  const tbodyMatch = tableHtml.match(/<tbody[^>]*>([\s\S]*?)<\/tbody>/i);
-  const bodyHtml = tbodyMatch ? tbodyMatch[1] : tableHtml;
-  
-  const rowRegex = /<tr[^>]*class="[^"]*rg(?:Row|AltRow)[^"]*"[^>]*>([\s\S]*?)<\/tr>/gi;
+  // Extract data rows directly against the master-table content. The master
+  // contains nested sub-tables (rgCommandTable, pager) each with their own
+  // <tbody>, so scoping to the first <tbody> can grab the wrong one. rgRow/
+  // rgAltRow are unique to data rows in the master grid, so a direct scan
+  // over the bracket-matched master HTML is safe.
+  const rowRegex = /<tr[^>]*class="[^"]*\brg(?:Row|AltRow)\b[^"]*"[^>]*>([\s\S]*?)<\/tr>/gi;
   let rowMatch;
-  while ((rowMatch = rowRegex.exec(bodyHtml)) !== null) {
+  while ((rowMatch = rowRegex.exec(tableHtml)) !== null) {
     const cells: string[] = [];
     const cellRegex = /<td[^>]*>([\s\S]*?)<\/td>/gi;
     let cellMatch;
@@ -631,12 +640,17 @@ export function parseRadGridTable(html: string, headerOverrides?: string[]): Gri
     }
     if (cells.length > 0) {
       const row: GridRow = {};
-      for (let i = 0; i < effectiveHeaders.length && i < cells.length; i++) {
-        row[effectiveHeaders[i]] = cells[i];
+      const keyCount = Math.max(effectiveHeaders.length, cells.length);
+      for (let i = 0; i < keyCount; i++) {
+        const key = effectiveHeaders[i] && effectiveHeaders[i].length > 0
+          ? effectiveHeaders[i]
+          : `c${i}`;
+        row[key] = cells[i] ?? "";
       }
       rows.push(row);
     }
   }
+
 
   return rows;
 }
