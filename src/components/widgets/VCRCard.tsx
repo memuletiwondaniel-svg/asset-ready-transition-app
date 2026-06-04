@@ -94,9 +94,13 @@ const Dot: React.FC = () => (
 
 export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false }) => {
   const displayCode = shortCode(vcr.vcr_code);
-  const style = LIFECYCLE_STYLE[vcr.lifecycle];
-  const isNotStarted = vcr.lifecycle === 'not_started';
+  const lifecycle: VCRLifecycle = vcr.lifecycle ?? 'draft';
+  const style = LIFECYCLE_STYLE[lifecycle];
+  const isNotStarted = lifecycle === 'not_started';
   const percent = Math.max(0, Math.min(100, vcr.progress));
+  const closedItems = vcr.closed_items ?? 0;
+  const totalItems = vcr.total_items ?? 0;
+  const sofSigned = vcr.sof_signed ?? false;
 
   // Summary line
   let summary: React.ReactNode = null;
@@ -109,17 +113,17 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
         No checklist items yet — click to begin
       </p>
     );
-  } else if (vcr.lifecycle === 'draft') {
+  } else if (lifecycle === 'draft') {
     summary = (
       <p className="text-[12px] leading-[1.4] mb-2.5 text-muted-foreground">
-        {vcr.closed_items} of {vcr.total_items} checklist items closed
+        {closedItems} of {totalItems} checklist items closed
       </p>
     );
-  } else if (vcr.lifecycle === 'in_approval') {
+  } else if (lifecycle === 'in_approval') {
     const text =
-      vcr.total_items > 0 && vcr.closed_items >= vcr.total_items
-        ? `All ${vcr.total_items} items closed · awaiting SoF sign-off`
-        : `${vcr.closed_items} of ${vcr.total_items} items closed · submitted for approval`;
+      totalItems > 0 && closedItems >= totalItems
+        ? `All ${totalItems} items closed · awaiting SoF sign-off`
+        : `${closedItems} of ${totalItems} items closed · submitted for approval`;
     summary = <p className="text-[12px] leading-[1.4] mb-2.5 text-muted-foreground">{text}</p>;
   } else {
     summary = (
