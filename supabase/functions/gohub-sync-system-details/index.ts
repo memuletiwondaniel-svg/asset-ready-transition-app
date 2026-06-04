@@ -574,15 +574,18 @@ Deno.serve(async (req) => {
               });
             }
             if (payload.length) {
-              const { error } = await supa.from("gohub_certificates")
-                .upsert(payload, { onConflict: "project_code,cert_type,object_id,discipline" });
+              // Counter fix: count AFFECTED rows, not just `!error`.
+              const { data: written, error } = await supa.from("gohub_certificates")
+                .upsert(payload, { onConflict: "project_code,cert_type,object_id,discipline" })
+                .select("id");
               if (error) {
                 report.cert_pass.errors.push(
                   `${certType}[${scope ?? "project"}]: ${error.message}`
                 );
               } else {
-                perTypeEntry.rows_persisted += payload.length;
-                report.certs_upserted += payload.length;
+                const n = written?.length ?? 0;
+                perTypeEntry.rows_persisted += n;
+                report.certs_upserted += n;
               }
             }
           } catch (e: any) {
