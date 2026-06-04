@@ -56,15 +56,11 @@ export function formatCookies(cookies: Record<string, string>): string {
 
 // ─── HTML Parsing Utilities ──────────────────────────────────
 
-export function decodeHtmlEntities(str: string): string {
-  return str
-    .replace(/&amp;/g, "&")
-    .replace(/&#39;/g, "'")
-    .replace(/&apos;/g, "'")
-    .replace(/&quot;/g, '"')
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">");
-}
+// Pure parsers (decodeHtmlEntities, parseRadAjaxDelta, parseRadGridTable,
+// GridRow) live in `gohub-parsers.ts` so unit tests can import without
+// pulling in npm packages. Re-exported here for back-compat.
+export { decodeHtmlEntities, parseRadAjaxDelta, parseRadGridTable } from "./gohub-parsers.ts";
+export type { GridRow } from "./gohub-parsers.ts";
 
 export function extractHiddenFields(html: string): Record<string, string> {
   const fields: Record<string, string> = {};
