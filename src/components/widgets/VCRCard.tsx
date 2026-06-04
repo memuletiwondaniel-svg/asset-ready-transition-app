@@ -100,7 +100,9 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
   const percent = Math.max(0, Math.min(100, vcr.progress));
   const closedItems = vcr.closed_items ?? 0;
   const totalItems = vcr.total_items ?? 0;
-  const sofSigned = vcr.sof_signed ?? false;
+  const gate = vcr.gate ?? (vcr.has_hydrocarbon ? 'SOF' : 'PAC');
+  const gateLabel = gate === 'SOF' ? 'SoF' : 'PAC';
+  const gateSigned = vcr.gate_signed ?? vcr.sof_signed ?? false;
 
   // Summary line
   let summary: React.ReactNode = null;
@@ -122,13 +124,13 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
   } else if (lifecycle === 'in_approval') {
     const text =
       totalItems > 0 && closedItems >= totalItems
-        ? `All ${totalItems} items closed · awaiting SoF sign-off`
+        ? `All ${totalItems} items closed · awaiting ${gateLabel} sign-off`
         : `${closedItems} of ${totalItems} items closed · submitted for approval`;
     summary = <p className="text-[12px] leading-[1.4] mb-2.5 text-muted-foreground">{text}</p>;
   } else {
     summary = (
       <p className="text-[12px] leading-[1.4] mb-2.5 text-muted-foreground">
-        All items closed · SoF signed off
+        All items closed · {gateLabel} signed off
       </p>
     );
   }
@@ -146,7 +148,7 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
         <>
           {sysLabel}
           <Dot />
-          {sofSigned ? 'SoF signed' : 'SoF pending'}
+          {gateSigned ? `${gateLabel} signed` : `${gateLabel} pending`}
         </>
       );
       right = vcr.submitted_at ? `Submitted ${formatShortDate(vcr.submitted_at)}` : '';
