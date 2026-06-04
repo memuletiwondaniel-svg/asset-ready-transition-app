@@ -17,7 +17,7 @@ import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from '@/components/ui/tooltip';
 import {
-  Search, X, Loader2, ChevronDown, Trash2,
+  Search, X, Loader2, ChevronDown, Trash2, FileStack, Plus,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -66,6 +66,7 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
   const [assaiOpen, setAssaiOpen] = useState(false);
   const [confirmRemoveBound, setConfirmRemoveBound] = useState<{ typeId: string; reqId: string } | null>(null);
   const [confirmClearAll, setConfirmClearAll] = useState(false);
+  const [browseCatalog, setBrowseCatalog] = useState(false);
 
   // Debounce search
   React.useEffect(() => {
@@ -123,7 +124,7 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
   });
 
   // Fetch existing requirements for this VCR
-  const { data: requirements = [] } = useQuery<RequirementRow[]>({
+  const { data: requirements = [], isLoading: requirementsLoading } = useQuery<RequirementRow[]>({
     queryKey: ['vcr-doc-requirements', vcrId],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
@@ -206,6 +207,14 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
   const totalCount = requirements.length + pendingSelections.size - pendingRemovals.size;
 
   const pendingChanges = pendingSelections.size + pendingRemovals.size;
+
+  React.useEffect(() => {
+    if (requirements.length > 0) {
+      setBrowseCatalog(true);
+    }
+  }, [requirements.length]);
+
+  const showCatalog = browseCatalog || totalCount > 0 || pendingChanges > 0 || typesLoading || requirementsLoading;
 
   // Save mutation
   const saveMutation = useMutation({
@@ -308,6 +317,11 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
     onSuccess: () => {
       setPendingSelections(new Set());
       setPendingRemovals(new Set());
+      setTier('all');
+      setDisciplines([]);
+      setSearchInput('');
+      setSearch('');
+      setBrowseCatalog(false);
       queryClient.invalidateQueries({ queryKey: ['vcr-doc-requirements', vcrId] });
       queryClient.invalidateQueries({ queryKey: ['vcr-critical-docs', vcrId] });
       queryClient.invalidateQueries({ queryKey: ['vcr-wizard-step-counts', vcrId] });
