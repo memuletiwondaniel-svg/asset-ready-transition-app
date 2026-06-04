@@ -92,14 +92,14 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
               <p className="text-sm text-muted-foreground">Living document — automatically updated as the platform evolves</p>
               <div className="flex items-center gap-1.5 mt-1">
                 <Calendar className="h-3 w-3 text-muted-foreground/70" />
-                <span className="text-xs text-muted-foreground/70">Last updated: 24 March 2026 — Security hardening complete, Claude migration security reviewed</span>
+                <span className="text-xs text-muted-foreground/70">Last updated: June 2026 — RLS helper functions adopted, multi-tenant resolver consolidated</span>
               </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <DocumentDownloadButton contentRef={contentRef} fileName="ORSH-Enterprise-Security-Compliance" />
             <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
-              v4.0 — March 2026
+              v4.1 — June 2026
             </Badge>
           </div>
         </div>
@@ -228,9 +228,9 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
                     <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">✅ RESOLVED</Badge>
                   </div>
                   <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
-                    <li>All 416+ RLS policies updated to use <code className="bg-muted px-1 rounded text-xs">(select auth.uid())</code> subquery pattern</li>
-                    <li>Evaluated once per query not per row — significant performance improvement at scale</li>
-                    <li>Zero bare <code className="bg-muted px-1 rounded text-xs">auth.uid()</code> calls remaining</li>
+                    <li>RLS policies optimized with <code className="bg-muted px-1 rounded text-xs">(select auth.uid())</code> subquery pattern — auth function evaluated once per query rather than per row</li>
+                    <li>Multi-tenant filtering consolidated behind <code className="bg-muted px-1 rounded text-xs">public.get_user_tenant_id()</code> helper for maintainable cross-tenant isolation</li>
+                    <li>Permissive policies consolidated across the schema — zero Supabase advisor warnings remaining</li>
                   </ul>
                 </CardContent>
               </Card>
@@ -307,7 +307,7 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
             <Card className="border-destructive/20 bg-destructive/5">
               <CardContent className="pt-4 text-sm">
                 <p className="font-medium text-destructive">Critical Security Principle</p>
-                <p>Roles are stored in a dedicated <code className="bg-muted px-1 rounded">user_roles</code> table — <strong>never</strong> on the user profile directly — preventing privilege escalation attacks.</p>
+                <p>Role assignments live in the <code className="bg-muted px-1 rounded">profiles.role</code> column governed by RLS and security-definer helpers. Privilege checks always run through the <code className="bg-muted px-1 rounded">has_role()</code> / tenant-scoped helpers — direct client writes to elevate roles are blocked at the policy level.</p>
               </CardContent>
             </Card>
             <p className="font-medium text-foreground">Permission Matrix</p>
@@ -619,13 +619,14 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
               <div className="pl-4">Security Definer Function → user_roles / role_permissions</div>
             </div>
 
-            <p className="font-medium text-foreground mt-4">RLS Performance Hardening (March 2026)</p>
+            <p className="font-medium text-foreground mt-4">RLS Performance & Helper Functions (March–June 2026)</p>
             <Card className="bg-emerald-500/5 border-emerald-500/20">
               <CardContent className="pt-4 text-sm space-y-2">
-                <p className="text-muted-foreground">Two major RLS hardening migrations applied across the entire schema:</p>
+                <p className="text-muted-foreground">Sustained RLS hardening across the schema:</p>
                 <ul className="list-disc pl-5 space-y-1">
-                  <li><strong className="text-foreground">auth.uid() subquery optimization (416 policies):</strong> All RLS policies updated to wrap <code className="bg-muted px-1 rounded text-xs">auth.uid()</code> as <code className="bg-muted px-1 rounded text-xs">(select auth.uid())</code>, telling PostgreSQL to evaluate the auth function once per query rather than once per row — significant performance improvement at scale.</li>
-                  <li><strong className="text-foreground">Multiple permissive policy consolidation (~100 overlaps):</strong> Eliminated duplicate permissive policies across ~90 tables. ALL-command policies split into per-command (SELECT, INSERT, UPDATE, DELETE) policies. Direct duplicates consolidated using OR conditions within single policies.</li>
+                  <li><strong className="text-foreground">auth.uid() subquery optimization:</strong> RLS policies wrap <code className="bg-muted px-1 rounded text-xs">auth.uid()</code> as <code className="bg-muted px-1 rounded text-xs">(select auth.uid())</code>, telling PostgreSQL to evaluate the auth function once per query rather than once per row — significant performance improvement at scale.</li>
+                  <li><strong className="text-foreground">Multi-tenant helper functions:</strong> <code className="bg-muted px-1 rounded text-xs">public.get_user_tenant_id()</code> and related security-definer helpers replace raw JWT claim parsing inside policies — simpler, faster, and safer to evolve.</li>
+                  <li><strong className="text-foreground">Permissive policy consolidation:</strong> Duplicate permissive policies eliminated; ALL-command policies split into per-command policies; direct duplicates consolidated.</li>
                   <li><strong className="text-foreground">Zero Supabase advisor warnings:</strong> Both "Auth RLS Initialization Plan" and "Multiple Permissive Policies" warnings fully resolved.</li>
                 </ul>
               </CardContent>
