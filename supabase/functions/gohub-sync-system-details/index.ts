@@ -166,12 +166,13 @@ function htmlCellText(html: string): string {
 
 // ─── Per-subsystem scrapers ──────────────────────────────────
 
-async function scrapeTagSearch(session: GocSessionManager, subsystem: string) {
+async function scrapeTagSearch(session: GocSessionManager, subsystem: string, debug = false) {
   const { html, url, cookies } = await session.navigateTo("GoCompletions/Completions/TagSearch.aspx");
   const sub = findSubSystemField(html);
   const target = findPostbackTarget(html, sub.scopePrefix);
+  const dbg: any = debug ? { subsystem_field: sub.field, postback_target: target, tagsearch_html_excerpt: null } : null;
   if (!target || !sub.field) {
-    return { ok: false, reason: "no postback target or subsystem field", items: [] as any[] };
+    return { ok: false, reason: "no postback target or subsystem field", items: [] as any[], debug: dbg };
   }
   // SubSystem on TagSearch is a plain textbox → post plain text only.
   // Only write ClientState if the page actually has one (RadComboBox).
@@ -190,8 +191,9 @@ async function scrapeTagSearch(session: GocSessionManager, subsystem: string) {
   // __EVENTVALIDATION extracted from THIS GET — required for the
   // SearchButton click to bind server-side.
   const { html: resultHtml } = await postWithViewState(cookies, url, html, params);
+  if (dbg) dbg.tagsearch_html_excerpt = resultHtml.slice(0, 2048);
   const tableMatch = resultHtml.match(/<table[^>]*class="[^"]*rgMasterTable[^"]*"[^>]*>([\s\S]*?)<\/table>/i);
-  if (!tableMatch) return { ok: false, reason: "no rgMasterTable", items: [] as any[] };
+  if (!tableMatch) return { ok: false, reason: "no rgMasterTable", items: [] as any[], debug: dbg };
 
   const headers = extractHeaders(tableMatch[1]);
   const rows = extractRowCellsHtml(tableMatch[1]);
@@ -200,7 +202,7 @@ async function scrapeTagSearch(session: GocSessionManager, subsystem: string) {
   const descIdx = headers.findIndex((h) => /^description$/i.test(h));
   const discIdx = headers.findIndex((h) => /^discipline$/i.test(h));
   const itrsIdx = headers.findIndex((h) => /tag\s*itrs/i.test(h));
-  if (itrsIdx < 0) return { ok: false, reason: "no Tag ITRs column", items: [] as any[] };
+  if (itrsIdx < 0) return { ok: false, reason: "no Tag ITRs column", items: [] as any[], debug: dbg };
 
   const items: any[] = [];
   for (const r of rows) {
@@ -226,7 +228,7 @@ async function scrapeTagSearch(session: GocSessionManager, subsystem: string) {
       });
     }
   }
-  return { ok: true, items, header_count: headers.length, row_count: rows.length };
+  return { ok: true, items, header_count: headers.length, row_count: rows.length, debug: dbg };
 }
 
 async function scrapePunch(session: GocSessionManager, subsystem: string) {
