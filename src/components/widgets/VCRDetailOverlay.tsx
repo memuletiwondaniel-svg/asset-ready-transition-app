@@ -552,8 +552,9 @@ const ApprovalsPanel: React.FC<ApprovalsPanelProps> = ({
           approverUserName={selectedApprover.userName}
           approverAvatarUrl={selectedApprover.avatarUrl}
           approverItemCount={selectedApprover.itemCount}
-          approverAcceptedCount={selectedApprover.acceptedCount}
+          approverAcceptedCount={isHandedOver ? selectedApprover.itemCount : selectedApprover.acceptedCount}
           roleType={selectedApprover.role === 'delivering' ? 'delivering' : 'receiving'}
+          forceCompleted={isHandedOver}
         />
       )}
     </>
