@@ -667,14 +667,14 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
           open={overlayOpen}
           onOpenChange={setOverlayOpen}
           pssrId={selectedPssrId}
-          certificateNumber={selectedPssrId === 'mock-pssr-dp385' ? 'SOF-2025-0127' : 'SOF-2026-0042'}
+          certificateNumber={selectedPssrId === 'mock-pssr-dp385' ? 'SOF-2025-0127' : selectedPssrId === 'mock-pssr-dp40' ? 'SOF-2025-0094' : 'SOF-2026-0042'}
           pssrReason="Start-up of a New Project or Facility"
           plantName="CS"
-          facilityName={selectedPssrId === 'mock-pssr-dp385' ? 'CS6 and CS7' : 'Hammar Mishrif'}
-          projectName={selectedPssrId === 'mock-pssr-dp385' ? 'DP-385: OT2/3 Gas Feed to CS6/7' : 'DP-300 HM Additional Compressors'}
-          approvers={selectedPssrId === 'mock-pssr-dp385' ? getDP385Approvers() : getMockApproversForOverlay(isViewOnly ? recentActivity : null)}
-          status={selectedPssrId === 'mock-pssr-dp385' ? 'COMPLETED' : (isViewOnly ? 'COMPLETED' : 'PENDING_SIGNATURE')}
-          isViewOnly={selectedPssrId === 'mock-pssr-dp385' ? true : isViewOnly}
+          facilityName={selectedPssrId === 'mock-pssr-dp385' ? 'CS6 and CS7' : selectedPssrId === 'mock-pssr-dp40' ? 'Hammar Mishrif LLP' : 'Hammar Mishrif'}
+          projectName={selectedPssrId === 'mock-pssr-dp385' ? 'DP-385: OT2/3 Gas Feed to CS6/7' : selectedPssrId === 'mock-pssr-dp40' ? 'DP-40: HM LLP Gas Capture' : 'DP-300 HM Additional Compressors'}
+          approvers={selectedPssrId === 'mock-pssr-dp385' ? getDP385Approvers() : selectedPssrId === 'mock-pssr-dp40' ? getDP40Approvers() : getMockApproversForOverlay(isViewOnly ? recentActivity : null)}
+          status={selectedPssrId === 'mock-pssr-dp385' || selectedPssrId === 'mock-pssr-dp40' ? 'COMPLETED' : (isViewOnly ? 'COMPLETED' : 'PENDING_SIGNATURE')}
+          isViewOnly={selectedPssrId === 'mock-pssr-dp385' || selectedPssrId === 'mock-pssr-dp40' ? true : isViewOnly}
         />
       )}
     </div>
