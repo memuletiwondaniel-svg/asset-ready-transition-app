@@ -91,7 +91,7 @@ export const VCRProceduresTab: React.FC<VCRProceduresTabProps> = ({ handoverPoin
   const rawItems = procedures || [];
   const items = isHandedOver
     ? (rawItems.length > 0
-        ? rawItems.map(i => ({ ...i, ora: { ...i.ora, ora_status: 'COMPLETED', ora_completion_percentage: 100 } }))
+        ? rawItems.map(i => ({ ...i, ora: { ...i.ora, ora_status: 'COMPLETED' as const, ora_completion_percentage: 100 } }))
         : (MOCK_PROCEDURES as unknown as VCRProcedureDeliverable[]))
     : rawItems;
   
