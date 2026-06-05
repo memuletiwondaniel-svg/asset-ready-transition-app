@@ -137,6 +137,28 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
   const totalCount = expectedDisciplines.length;
   const allDisciplinesSubmitted = totalCount > 0 && submittedCount === totalCount;
 
+  // Mock interdisciplinary statement when VCR has been handed over (e.g. VCR-01)
+  const mockInterdisciplinary: DisciplineAssurance | null = isHandedOver && !interdisciplinaryStatement
+    ? {
+        id: 'mock-interdisciplinary',
+        handover_point_id: handoverPointId,
+        discipline_role_id: null,
+        discipline_role_name: 'Interdisciplinary Lead (Snr ORA Engr.)',
+        reviewer_user_id: null,
+        assurance_statement:
+          'All discipline-specific assurance statements have been received, reviewed and accepted. Cross-discipline interface checks (Electrical/Process/Mechanical/Instrumentation/Safety) have been completed with no outstanding concerns. Approved qualifications and MoCs are tracked to closure and do not impact safe operation. The Power & Utilities scope is deemed integrated, operationally ready and recommended for handover to Operations.',
+        statement_type: 'interdisciplinary',
+        submitted_at: '2026-06-03T09:15:00Z',
+        created_at: '2026-06-03T09:15:00Z',
+        updated_at: '2026-06-03T09:15:00Z',
+        reviewer: {
+          full_name: 'Aarav Krishnan',
+          avatar_url: avatarUrlFor('Aarav Krishnan'),
+        },
+      }
+    : null;
+  const effectiveInterdisciplinary = interdisciplinaryStatement || mockInterdisciplinary;
+
   return (
     <div className="space-y-6">
       {/* Header summary */}
