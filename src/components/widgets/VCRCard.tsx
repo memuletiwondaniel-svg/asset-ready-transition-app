@@ -161,6 +161,15 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
       right = vcr.submitted_at ? `Submitted ${formatShortDate(vcr.submitted_at)}` : '';
     } else if (lifecycle === 'approved') {
       right = vcr.approved_at ? `Approved ${formatShortDate(vcr.approved_at)}` : '';
+    } else if (lifecycle === 'handed_over') {
+      left = (
+        <>
+          {sysLabel}
+          <Dot />
+          {gateLabel} signed
+        </>
+      );
+      right = vcr.gate_signed_at ? `Handed over ${formatShortDate(vcr.gate_signed_at)}` : '';
     }
     footer = (
       <div className="flex items-center justify-between text-[11px] text-muted-foreground">
