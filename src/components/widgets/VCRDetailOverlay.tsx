@@ -41,6 +41,7 @@ import {
   ChevronRight,
   MessageSquare,
   AlertTriangle,
+  Check,
 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
