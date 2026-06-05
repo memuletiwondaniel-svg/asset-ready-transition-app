@@ -21,6 +21,7 @@ interface ApproverDetailSheetProps {
   approverItemCount: number;
   approverAcceptedCount: number;
   roleType?: 'delivering' | 'receiving';
+  forceCompleted?: boolean;
 }
 
 type FilterStatus = 'all' | 'completed' | 'pending' | 'not_submitted';
@@ -43,6 +44,7 @@ export const ApproverDetailSheet: React.FC<ApproverDetailSheetProps> = ({
   approverItemCount,
   approverAcceptedCount,
   roleType = 'receiving',
+  forceCompleted = false,
 }) => {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterStatus>('all');
@@ -53,7 +55,7 @@ export const ApproverDetailSheet: React.FC<ApproverDetailSheetProps> = ({
 
   // Fetch VCR items assigned to this approver role, with their prereq status for this VCR
   const { data: items = [], isLoading } = useQuery({
-    queryKey: ['approver-vcr-items', vcrId, approverRoleName, roleType],
+    queryKey: ['approver-vcr-items', vcrId, approverRoleName, roleType, forceCompleted],
     queryFn: async () => {
       const client = supabase as any;
 
@@ -110,6 +112,9 @@ export const ApproverDetailSheet: React.FC<ApproverDetailSheetProps> = ({
           else if (reviewStatuses.includes(prereq.status)) status = 'pending';
           else status = 'not_submitted';
         }
+        if (forceCompleted) status = 'completed';
+        const effectivePrereqStatus = forceCompleted ? 'ACCEPTED' : (prereq?.status || 'NOT_STARTED');
+        const now = new Date().toISOString();
         return {
           id: item.id,
           name: item.vcr_item,
@@ -117,10 +122,10 @@ export const ApproverDetailSheet: React.FC<ApproverDetailSheetProps> = ({
           category: item.vcr_item_categories?.name || 'Other',
           categoryCode: item.vcr_item_categories?.code || '',
           status,
-          prereqStatus: prereq?.status || 'NOT_STARTED',
+          prereqStatus: effectivePrereqStatus,
           prerequisiteId: prereq?.id || null,
-          submittedAt: prereq?.submitted_at,
-          reviewedAt: prereq?.reviewed_at,
+          submittedAt: prereq?.submitted_at || (forceCompleted ? now : undefined),
+          reviewedAt: prereq?.reviewed_at || (forceCompleted ? now : undefined),
           order: item.display_order || idx,
         };
       });
