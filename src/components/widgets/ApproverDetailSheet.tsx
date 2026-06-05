@@ -49,13 +49,14 @@ export const ApproverDetailSheet: React.FC<ApproverDetailSheetProps> = ({
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterStatus>('all');
   const [selectedItem, setSelectedItem] = useState<VCRItemBasic | null>(null);
+  const shouldForceCompleted = forceCompleted || (approverItemCount > 0 && approverAcceptedCount >= approverItemCount);
 
   const getInitials = (name: string) =>
     name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
   // Fetch VCR items assigned to this approver role, with their prereq status for this VCR
   const { data: items = [], isLoading } = useQuery({
-    queryKey: ['approver-vcr-items', vcrId, approverRoleName, roleType, forceCompleted],
+    queryKey: ['approver-vcr-items', vcrId, approverRoleName, roleType, shouldForceCompleted],
     queryFn: async () => {
       const client = supabase as any;
 
@@ -112,8 +113,8 @@ export const ApproverDetailSheet: React.FC<ApproverDetailSheetProps> = ({
           else if (reviewStatuses.includes(prereq.status)) status = 'pending';
           else status = 'not_submitted';
         }
-        if (forceCompleted) status = 'completed';
-        const effectivePrereqStatus = forceCompleted ? 'ACCEPTED' : (prereq?.status || 'NOT_STARTED');
+        if (shouldForceCompleted) status = 'completed';
+        const effectivePrereqStatus = shouldForceCompleted ? 'ACCEPTED' : (prereq?.status || 'NOT_STARTED');
         const now = new Date().toISOString();
         return {
           id: item.id,
@@ -124,8 +125,8 @@ export const ApproverDetailSheet: React.FC<ApproverDetailSheetProps> = ({
           status,
           prereqStatus: effectivePrereqStatus,
           prerequisiteId: prereq?.id || null,
-          submittedAt: prereq?.submitted_at || (forceCompleted ? now : undefined),
-          reviewedAt: prereq?.reviewed_at || (forceCompleted ? now : undefined),
+          submittedAt: prereq?.submitted_at || (shouldForceCompleted ? now : undefined),
+          reviewedAt: prereq?.reviewed_at || (shouldForceCompleted ? now : undefined),
           order: item.display_order || idx,
         };
       });
