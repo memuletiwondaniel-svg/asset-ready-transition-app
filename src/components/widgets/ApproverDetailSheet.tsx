@@ -55,7 +55,7 @@ export const ApproverDetailSheet: React.FC<ApproverDetailSheetProps> = ({
 
   // Fetch VCR items assigned to this approver role, with their prereq status for this VCR
   const { data: items = [], isLoading } = useQuery({
-    queryKey: ['approver-vcr-items', vcrId, approverRoleName, roleType],
+    queryKey: ['approver-vcr-items', vcrId, approverRoleName, roleType, forceCompleted],
     queryFn: async () => {
       const client = supabase as any;
 
