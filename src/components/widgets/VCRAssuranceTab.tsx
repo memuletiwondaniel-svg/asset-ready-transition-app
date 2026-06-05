@@ -259,7 +259,7 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
         <div>
           <h3 className="text-base font-semibold text-foreground">Discipline Assurance Statements</h3>
           <p className="text-xs text-muted-foreground">
-            {submittedCount} of {totalCount} discipline statements submitted
+            {effectiveSubmittedCount} of {effectiveTotalCount} discipline statements submitted
             {effectiveInterdisciplinary ? ' · Interdisciplinary statement submitted' : ' · Interdisciplinary statement pending'}
           </p>
         </div>
@@ -338,11 +338,11 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
           <Users className="w-4 h-4 text-primary" />
           <h4 className="text-sm font-semibold text-foreground">Discipline Statements</h4>
           <Badge variant="secondary" className="text-[10px] ml-auto">
-            {submittedCount}/{totalCount}
+            {effectiveSubmittedCount}/{effectiveTotalCount}
           </Badge>
         </div>
 
-        {expectedDisciplines.length === 0 ? (
+        {effectiveExpectedDisciplines.length === 0 ? (
           <Card className="border-dashed">
             <CardContent className="p-6 text-center">
               <p className="text-sm text-muted-foreground">
@@ -352,7 +352,7 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
           </Card>
         ) : (
           <div className="space-y-3">
-            {expectedDisciplines
+            {effectiveExpectedDisciplines
               .filter(disc => disc.submitted && disc.assurance)
               .map(disc => (
                 <AssuranceCard key={disc.role_id} assurance={disc.assurance!} type="discipline" />
