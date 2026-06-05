@@ -11,10 +11,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { 
-  FileText, 
-  Download, 
-  User, 
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import {
+  FileText,
+  Download,
+  User,
   Calendar,
   CheckCircle2,
   XCircle,
@@ -26,6 +27,8 @@ import {
 import { VCRQualification, getQualificationStatusConfig } from '../hooks/useVCRQualifications';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface QualificationDetailSheetProps {
   qualification: VCRQualification | null;
