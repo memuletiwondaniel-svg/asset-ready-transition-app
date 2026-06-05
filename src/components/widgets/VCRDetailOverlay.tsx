@@ -372,8 +372,14 @@ const ApprovalsPanel: React.FC<ApprovalsPanelProps> = ({
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  const approvingParties = checklistApprovers.filter(a => a.role === 'receiving');
-  const deliveringParties = checklistApprovers.filter(a => a.role === 'delivering');
+  const approvingPartiesRaw = checklistApprovers.filter(a => a.role === 'receiving');
+  const deliveringPartiesRaw = checklistApprovers.filter(a => a.role === 'delivering');
+  const approvingParties = isHandedOver
+    ? approvingPartiesRaw.map(p => ({ ...p, acceptedCount: p.itemCount }))
+    : approvingPartiesRaw;
+  const deliveringParties = isHandedOver
+    ? deliveringPartiesRaw.map(p => ({ ...p, acceptedCount: p.itemCount }))
+    : deliveringPartiesRaw;
 
   const StatusIndicator: React.FC<{ accepted: number; total: number }> = ({ accepted, total }) => {
     if (accepted === total && total > 0) return (
