@@ -17,6 +17,7 @@ import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 
 interface VCRCMMSTabProps {
   handoverPoint: P2AHandoverPoint;
+  isHandedOver?: boolean;
 }
 
 interface CMMSComponent {
@@ -83,10 +84,24 @@ const CMMS_COMPONENTS: CMMSComponent[] = [
   },
 ];
 
-export const VCRCMMSTab: React.FC<VCRCMMSTabProps> = ({ handoverPoint }) => {
+export const VCRCMMSTab: React.FC<VCRCMMSTabProps> = ({ handoverPoint, isHandedOver = false }) => {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const components = CMMS_COMPONENTS;
+  const MOCK_BATCHES: Record<string, { completed: number; total: number; target: string }> = {
+    arb: { completed: 12, total: 12, target: '15 May 2026' },
+    pms: { completed: 8, total: 8, target: '20 May 2026' },
+    ims: { completed: 5, total: 5, target: '22 May 2026' },
+    bom: { completed: 9, total: 9, target: '24 May 2026' },
+  };
+
+  const components = isHandedOver
+    ? CMMS_COMPONENTS.map(c => ({
+        ...c,
+        batches: { completed: MOCK_BATCHES[c.id].completed, total: MOCK_BATCHES[c.id].total },
+        targetDate: MOCK_BATCHES[c.id].target,
+        progress: 100,
+      }))
+    : CMMS_COMPONENTS;
   const avgProgress = components.length > 0
     ? Math.round(components.reduce((sum, c) => sum + c.progress, 0) / components.length)
     : 0;
@@ -143,7 +158,7 @@ export const VCRCMMSTab: React.FC<VCRCMMSTabProps> = ({ handoverPoint }) => {
               <Target className="w-3.5 h-3.5" />
               Overall Target
             </div>
-            <div className="text-xl font-bold text-muted-foreground">—</div>
+            <div className="text-xl font-bold text-muted-foreground">{isHandedOver ? '24 May 2026' : '—'}</div>
           </CardContent>
         </Card>
       </div>
@@ -197,9 +212,11 @@ export const VCRCMMSTab: React.FC<VCRCMMSTabProps> = ({ handoverPoint }) => {
 
                 {/* Expanded content */}
                 {isExpanded && (
-                  <div className="mt-4 ml-14 pl-4 border-l-2 border-border space-y-3">
+                <div className="mt-4 ml-14 pl-4 border-l-2 border-border space-y-3">
                     <div className="text-xs text-muted-foreground italic">
-                      No batches defined for this component. Batches are managed by the CMMS Lead.
+                      {isHandedOver
+                        ? `All ${comp.batches.total} batches loaded, verified, and signed off by CMMS Lead.`
+                        : 'No batches defined for this component. Batches are managed by the CMMS Lead.'}
                     </div>
                   </div>
                 )}

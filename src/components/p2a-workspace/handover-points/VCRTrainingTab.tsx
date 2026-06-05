@@ -27,7 +27,55 @@ import { cn } from '@/lib/utils';
 
 interface VCRTrainingTabProps {
   handoverPoint: P2AHandoverPoint;
+  isHandedOver?: boolean;
 }
+
+const MOCK_TRAINING: any[] = [
+  {
+    id: 'mock-tr-1',
+    title: 'HV Switchgear Operation & Safety',
+    description: 'Safe racking, isolation and earthing procedures for 11 kV switchgear with practical assessment.',
+    training_provider: 'Schneider Electric Academy',
+    duration_hours: 16,
+    estimated_cost: 4800,
+    tentative_date: '2026-04-10',
+    target_audience: ['Operations', 'Maintenance'],
+    ora: { ora_status: 'COMPLETED' as const, ora_completion_percentage: 100 },
+  },
+  {
+    id: 'mock-tr-2',
+    title: 'Emergency Diesel Generator — Operator Familiarisation',
+    description: 'Local start/stop, black-start sequence, daily checks and emergency response.',
+    training_provider: 'OEM (Caterpillar)',
+    duration_hours: 8,
+    estimated_cost: 2200,
+    tentative_date: '2026-04-18',
+    target_audience: ['Operations'],
+    ora: { ora_status: 'COMPLETED' as const, ora_completion_percentage: 100 },
+  },
+  {
+    id: 'mock-tr-3',
+    title: 'UPS & Battery Maintenance Practitioner Course',
+    description: 'Battery health checks, capacity testing, and UPS bypass operation.',
+    training_provider: 'Eaton Training Services',
+    duration_hours: 12,
+    estimated_cost: 3100,
+    tentative_date: '2026-04-25',
+    target_audience: ['Maintenance', 'Electrical Technicians'],
+    ora: { ora_status: 'COMPLETED' as const, ora_completion_percentage: 100 },
+  },
+  {
+    id: 'mock-tr-4',
+    title: 'CMMS (SAP PM) Refresher for Power & Utilities Crew',
+    description: 'Notification creation, work order execution and history capture specific to Power & Utilities assets.',
+    training_provider: 'Internal — Asset Information Team',
+    duration_hours: 4,
+    estimated_cost: 0,
+    tentative_date: '2026-05-02',
+    target_audience: ['Operations', 'Maintenance'],
+    ora: { ora_status: 'COMPLETED' as const, ora_completion_percentage: 100 },
+  },
+];
 
 const ORA_STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; className: string }> = {
   'NOT_STARTED': { label: 'Not Started', icon: Circle, className: 'text-muted-foreground' },
@@ -35,12 +83,17 @@ const ORA_STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType
   'COMPLETED': { label: 'Completed', icon: CheckCircle2, className: 'text-emerald-500' },
 };
 
-export const VCRTrainingTab: React.FC<VCRTrainingTabProps> = ({ handoverPoint }) => {
+export const VCRTrainingTab: React.FC<VCRTrainingTabProps> = ({ handoverPoint, isHandedOver = false }) => {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const executionPlanStatus = handoverPoint.execution_plan_status || 'DRAFT';
   
   const { data: trainingItems, isLoading } = useVCRTrainingDeliverables(handoverPoint.id);
-  const items = trainingItems || [];
+  const rawItems = trainingItems || [];
+  const items = isHandedOver
+    ? (rawItems.length > 0
+        ? rawItems.map(i => ({ ...i, ora: { ...i.ora, ora_status: 'COMPLETED' as const, ora_completion_percentage: 100 } }))
+        : (MOCK_TRAINING as unknown as VCRTrainingDeliverable[]))
+    : rawItems;
 
   const completedCount = items.filter(i => i.ora.ora_status === 'COMPLETED').length;
   const inProgressCount = items.filter(i => i.ora.ora_status === 'IN_PROGRESS').length;

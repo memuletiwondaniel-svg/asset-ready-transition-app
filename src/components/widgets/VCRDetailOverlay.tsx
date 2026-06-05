@@ -1308,6 +1308,79 @@ const PlaceholderContent: React.FC<{ title: string; icon: React.ElementType }> =
   </div>
 );
 
+// ── Completed deliverable mock (for handed-over VCRs) ──────────────
+interface MockDeliverableItem {
+  code: string;
+  title: string;
+  description: string;
+  owner: string;
+  completedDate: string;
+}
+
+const MOCK_DOCUMENTATION_ITEMS: MockDeliverableItem[] = [
+  { code: 'AFC-001', title: 'P&IDs (AFC) — Power & Utilities', description: 'Approved-for-Construction P&IDs verified against site walk-down and reviewed by Engineering.', owner: 'Mohamed Ehab', completedDate: '08 May 2026' },
+  { code: 'RLMU-002', title: 'Red-Line Mark-Ups — Electrical SLDs', description: 'All as-built mark-ups collected, reviewed and transmitted to the Document Controller.', owner: 'Chan Chew Ping', completedDate: '12 May 2026' },
+  { code: 'ASB-003', title: 'As-Built Drawings — Mechanical Layouts', description: 'Final as-built drawings released through EDMS; superseded revisions withdrawn.', owner: 'Stuart Lugo', completedDate: '16 May 2026' },
+  { code: 'OPM-004', title: 'Operating & Maintenance Manuals', description: 'Vendor O&M manuals indexed, reviewed and uploaded to the Asset library.', owner: 'Bilal Rahman', completedDate: '20 May 2026' },
+  { code: 'DOS-005', title: 'Datasheets & Test Certificates', description: 'Equipment datasheets, FAT/SAT reports and calibration certificates compiled into the handover dossier.', owner: 'Kersha Andrews', completedDate: '22 May 2026' },
+];
+
+const MOCK_SPARES_ITEMS: MockDeliverableItem[] = [
+  { code: 'SP-CMS-01', title: 'Commissioning Spares — Received & Reconciled', description: 'All commissioning spares received, inspected and reconciled against the purchase order.', owner: 'Materials Coordinator', completedDate: '10 May 2026' },
+  { code: 'SP-2YR-02', title: '2-Year Operational Spares — Loaded to Warehouse', description: 'OEM-recommended 2-year spares received, bin-located and loaded into SAP/CMMS.', owner: 'Warehouse Lead', completedDate: '14 May 2026' },
+  { code: 'SP-CAP-03', title: 'Capital / Insurance Spares — Stored & Preserved', description: 'Long-lead insurance spares stored under preservation regime with periodic checks scheduled.', owner: 'Preservation Engineer', completedDate: '18 May 2026' },
+  { code: 'SP-SCT-04', title: 'SCE-Critical Spares Verified', description: 'Spares for safety-critical elements identified, tagged and tied to PM strategies.', owner: 'Reliability Engineer', completedDate: '20 May 2026' },
+];
+
+const CompletedDeliverableMock: React.FC<{
+  title: string;
+  icon: React.ElementType;
+  items: MockDeliverableItem[];
+}> = ({ title, icon: Icon, items }) => (
+  <div className="space-y-4">
+    <div className="flex items-center justify-between gap-3 flex-wrap">
+      <div className="flex items-center gap-2">
+        <Icon className="w-5 h-5 text-emerald-500" />
+        <h2 className="text-lg font-semibold">{title}</h2>
+        <Badge variant="outline" className="text-[10px] border-emerald-200 text-emerald-700 bg-emerald-50 gap-1">
+          <CheckCircle2 className="w-3 h-3" />
+          All complete
+        </Badge>
+      </div>
+      <div className="text-xs text-muted-foreground">
+        {items.length} of {items.length} items closed
+      </div>
+    </div>
+    <div className="space-y-2">
+      {items.map((it) => (
+        <div key={it.code} className="rounded-lg border border-border bg-card p-3">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-md bg-emerald-50 border border-emerald-200 flex items-center justify-center shrink-0 mt-0.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                <span className="text-[10px] font-mono text-muted-foreground">{it.code}</span>
+                <span className="text-sm font-medium text-foreground">{it.title}</span>
+                <Badge variant="outline" className="text-[9px] px-1.5 border-emerald-200 text-emerald-700 bg-emerald-50">
+                  Completed
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">{it.description}</p>
+              <div className="flex items-center gap-3 mt-1.5 text-[10px] text-muted-foreground">
+                <span>Owner: <span className="text-foreground">{it.owner}</span></span>
+                <span>Completed: <span className="text-foreground">{it.completedDate}</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+
+
 // ── VCR SoF Tab (interactive cert with per-approver signing) ─────
 const VCRSoFTabContent: React.FC<{
   vcr: ProjectVCR;
@@ -2076,17 +2149,21 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         );
       }
       case 'training':
-        return <VCRHandoverPointWrapper vcr={vcr} render={(hp) => <VCRTrainingTab handoverPoint={hp} />} />;
+        return <VCRHandoverPointWrapper vcr={vcr} render={(hp) => <VCRTrainingTab handoverPoint={hp} isHandedOver={vcr.lifecycle === 'handed_over'} />} />;
       case 'procedures':
-        return <VCRHandoverPointWrapper vcr={vcr} render={(hp) => <VCRProceduresTab handoverPoint={hp} />} />;
+        return <VCRHandoverPointWrapper vcr={vcr} render={(hp) => <VCRProceduresTab handoverPoint={hp} isHandedOver={vcr.lifecycle === 'handed_over'} />} />;
       case 'registers':
-        return <VCRHandoverPointWrapper vcr={vcr} render={(hp) => <VCRRegistersTab handoverPoint={hp} />} />;
+        return <VCRHandoverPointWrapper vcr={vcr} render={(hp) => <VCRRegistersTab handoverPoint={hp} isHandedOver={vcr.lifecycle === 'handed_over'} />} />;
       case 'documentation':
-        return <PlaceholderContent title="Documentation" icon={FileText} />;
+        return vcr.lifecycle === 'handed_over'
+          ? <CompletedDeliverableMock title="Documentation" icon={FileText} items={MOCK_DOCUMENTATION_ITEMS} />
+          : <PlaceholderContent title="Documentation" icon={FileText} />;
       case 'cmms':
-        return <VCRHandoverPointWrapper vcr={vcr} render={(hp) => <VCRCMMSTab handoverPoint={hp} />} />;
+        return <VCRHandoverPointWrapper vcr={vcr} render={(hp) => <VCRCMMSTab handoverPoint={hp} isHandedOver={vcr.lifecycle === 'handed_over'} />} />;
       case 'spares':
-        return <PlaceholderContent title="Spares" icon={Package} />;
+        return vcr.lifecycle === 'handed_over'
+          ? <CompletedDeliverableMock title="Spares" icon={Package} items={MOCK_SPARES_ITEMS} />
+          : <PlaceholderContent title="Spares" icon={Package} />;
       case 'systems':
         return <VCRSystemsPanel vcrId={vcr.id} projectCode={projectCode} />;
       case 'comments':

@@ -23,7 +23,43 @@ import { cn } from '@/lib/utils';
 
 interface VCRRegistersTabProps {
   handoverPoint: P2AHandoverPoint;
+  isHandedOver?: boolean;
 }
+
+const MOCK_REGISTERS: any[] = [
+  {
+    id: 'mock-reg-1',
+    title: 'Permit-to-Work Register — Power & Utilities',
+    description: 'Live PTW register loaded with active isolations, LOTOs and energization permits ahead of handover.',
+    responsible_person: 'Operations Supervisor',
+    target_date: '18 May 2026',
+    ora: { ora_status: 'COMPLETED' as const, ora_completion_percentage: 100 },
+  },
+  {
+    id: 'mock-reg-2',
+    title: 'Safety-Critical Element (SCE) Register',
+    description: 'SCE performance standards mapped, owners assigned, and verification frequencies recorded.',
+    responsible_person: 'Safety Engineer',
+    target_date: '19 May 2026',
+    ora: { ora_status: 'COMPLETED' as const, ora_completion_percentage: 100 },
+  },
+  {
+    id: 'mock-reg-3',
+    title: 'Operating Limits & Setpoints Register',
+    description: 'Normal, alarm, and trip setpoints for switchgear, generators, UPS and air compressors.',
+    responsible_person: 'Process Engineer',
+    target_date: '20 May 2026',
+    ora: { ora_status: 'COMPLETED' as const, ora_completion_percentage: 100 },
+  },
+  {
+    id: 'mock-reg-4',
+    title: 'Outstanding Punchlist Register (Carried into Operations)',
+    description: 'B-category punch items with mitigations agreed, owners assigned and target close-out dates.',
+    responsible_person: 'Commissioning Lead',
+    target_date: '22 May 2026',
+    ora: { ora_status: 'COMPLETED' as const, ora_completion_percentage: 100 },
+  },
+];
 
 const ORA_STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; className: string }> = {
   'NOT_STARTED': { label: 'Not Started', icon: Circle, className: 'text-muted-foreground' },
@@ -31,10 +67,15 @@ const ORA_STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType
   'COMPLETED': { label: 'Completed', icon: CheckCircle2, className: 'text-emerald-500' },
 };
 
-export const VCRRegistersTab: React.FC<VCRRegistersTabProps> = ({ handoverPoint }) => {
+export const VCRRegistersTab: React.FC<VCRRegistersTabProps> = ({ handoverPoint, isHandedOver = false }) => {
   const executionPlanStatus = handoverPoint.execution_plan_status || 'DRAFT';
   const { data: registers, isLoading } = useVCRRegisterDeliverables(handoverPoint.id);
-  const items = registers || [];
+  const rawItems = registers || [];
+  const items = isHandedOver
+    ? (rawItems.length > 0
+        ? rawItems.map(i => ({ ...i, ora: { ...i.ora, ora_status: 'COMPLETED' as const, ora_completion_percentage: 100 } }))
+        : (MOCK_REGISTERS as unknown as VCRRegisterDeliverable[]))
+    : rawItems;
   const [searchQuery, setSearchQuery] = useState('');
 
   const completedCount = items.filter(i => i.ora.ora_status === 'COMPLETED').length;
