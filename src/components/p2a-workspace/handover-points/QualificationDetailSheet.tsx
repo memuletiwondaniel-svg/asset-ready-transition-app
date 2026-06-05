@@ -11,10 +11,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { 
-  FileText, 
-  Download, 
-  User, 
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import {
+  FileText,
+  Download,
+  User,
   Calendar,
   CheckCircle2,
   XCircle,
@@ -26,6 +27,8 @@ import {
 import { VCRQualification, getQualificationStatusConfig } from '../hooks/useVCRQualifications';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface QualificationDetailSheetProps {
   qualification: VCRQualification | null;
@@ -41,6 +44,48 @@ export const QualificationDetailSheet: React.FC<QualificationDetailSheetProps> =
   if (!qualification) return null;
 
   const statusConfig = getQualificationStatusConfig(qualification.status);
+
+  const ownerId = qualification.action_owner_id;
+  const ownerName = qualification.action_owner_name;
+
+  const { data: ownerProfile } = useQuery({
+    queryKey: ['qualification-action-owner', ownerId, ownerName],
+    enabled: !!(ownerId || ownerName),
+    queryFn: async () => {
+      const client = supabase as any;
+      let row: any = null;
+      if (ownerId) {
+        const { data } = await client
+          .from('profiles')
+          .select('user_id, full_name, avatar_url')
+          .eq('user_id', ownerId)
+          .maybeSingle();
+        row = data;
+      }
+      if (!row && ownerName) {
+        const { data } = await client
+          .from('profiles')
+          .select('user_id, full_name, avatar_url')
+          .ilike('full_name', ownerName)
+          .maybeSingle();
+        row = data;
+      }
+      if (!row) return null;
+      let url = row.avatar_url as string | null;
+      if (url && !url.startsWith('http')) {
+        const { data } = supabase.storage.from('user-avatars').getPublicUrl(url);
+        url = data.publicUrl;
+      }
+      return { name: row.full_name as string, avatarUrl: url || '' };
+    },
+  });
+
+  const initials = (ownerName || '')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((s) => s[0]?.toUpperCase())
+    .join('') || '?';
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -109,12 +154,19 @@ export const QualificationDetailSheet: React.FC<QualificationDetailSheetProps> =
               <div className="grid grid-cols-2 gap-3">
                 <Card>
                   <CardContent className="p-3">
-                    <div className="flex items-center gap-2">
-                      <User className="w-4 h-4 text-muted-foreground" />
-                      <div>
+                    <div className="flex items-center gap-2.5">
+                      {ownerName ? (
+                        <Avatar className="w-8 h-8 shrink-0">
+                          {ownerProfile?.avatarUrl && <AvatarImage src={ownerProfile.avatarUrl} alt={ownerName} />}
+                          <AvatarFallback className="text-[10px] font-medium">{initials}</AvatarFallback>
+                        </Avatar>
+                      ) : (
+                        <User className="w-4 h-4 text-muted-foreground" />
+                      )}
+                      <div className="min-w-0">
                         <div className="text-xs text-muted-foreground">Action Owner</div>
-                        <div className="text-sm font-medium">
-                          {qualification.action_owner_name || 'Not assigned'}
+                        <div className="text-sm font-medium truncate">
+                          {ownerName || 'Not assigned'}
                         </div>
                       </div>
                     </div>
