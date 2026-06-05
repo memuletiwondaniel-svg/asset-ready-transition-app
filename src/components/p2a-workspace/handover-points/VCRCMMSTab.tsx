@@ -158,7 +158,7 @@ export const VCRCMMSTab: React.FC<VCRCMMSTabProps> = ({ handoverPoint, isHandedO
               <Target className="w-3.5 h-3.5" />
               Overall Target
             </div>
-            <div className="text-xl font-bold text-muted-foreground">—</div>
+            <div className="text-xl font-bold text-muted-foreground">{isHandedOver ? '24 May 2026' : '—'}</div>
           </CardContent>
         </Card>
       </div>
