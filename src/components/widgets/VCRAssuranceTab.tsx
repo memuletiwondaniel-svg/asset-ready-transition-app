@@ -139,9 +139,84 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
   const totalCount = expectedDisciplines.length;
   const allDisciplinesSubmitted = totalCount > 0 && submittedCount === totalCount;
 
-  // Mock interdisciplinary statement when VCR has been handed over (e.g. VCR-01)
-  const mockInterdisciplinary: DisciplineAssurance | null = isHandedOver && !interdisciplinaryStatement
-    ? {
+  // VCR-04 (Compressor C and D) — Paul's SoF workflow scenario
+  const isVCR04Mock = vcrCode === 'VCR-04';
+
+  const VCR04_DISCIPLINES: DisciplineAssurance[] = [
+    {
+      id: 'mock-vcr04-disc-1',
+      handover_point_id: handoverPointId,
+      discipline_role_id: null,
+      discipline_role_name: 'TA2 — Project (Rotating Equipment)',
+      reviewer_user_id: null,
+      assurance_statement:
+        'Compressor C and D mechanical scope has been verified against the project specifications and vendor FAT/SAT reports. All static and rotating equipment punch-list items at category A/B have been closed. The package is mechanically complete and ready for energisation and performance testing.',
+      statement_type: 'discipline',
+      submitted_at: '2026-05-30T08:42:00Z',
+      created_at: '2026-05-30T08:42:00Z',
+      updated_at: '2026-05-30T08:42:00Z',
+      reviewer: {
+        full_name: 'Rajesh Subramanian',
+        avatar_url: avatarUrlFor('Rajesh Subramanian Rotating'),
+      },
+    },
+    {
+      id: 'mock-vcr04-disc-2',
+      handover_point_id: handoverPointId,
+      discipline_role_id: null,
+      discipline_role_name: 'TA2 — Technical Safety',
+      reviewer_user_id: null,
+      assurance_statement:
+        'F&G detection, ESD logic, PSV sizing and HAZOP/LOPA action closeout for Compressor C and D have been reviewed and accepted. All technical safety qualifications are tracked to closure with no residual high-risk items affecting safe start-up.',
+      statement_type: 'discipline',
+      submitted_at: '2026-05-31T13:05:00Z',
+      created_at: '2026-05-31T13:05:00Z',
+      updated_at: '2026-05-31T13:05:00Z',
+      reviewer: {
+        full_name: 'Fatima Al-Hashimi',
+        avatar_url: avatarUrlFor('Fatima Al-Hashimi Tech Safety'),
+      },
+    },
+    {
+      id: 'mock-vcr04-disc-3',
+      handover_point_id: handoverPointId,
+      discipline_role_id: null,
+      discipline_role_name: 'ORA Engineer',
+      reviewer_user_id: null,
+      assurance_statement:
+        'Operational readiness deliverables for Compressor C and D (procedures, training, spares, CMMS load and operational registers) have been validated by Operations. The asset is ready for handover with all ORA prerequisites satisfied.',
+      statement_type: 'discipline',
+      submitted_at: '2026-06-01T10:20:00Z',
+      created_at: '2026-06-01T10:20:00Z',
+      updated_at: '2026-06-01T10:20:00Z',
+      reviewer: {
+        full_name: 'Daniel Okafor',
+        avatar_url: avatarUrlFor('Daniel Okafor ORA'),
+      },
+    },
+  ];
+
+  const mockInterdisciplinaryVCR04: DisciplineAssurance = {
+    id: 'mock-vcr04-inter',
+    handover_point_id: handoverPointId,
+    discipline_role_id: null,
+    discipline_role_name: 'Interdisciplinary Lead (Snr ORA Engr.)',
+    reviewer_user_id: null,
+    assurance_statement:
+      'All three discipline assurance statements (Project/Rotating Equipment, Technical Safety and ORA) for Compressor C and D have been received and reconciled. Cross-discipline interfaces have been verified with no outstanding concerns. The VCR is recommended for SoF approval.',
+    statement_type: 'interdisciplinary',
+    submitted_at: '2026-06-02T15:30:00Z',
+    created_at: '2026-06-02T15:30:00Z',
+    updated_at: '2026-06-02T15:30:00Z',
+    reviewer: {
+      full_name: 'Aarav Krishnan',
+      avatar_url: avatarUrlFor('Aarav Krishnan'),
+    },
+  };
+
+  // Mock interdisciplinary statement when VCR has been handed over (e.g. VCR-01) or VCR-04 scenario
+  const mockInterdisciplinary: DisciplineAssurance | null = (isHandedOver || isVCR04Mock) && !interdisciplinaryStatement
+    ? (isVCR04Mock ? mockInterdisciplinaryVCR04 : {
         id: 'mock-interdisciplinary',
         handover_point_id: handoverPointId,
         discipline_role_id: null,
@@ -157,9 +232,22 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
           full_name: 'Aarav Krishnan',
           avatar_url: avatarUrlFor('Aarav Krishnan'),
         },
-      }
+      })
     : null;
   const effectiveInterdisciplinary = interdisciplinaryStatement || mockInterdisciplinary;
+
+  // Effective discipline list — synthesize for VCR-04 if hook returned nothing
+  const effectiveExpectedDisciplines: ExpectedDiscipline[] = isVCR04Mock && expectedDisciplines.length === 0
+    ? VCR04_DISCIPLINES.map((a, i) => ({
+        role_id: `mock-vcr04-role-${i}`,
+        role_name: a.discipline_role_name,
+        submitted: true,
+        assurance: a,
+      }))
+    : expectedDisciplines;
+
+  const effectiveSubmittedCount = effectiveExpectedDisciplines.filter(d => d.submitted).length;
+  const effectiveTotalCount = effectiveExpectedDisciplines.length;
 
   return (
     <div className="space-y-6">
