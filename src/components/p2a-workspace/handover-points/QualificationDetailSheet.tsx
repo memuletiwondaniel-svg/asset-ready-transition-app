@@ -154,12 +154,19 @@ export const QualificationDetailSheet: React.FC<QualificationDetailSheetProps> =
               <div className="grid grid-cols-2 gap-3">
                 <Card>
                   <CardContent className="p-3">
-                    <div className="flex items-center gap-2">
-                      <User className="w-4 h-4 text-muted-foreground" />
-                      <div>
+                    <div className="flex items-center gap-2.5">
+                      {ownerName ? (
+                        <Avatar className="w-8 h-8 shrink-0">
+                          {ownerProfile?.avatarUrl && <AvatarImage src={ownerProfile.avatarUrl} alt={ownerName} />}
+                          <AvatarFallback className="text-[10px] font-medium">{initials}</AvatarFallback>
+                        </Avatar>
+                      ) : (
+                        <User className="w-4 h-4 text-muted-foreground" />
+                      )}
+                      <div className="min-w-0">
                         <div className="text-xs text-muted-foreground">Action Owner</div>
-                        <div className="text-sm font-medium">
-                          {qualification.action_owner_name || 'Not assigned'}
+                        <div className="text-sm font-medium truncate">
+                          {ownerName || 'Not assigned'}
                         </div>
                       </div>
                     </div>
