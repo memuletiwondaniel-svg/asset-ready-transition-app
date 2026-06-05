@@ -181,16 +181,21 @@ const ProgressPanel: React.FC<{ vcr: ProjectVCR; liveTargetDate?: Date }> = ({ v
       }
 
       const totalItems = items?.length || 0;
-      const totalDone = Array.from(categoryMap.values()).reduce((s, c) => s + c.done, 0);
+      let totalDone = Array.from(categoryMap.values()).reduce((s, c) => s + c.done, 0);
+      let categories = Array.from(categoryMap.entries())
+        .map(([name, counts]) => ({ name, ...counts }))
+        .sort((a, b) => (CATEGORY_META_LOOKUP(a.name).order) - (CATEGORY_META_LOOKUP(b.name).order));
 
-      return {
-        totalItems,
-        totalDone,
-        statusCounts,
-        categories: Array.from(categoryMap.entries())
-          .map(([name, counts]) => ({ name, ...counts }))
-          .sort((a, b) => (CATEGORY_META_LOOKUP(a.name).order) - (CATEGORY_META_LOOKUP(b.name).order)),
-      };
+      // Override: if VCR is handed over, force everything as completed
+      if (vcr.lifecycle === 'handed_over') {
+        totalDone = totalItems;
+        statusCounts.pending = 0;
+        statusCounts.in_review = 0;
+        statusCounts.completed = totalItems;
+        categories = categories.map(c => ({ ...c, done: c.total }));
+      }
+
+      return { totalItems, totalDone, statusCounts, categories };
     },
   });
 
@@ -199,6 +204,7 @@ const ProgressPanel: React.FC<{ vcr: ProjectVCR; liveTargetDate?: Date }> = ({ v
   const progress = totalItems > 0 ? Math.round((totalDone / totalItems) * 100) : 0;
   const itemsToGo = totalItems - totalDone;
   const statusCounts = progressData?.statusCounts || { pending: 0, in_review: 0, completed: 0 };
+  const isHandedOver = vcr.lifecycle === 'handed_over';
 
   const circumference = 2 * Math.PI * 44;
   const offset = circumference - (progress / 100) * circumference;
