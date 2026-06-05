@@ -412,19 +412,41 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
                         )}
                       </div>
                       <div className="border-t border-dashed border-border pt-3 mt-3">
-                        <div className="h-12 flex items-center justify-center border-b border-dashed border-border">
+                        <div className="h-14 flex items-end justify-center border-b border-dashed border-border pb-1">
                           {signed && approver.name ? (
-                            <span
-                              className="text-2xl text-emerald-700"
-                              style={{ fontFamily: '"Brush Script MT", "Lucida Handwriting", cursive', transform: 'rotate(-3deg)' }}
-                            >
-                              {approver.name}
-                            </span>
+                            (() => {
+                              const parts = approver.name.split(' ');
+                              const first = parts[0] || '';
+                              const lastInitial = parts[1]?.[0] || '';
+                              // Deterministic slight rotation per name for realism
+                              const seed = approver.name
+                                .split('')
+                                .reduce((a, c) => a + c.charCodeAt(0), 0);
+                              const rotate = ((seed % 7) - 3); // -3..+3 deg
+                              const scale = 0.95 + ((seed % 11) / 100); // 0.95..1.05
+                              return (
+                                <span
+                                  className="text-3xl text-foreground leading-none select-none"
+                                  style={{
+                                    fontFamily:
+                                      '"Segoe Script", "Lucida Handwriting", "Brush Script MT", "Apple Chancery", cursive',
+                                    transform: `rotate(${rotate}deg) scale(${scale})`,
+                                    letterSpacing: '0.5px',
+                                  }}
+                                >
+                                  {first}
+                                  {lastInitial && (
+                                    <span style={{ marginLeft: '4px' }}>{lastInitial}.</span>
+                                  )}
+                                </span>
+                              );
+                            })()
                           ) : (
                             <span className="text-muted-foreground text-xs italic">Signature</span>
                           )}
                         </div>
                       </div>
+
                       <div className="mt-2">
                         <p className="text-xs text-muted-foreground">
                           Date: {signed && approver.approvedDate ? new Date(approver.approvedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '____________'}
