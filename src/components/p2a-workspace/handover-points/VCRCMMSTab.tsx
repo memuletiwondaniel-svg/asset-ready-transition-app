@@ -212,9 +212,11 @@ export const VCRCMMSTab: React.FC<VCRCMMSTabProps> = ({ handoverPoint, isHandedO
 
                 {/* Expanded content */}
                 {isExpanded && (
-                  <div className="mt-4 ml-14 pl-4 border-l-2 border-border space-y-3">
+                <div className="mt-4 ml-14 pl-4 border-l-2 border-border space-y-3">
                     <div className="text-xs text-muted-foreground italic">
-                      No batches defined for this component. Batches are managed by the CMMS Lead.
+                      {isHandedOver
+                        ? `All ${comp.batches.total} batches loaded, verified, and signed off by CMMS Lead.`
+                        : 'No batches defined for this component. Batches are managed by the CMMS Lead.'}
                     </div>
                   </div>
                 )}
