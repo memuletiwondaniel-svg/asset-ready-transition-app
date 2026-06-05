@@ -546,6 +546,7 @@ const ApprovalsPanel: React.FC<ApprovalsPanelProps> = ({
                     name={person.name}
                     subtitle={person.role}
                     avatarUrl={person.avatar_url}
+                    approved={isHandedOver}
                   />
                 ))}
               {pacApprovers.filter(a => a.name).length === 0 && (
