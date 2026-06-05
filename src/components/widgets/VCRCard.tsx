@@ -54,6 +54,13 @@ const LIFECYCLE_STYLE: Record<
     label: 'Approved',
     barFill: '#0F6E56',
   },
+  handed_over: {
+    pillBg: '#D1FAE5',
+    pillText: '#064E3B',
+    pillDot: '#059669',
+    label: 'Handed Over',
+    barFill: '#059669',
+  },
 };
 
 const GATE_SIGNED_COLOR = '#0F6E56';
