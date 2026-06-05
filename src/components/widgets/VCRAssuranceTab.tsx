@@ -45,10 +45,13 @@ const AssuranceCard: React.FC<{ assurance: DisciplineAssurance; type: 'disciplin
           </Avatar>
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2 mb-1">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-sm font-medium text-foreground">
                   {assurance.discipline_role_name}
                 </span>
+                <Badge className="text-[9px] h-4 px-1.5 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 border-0 font-semibold">
+                  B2B
+                </Badge>
                 <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-emerald-200 text-emerald-700 bg-emerald-50">
                   <CheckCircle2 className="w-3 h-3 mr-1" />
                   Submitted
