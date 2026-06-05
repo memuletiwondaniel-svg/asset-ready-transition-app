@@ -21,6 +21,7 @@ interface ApproverDetailSheetProps {
   approverItemCount: number;
   approverAcceptedCount: number;
   roleType?: 'delivering' | 'receiving';
+  forceCompleted?: boolean;
 }
 
 type FilterStatus = 'all' | 'completed' | 'pending' | 'not_submitted';
