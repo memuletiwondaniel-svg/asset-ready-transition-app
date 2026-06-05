@@ -332,26 +332,7 @@ export const SystemDetailSheet: React.FC<SystemDetailSheetProps> = ({
           <TabsContent value="punchlist" className="flex-1 min-h-0 mt-0">
             <ScrollArea className="h-full">
               <div className="px-4 py-4 space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 rounded-lg bg-red-500/5 border border-red-500/10 text-center">
-                    <div className="text-2xl font-bold text-red-500">{system.punchlist_a_count}</div>
-                    <div className="text-[10px] text-muted-foreground mt-0.5">Category A</div>
-                  </div>
-                  <div className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/10 text-center">
-                    <div className="text-2xl font-bold text-amber-500">{system.punchlist_b_count}</div>
-                    <div className="text-[10px] text-muted-foreground mt-0.5">Category B</div>
-                  </div>
-                </div>
-                <Separator />
-                <div className="text-center py-8">
-                  <AlertCircle className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">
-                    Punchlist items will be displayed here once integrated with the punchlist data source.
-                  </p>
-                  <p className="text-xs text-muted-foreground/60 mt-1">
-                    {system.punchlist_a_count + system.punchlist_b_count} total items outstanding
-                  </p>
-                </div>
+                <SystemPunchlistContent system={system} />
               </div>
             </ScrollArea>
           </TabsContent>
