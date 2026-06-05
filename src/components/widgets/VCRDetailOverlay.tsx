@@ -2016,7 +2016,17 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
           />
         );
 
-      case 'pac':
+      case 'pac': {
+        const pacSignedAt = (vcr as any).gate_signed_at || null;
+        const pacApproversForCert = pacCertificateApprovers.length > 0
+          ? pacCertificateApprovers
+              .filter(a => a.name)
+              .map(a => ({
+                ...a,
+                status: pacSignedAt ? ('approved' as const) : a.status,
+                approvedDate: pacSignedAt || undefined,
+              }))
+          : undefined;
         return (
           <PACCertificate
             certificateNumber={`PAC-${projectCode}-VCR-${displayCode.replace('VCR-', '')}`}
@@ -2025,10 +2035,11 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
             projectName={projectName}
             handoverPointId={vcr.id}
             vcrCode={vcr.vcr_code}
-            pacDate=""
-            approvers={pacCertificateApprovers.length > 0 ? pacCertificateApprovers.filter(a => a.name) : undefined}
+            pacDate={pacSignedAt ? new Date(pacSignedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : ''}
+            approvers={pacApproversForCert}
           />
         );
+      }
       case 'training':
         return <VCRHandoverPointWrapper vcr={vcr} render={(hp) => <VCRTrainingTab handoverPoint={hp} />} />;
       case 'procedures':
