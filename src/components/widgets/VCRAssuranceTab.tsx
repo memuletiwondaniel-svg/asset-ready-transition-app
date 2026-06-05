@@ -170,7 +170,7 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
           <h3 className="text-base font-semibold text-foreground">Discipline Assurance Statements</h3>
           <p className="text-xs text-muted-foreground">
             {submittedCount} of {totalCount} discipline statements submitted
-            {interdisciplinaryStatement ? ' · Interdisciplinary statement submitted' : ' · Interdisciplinary statement pending'}
+            {effectiveInterdisciplinary ? ' · Interdisciplinary statement submitted' : ' · Interdisciplinary statement pending'}
           </p>
         </div>
       </div>
