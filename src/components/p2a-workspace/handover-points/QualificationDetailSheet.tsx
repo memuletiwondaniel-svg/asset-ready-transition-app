@@ -45,7 +45,47 @@ export const QualificationDetailSheet: React.FC<QualificationDetailSheetProps> =
 
   const statusConfig = getQualificationStatusConfig(qualification.status);
 
-  return (
+  const ownerId = qualification.action_owner_id;
+  const ownerName = qualification.action_owner_name;
+
+  const { data: ownerProfile } = useQuery({
+    queryKey: ['qualification-action-owner', ownerId, ownerName],
+    enabled: !!(ownerId || ownerName),
+    queryFn: async () => {
+      const client = supabase as any;
+      let row: any = null;
+      if (ownerId) {
+        const { data } = await client
+          .from('profiles')
+          .select('user_id, full_name, avatar_url')
+          .eq('user_id', ownerId)
+          .maybeSingle();
+        row = data;
+      }
+      if (!row && ownerName) {
+        const { data } = await client
+          .from('profiles')
+          .select('user_id, full_name, avatar_url')
+          .ilike('full_name', ownerName)
+          .maybeSingle();
+        row = data;
+      }
+      if (!row) return null;
+      let url = row.avatar_url as string | null;
+      if (url && !url.startsWith('http')) {
+        const { data } = supabase.storage.from('user-avatars').getPublicUrl(url);
+        url = data.publicUrl;
+      }
+      return { name: row.full_name as string, avatarUrl: url || '' };
+    },
+  });
+
+  const initials = (ownerName || '')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((s) => s[0]?.toUpperCase())
+    .join('') || '?';
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="sm:max-w-lg overflow-hidden flex flex-col">
         <SheetHeader className="pb-4">
