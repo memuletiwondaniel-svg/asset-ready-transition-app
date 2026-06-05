@@ -391,27 +391,48 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
                 APPROVALS
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-16 mt-4 max-w-2xl mx-auto">
-                {approvers.map((approver) => (
-                  <div 
-                    key={approver.id} 
-                    className="border border-border rounded-lg p-4 bg-background"
-                  >
-                    <div className="mb-3">
-                      <p className="font-semibold text-foreground">{approver.role}</p>
-                      {approver.name && (
-                        <p className="text-xs text-muted-foreground">{approver.name}</p>
-                      )}
-                    </div>
-                    <div className="border-t border-dashed border-border pt-3 mt-3">
-                      <div className="h-12 flex items-center justify-center text-muted-foreground text-xs italic border-b border-dashed border-border">
-                        Signature
+                {approvers.map((approver) => {
+                  const signed = approver.status === 'approved';
+                  return (
+                    <div
+                      key={approver.id}
+                      className={`border rounded-lg p-4 bg-background ${signed ? 'border-emerald-500/60' : 'border-border'}`}
+                    >
+                      <div className="mb-3 flex items-start justify-between gap-2">
+                        <div>
+                          <p className="font-semibold text-foreground">{approver.role}</p>
+                          {approver.name && (
+                            <p className="text-xs text-muted-foreground">{approver.name}</p>
+                          )}
+                        </div>
+                        {signed && (
+                          <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
+                            Signed
+                          </span>
+                        )}
+                      </div>
+                      <div className="border-t border-dashed border-border pt-3 mt-3">
+                        <div className="h-12 flex items-center justify-center border-b border-dashed border-border">
+                          {signed && approver.name ? (
+                            <span
+                              className="text-2xl text-emerald-700"
+                              style={{ fontFamily: '"Brush Script MT", "Lucida Handwriting", cursive', transform: 'rotate(-3deg)' }}
+                            >
+                              {approver.name}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground text-xs italic">Signature</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="mt-2">
+                        <p className="text-xs text-muted-foreground">
+                          Date: {signed && approver.approvedDate ? new Date(approver.approvedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '____________'}
+                        </p>
                       </div>
                     </div>
-                    <div className="mt-2">
-                      <p className="text-xs text-muted-foreground">Date: ____________</p>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
