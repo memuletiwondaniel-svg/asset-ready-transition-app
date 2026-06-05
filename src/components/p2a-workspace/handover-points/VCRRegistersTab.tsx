@@ -67,10 +67,15 @@ const ORA_STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType
   'COMPLETED': { label: 'Completed', icon: CheckCircle2, className: 'text-emerald-500' },
 };
 
-export const VCRRegistersTab: React.FC<VCRRegistersTabProps> = ({ handoverPoint }) => {
+export const VCRRegistersTab: React.FC<VCRRegistersTabProps> = ({ handoverPoint, isHandedOver = false }) => {
   const executionPlanStatus = handoverPoint.execution_plan_status || 'DRAFT';
   const { data: registers, isLoading } = useVCRRegisterDeliverables(handoverPoint.id);
-  const items = registers || [];
+  const rawItems = registers || [];
+  const items = isHandedOver
+    ? (rawItems.length > 0
+        ? rawItems.map(i => ({ ...i, ora: { ...i.ora, ora_status: 'COMPLETED' as const, ora_completion_percentage: 100 } }))
+        : (MOCK_REGISTERS as unknown as VCRRegisterDeliverable[]))
+    : rawItems;
   const [searchQuery, setSearchQuery] = useState('');
 
   const completedCount = items.filter(i => i.ora.ora_status === 'COMPLETED').length;
