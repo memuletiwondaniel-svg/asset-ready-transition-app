@@ -21,24 +21,29 @@ import { format } from 'date-fns';
 
 interface VCRAssuranceTabProps {
   handoverPointId: string;
+  /** When true (e.g. VCR-01 handed over), render mock interdisciplinary statement & treat all disciplines as submitted. */
+  isHandedOver?: boolean;
 }
 
+const avatarUrlFor = (name: string) =>
+  `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name || 'user')}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
+
 const AssuranceCard: React.FC<{ assurance: DisciplineAssurance; type: 'discipline' | 'interdisciplinary' }> = ({ assurance, type }) => {
-  const initials = assurance.reviewer?.full_name
-    ?.split(' ')
+  const fullName = assurance.reviewer?.full_name || 'Unknown reviewer';
+  const initials = fullName
+    .split(' ')
     .map(n => n[0])
     .join('')
     .slice(0, 2)
     .toUpperCase() || '??';
+  const avatarSrc = assurance.reviewer?.avatar_url || avatarUrlFor(fullName);
 
   return (
     <Card className="border-l-4 border-l-emerald-500">
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
           <Avatar className="h-9 w-9 shrink-0 mt-0.5">
-            {assurance.reviewer?.avatar_url && (
-              <AvatarImage src={assurance.reviewer.avatar_url} />
-            )}
+            <AvatarImage src={avatarSrc} />
             <AvatarFallback className="text-xs bg-emerald-100 text-emerald-700">
               {initials}
             </AvatarFallback>
@@ -49,9 +54,6 @@ const AssuranceCard: React.FC<{ assurance: DisciplineAssurance; type: 'disciplin
                 <span className="text-sm font-medium text-foreground">
                   {assurance.discipline_role_name}
                 </span>
-                <Badge className="text-[9px] h-4 px-1.5 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 border-0 font-semibold">
-                  B2B
-                </Badge>
                 <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-emerald-200 text-emerald-700 bg-emerald-50">
                   <CheckCircle2 className="w-3 h-3 mr-1" />
                   Submitted
@@ -62,7 +64,7 @@ const AssuranceCard: React.FC<{ assurance: DisciplineAssurance; type: 'disciplin
               </span>
             </div>
             <p className="text-xs text-muted-foreground mb-2">
-              {assurance.reviewer?.full_name || 'Unknown reviewer'}
+              {fullName}
             </p>
             <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
               {assurance.assurance_statement}
