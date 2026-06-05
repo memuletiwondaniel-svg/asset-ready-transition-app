@@ -92,7 +92,7 @@ const PendingDisciplineCard: React.FC<{ roleName: string }> = ({ roleName }) => 
   </Card>
 );
 
-export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointId }) => {
+export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointId, isHandedOver = false }) => {
   const { toast } = useToast();
   const {
     interdisciplinaryStatement,
