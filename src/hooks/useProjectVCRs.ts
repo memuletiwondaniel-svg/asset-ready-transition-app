@@ -26,6 +26,8 @@ export interface ProjectVCR {
   sof_signed?: boolean;
   /** True when PAC has been signed (non-HC VCRs only). */
   pac_signed?: boolean;
+  /** Timestamp of gate sign-off (SoF or PAC), null when unsigned. */
+  gate_signed_at?: string | null;
   lifecycle?: VCRLifecycle;
   systems_count: number;
   has_hydrocarbon: boolean;
