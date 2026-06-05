@@ -94,20 +94,31 @@ export const CategoryItemsSheet: React.FC<CategoryItemsSheetProps> = ({
         );
       });
 
+      // Indices (0-based) within a category that should show as Approved Qualification
+      // instead of Accepted when the VCR is handed over.
+      const QUALIFIED_INDEX_MAP: Record<string, number[]> = {
+        'Technical Integrity': [2, 4], // TI-03, TI-05
+        'Design Integrity': [1, 3],    // DI-02, DI-04
+      };
+      const qualifiedIndices = new Set(QUALIFIED_INDEX_MAP[categoryLabel] || []);
+
       // Map items with their prerequisite status
-      return filtered.map(item => {
+      return filtered.map((item, idx) => {
         const matchedPrereq = prereqs?.find(p =>
           p.summary?.toLowerCase().trim() === item.vcr_item?.toLowerCase().trim()
         );
 
         const baseStatus = matchedPrereq?.status || 'NOT_STARTED';
+        const forcedStatus = forceCompleted
+          ? (qualifiedIndices.has(idx) ? 'QUALIFICATION_APPROVED' : 'ACCEPTED')
+          : baseStatus;
         return {
           id: item.id,
           vcr_item: item.vcr_item,
           topic: item.topic,
           category_name: item.vcr_item_categories?.name || '',
           category_code: item.vcr_item_categories?.code || '',
-          status: forceCompleted ? 'ACCEPTED' : baseStatus,
+          status: forcedStatus,
           prerequisite_id: matchedPrereq?.id || null,
         } as VCRItemWithStatus;
       });
