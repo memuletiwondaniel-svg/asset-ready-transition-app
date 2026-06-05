@@ -304,6 +304,7 @@ const ProgressPanel: React.FC<{ vcr: ProjectVCR; liveTargetDate?: Date }> = ({ v
           categoryLabel={selectedCategory.label}
           categoryIcon={selectedCategory.icon}
           categoryColor={selectedCategory.color}
+          forceCompleted={isHandedOver}
         />
       )}
     </>
