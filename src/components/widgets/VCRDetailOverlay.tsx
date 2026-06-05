@@ -367,6 +367,7 @@ const ApprovalsPanel: React.FC<ApprovalsPanelProps> = ({
   showSof = false,
 }) => {
   const [selectedApprover, setSelectedApprover] = useState<ChecklistApproverData | null>(null);
+  const isHandedOver = vcr.lifecycle === 'handed_over';
   const getInitials = (name: string) => {
     if (!name) return '??';
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
