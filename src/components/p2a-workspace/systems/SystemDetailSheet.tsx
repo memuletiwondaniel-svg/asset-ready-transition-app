@@ -332,26 +332,7 @@ export const SystemDetailSheet: React.FC<SystemDetailSheetProps> = ({
           <TabsContent value="punchlist" className="flex-1 min-h-0 mt-0">
             <ScrollArea className="h-full">
               <div className="px-4 py-4 space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 rounded-lg bg-red-500/5 border border-red-500/10 text-center">
-                    <div className="text-2xl font-bold text-red-500">{system.punchlist_a_count}</div>
-                    <div className="text-[10px] text-muted-foreground mt-0.5">Category A</div>
-                  </div>
-                  <div className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/10 text-center">
-                    <div className="text-2xl font-bold text-amber-500">{system.punchlist_b_count}</div>
-                    <div className="text-[10px] text-muted-foreground mt-0.5">Category B</div>
-                  </div>
-                </div>
-                <Separator />
-                <div className="text-center py-8">
-                  <AlertCircle className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">
-                    Punchlist items will be displayed here once integrated with the punchlist data source.
-                  </p>
-                  <p className="text-xs text-muted-foreground/60 mt-1">
-                    {system.punchlist_a_count + system.punchlist_b_count} total items outstanding
-                  </p>
-                </div>
+                <SystemPunchlistContent system={system} />
               </div>
             </ScrollArea>
           </TabsContent>
@@ -384,3 +365,185 @@ const MetricCard: React.FC<{
     <div className={`text-xl font-bold text-${color}-500`}>{value}</div>
   </div>
 );
+
+// ─── Mock punchlist/ITR content for a System ───────────────────────────────
+type PLItem = {
+  ref: string;
+  category: 'A' | 'B';
+  title: string;
+  raisedBy: string;
+  raisedOn: string;
+  status: 'OPEN' | 'CLOSED';
+  closedOn?: string;
+  itrRef?: string;
+};
+
+const PL_TITLES_A = [
+  'Cable gland not certified Ex e on JB-04',
+  'Earth bond missing on transformer T-201A',
+  'Battery room ventilation interlock not proven',
+  'Relay protection setting deviation on Feeder-12',
+];
+const PL_TITLES_B = [
+  'Label plate missing on MCC-03 cubicle 7',
+  'Touch-up paint required on cable tray support',
+  'Cable tag faded on Tray-CT-118',
+  'Lighting fixture orientation correction',
+  'Hand-rail paint scratch near switchgear room',
+  'Bolt torque marking faded on RTU panel',
+  'Cleanliness — debris under floor tile B-12',
+  'Door seal worn on HVAC plenum',
+];
+const ITR_PREFIXES = ['ITR-A-EL', 'ITR-B-EL', 'ITR-A-IN', 'ITR-B-IN'];
+const RAISERS = ['M. Idris', 'P. Kumar', 'L. Tan', 'A. Hassan', 'R. Chen', 'S. Park'];
+
+function hashStr(s: string) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return h;
+}
+
+function buildMockPunchlist(system: P2ASystem): PLItem[] {
+  const seed = hashStr(system.system_id || system.id);
+  const rand = (n: number, off = 0) => (seed >> off) % n;
+  const items: PLItem[] = [];
+  const sysShort = (system.system_id || '').split('-').pop() || '00';
+
+  // Open A items
+  for (let i = 0; i < (system.punchlist_a_count || 0); i++) {
+    items.push({
+      ref: `PL-A-${sysShort}-${String(101 + i).padStart(3, '0')}`,
+      category: 'A',
+      title: PL_TITLES_A[(rand(PL_TITLES_A.length, i) + i) % PL_TITLES_A.length],
+      raisedBy: RAISERS[(rand(RAISERS.length, i + 1)) % RAISERS.length],
+      raisedOn: `2026-0${1 + (i % 5)}-${10 + i}`,
+      status: 'OPEN',
+      itrRef: `${ITR_PREFIXES[i % ITR_PREFIXES.length]}-${sysShort}-${200 + i}`,
+    });
+  }
+  // Open B items
+  for (let i = 0; i < (system.punchlist_b_count || 0); i++) {
+    items.push({
+      ref: `PL-B-${sysShort}-${String(201 + i).padStart(3, '0')}`,
+      category: 'B',
+      title: PL_TITLES_B[(rand(PL_TITLES_B.length, i) + i) % PL_TITLES_B.length],
+      raisedBy: RAISERS[(rand(RAISERS.length, i)) % RAISERS.length],
+      raisedOn: `2026-0${1 + ((i + 1) % 5)}-${5 + i}`,
+      status: 'OPEN',
+      itrRef: `${ITR_PREFIXES[(i + 1) % ITR_PREFIXES.length]}-${sysShort}-${300 + i}`,
+    });
+  }
+  // Closed history — always show some closed punchlist to demonstrate progress
+  const closedCount = 4 + (seed % 4);
+  for (let i = 0; i < closedCount; i++) {
+    const cat: 'A' | 'B' = i % 3 === 0 ? 'A' : 'B';
+    const pool = cat === 'A' ? PL_TITLES_A : PL_TITLES_B;
+    items.push({
+      ref: `PL-${cat}-${sysShort}-${String(501 + i).padStart(3, '0')}`,
+      category: cat,
+      title: pool[(rand(pool.length, i + 3) + i) % pool.length],
+      raisedBy: RAISERS[(rand(RAISERS.length, i + 2)) % RAISERS.length],
+      raisedOn: `2025-${10 + (i % 3)}-${5 + i}`,
+      status: 'CLOSED',
+      closedOn: `2026-0${1 + (i % 4)}-${20 + i}`,
+      itrRef: `${ITR_PREFIXES[(i + 2) % ITR_PREFIXES.length]}-${sysShort}-${400 + i}`,
+    });
+  }
+  return items;
+}
+
+const PLRow: React.FC<{ item: PLItem }> = ({ item }) => {
+  const isOpen = item.status === 'OPEN';
+  const catColor =
+    item.category === 'A'
+      ? 'bg-red-100 text-red-700 border-red-200'
+      : 'bg-amber-100 text-amber-700 border-amber-200';
+  return (
+    <div className={cn(
+      'rounded-md border p-2.5 flex items-start gap-2.5',
+      isOpen ? 'bg-card' : 'bg-muted/30'
+    )}>
+      <Badge variant="outline" className={cn('text-[9px] px-1 py-0 shrink-0 h-4', catColor)}>
+        {item.category}
+      </Badge>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-[10px] font-mono text-muted-foreground">{item.ref}</span>
+          {item.itrRef && (
+            <span className="text-[10px] font-mono text-blue-600/80">{item.itrRef}</span>
+          )}
+          {isOpen ? (
+            <Badge className="text-[9px] h-4 px-1.5 bg-rose-100 text-rose-700 border-0">OPEN</Badge>
+          ) : (
+            <Badge className="text-[9px] h-4 px-1.5 bg-emerald-100 text-emerald-700 border-0">CLOSED</Badge>
+          )}
+        </div>
+        <p className={cn('text-xs mt-0.5 leading-snug', isOpen ? 'text-foreground' : 'text-muted-foreground line-through')}>
+          {item.title}
+        </p>
+        <p className="text-[10px] text-muted-foreground mt-0.5">
+          Raised {item.raisedOn} by {item.raisedBy}
+          {item.closedOn && ` · Closed ${item.closedOn}`}
+        </p>
+      </div>
+    </div>
+  );
+};
+
+const SystemPunchlistContent: React.FC<{ system: P2ASystem }> = ({ system }) => {
+  const items = React.useMemo(() => buildMockPunchlist(system), [system.id]);
+  const open = items.filter(i => i.status === 'OPEN');
+  const closed = items.filter(i => i.status === 'CLOSED');
+  const openA = open.filter(i => i.category === 'A').length;
+  const openB = open.filter(i => i.category === 'B').length;
+  const closedA = closed.filter(i => i.category === 'A').length;
+  const closedB = closed.filter(i => i.category === 'B').length;
+
+  return (
+    <>
+      {/* Summary tiles */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="p-3 rounded-lg bg-red-500/5 border border-red-500/10 text-center">
+          <div className="text-2xl font-bold text-red-500">{openA}</div>
+          <div className="text-[10px] text-muted-foreground mt-0.5">Category A · Open</div>
+          <div className="text-[10px] text-emerald-600 mt-1">{closedA} closed</div>
+        </div>
+        <div className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/10 text-center">
+          <div className="text-2xl font-bold text-amber-500">{openB}</div>
+          <div className="text-[10px] text-muted-foreground mt-0.5">Category B · Open</div>
+          <div className="text-[10px] text-emerald-600 mt-1">{closedB} closed</div>
+        </div>
+      </div>
+
+      {/* Open list */}
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <AlertCircle className="w-3.5 h-3.5 text-rose-500" />
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">Open Punchlist</h4>
+          <Badge variant="secondary" className="text-[10px] h-4 px-1.5 ml-auto">{open.length}</Badge>
+        </div>
+        {open.length === 0 ? (
+          <p className="text-xs text-muted-foreground italic px-1">No open punchlist items. System is clean.</p>
+        ) : (
+          <div className="space-y-1.5">
+            {open.map(item => <PLRow key={item.ref} item={item} />)}
+          </div>
+        )}
+      </div>
+
+      <Separator />
+
+      {/* Closed history */}
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <FileCheck className="w-3.5 h-3.5 text-emerald-500" />
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">Closed History</h4>
+          <Badge variant="secondary" className="text-[10px] h-4 px-1.5 ml-auto">{closed.length}</Badge>
+        </div>
+        <div className="space-y-1.5">
+          {closed.map(item => <PLRow key={item.ref} item={item} />)}
+        </div>
+      </div>
+    </>
+  );
+};
