@@ -32,11 +32,31 @@ interface RejectionActivity {
   projectName?: string;
 }
 
+// Generate a realistic-looking cursive signature as an inline SVG data URL.
+// Used as a fallback so Marije and Ali always render a "wet" signature even when
+// localStorage hasn't captured a hand-drawn one yet.
+const makeSignatureDataUrl = (name: string, seed: number) => {
+  // Two stylistically different paths so each director's signature looks unique
+  const path =
+    seed % 2 === 0
+      ? 'M10 55 C 30 10, 55 80, 80 35 S 130 70, 160 30 S 220 75, 260 40 S 330 70, 380 45'
+      : 'M15 50 C 40 20, 70 70, 100 30 S 160 75, 200 35 S 270 70, 320 40 S 380 65, 410 50';
+  const flourish =
+    seed % 2 === 0
+      ? 'M260 45 q 30 25 70 5'
+      : 'M320 45 q 35 20 80 0';
+  const svg = `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 90" width="420" height="90">\n  <g fill="none" stroke="#0a1f3d" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">\n    <path d="${path}"/>\n    <path d="${flourish}" stroke-width="2"/>\n  </g>\n  <text x="10" y="78" font-family="'Segoe Script','Lucida Handwriting','Brush Script MT','Apple Chancery',cursive" font-size="34" fill="#0a1f3d" font-style="italic">${name}</text>\n</svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+};
+
+const DEFAULT_MARIJE_SIGNATURE = makeSignatureDataUrl('Marije H.', 0);
+const DEFAULT_ALI_SIGNATURE = makeSignatureDataUrl('Ali D.', 1);
+
 // Mock approvers for the overlay - returns different states based on activity
 // Brief ordering: Marije SIGNED (lvl 1) -> Ali SIGNED (lvl 2) -> Paul PENDING (lvl 3)
 const getMockApproversForOverlay = (activity?: RejectionActivity | null) => {
-  const marijeSignature = typeof window !== 'undefined' ? localStorage.getItem('marije-hoedemaker-signature') : null;
-  const aliSignature = typeof window !== 'undefined' ? localStorage.getItem('ali-danbous-signature') : null;
+  const marijeSignature = (typeof window !== 'undefined' ? localStorage.getItem('marije-hoedemaker-signature') : null) || DEFAULT_MARIJE_SIGNATURE;
+  const aliSignature = (typeof window !== 'undefined' ? localStorage.getItem('ali-danbous-signature') : null) || DEFAULT_ALI_SIGNATURE;
 
   // Base state: Marije + Ali APPROVED, Paul PENDING (last)
   const baseApprovers = [
@@ -48,7 +68,7 @@ const getMockApproversForOverlay = (activity?: RejectionActivity | null) => {
       status: 'APPROVED',
       comments: 'Project engineering deliverables reviewed and accepted.',
       approved_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-      signature_data: marijeSignature || undefined,
+      signature_data: marijeSignature,
     },
     {
       id: 'approver-2',
@@ -58,7 +78,7 @@ const getMockApproversForOverlay = (activity?: RejectionActivity | null) => {
       status: 'APPROVED',
       comments: 'All safety requirements have been verified. Ready for facility startup.',
       approved_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      signature_data: aliSignature || undefined,
+      signature_data: aliSignature,
     },
     {
       id: 'approver-3',
