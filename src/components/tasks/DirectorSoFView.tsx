@@ -121,6 +121,8 @@ const getMockApproversForOverlay = (activity?: RejectionActivity | null) => {
 };
 
 
+const DEFAULT_PAUL_SIGNATURE = makeSignatureDataUrl('Paul VDH', 0);
+
 // Completed approvers for DP-385 historical view
 const getDP385Approvers = () => {
   return [
@@ -132,7 +134,7 @@ const getDP385Approvers = () => {
       status: 'APPROVED',
       comments: 'All safety and environmental requirements verified. Facility ready for gas feed operations.',
       approved_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-      signature_data: typeof window !== 'undefined' ? localStorage.getItem('ali-danbous-signature') : undefined,
+      signature_data: (typeof window !== 'undefined' ? localStorage.getItem('ali-danbous-signature') : null) || DEFAULT_ALI_SIGNATURE,
     },
     {
       id: 'approver-2',
@@ -142,7 +144,7 @@ const getDP385Approvers = () => {
       status: 'APPROVED',
       comments: 'Production and maintenance systems reviewed and approved.',
       approved_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
-      signature_data: typeof window !== 'undefined' ? localStorage.getItem('paul-vandenhemel-signature') : undefined,
+      signature_data: (typeof window !== 'undefined' ? localStorage.getItem('paul-vandenhemel-signature') : null) || DEFAULT_PAUL_SIGNATURE,
     },
     {
       id: 'approver-3',
@@ -152,7 +154,43 @@ const getDP385Approvers = () => {
       status: 'APPROVED',
       comments: 'Project engineering deliverables complete. Approved for startup.',
       approved_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-      signature_data: typeof window !== 'undefined' ? localStorage.getItem('marije-hoedemaker-signature') : undefined,
+      signature_data: (typeof window !== 'undefined' ? localStorage.getItem('marije-hoedemaker-signature') : null) || DEFAULT_MARIJE_SIGNATURE,
+    },
+  ];
+};
+
+// Completed approvers for DP-40 historical view (HM LLP Gas Capture)
+const getDP40Approvers = () => {
+  return [
+    {
+      id: 'approver-1',
+      approver_name: 'Marije Hoedemaker',
+      approver_role: 'P&E Director',
+      approver_level: 1,
+      status: 'APPROVED',
+      comments: 'Project engineering deliverables for LLP gas capture reviewed and accepted.',
+      approved_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+      signature_data: (typeof window !== 'undefined' ? localStorage.getItem('marije-hoedemaker-signature') : null) || DEFAULT_MARIJE_SIGNATURE,
+    },
+    {
+      id: 'approver-2',
+      approver_name: 'Ali Danbous',
+      approver_role: 'HSSE Director',
+      approver_level: 2,
+      status: 'APPROVED',
+      comments: 'HSE risk assessment and safety barriers verified. Cleared for start-up.',
+      approved_at: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
+      signature_data: (typeof window !== 'undefined' ? localStorage.getItem('ali-danbous-signature') : null) || DEFAULT_ALI_SIGNATURE,
+    },
+    {
+      id: 'approver-3',
+      approver_name: 'Paul Van Den Hemel',
+      approver_role: 'P&M Director',
+      approver_level: 3,
+      status: 'APPROVED',
+      comments: 'Production and maintenance readiness confirmed. Approved.',
+      approved_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+      signature_data: (typeof window !== 'undefined' ? localStorage.getItem('paul-vandenhemel-signature') : null) || DEFAULT_PAUL_SIGNATURE,
     },
   ];
 };
