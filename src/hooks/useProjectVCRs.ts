@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-export type VCRLifecycle = 'not_started' | 'draft' | 'in_approval' | 'approved';
+export type VCRLifecycle = 'not_started' | 'draft' | 'in_approval' | 'approved' | 'handed_over';
 export type VCRGate = 'SOF' | 'PAC';
 
 export interface ProjectVCR {
