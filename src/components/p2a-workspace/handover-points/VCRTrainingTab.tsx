@@ -83,12 +83,17 @@ const ORA_STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType
   'COMPLETED': { label: 'Completed', icon: CheckCircle2, className: 'text-emerald-500' },
 };
 
-export const VCRTrainingTab: React.FC<VCRTrainingTabProps> = ({ handoverPoint }) => {
+export const VCRTrainingTab: React.FC<VCRTrainingTabProps> = ({ handoverPoint, isHandedOver = false }) => {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const executionPlanStatus = handoverPoint.execution_plan_status || 'DRAFT';
   
   const { data: trainingItems, isLoading } = useVCRTrainingDeliverables(handoverPoint.id);
-  const items = trainingItems || [];
+  const rawItems = trainingItems || [];
+  const items = isHandedOver
+    ? (rawItems.length > 0
+        ? rawItems.map(i => ({ ...i, ora: { ...i.ora, ora_status: 'COMPLETED' as const, ora_completion_percentage: 100 } }))
+        : (MOCK_TRAINING as unknown as VCRTrainingDeliverable[]))
+    : rawItems;
 
   const completedCount = items.filter(i => i.ora.ora_status === 'COMPLETED').length;
   const inProgressCount = items.filter(i => i.ora.ora_status === 'IN_PROGRESS').length;
