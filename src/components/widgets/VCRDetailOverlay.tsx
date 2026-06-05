@@ -2075,7 +2075,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
       case 'systems':
         return <VCRSystemsPanel vcrId={vcr.id} projectCode={projectCode} />;
       case 'comments':
-        return <VCRAssuranceTab handoverPointId={vcr.id} />;
+        return <VCRAssuranceTab handoverPointId={vcr.id} isHandedOver={vcr.lifecycle === 'handed_over'} />;
       case 'qualifications':
         return <VCRHandoverPointWrapper vcr={vcr} render={(hp) => <VCRQualificationsTab handoverPoint={hp} />} />;
       default:
