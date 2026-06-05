@@ -59,10 +59,11 @@ export const CategoryItemsSheet: React.FC<CategoryItemsSheetProps> = ({
   categoryLabel,
   categoryIcon: CategoryIcon,
   categoryColor,
+  forceCompleted = false,
 }) => {
   const [selectedItem, setSelectedItem] = useState<(VCRItemWithStatus & { itemCode: string }) | null>(null);
   const { data: items, isLoading } = useQuery({
-    queryKey: ['vcr-category-items', vcrId, categoryLabel],
+    queryKey: ['vcr-category-items', vcrId, categoryLabel, forceCompleted],
     queryFn: async () => {
       // Get prerequisites for this VCR
       const { data: prereqs } = await supabase
