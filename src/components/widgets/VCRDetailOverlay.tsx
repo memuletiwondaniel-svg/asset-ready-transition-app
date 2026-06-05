@@ -41,6 +41,7 @@ import {
   ChevronRight,
   MessageSquare,
   AlertTriangle,
+  Check,
 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
@@ -407,7 +408,8 @@ const ApprovalsPanel: React.FC<ApprovalsPanelProps> = ({
     avatarUrl?: string;
     onClick?: () => void;
     trailing?: React.ReactNode;
-  }> = ({ name, subtitle, avatarUrl, onClick, trailing }) => (
+    approved?: boolean;
+  }> = ({ name, subtitle, avatarUrl, onClick, trailing, approved }) => (
     <div
       className={cn(
         "flex items-center gap-3 py-2 rounded-lg px-2 -mx-2 transition-colors",
@@ -415,12 +417,22 @@ const ApprovalsPanel: React.FC<ApprovalsPanelProps> = ({
       )}
       onClick={onClick}
     >
-      <Avatar className="w-8 h-8 shrink-0">
-        {avatarUrl && <AvatarImage src={avatarUrl} alt={name} />}
-        <AvatarFallback className="text-[10px] font-semibold bg-muted text-muted-foreground">
-          {getInitials(name)}
-        </AvatarFallback>
-      </Avatar>
+      <div className="relative shrink-0">
+        <Avatar className="w-8 h-8">
+          {avatarUrl && <AvatarImage src={avatarUrl} alt={name} />}
+          <AvatarFallback className="text-[10px] font-semibold bg-muted text-muted-foreground">
+            {getInitials(name)}
+          </AvatarFallback>
+        </Avatar>
+        {approved && (
+          <span
+            className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-2 ring-background flex items-center justify-center"
+            title="Approved"
+          >
+            <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />
+          </span>
+        )}
+      </div>
       <div className="flex-1 min-w-0">
         <div className="text-xs font-medium text-foreground truncate">{name || 'Unassigned'}</div>
         {subtitle && <div className="text-[10px] text-muted-foreground truncate">{subtitle}</div>}
@@ -428,6 +440,7 @@ const ApprovalsPanel: React.FC<ApprovalsPanelProps> = ({
       {trailing}
     </div>
   );
+
 
   return (
     <>
@@ -489,6 +502,7 @@ const ApprovalsPanel: React.FC<ApprovalsPanelProps> = ({
                   name={person.name}
                   subtitle={person.role}
                   avatarUrl={person.avatarUrl}
+                  approved={isHandedOver}
                 />
               ))}
               {vcrApprovers.length === 0 && (
@@ -532,6 +546,7 @@ const ApprovalsPanel: React.FC<ApprovalsPanelProps> = ({
                     name={person.name}
                     subtitle={person.role}
                     avatarUrl={person.avatar_url}
+                    approved={isHandedOver}
                   />
                 ))}
               {pacApprovers.filter(a => a.name).length === 0 && (
