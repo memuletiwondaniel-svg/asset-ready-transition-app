@@ -313,6 +313,7 @@ const ProgressPanel: React.FC<{ vcr: ProjectVCR; liveTargetDate?: Date }> = ({ v
 // ── Approvals Panel (Middle) ────────────────────────────────────
 interface ChecklistApproverData {
   name: string;
+  roleName?: string;
   role: 'delivering' | 'receiving';
   itemCount: number;
   acceptedCount: number;
@@ -548,7 +549,7 @@ const ApprovalsPanel: React.FC<ApprovalsPanelProps> = ({
           open={!!selectedApprover}
           onOpenChange={(open) => !open && setSelectedApprover(null)}
           vcrId={vcr.id}
-          approverRoleName={selectedApprover.name}
+          approverRoleName={selectedApprover.roleName || selectedApprover.name}
           approverUserName={selectedApprover.userName}
           approverAvatarUrl={selectedApprover.avatarUrl}
           approverItemCount={selectedApprover.itemCount}
@@ -1677,10 +1678,10 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
 
       const result: ChecklistApproverData[] = [];
       approverMap.forEach((val, name) => {
-        result.push({ name, role: 'receiving', ...val });
+        result.push({ name, roleName: name, role: 'receiving', ...val });
       });
       deliveringMap.forEach((val, name) => {
-        result.push({ name, role: 'delivering', ...val });
+        result.push({ name, roleName: name, role: 'delivering', ...val });
       });
 
       return result;
