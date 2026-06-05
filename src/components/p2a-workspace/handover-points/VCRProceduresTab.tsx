@@ -26,7 +26,56 @@ import { cn } from '@/lib/utils';
 
 interface VCRProceduresTabProps {
   handoverPoint: P2AHandoverPoint;
+  isHandedOver?: boolean;
 }
+
+const MOCK_PROCEDURES: any[] = [
+  {
+    id: 'mock-proc-1',
+    title: 'Power-up Procedure (LV Network)',
+    description: 'Sequential energization of LV switchboards, MCC line-up and load transfer checks following commissioning of normal power distribution.',
+    procedure_type: 'startup',
+    responsible_person: 'Daniel Memuletiwon',
+    target_date: '12 May 2026',
+    ora: { ora_status: 'COMPLETED', ora_completion_percentage: 100 },
+  },
+  {
+    id: 'mock-proc-2',
+    title: 'Emergency Generator Black Start Procedure',
+    description: 'Black start sequence for the 2.5 MW emergency diesel generator, auto-transfer switch verification and essential bus loading on loss of normal supply.',
+    procedure_type: 'startup',
+    responsible_person: 'Daniel Memuletiwon',
+    target_date: '14 May 2026',
+    ora: { ora_status: 'COMPLETED', ora_completion_percentage: 100 },
+  },
+  {
+    id: 'mock-proc-3',
+    title: 'HV Switchgear Energization Procedure',
+    description: '11 kV switchgear pre-energization checklist, primary injection results review, racking sequence and first-energization permit-to-work.',
+    procedure_type: 'startup',
+    responsible_person: 'Daniel Memuletiwon',
+    target_date: '16 May 2026',
+    ora: { ora_status: 'COMPLETED', ora_completion_percentage: 100 },
+  },
+  {
+    id: 'mock-proc-4',
+    title: 'Normal Operating Procedure — Power Distribution',
+    description: 'Routine operating envelope, load shedding scheme verification, and changeover steps between normal and emergency power sources.',
+    procedure_type: 'operating',
+    responsible_person: 'Bilal Rahman',
+    target_date: '20 May 2026',
+    ora: { ora_status: 'COMPLETED', ora_completion_percentage: 100 },
+  },
+  {
+    id: 'mock-proc-5',
+    title: 'Normal Operating Procedure — Utility Air & Nitrogen',
+    description: 'Compressor sequencing, dryer regeneration, pressure setpoints and nitrogen header isolation steps for normal operation.',
+    procedure_type: 'operating',
+    responsible_person: 'Bilal Rahman',
+    target_date: '22 May 2026',
+    ora: { ora_status: 'COMPLETED', ora_completion_percentage: 100 },
+  },
+];
 
 type ProcedureFilter = 'all' | 'startup' | 'operating';
 
