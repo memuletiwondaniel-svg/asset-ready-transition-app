@@ -181,8 +181,9 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
           <Shield className="w-4 h-4 text-primary" />
           <h4 className="text-sm font-semibold text-foreground">Interdisciplinary Assurance Statement</h4>
         </div>
-        {interdisciplinaryStatement ? (
-          <AssuranceCard assurance={interdisciplinaryStatement} type="interdisciplinary" />
+        {effectiveInterdisciplinary ? (
+          <AssuranceCard assurance={effectiveInterdisciplinary} type="interdisciplinary" />
+
         ) : (
           <Card className="border-dashed">
             <CardContent className="p-4">
