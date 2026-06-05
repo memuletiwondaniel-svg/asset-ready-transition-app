@@ -2236,7 +2236,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
                         className={cn(
                           'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-sm transition-all duration-200',
                           isActive
-                            ? 'bg-primary text-primary-foreground font-medium shadow-sm'
+                            ? 'bg-primary/10 text-primary font-medium'
                             : 'text-muted-foreground hover:text-foreground hover:bg-muted/60',
                           isLocked && !isActive && 'opacity-60'
                         )}
@@ -2268,7 +2268,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
                       className={cn(
                         'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-sm transition-all duration-200',
                         isActive
-                          ? 'bg-primary text-primary-foreground font-medium shadow-sm'
+                          ? 'bg-primary/10 text-primary font-medium'
                           : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
                       )}
                     >
