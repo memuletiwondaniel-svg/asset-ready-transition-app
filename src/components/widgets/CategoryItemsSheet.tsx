@@ -17,6 +17,8 @@ interface CategoryItemsSheetProps {
   categoryLabel: string;
   categoryIcon: React.ElementType;
   categoryColor: string;
+  /** When true, all items in this category are displayed as ACCEPTED (used after VCR handover). */
+  forceCompleted?: boolean;
 }
 
 interface VCRItemWithStatus {
