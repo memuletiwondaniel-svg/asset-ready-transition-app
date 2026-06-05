@@ -237,13 +237,11 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
           </Card>
         ) : (
           <div className="space-y-3">
-            {expectedDisciplines.map(disc => (
-              disc.submitted && disc.assurance ? (
-                <AssuranceCard key={disc.role_id} assurance={disc.assurance} type="discipline" />
-              ) : (
-                <PendingDisciplineCard key={disc.role_id} roleName={disc.role_name} />
-              )
-            ))}
+            {expectedDisciplines
+              .filter(disc => disc.submitted && disc.assurance)
+              .map(disc => (
+                <AssuranceCard key={disc.role_id} assurance={disc.assurance!} type="discipline" />
+              ))}
           </div>
         )}
       </div>
