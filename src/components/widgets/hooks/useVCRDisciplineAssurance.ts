@@ -202,7 +202,7 @@ export const useVCRDisciplineAssurance = (handoverPointId: string | undefined) =
         }
       }
 
-      return Array.from(seen.entries()).map(([roleId, roleName]) => {
+      const list: ExpectedDiscipline[] = Array.from(seen.entries()).map(([roleId, roleName]) => {
         const assurance = statements.find(
           s => s.statement_type === 'discipline' && (s.discipline_role_id === roleId || s.discipline_role_name === roleName)
         );
@@ -213,6 +213,23 @@ export const useVCRDisciplineAssurance = (handoverPointId: string | undefined) =
           assurance,
         } as ExpectedDiscipline;
       });
+
+      // Also surface any submitted discipline statements that don't have a matching prereq entry.
+      const knownIds = new Set(list.map(d => d.role_id));
+      const knownNames = new Set(list.map(d => d.role_name));
+      for (const s of statements) {
+        if (s.statement_type !== 'discipline') continue;
+        if (s.discipline_role_id && knownIds.has(s.discipline_role_id)) continue;
+        if (knownNames.has(s.discipline_role_name)) continue;
+        list.push({
+          role_id: s.discipline_role_id || s.id,
+          role_name: s.discipline_role_name,
+          submitted: true,
+          assurance: s,
+        });
+      }
+
+      return list;
     },
     enabled: !!handoverPointId && !isLoadingStatements,
   });
