@@ -91,7 +91,7 @@ export function useProjectVCRs(projectId: string) {
 
           const total = prereqs.length;
           const closed = prereqs.filter(
-            (p: any) => p.status === 'ACCEPTED' || p.status === 'READY_FOR_REVIEW'
+            (p: any) => p.status === 'ACCEPTED' || p.status === 'READY_FOR_REVIEW' || p.status === 'QUALIFICATION_APPROVED'
           ).length;
 
           const status = (vcr.status || '').toString().toUpperCase();
@@ -104,12 +104,15 @@ export function useProjectVCRs(projectId: string) {
           const sofSigned = hasHydrocarbon && !!vcr.sof_signed_at;
           const pacSigned = !hasHydrocarbon && !!vcr.pac_signed_at;
           const gateSigned = sofSigned || pacSigned;
+          const gateSignedAt: string | null = (hasHydrocarbon ? vcr.sof_signed_at : vcr.pac_signed_at) ?? null;
 
           // Lifecycle derivation
           let lifecycle: VCRLifecycle;
-          if (total === 0 && !submittedAt && !approvedAt) {
+          if (gateSigned) {
+            lifecycle = 'handed_over';
+          } else if (total === 0 && !submittedAt && !approvedAt) {
             lifecycle = 'not_started';
-          } else if (gateSigned || status === 'SIGNED' || execStatus === 'APPROVED') {
+          } else if (status === 'SIGNED' || execStatus === 'APPROVED') {
             lifecycle = 'approved';
           } else if (submittedAt || execStatus === 'SUBMITTED' || execStatus === 'IN_APPROVAL' || execStatus === 'PENDING_APPROVAL') {
             lifecycle = 'in_approval';
@@ -117,9 +120,10 @@ export function useProjectVCRs(projectId: string) {
             lifecycle = 'draft';
           }
 
-          // Weighted progress: checklist = 95%, gate sign-off = 5%
+          // Weighted progress: checklist = 95%, gate sign-off = 5%. Handed over forces 100.
           const checklistPct = total > 0 ? (closed / total) * 95 : 0;
-          const progress = Math.round(checklistPct + (gateSigned ? 5 : 0));
+          let progress = Math.round(checklistPct + (gateSigned ? 5 : 0));
+          if (lifecycle === 'handed_over') progress = 100;
 
           return {
             id: vcr.id,
