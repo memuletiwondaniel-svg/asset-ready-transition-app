@@ -2076,17 +2076,21 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         );
       }
       case 'training':
-        return <VCRHandoverPointWrapper vcr={vcr} render={(hp) => <VCRTrainingTab handoverPoint={hp} />} />;
+        return <VCRHandoverPointWrapper vcr={vcr} render={(hp) => <VCRTrainingTab handoverPoint={hp} isHandedOver={vcr.lifecycle === 'handed_over'} />} />;
       case 'procedures':
-        return <VCRHandoverPointWrapper vcr={vcr} render={(hp) => <VCRProceduresTab handoverPoint={hp} />} />;
+        return <VCRHandoverPointWrapper vcr={vcr} render={(hp) => <VCRProceduresTab handoverPoint={hp} isHandedOver={vcr.lifecycle === 'handed_over'} />} />;
       case 'registers':
-        return <VCRHandoverPointWrapper vcr={vcr} render={(hp) => <VCRRegistersTab handoverPoint={hp} />} />;
+        return <VCRHandoverPointWrapper vcr={vcr} render={(hp) => <VCRRegistersTab handoverPoint={hp} isHandedOver={vcr.lifecycle === 'handed_over'} />} />;
       case 'documentation':
-        return <PlaceholderContent title="Documentation" icon={FileText} />;
+        return vcr.lifecycle === 'handed_over'
+          ? <CompletedDeliverableMock title="Documentation" icon={FileText} items={MOCK_DOCUMENTATION_ITEMS} />
+          : <PlaceholderContent title="Documentation" icon={FileText} />;
       case 'cmms':
-        return <VCRHandoverPointWrapper vcr={vcr} render={(hp) => <VCRCMMSTab handoverPoint={hp} />} />;
+        return <VCRHandoverPointWrapper vcr={vcr} render={(hp) => <VCRCMMSTab handoverPoint={hp} isHandedOver={vcr.lifecycle === 'handed_over'} />} />;
       case 'spares':
-        return <PlaceholderContent title="Spares" icon={Package} />;
+        return vcr.lifecycle === 'handed_over'
+          ? <CompletedDeliverableMock title="Spares" icon={Package} items={MOCK_SPARES_ITEMS} />
+          : <PlaceholderContent title="Spares" icon={Package} />;
       case 'systems':
         return <VCRSystemsPanel vcrId={vcr.id} projectCode={projectCode} />;
       case 'comments':
