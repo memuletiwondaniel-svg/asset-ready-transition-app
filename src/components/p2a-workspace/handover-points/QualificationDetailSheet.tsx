@@ -86,6 +86,8 @@ export const QualificationDetailSheet: React.FC<QualificationDetailSheetProps> =
     .slice(0, 2)
     .map((s) => s[0]?.toUpperCase())
     .join('') || '?';
+
+  return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="sm:max-w-lg overflow-hidden flex flex-col">
         <SheetHeader className="pb-4">
