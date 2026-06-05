@@ -502,6 +502,7 @@ const ApprovalsPanel: React.FC<ApprovalsPanelProps> = ({
                   name={person.name}
                   subtitle={person.role}
                   avatarUrl={person.avatarUrl}
+                  approved={isHandedOver}
                 />
               ))}
               {vcrApprovers.length === 0 && (
