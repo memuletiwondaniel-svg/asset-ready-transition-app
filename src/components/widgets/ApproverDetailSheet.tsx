@@ -44,6 +44,7 @@ export const ApproverDetailSheet: React.FC<ApproverDetailSheetProps> = ({
   approverItemCount,
   approverAcceptedCount,
   roleType = 'receiving',
+  forceCompleted = false,
 }) => {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterStatus>('all');
