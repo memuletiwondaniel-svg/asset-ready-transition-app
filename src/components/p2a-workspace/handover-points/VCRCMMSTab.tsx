@@ -17,6 +17,7 @@ import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 
 interface VCRCMMSTabProps {
   handoverPoint: P2AHandoverPoint;
+  isHandedOver?: boolean;
 }
 
 interface CMMSComponent {
