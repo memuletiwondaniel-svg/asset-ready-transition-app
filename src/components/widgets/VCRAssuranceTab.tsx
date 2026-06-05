@@ -16,13 +16,15 @@ import {
   FileCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useVCRDisciplineAssurance, DisciplineAssurance } from './hooks/useVCRDisciplineAssurance';
+import { useVCRDisciplineAssurance, DisciplineAssurance, ExpectedDiscipline } from './hooks/useVCRDisciplineAssurance';
 import { format } from 'date-fns';
 
 interface VCRAssuranceTabProps {
   handoverPointId: string;
   /** When true (e.g. VCR-01 handed over), render mock interdisciplinary statement & treat all disciplines as submitted. */
   isHandedOver?: boolean;
+  /** VCR code used to drive scenario-specific mock data (e.g. VCR-04 for Paul's SoF workflow). */
+  vcrCode?: string;
 }
 
 const avatarUrlFor = (name: string) =>
@@ -92,7 +94,7 @@ const PendingDisciplineCard: React.FC<{ roleName: string }> = ({ roleName }) => 
   </Card>
 );
 
-export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointId, isHandedOver = false }) => {
+export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointId, isHandedOver = false, vcrCode }) => {
   const { toast } = useToast();
   const {
     interdisciplinaryStatement,
