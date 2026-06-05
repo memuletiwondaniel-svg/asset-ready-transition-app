@@ -237,13 +237,17 @@ const ProgressPanel: React.FC<{ vcr: ProjectVCR; liveTargetDate?: Date }> = ({ v
               </div>
               <div>
                 <div className="text-sm font-medium text-foreground">
-                  {liveTargetDate 
-                    ? differenceInDays(liveTargetDate, new Date()) < 0
-                      ? `${Math.abs(differenceInDays(liveTargetDate, new Date()))} days overdue`
-                      : `${differenceInDays(liveTargetDate, new Date())} days to go`
-                    : `${itemsToGo} items to go`}
+                  {isHandedOver
+                    ? 'All items completed'
+                    : liveTargetDate
+                      ? differenceInDays(liveTargetDate, new Date()) < 0
+                        ? `${Math.abs(differenceInDays(liveTargetDate, new Date()))} days overdue`
+                        : `${differenceInDays(liveTargetDate, new Date())} days to go`
+                      : `${itemsToGo} items to go`}
                 </div>
-                {!liveTargetDate && <div className="text-xs text-muted-foreground">of {totalItems} total items</div>}
+                <div className="text-xs text-muted-foreground">
+                  {isHandedOver ? `${totalItems} of ${totalItems} items closed` : (!liveTargetDate && `of ${totalItems} total items`)}
+                </div>
               </div>
             </div>
           </div>
