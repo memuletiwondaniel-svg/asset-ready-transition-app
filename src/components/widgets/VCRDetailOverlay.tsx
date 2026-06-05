@@ -285,7 +285,7 @@ const ProgressPanel: React.FC<{ vcr: ProjectVCR; liveTargetDate?: Date }> = ({ v
                       <span className="text-[10px] font-medium text-muted-foreground">{cat.done}/{cat.total}</span>
                       <ChevronRight className="w-3 h-3 text-muted-foreground" />
                     </div>
-                    <Progress value={cat.total > 0 ? (cat.done / cat.total) * 100 : 0} className="h-1.5" indicatorClassName={meta.bg} />
+                    <Progress value={cat.total > 0 ? (cat.done / cat.total) * 100 : 0} className="h-1.5" indicatorClassName="bg-muted-foreground/40" />
                   </div>
                 );
               })}
