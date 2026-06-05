@@ -96,17 +96,18 @@ export const CategoryItemsSheet: React.FC<CategoryItemsSheetProps> = ({
 
       // Map items with their prerequisite status
       return filtered.map(item => {
-        const matchedPrereq = prereqs?.find(p => 
+        const matchedPrereq = prereqs?.find(p =>
           p.summary?.toLowerCase().trim() === item.vcr_item?.toLowerCase().trim()
         );
-        
+
+        const baseStatus = matchedPrereq?.status || 'NOT_STARTED';
         return {
           id: item.id,
           vcr_item: item.vcr_item,
           topic: item.topic,
           category_name: item.vcr_item_categories?.name || '',
           category_code: item.vcr_item_categories?.code || '',
-          status: matchedPrereq?.status || 'NOT_STARTED',
+          status: forceCompleted ? 'ACCEPTED' : baseStatus,
           prerequisite_id: matchedPrereq?.id || null,
         } as VCRItemWithStatus;
       });
