@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-label="ORSH icon">
+  <rect x="0" y="0" width="48" height="48" rx="11" fill="#1d9e75"/>
+  <g transform="translate(7 7) scale(0.71)" fill="#ffffff">
+    <path d="M30.16 7.09 A18 18 0 1 1 17.84 7.09 L19.55 9.78 A13 13 0 1 0 28.45 9.78 Z"/>
+    <circle cx="24" cy="3" r="3.1"/>
+    <circle cx="24" cy="12" r="3.1"/>
+    <circle cx="24" cy="21" r="3.1"/>
+  </g>
+</svg>
