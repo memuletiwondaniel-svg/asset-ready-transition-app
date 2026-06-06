@@ -7,10 +7,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
-  Select, SelectContent, SelectItem, SelectTrigger,
-} from '@/components/ui/select';
-import { Loader2 } from 'lucide-react';
+  Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
+} from '@/components/ui/command';
+import { Check, ChevronDown, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -41,6 +42,7 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
   const isEdit = !!editingActivityId;
 
   const [systemId, setSystemId] = useState<string>('');
+  const [systemOpen, setSystemOpen] = useState(false);
   const [activity, setActivity] = useState('');
   const [type, setType] = useState<InspectionType>('HOLD');
   const [notes, setNotes] = useState('');
@@ -161,48 +163,66 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
           {/* System */}
           <div className="space-y-1.5">
             <label className="text-xs text-muted-foreground">System</label>
-            <Select
-              value={systemId || undefined}
-              onValueChange={setSystemId}
-              disabled={noSystemsMapped}
-            >
-              <SelectTrigger
-                className="h-9 text-sm"
-                title={noSystemsMapped ? 'Add systems first (step 1)' : undefined}
-              >
-                {selectedSystem ? (
-                  <span className="flex items-baseline gap-4 min-w-0 text-left truncate">
-                    <span className="truncate">{selectedSystem.name}</span>
-                    {selectedSystem.code && (
-                      <span className="font-mono text-xs text-muted-foreground shrink-0">
-                        {selectedSystem.code}
-                      </span>
+            <Popover open={systemOpen} onOpenChange={(o) => !noSystemsMapped && setSystemOpen(o)}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  role="combobox"
+                  aria-expanded={systemOpen}
+                  disabled={noSystemsMapped}
+                  title={noSystemsMapped ? 'Add systems first (step 1)' : undefined}
+                  className={cn(
+                    'flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background',
+                    'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+                    'disabled:cursor-not-allowed disabled:opacity-50',
+                  )}
+                >
+                  <span className="truncate text-left">
+                    {selectedSystem ? selectedSystem.name : (
+                      <span className="text-muted-foreground">Select system…</span>
                     )}
                   </span>
-                ) : (
-                  <span className="text-muted-foreground">Select system…</span>
-                )}
-              </SelectTrigger>
-              <SelectContent className="z-[210]">
-                {systems.filter((s) => !!s.id).map((s) => (
-                  <SelectItem
-                    key={s.id}
-                    value={s.id}
-                    className="data-[state=checked]:font-medium"
-                  >
-                    <span className="flex items-baseline gap-4 min-w-0 w-full justify-between">
-                      <span className="truncate">{s.name}</span>
-                      {s.code && (
-                        <span className="font-mono text-xs text-muted-foreground shrink-0">
-                          {s.code}
-                        </span>
-                      )}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-
-            </Select>
+                  <ChevronDown className="h-4 w-4 opacity-50 shrink-0 ml-2" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="p-0 z-[210] w-[--radix-popover-trigger-width]"
+                align="start"
+              >
+                <Command>
+                  <CommandInput placeholder="Search systems…" className="h-9" />
+                  <CommandList>
+                    <CommandEmpty>No systems found.</CommandEmpty>
+                    <CommandGroup>
+                      {systems.filter((s) => !!s.id).map((s) => (
+                        <CommandItem
+                          key={s.id}
+                          value={`${s.name} ${s.code}`}
+                          onSelect={() => {
+                            setSystemId(s.id);
+                            setSystemOpen(false);
+                          }}
+                          className="flex items-baseline gap-4"
+                        >
+                          <Check
+                            className={cn(
+                              'h-4 w-4 shrink-0',
+                              systemId === s.id ? 'opacity-100' : 'opacity-0',
+                            )}
+                          />
+                          <span className="truncate flex-1">{s.name}</span>
+                          {s.code && (
+                            <span className="font-mono text-xs text-muted-foreground shrink-0">
+                              {s.code}
+                            </span>
+                          )}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
 
           {/* Activity */}
