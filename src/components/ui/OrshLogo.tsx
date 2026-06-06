@@ -68,7 +68,7 @@ const OrshLogo: React.FC<OrshLogoProps> = ({
               lineHeight: 1,
               letterSpacing: '0.04em',
               marginBottom: `${Math.round(h * 0.06)}px`,
-              marginLeft: `-${Math.max(2, Math.round(h * 0.12))}px`,
+              marginLeft: `-${Math.max(2, Math.round(h * 0.06))}px`,
             }}
           >
             RSH
