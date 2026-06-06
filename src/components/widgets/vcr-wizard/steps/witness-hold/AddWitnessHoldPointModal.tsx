@@ -7,9 +7,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
-  Select, SelectContent, SelectTrigger, SelectValue,
+  Select, SelectContent, SelectTrigger,
 } from '@/components/ui/select';
 import * as SelectPrimitive from '@radix-ui/react-select';
 import { Loader2 } from 'lucide-react';
@@ -45,7 +44,7 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
   const [activity, setActivity] = useState('');
   const [type, setType] = useState<InspectionType>('HOLD');
   const [notes, setNotes] = useState('');
-  const [addAnother, setAddAnother] = useState(false);
+  
   const [saving, setSaving] = useState(false);
 
   // Fetch systems mapped to this VCR
@@ -93,7 +92,7 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
       setActivity(existing.activity_name || '');
       setType((existing.inspection_type === 'WITNESS' ? 'WITNESS' : 'HOLD') as InspectionType);
       setNotes(existing.notes || '');
-      setAddAnother(false);
+      
     } else if (!isEdit) {
       setSystemId(defaultSystemId || '');
       setActivity('');
@@ -156,15 +155,7 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
         toast.success(type === 'HOLD' ? 'Hold point added' : 'Witness point added');
         queryClient.invalidateQueries({ queryKey: ['itp-activities', vcrId] });
         onAdded?.();
-
-        if (addAnother) {
-          // Keep system selection, reset the rest
-          setActivity('');
-          setNotes('');
-          setType('HOLD');
-        } else {
-          handleClose();
-        }
+        handleClose();
       }
     } catch (e: any) {
       toast.error(e?.message || 'Failed to save');
@@ -211,7 +202,7 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
                     )}
                   </span>
                 ) : (
-                  <SelectValue placeholder="Select system…" />
+                  <span className="text-muted-foreground">Select system…</span>
                 )}
               </SelectTrigger>
               <SelectContent className="z-[210]">
@@ -245,7 +236,7 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
             <Input
               value={activity}
               onChange={(e) => setActivity(e.target.value)}
-              placeholder="e.g. Pigging witnessed by ORA, hydrotest sign-off"
+              placeholder="e.g. 72-Hour Performance Test"
               className="h-9 text-sm"
             />
           </div>
@@ -282,16 +273,6 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
             />
           </div>
 
-          {/* Add another */}
-          {!isEdit && (
-            <label className="flex items-center gap-2 cursor-pointer">
-              <Checkbox
-                checked={addAnother}
-                onCheckedChange={(c) => setAddAnother(!!c)}
-              />
-              <span className="text-xs text-muted-foreground">Add another after this one</span>
-            </label>
-          )}
         </div>
 
         <div className="px-6 py-3 border-t border-border/60 flex items-center justify-end gap-2">
