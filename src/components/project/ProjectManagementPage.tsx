@@ -10,7 +10,8 @@ import { Plus, FolderOpen, Users, Calendar, FileText, MoreVertical, Eye, Edit3, 
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { getCurrentTranslations } from '@/utils/translations';
-import { useProjects } from '@/hooks/useProjects';
+import { useProjects, useArchivedProjects } from '@/hooks/useProjects';
+import { Switch } from '@/components/ui/switch';
 import { usePlants } from '@/hooks/usePlants';
 import { useStations } from '@/hooks/useStations';
 import { useHubs } from '@/hooks/useHubs';
