@@ -25,6 +25,10 @@ import {
   ChevronUp,
   ChevronDown,
   ChevronsUpDown,
+  Archive,
+  RotateCcw,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -217,9 +221,15 @@ interface ProjectsTableProps {
   projects: Project[];
   progressMap?: ProjectsP2AProgressMap;
   canPerformActions: boolean;
+  isAdmin?: boolean;
   onProjectClick: (id: string) => void;
   onToggleFavorite: (e: React.MouseEvent, id: string, current: boolean | null) => void;
   onDelete: (project: { id: string; title: string }) => void;
+  onArchive?: (id: string) => void;
+  onRestore?: (id: string) => void;
+  onHide?: (id: string) => void;
+  onUnhide?: (id: string) => void;
+  isHidden?: (id: string) => boolean;
   onOpenQualifications: (project: Project) => void;
   prefs?: TablePreferences;
   setPrefs?: React.Dispatch<React.SetStateAction<TablePreferences>>;
@@ -229,9 +239,15 @@ export function ProjectsTable({
   projects,
   progressMap,
   canPerformActions,
+  isAdmin = false,
   onProjectClick,
   onToggleFavorite,
   onDelete,
+  onArchive,
+  onRestore,
+  onHide,
+  onUnhide,
+  isHidden,
   onOpenQualifications,
   prefs: externalPrefs,
   setPrefs: externalSetPrefs,
@@ -400,15 +416,55 @@ export function ProjectsTable({
                             <Star className={cn('h-4 w-4 mr-2', project.is_favorite && 'fill-yellow-400 text-yellow-400')} />
                             {project.is_favorite ? 'Remove favorite' : 'Mark as favorite'}
                           </DropdownMenuItem>
-                          {canPerformActions && (
+                          {isAdmin ? (
                             <>
                               <DropdownMenuSeparator />
+                              {(project.lifecycle_status ?? 'active') === 'active' ? (
+                                onArchive && (
+                                  <DropdownMenuItem
+                                    className="text-amber-700 focus:text-amber-700"
+                                    onClick={(e) => { e.stopPropagation(); onArchive(project.id); }}
+                                  >
+                                    <Archive className="h-4 w-4 mr-2" /> Archive
+                                  </DropdownMenuItem>
+                                )
+                              ) : (
+                                onRestore && (
+                                  <DropdownMenuItem
+                                    className="text-green-700 focus:text-green-700"
+                                    onClick={(e) => { e.stopPropagation(); onRestore(project.id); }}
+                                  >
+                                    <RotateCcw className="h-4 w-4 mr-2" /> Restore
+                                  </DropdownMenuItem>
+                                )
+                              )}
                               <DropdownMenuItem
                                 className="text-destructive focus:text-destructive"
                                 onClick={(e) => { e.stopPropagation(); onDelete({ id: project.id, title: project.project_title }); }}
                               >
                                 <Trash2 className="h-4 w-4 mr-2" /> Delete project
                               </DropdownMenuItem>
+                            </>
+                          ) : (
+                            <>
+                              <DropdownMenuSeparator />
+                              {isHidden?.(project.id) ? (
+                                onUnhide && (
+                                  <DropdownMenuItem
+                                    onClick={(e) => { e.stopPropagation(); onUnhide(project.id); }}
+                                  >
+                                    <Eye className="h-4 w-4 mr-2" /> Unhide
+                                  </DropdownMenuItem>
+                                )
+                              ) : (
+                                onHide && (
+                                  <DropdownMenuItem
+                                    onClick={(e) => { e.stopPropagation(); onHide(project.id); }}
+                                  >
+                                    <EyeOff className="h-4 w-4 mr-2" /> Hide
+                                  </DropdownMenuItem>
+                                )
+                              )}
                             </>
                           )}
                         </DropdownMenuContent>

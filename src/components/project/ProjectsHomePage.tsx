@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useProjects } from '@/hooks/useProjects';
+import { useProjects, useHiddenProjects } from '@/hooks/useProjects';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { CreateProjectWizard } from '@/components/project/CreateProjectWizard';
 import { supabase } from '@/integrations/supabase/client';
@@ -46,7 +46,8 @@ interface ProjectsHomePageProps {
 const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
   const navigate = useNavigate();
   useLanguage();
-  const { projects, isLoading, deleteProject, permanentlyDeleteProject, isDeleting } = useProjects();
+  const { projects, isLoading, deleteProject, permanentlyDeleteProject, isDeleting, archiveProject, restoreProject } = useProjects();
+  const { isHidden, hideProject, unhideProject } = useHiddenProjects();
   const { canPerformActions } = useCanPerformActionsPermission();
   const { isAdmin } = useIsAdminPermission();
   const [searchQuery, setSearchQuery] = useState('');
@@ -229,9 +230,15 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
                 projects={filteredProjects}
                 progressMap={mergedProgressMap}
                 canPerformActions={canPerformActions}
+                isAdmin={isAdmin}
                 onProjectClick={handleProjectClick}
                 onToggleFavorite={handleToggleFavorite}
                 onDelete={setProjectToDelete}
+                onArchive={archiveProject}
+                onRestore={restoreProject}
+                onHide={hideProject}
+                onUnhide={unhideProject}
+                isHidden={isHidden}
                 onOpenQualifications={setQualProject}
                 prefs={tablePrefs}
                 setPrefs={setTablePrefs}
