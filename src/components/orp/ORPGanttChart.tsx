@@ -1956,7 +1956,6 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                         )}
 
                         {barPos && isParent && (() => {
-                          const mutedColor = BAR_COLORS_MUTED[prefix] || 'bg-muted';
                           const range = getParentDateRange(activityCode, childrenMap);
                           const parentDuration = range.minStart && range.maxEnd ? differenceInDays(range.maxEnd, range.minStart) : null;
 
@@ -1964,14 +1963,14 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                             <div
                               className={cn(
                                 "absolute top-2 rounded shadow-sm overflow-hidden",
-                                mutedColor
+                                barStyle.track
                               )}
                               style={{ left: barPos.left, width: barPos.width, height: ROW_HEIGHT - 16 }}
                               title={`${deliverable.deliverable?.name} (summary)`}
                             >
-                              <div className={cn("absolute h-full rounded-l", barColor, "opacity-40")} style={{ width: '100%' }} />
+                              <div className={cn("absolute h-full rounded-l", barStyle.fill, "opacity-40")} style={{ width: '100%' }} />
                               <div className="absolute inset-0 flex items-center justify-center z-10">
-                                <span className="text-[9px] text-white font-medium drop-shadow-sm">
+                                <span className={cn("text-[9px]", GANTT_BAR_LABEL_CLASS)}>
                                   {parentDuration !== null ? `${parentDuration}d` : ''}
                                 </span>
                               </div>
