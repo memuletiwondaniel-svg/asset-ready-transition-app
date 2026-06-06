@@ -273,6 +273,7 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
 
         <AddWitnessHoldPointModal
           vcrId={vcrId}
+          systems={systems.map((s) => ({ id: s.systemId, name: s.name, code: s.systemCode }))}
           open={modalOpen}
           onOpenChange={setModalOpen}
           editingActivityId={editingId}
