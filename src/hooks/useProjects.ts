@@ -187,7 +187,7 @@ export const useProjects = () => {
     mutationFn: async (id: string) => {
       const { error } = await supabase
         .from('projects')
-        .update({ is_active: false })
+        .update({ is_active: false, lifecycle_status: 'deleted' } as any)
         .eq('id', id);
 
       if (error) throw error;
