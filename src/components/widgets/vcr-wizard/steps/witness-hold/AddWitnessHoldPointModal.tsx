@@ -193,7 +193,7 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
                 title={noSystemsMapped ? 'Add systems first (step 1)' : undefined}
               >
                 {selectedSystem ? (
-                  <span className="flex items-baseline gap-2 min-w-0 text-left truncate">
+                  <span className="flex items-baseline gap-4 min-w-0 text-left truncate">
                     <span className="truncate">{selectedSystem.name}</span>
                     {selectedSystem.code && (
                       <span className="font-mono text-xs text-muted-foreground shrink-0">
