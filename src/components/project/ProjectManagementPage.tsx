@@ -161,7 +161,7 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
 
   // Filter and sort projects
   const filteredAndSortedProjects = useMemo(() => {
-    let filtered = [...(projects || [])];
+    let filtered = [...(projects || []), ...(isAdmin && showArchived ? archivedProjects : [])];
 
     // Apply search filter
     if (searchQuery) {
