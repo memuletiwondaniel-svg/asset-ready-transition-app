@@ -305,8 +305,8 @@ export const VCREditOverlay: React.FC<VCREditOverlayProps> = ({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
-        overlayClassName="z-[180]"
-        className="sm:max-w-md p-0 flex flex-col z-[200]"
+        overlayClassName=""
+        className="sm:max-w-md p-0 flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -356,7 +356,7 @@ export const VCREditOverlay: React.FC<VCREditOverlayProps> = ({
             <SelectTrigger className="h-7 text-sm border-transparent bg-muted/40 hover:bg-muted/60 focus:ring-1 focus:ring-ring/40 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:opacity-50">
               <SelectValue placeholder="Unassigned" />
             </SelectTrigger>
-            <SelectContent className="z-[150]">
+            <SelectContent className="">
               <SelectItem value="none">Unassigned</SelectItem>
               {phases.map(p => (
                 <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>

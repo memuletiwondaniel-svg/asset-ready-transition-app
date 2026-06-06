@@ -83,7 +83,7 @@ export const AssignedVCRChip: React.FC<AssignedVCRChipProps> = ({ vcr, vcrIndex,
         sideOffset={4}
         collisionPadding={16}
         avoidCollisions
-        className="w-56 p-2 rounded-xl shadow-xl border overflow-hidden z-[100] max-h-48 overflow-y-auto"
+        className="w-56 p-2 rounded-xl shadow-xl border overflow-hidden max-h-48 overflow-y-auto"
       >
         <div className="space-y-0.5">
           {vcrSystems.map(sys => (

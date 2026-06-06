@@ -188,7 +188,7 @@ export const SparesStep: React.FC<SparesStepProps> = ({ vcrId }) => {
       )}
 
       <Sheet open={addOpen} onOpenChange={(o) => { setAddOpen(o); if (!o) setForm(EMPTY_FORM); }}>
-        <SheetContent className="w-full sm:max-w-md overflow-y-auto z-[150]" overlayClassName="z-[150]">
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto" overlayClassName="">
           <SheetHeader>
             <SheetTitle>Add 2Y Spare</SheetTitle>
           </SheetHeader>
@@ -254,7 +254,7 @@ export const SparesStep: React.FC<SparesStepProps> = ({ vcrId }) => {
       </Sheet>
 
       <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
-        <AlertDialogContent className="z-[150]" overlayClassName="z-[149] bg-black/80 backdrop-blur-sm">
+        <AlertDialogContent className="" overlayClassName="bg-black/80 backdrop-blur-sm">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete 2Y Spare</AlertDialogTitle>
             <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>

@@ -144,8 +144,8 @@ export const SystemRow: React.FC<SystemRowProps> = ({
       {onRemove && (
         <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
           <AlertDialogContent
-            className="z-[300]"
-            overlayClassName="z-[299] bg-black/70 backdrop-blur-sm"
+            className=""
+            overlayClassName="bg-black/70 backdrop-blur-sm"
           >
             <AlertDialogHeader>
               <AlertDialogTitle>

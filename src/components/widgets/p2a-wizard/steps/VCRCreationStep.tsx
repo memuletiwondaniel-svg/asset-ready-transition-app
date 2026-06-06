@@ -182,8 +182,8 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
       {/* Delete confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
         <AlertDialogContent
-          className="z-[300]"
-          overlayClassName="z-[299] bg-black/70 backdrop-blur-sm"
+          className=""
+          overlayClassName="bg-black/70 backdrop-blur-sm"
         >
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">

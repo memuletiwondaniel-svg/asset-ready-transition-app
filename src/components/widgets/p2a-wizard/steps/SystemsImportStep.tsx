@@ -362,7 +362,7 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
 
       {/* Clear-all confirmation */}
       <AlertDialog open={showClearAllConfirm} onOpenChange={setShowClearAllConfirm}>
-        <AlertDialogContent className="z-[300]" overlayClassName="z-[299] bg-black/70 backdrop-blur-sm">
+        <AlertDialogContent className="" overlayClassName="bg-black/70 backdrop-blur-sm">
           <AlertDialogHeader>
             <AlertDialogTitle>Remove all {systems.length} systems?</AlertDialogTitle>
             <AlertDialogDescription>

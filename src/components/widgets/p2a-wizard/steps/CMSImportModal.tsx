@@ -220,8 +220,8 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="sm:max-w-2xl z-[200] flex flex-col max-h-[85vh]"
-        overlayClassName="z-[199] bg-black/70 backdrop-blur-sm"
+        className="sm:max-w-2xl flex flex-col max-h-[85vh]"
+        overlayClassName="bg-black/70 backdrop-blur-sm"
         onPointerDownOutside={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
       >

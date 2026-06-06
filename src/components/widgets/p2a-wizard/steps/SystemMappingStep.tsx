@@ -114,7 +114,7 @@ const VCRPillSelector: React.FC<{
         </button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-48 p-1 z-[150]"
+        className="w-48 p-1"
         align="end"
         sideOffset={4}
         onClick={(e) => e.stopPropagation()}
@@ -211,7 +211,7 @@ const MixedBadge: React.FC<{
         </button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-52 p-1 z-[150]"
+        className="w-52 p-1"
         align="end"
         sideOffset={4}
         onClick={(e) => e.stopPropagation()}

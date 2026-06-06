@@ -458,8 +458,8 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-[600px] sm:max-w-[600px] w-full h-[80vh] max-h-[80vh] p-0 flex flex-col gap-0 z-[150] overflow-hidden"
-        overlayClassName="z-[140]"
+        className="max-w-[600px] sm:max-w-[600px] w-full h-[80vh] max-h-[80vh] p-0 flex flex-col gap-0 overflow-hidden"
+        overlayClassName=""
       >
         <VisuallyHidden>
           <DialogHeader>

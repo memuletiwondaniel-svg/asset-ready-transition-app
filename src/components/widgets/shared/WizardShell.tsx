@@ -105,7 +105,7 @@ export const WizardShell: React.FC<WizardShellProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={cn(
-        "flex flex-col p-0 gap-0 [&>button]:hidden z-[100]",
+        "flex flex-col p-0 gap-0 [&>button]:hidden",
         isMobile
           ? "!inset-0 !max-w-full !max-h-full !translate-x-0 !translate-y-0 !rounded-none border-0 h-[100dvh] w-full"
           : "sm:max-w-6xl sm:w-[95vw] sm:h-[min(88vh,800px)] sm:!max-h-[88vh]"

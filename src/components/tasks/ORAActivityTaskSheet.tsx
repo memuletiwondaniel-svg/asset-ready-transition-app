@@ -854,8 +854,8 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
     <>
     <Sheet open={open} onOpenChange={onOpenChange} modal={true}>
       <SheetContent 
-        className="w-full sm:max-w-lg p-0 flex flex-col h-full !z-[60]" 
-        overlayClassName="!z-[60]"
+        className="w-full sm:max-w-lg p-0 flex flex-col h-full" 
+        overlayClassName=""
         style={{ pointerEvents: 'auto' }}
       >
         {/* Scrollable content area */}
@@ -1671,7 +1671,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                     Delete
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent className="z-[200]">
+                <AlertDialogContent className="">
                   <AlertDialogHeader>
                     <AlertDialogTitle>Delete Activity</AlertDialogTitle>
                     <AlertDialogDescription>
@@ -1745,7 +1745,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
     </Sheet>
 
     <AlertDialog open={showCompleteConfirm} onOpenChange={setShowCompleteConfirm}>
-      <AlertDialogContent className="z-[100]">
+      <AlertDialogContent className="">
         <AlertDialogHeader>
           <AlertDialogTitle>Mark activity as Completed?</AlertDialogTitle>
           <AlertDialogDescription>

@@ -159,7 +159,7 @@ const DmsOriginatorsTab: React.FC = () => {
       </Card>
 
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent side="right" className="sm:max-w-md z-[150] flex flex-col">
+        <SheetContent side="right" className="sm:max-w-md flex flex-col">
           <SheetHeader className="pb-4 border-b">
             <SheetTitle className="text-lg font-semibold">{editingItem ? 'Edit Originator' : 'Add Originator'}</SheetTitle>
             <SheetDescription>{editingItem ? 'Modify the originator details below.' : 'Fill in the details to create a new originator.'}</SheetDescription>

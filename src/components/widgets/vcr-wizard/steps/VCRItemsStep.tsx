@@ -654,7 +654,7 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
       </div>
 
       <Sheet open={editSheetOpen} onOpenChange={setEditSheetOpen}>
-        <SheetContent className="w-[480px] sm:max-w-[480px] z-[150]" overlayClassName="z-[150]">
+        <SheetContent className="w-[480px] sm:max-w-[480px]" overlayClassName="">
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2">
               Edit VCR Item
@@ -689,7 +689,7 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
 
       {/* Add New Item Sheet */}
       <Sheet open={addSheetOpen} onOpenChange={setAddSheetOpen}>
-        <SheetContent className="w-[480px] sm:max-w-[480px] z-[150]" overlayClassName="z-[150]">
+        <SheetContent className="w-[480px] sm:max-w-[480px]" overlayClassName="">
           <SheetHeader>
             <SheetTitle>Add VCR Item</SheetTitle>
           </SheetHeader>
@@ -706,7 +706,7 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
 
       {/* N/A Confirmation */}
       <AlertDialog open={!!naItem} onOpenChange={() => setNaItem(null)}>
-        <AlertDialogContent className="z-[150]" overlayClassName="z-[149] bg-black/80 backdrop-blur-sm">
+        <AlertDialogContent className="" overlayClassName="bg-black/80 backdrop-blur-sm">
           <AlertDialogHeader>
             <AlertDialogTitle>Mark as Not Applicable</AlertDialogTitle>
             <AlertDialogDescription>
@@ -1052,7 +1052,7 @@ const EditItemForm: React.FC<{
                 {allNames}
               </TooltipContent>
             </Tooltip>
-            <PopoverContent side="left" align="start" collisionPadding={16} className="w-64 p-2 z-[200]">
+            <PopoverContent side="left" align="start" collisionPadding={16} className="w-64 p-2">
               {opts.popoverContent ?? (
                 <div className="space-y-1">
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground px-1 pb-1">
@@ -1218,7 +1218,7 @@ const EditItemForm: React.FC<{
                     <Plus className="w-3 h-3" /> Add
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent side="left" align="end" collisionPadding={16} className="w-64 p-2 z-[200]">
+                <PopoverContent side="left" align="end" collisionPadding={16} className="w-64 p-2">
                   <Input
                     placeholder="Search role or team member..."
                     value={deliveringSearch}
@@ -1340,7 +1340,7 @@ const EditItemForm: React.FC<{
                     <Plus className="w-3 h-3" /> Add
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent side="left" align="end" collisionPadding={16} className="w-64 p-2 z-[200]">
+                <PopoverContent side="left" align="end" collisionPadding={16} className="w-64 p-2">
                   <Input
                     placeholder="Search roles..."
                     value={approverSearch}
@@ -1436,7 +1436,7 @@ const EditItemForm: React.FC<{
 
       {/* Approver delete confirmation */}
       <AlertDialog open={!!deleteApproverTarget} onOpenChange={(open) => !open && setDeleteApproverTarget(null)}>
-        <AlertDialogContent className="z-[200]" overlayClassName="z-[199] bg-black/80 backdrop-blur-sm">
+        <AlertDialogContent className="" overlayClassName="bg-black/80 backdrop-blur-sm">
           <AlertDialogHeader>
             <AlertDialogTitle>Remove Approving Party</AlertDialogTitle>
             <AlertDialogDescription>
@@ -1588,7 +1588,7 @@ const AddItemForm: React.FC<{
             <SelectTrigger className="text-sm">
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
-            <SelectContent className="z-[200]">
+            <SelectContent className="">
               {categories.map(c => (
                 <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
               ))}
@@ -1618,7 +1618,7 @@ const AddItemForm: React.FC<{
             <SelectTrigger className="text-sm">
               <SelectValue placeholder="Select role" />
             </SelectTrigger>
-            <SelectContent className="z-[200]">
+            <SelectContent className="">
               {roles.map(r => (
                 <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
               ))}
@@ -1653,7 +1653,7 @@ const AddItemForm: React.FC<{
                   <Plus className="w-3 h-3" /> Add
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-64 p-2 z-[200]" align="end">
+              <PopoverContent className="w-64 p-2" align="end">
                 <Input
                   placeholder="Search roles..."
                   value={approverSearch}

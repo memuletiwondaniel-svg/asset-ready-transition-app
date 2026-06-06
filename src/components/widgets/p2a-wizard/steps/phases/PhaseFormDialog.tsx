@@ -106,8 +106,8 @@ export const PhaseFormDialog: React.FC<PhaseFormDialogProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-md z-[150]"
-        overlayClassName="z-[140] bg-black/70 backdrop-blur-sm"
+        className="max-w-md"
+        overlayClassName="bg-black/70 backdrop-blur-sm"
       >
         <DialogHeader>
           <DialogTitle className="text-base">
@@ -261,8 +261,8 @@ export const PhaseFormDialog: React.FC<PhaseFormDialogProps> = ({
       {/* Nested catalogue picker — own backdrop, above the parent dialog */}
       <Dialog open={catalogueOpen} onOpenChange={setCatalogueOpen}>
         <DialogContent
-          className="max-w-md p-0 gap-0 z-[170]"
-          overlayClassName="z-[165] bg-black/70 backdrop-blur-sm"
+          className="max-w-md p-0 gap-0"
+          overlayClassName="bg-black/70 backdrop-blur-sm"
         >
           <DialogHeader className="px-4 pt-4 pb-2">
             <DialogTitle className="text-base">Add milestones from catalogue</DialogTitle>

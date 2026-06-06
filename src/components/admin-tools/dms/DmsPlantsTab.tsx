@@ -168,7 +168,7 @@ const DmsPlantsTab: React.FC = () => {
       </Card>
 
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent side="right" className="sm:max-w-md z-[150] flex flex-col">
+        <SheetContent side="right" className="sm:max-w-md flex flex-col">
           <SheetHeader className="pb-4 border-b">
             <SheetTitle className="text-lg font-semibold">{editingItem ? 'Edit Plant' : 'Add Plant'}</SheetTitle>
             <SheetDescription>{editingItem ? 'Modify the plant details below.' : 'Fill in the details to create a new plant.'}</SheetDescription>
