@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Shield, FileCheck, Headphones, ClipboardCheck, Key } from "lucide-react";
+import { ArrowRight, Shield, Users, Network, Target, ClipboardCheck, Key } from "lucide-react";
 import { useAuth } from "@/components/enhanced-auth/AuthProvider";
 import { useTenantContext } from "@/contexts/TenantContext";
 import EnhancedAuthModal from "@/components/enhanced-auth/EnhancedAuthModal";
@@ -149,12 +149,16 @@ const Index = () => {
                   <span className="text-sm font-medium">{t.enterpriseSecure}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <FileCheck className="w-4 h-4 text-blue-400" />
-                  <span className="text-sm font-medium">{t.isoCompliant}</span>
+                  <Users className="w-4 h-4 text-cyan-400" />
+                  <span className="text-sm font-medium">{t.connectedPeople}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Headphones className="w-4 h-4 text-amber-400" />
-                  <span className="text-sm font-medium">{t.support24}</span>
+                  <Network className="w-4 h-4 text-purple-400" />
+                  <span className="text-sm font-medium">{t.connectedSystems}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Target className="w-4 h-4 text-rose-400" />
+                  <span className="text-sm font-medium">{t.integratedDelivery}</span>
                 </div>
               </div>
             </div>
