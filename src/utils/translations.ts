@@ -99,7 +99,7 @@ export const translations = {
     // Welcome Screen
     welcomeTitle: 'Operation Readiness',
     welcomeSubtitle: 'Start-Up & Handover',
-    welcomeDescription: 'One platform. Every party. Integrating people and systems to deliver business outcomes.',
+    welcomeDescription: 'Integrating people and systems to deliver business outcomes.',
     safeStartup: 'PSSR',
     safeStartupDesc: 'Pre-Start-Up Safety Review - Manage the safe introduction of hydrocarbons into new facilities using PSSR checklists',
     p2oHandover: 'P2A',
@@ -843,7 +843,7 @@ export const translations = {
     // Welcome Screen
     welcomeTitle: 'جاهزية العمليات',
     welcomeSubtitle: 'البدء والتسليم',
-    welcomeDescription: 'منصة واحدة. كل طرف. دمج الأشخاص والأنظمة لتحقيق نتائج الأعمال.',
+    welcomeDescription: 'دمج الأشخاص والأنظمة لتحقيق نتائج الأعمال.',
     safeStartup: 'PSSR',
     safeStartupDesc: 'مراجعة السلامة قبل البدء - إدارة الإدخال الآمن للهيدروكربونات في المنشآت الجديدة',
     p2oHandover: 'P2A',
@@ -1571,7 +1571,7 @@ export const translations = {
     // Welcome Screen
     welcomeTitle: 'Préparation Opérationnelle',
     welcomeSubtitle: 'Démarrage et Remise',
-    welcomeDescription: 'Une plateforme. Chaque partie. Intégrer les personnes et les systèmes pour délivrer des résultats.',
+    welcomeDescription: 'Intégrer les personnes et les systèmes pour délivrer des résultats.',
     safeStartup: 'PSSR',
     safeStartupDesc: 'Revue de Sécurité Pré-Démarrage - Gérer l\'introduction sécurisée des hydrocarbures',
     p2oHandover: 'P2A',
@@ -2299,7 +2299,7 @@ export const translations = {
     // Welcome Screen
     welcomeTitle: 'Kesediaan Operasi',
     welcomeSubtitle: 'Permulaan & Penyerahan',
-    welcomeDescription: 'Satu platform. Setiap pihak. Mengintegrasikan orang dan sistem untuk menghasilkan keputusan perniagaan.',
+    welcomeDescription: 'Mengintegrasikan orang dan sistem untuk menghasilkan keputusan perniagaan.',
     safeStartup: 'PSSR',
     safeStartupDesc: 'Kajian Keselamatan Pra-Permulaan - Menguruskan pengenalan hidrokarbon yang selamat',
     p2oHandover: 'P2A',
@@ -3027,7 +3027,7 @@ export const translations = {
     // Welcome Screen
     welcomeTitle: 'Операциялық дайындық',
     welcomeSubtitle: 'Іске қосу және тапсыру',
-    welcomeDescription: 'Бір платформа. Әрбір тарап. Адамдар мен жүйелерді интеграциялау арқылы бизнес нәтижелерін жеткізу.',
+    welcomeDescription: 'Адамдар мен жүйелерді интеграциялау арқылы бизнес нәтижелерін жеткізу.',
     safeStartup: 'PSSR',
     safeStartupDesc: 'Іске қосу алдындағы қауіпсіздік шолуы',
     p2oHandover: 'P2A',
@@ -3754,7 +3754,7 @@ export const translations = {
     // Welcome Screen
     welcomeTitle: '运营就绪',
     welcomeSubtitle: '启动与移交',
-    welcomeDescription: '一个平台。各方参与。整合人员与系统，交付业务成果。',
+    welcomeDescription: '整合人员与系统，交付业务成果。',
     safeStartup: 'PSSR',
     safeStartupDesc: '启动前安全审查 - 使用 PSSR 检查表管理新设施碳氢化合物的安全引入',
     p2oHandover: 'P2A',
