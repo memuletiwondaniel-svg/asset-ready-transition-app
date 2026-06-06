@@ -210,7 +210,7 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
                     )}
                   </span>
                 ) : (
-                  <SelectValue placeholder="Select system…" />
+                  <span className="text-muted-foreground">Select system…</span>
                 )}
               </SelectTrigger>
               <SelectContent className="z-[210]">
