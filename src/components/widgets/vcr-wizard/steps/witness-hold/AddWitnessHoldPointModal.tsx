@@ -53,24 +53,22 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from('p2a_handover_point_systems')
-        .select('system_id, p2a_systems!inner(id, name, system_id)')
+        .select('system_id, p2a_systems(id, system_id, name)')
         .eq('handover_point_id', vcrId);
       if (error) throw error;
 
       const seen = new Set<string>();
       return (data || [])
-        .filter((row: any) => {
-          const system = Array.isArray(row.p2a_systems) ? row.p2a_systems[0] : row.p2a_systems;
-          if (!system?.id || seen.has(system.id)) return false;
-          seen.add(system.id);
+        .filter((r: any) => {
+          if (!r.p2a_systems || seen.has(r.system_id)) return false;
+          seen.add(r.system_id);
           return true;
         })
-        .map((row: any) => ({
-          id: (Array.isArray(row.p2a_systems) ? row.p2a_systems[0] : row.p2a_systems).id,
-          name: (Array.isArray(row.p2a_systems) ? row.p2a_systems[0] : row.p2a_systems).name || 'Unknown',
-          code: (Array.isArray(row.p2a_systems) ? row.p2a_systems[0] : row.p2a_systems).system_id || '',
-        }))
-        .sort((a: MappedSystem, b: MappedSystem) => a.name.localeCompare(b.name));
+        .map((r: any) => ({
+          id: r.system_id,
+          name: r.p2a_systems.name || 'Unknown',
+          code: r.p2a_systems.system_id || '',
+        }));
     },
   });
 
@@ -215,9 +213,16 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
                   <SelectItem
                     key={s.id}
                     value={s.id}
-                    className="px-2 font-normal data-[state=checked]:font-medium"
+                    className="data-[state=checked]:font-medium"
                   >
-                    {s.code ? `${s.name} — ${s.code}` : s.name}
+                    <span className="flex items-baseline gap-4 min-w-0 w-full justify-between">
+                      <span className="truncate">{s.name}</span>
+                      {s.code && (
+                        <span className="font-mono text-xs text-muted-foreground shrink-0">
+                          {s.code}
+                        </span>
+                      )}
+                    </span>
                   </SelectItem>
                 ))}
               </SelectContent>
