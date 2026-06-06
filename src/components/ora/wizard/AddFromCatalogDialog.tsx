@@ -40,12 +40,11 @@ const PHASE_FILTERS = [
   { key: 'EXECUTE', label: 'Execute', letter: 'E', active: 'bg-emerald-500 text-white border-emerald-500' },
 ];
 
+// Neutral ID badge — matches shared Gantt module (no status-colliding hues).
+const NEUTRAL_BADGE = 'text-slate-700 bg-slate-100 dark:text-slate-300 dark:bg-slate-800';
 const LETTER_COLOR: Record<string, string> = {
-  A: 'text-amber-600 bg-amber-50 dark:bg-amber-950/30',
-  S: 'text-purple-600 bg-purple-50 dark:bg-purple-950/30',
-  D: 'text-teal-600 bg-teal-50 dark:bg-teal-950/30',
-  E: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30',
-  C: 'text-rose-600 bg-rose-50 dark:bg-rose-950/30',
+  A: NEUTRAL_BADGE, S: NEUTRAL_BADGE, D: NEUTRAL_BADGE, E: NEUTRAL_BADGE, C: NEUTRAL_BADGE,
+  I: NEUTRAL_BADGE, O: NEUTRAL_BADGE,
 };
 
 const LETTER_TO_PHASE_LABEL: Record<string, string> = {

@@ -66,32 +66,12 @@ type ColKey = keyof typeof COL_DEFS;
 const ALL_COLS: ColKey[] = ['id', 'name', 'start', 'end', 'duration', 'status'];
 const DEFAULT_VISIBLE: ColKey[] = ['id', 'name', 'start'];
 
-const PHASE_COLORS: Record<string, { bg: string; text: string }> = {
-  IDN: { bg: 'bg-blue-500/15', text: 'text-blue-700 dark:text-blue-400' },
-  ASS: { bg: 'bg-amber-500/15', text: 'text-amber-700 dark:text-amber-400' },
-  SEL: { bg: 'bg-emerald-500/15', text: 'text-emerald-700 dark:text-emerald-400' },
-  DEF: { bg: 'bg-teal-500/15', text: 'text-teal-700 dark:text-teal-400' },
-  EXE: { bg: 'bg-indigo-500/15', text: 'text-indigo-700 dark:text-indigo-400' },
-  OPR: { bg: 'bg-purple-500/15', text: 'text-purple-700 dark:text-purple-400' },
-};
-
-const BAR_COLORS: Record<string, string> = {
-  IDN: 'bg-blue-400 dark:bg-blue-500',
-  ASS: 'bg-amber-400 dark:bg-amber-500',
-  SEL: 'bg-emerald-400 dark:bg-emerald-500',
-  DEF: 'bg-teal-400 dark:bg-teal-500',
-  EXE: 'bg-indigo-400 dark:bg-indigo-500',
-  OPR: 'bg-purple-400 dark:bg-purple-500',
-};
-
-const BAR_COLORS_MUTED: Record<string, string> = {
-  IDN: 'bg-blue-200 dark:bg-blue-800',
-  ASS: 'bg-amber-200 dark:bg-amber-800',
-  SEL: 'bg-emerald-200 dark:bg-emerald-800',
-  DEF: 'bg-teal-200 dark:bg-teal-800',
-  EXE: 'bg-indigo-200 dark:bg-indigo-800',
-  OPR: 'bg-purple-200 dark:bg-purple-800',
-};
+import {
+  getGanttBarStyle,
+  getGanttPhasePrefix as getPhasePrefix,
+  GANTT_BAR_LABEL_CLASS,
+  ID_BADGE_COLORS,
+} from '@/components/orp/utils/ganttBarStyles';
 
 const STATUS_OPTIONS = [
   { value: 'NOT_STARTED', label: 'Not Started', class: 'bg-muted text-muted-foreground' },
@@ -105,33 +85,12 @@ const ZOOM_PRESETS = [
   { label: '24M', days: 730 },
 ];
 
-// Per-activity hue rotation palette for visual distinction
-const ACTIVITY_BADGE_PALETTE = [
-  { bg: 'bg-indigo-500/15', text: 'text-indigo-700 dark:text-indigo-400' },
-  { bg: 'bg-sky-500/15', text: 'text-sky-700 dark:text-sky-400' },
-  { bg: 'bg-rose-500/15', text: 'text-rose-700 dark:text-rose-400' },
-  { bg: 'bg-violet-500/15', text: 'text-violet-700 dark:text-violet-400' },
-  { bg: 'bg-teal-500/15', text: 'text-teal-700 dark:text-teal-400' },
-  { bg: 'bg-amber-500/15', text: 'text-amber-700 dark:text-amber-400' },
-  { bg: 'bg-emerald-500/15', text: 'text-emerald-700 dark:text-emerald-400' },
-  { bg: 'bg-fuchsia-500/15', text: 'text-fuchsia-700 dark:text-fuchsia-400' },
-  { bg: 'bg-cyan-500/15', text: 'text-cyan-700 dark:text-cyan-400' },
-  { bg: 'bg-orange-500/15', text: 'text-orange-700 dark:text-orange-400' },
-];
-
-function getPhasePrefix(code: string): string {
-  return code.split('-')[0];
+// Neutral ID badge — single source of truth from shared module.
+function getActivityBadgeClasses(_index: number) {
+  return ID_BADGE_COLORS;
 }
-function getBarColor(code: string): string {
-  return BAR_COLORS[getPhasePrefix(code)] || 'bg-primary';
-}
-function getActivityBadgeClasses(index: number) {
-  return ACTIVITY_BADGE_PALETTE[index % ACTIVITY_BADGE_PALETTE.length];
-}
-// Phase-based fallback for contexts without row index
-function getIdBadgeClasses(code: string) {
-  const prefix = getPhasePrefix(code);
-  return PHASE_COLORS[prefix] || { bg: 'bg-muted', text: 'text-foreground' };
+function getIdBadgeClasses(_code: string) {
+  return ID_BADGE_COLORS;
 }
 
 // Convert internal codes like "EXE-01" / "ASS-04.1" to display format "E.01" / "A.04.1"
@@ -863,22 +822,19 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
                         );
                       })()}
                       {barPos && isParent && (() => {
-                        const prefix = getPhasePrefix(activity.activityCode);
-                        const mutedColor = BAR_COLORS_MUTED[prefix] || 'bg-muted';
-                        const barColorSolid = getBarColor(activity.activityCode);
-
+                        const barStyle = getGanttBarStyle(activity.activityCode);
                         return (
                           <div
                             className={cn(
                               "absolute top-2 rounded shadow-sm overflow-hidden",
-                              mutedColor,
+                              barStyle.track,
                             )}
                             style={{ left: barPos.left, width: barPos.width, height: ROW_HEIGHT - 16 }}
                             title={`${activity.activity} (summary)`}
                           >
-                            <div className={cn("h-full rounded", barColorSolid, "opacity-50")} style={{ width: '100%' }} />
+                            <div className={cn("h-full rounded", barStyle.fill, "opacity-40")} style={{ width: '100%' }} />
                             {barPos.width > 24 && (
-                              <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-white drop-shadow-sm">
+                              <span className={cn("absolute inset-0 flex items-center justify-center text-[9px]", GANTT_BAR_LABEL_CLASS)}>
                                 {(() => {
                                   const range = getParentDateRange(activity.id, selectedActivities, childrenMap);
                                   if (range.minStart && range.maxEnd) {
@@ -895,33 +851,33 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
                         const isDragging = draggingId === activity.id;
                         const barL = isDragging && previewLeft !== null ? previewLeft : barPos.left;
                         const barW = isDragging && previewWidth !== null ? previewWidth : barPos.width;
-                        const prefix = getPhasePrefix(activity.activityCode);
-                        const mutedColor = BAR_COLORS_MUTED[prefix] || 'bg-muted';
-                        const barColorSolid = getBarColor(activity.activityCode);
+                        const barStyle = getGanttBarStyle(activity.activityCode);
                         const completion = (activity as any).completionPercentage || 0;
 
                         return (
                           <div
                             className={cn(
                               "absolute top-2 rounded shadow-sm overflow-hidden transition-all group",
-                              mutedColor,
+                              barStyle.track,
                               isDragging && "ring-2 ring-primary/50 shadow-lg"
                             )}
                             style={{ left: barL, width: barW, height: ROW_HEIGHT - 16 }}
                             title={`${activity.activity}: ${activity.startDate} → ${activity.endDate || '?'} (${activity.durationDays || '?'}d)`}
                           >
                             {/* Progress fill */}
-                            <div
-                              className={cn("absolute h-full rounded-l", barColorSolid)}
-                              style={{ width: `${completion}%` }}
-                            />
+                            {completion > 0 && (
+                              <div
+                                className={cn("absolute h-full rounded-l", barStyle.fill)}
+                                style={{ width: `${completion}%` }}
+                              />
+                            )}
                             {/* Label */}
                             <div className="absolute inset-0 flex items-center px-1.5 z-10">
-                              <span className="text-[9px] text-white font-medium truncate drop-shadow-sm">{activity.durationDays}d</span>
+                              <span className={cn("text-[9px] truncate", GANTT_BAR_LABEL_CLASS)}>{activity.durationDays}d</span>
                             </div>
                             {/* Left resize handle */}
                             <div
-                              className="absolute left-0 top-0 bottom-0 w-[6px] cursor-col-resize z-20 hover:bg-white/30"
+                              className="absolute left-0 top-0 bottom-0 w-[6px] cursor-col-resize z-20 hover:bg-foreground/10"
                               onMouseDown={(e) => {
                                 if (!activity.startDate || !activity.endDate) return;
                                 handleMouseDown(e, 'left', activity.id, barPos.left, barPos.width, parseISO(activity.startDate), parseISO(activity.endDate));
@@ -929,7 +885,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
                             />
                             {/* Right resize handle */}
                             <div
-                              className="absolute right-0 top-0 bottom-0 w-[6px] cursor-col-resize z-20 hover:bg-white/30"
+                              className="absolute right-0 top-0 bottom-0 w-[6px] cursor-col-resize z-20 hover:bg-foreground/10"
                               onMouseDown={(e) => {
                                 if (!activity.startDate) return;
                                 const endDate = activity.endDate ? parseISO(activity.endDate) : addDays(parseISO(activity.startDate), activity.durationDays || 14);
