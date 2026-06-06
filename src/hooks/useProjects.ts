@@ -20,6 +20,7 @@ export interface Project {
   created_at: string;
   updated_at: string;
   is_active: boolean;
+  lifecycle_status?: 'active' | 'archived' | 'deleted';
   is_favorite?: boolean;
   // Joined data
   plant_name?: string;
@@ -234,6 +235,36 @@ export const useProjects = () => {
     },
   });
 
+  const setLifecycleStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: 'active' | 'archived' | 'deleted' }) => {
+      const { error } = await supabase
+        .from('projects')
+        .update({ lifecycle_status: status } as any)
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['project-id-availability'] });
+      toast({
+        title:
+          vars.status === 'active'
+            ? 'Project restored'
+            : vars.status === 'archived'
+            ? 'Project archived'
+            : 'Project deleted',
+      });
+    },
+    onError: (error: any) => {
+      console.error('Error updating project lifecycle:', error);
+      toast({
+        title: 'Error',
+        description: error?.message || 'Failed to update project status',
+        variant: 'destructive',
+      });
+    },
+  });
+
   return {
     projects,
     isLoading,
@@ -244,6 +275,9 @@ export const useProjects = () => {
     deleteProject: deleteProjectMutation.mutate,
     permanentlyDeleteProject: permanentlyDeleteProjectMutation.mutate,
     permanentlyDeleteProjectAsync: permanentlyDeleteProjectMutation.mutateAsync,
+    archiveProject: (id: string) => setLifecycleStatusMutation.mutate({ id, status: 'archived' }),
+    restoreProject: (id: string) => setLifecycleStatusMutation.mutate({ id, status: 'active' }),
+    softDeleteProject: (id: string) => setLifecycleStatusMutation.mutate({ id, status: 'deleted' }),
     isCreating: createProjectMutation.isPending,
     isUpdating: updateProjectMutation.isPending,
     isDeleting: deleteProjectMutation.isPending || permanentlyDeleteProjectMutation.isPending,
@@ -251,25 +285,104 @@ export const useProjects = () => {
 };
 
 /**
- * Admin-only: fetch soft-deleted (archived) projects directly from the
- * `projects` table. The `projects_enriched` view filters them out, so we
- * query the base table and provide just enough fields for the management UI.
+ * Admin-only: fetch projects in a non-active lifecycle state directly from the
+ * `projects` table. The `projects_enriched` view filters them out (is_active=true),
+ * so we query the base table for archived / deleted rows.
  */
-export const useArchivedProjects = (enabled: boolean) => {
+export const useArchivedProjects = (
+  enabled: boolean,
+  status: 'archived' | 'deleted' | 'all' = 'all',
+) => {
   return useQuery({
-    queryKey: ['projects', 'archived'],
+    queryKey: ['projects', 'archived', status],
     enabled,
     staleTime: 30000,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from('projects')
-        .select('id, project_id_prefix, project_id_number, project_title, plant_id, field_id, station_id, hub_id, region_id, project_scope, project_scope_image_url, created_by, created_at, updated_at, is_active')
-        .eq('is_active', false)
-        .order('updated_at', { ascending: false });
+        .select('id, project_id_prefix, project_id_number, project_title, plant_id, field_id, station_id, hub_id, region_id, project_scope, project_scope_image_url, created_by, created_at, updated_at, is_active, lifecycle_status')
+        .eq('is_active', false);
+      if (status !== 'all') {
+        q = q.eq('lifecycle_status', status);
+      }
+      const { data, error } = await q.order('updated_at', { ascending: false });
       if (error) throw error;
       return (data || []) as Project[];
     },
   });
+};
+
+/**
+ * Per-user hidden projects. Each user can hide projects from their own view
+ * without affecting other users. Mirrors the favorites UX.
+ */
+export const useHiddenProjects = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: hiddenIds = [], isLoading } = useQuery({
+    queryKey: ['project-user-hides'],
+    staleTime: 30000,
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [] as string[];
+      const { data, error } = await (supabase as any)
+        .from('project_user_hides')
+        .select('project_id')
+        .eq('user_id', user.id);
+      if (error) {
+        console.error('Error fetching hidden projects:', error);
+        return [] as string[];
+      }
+      return (data || []).map((r: any) => r.project_id as string);
+    },
+  });
+
+  const hideProjectMutation = useMutation({
+    mutationFn: async (projectId: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      const { error } = await (supabase as any)
+        .from('project_user_hides')
+        .upsert({ user_id: user.id, project_id: projectId });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['project-user-hides'] });
+      toast({ title: 'Project hidden', description: 'It is hidden from your list only.' });
+    },
+    onError: (e: any) => {
+      toast({ title: 'Error', description: e?.message || 'Failed to hide', variant: 'destructive' });
+    },
+  });
+
+  const unhideProjectMutation = useMutation({
+    mutationFn: async (projectId: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      const { error } = await (supabase as any)
+        .from('project_user_hides')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('project_id', projectId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['project-user-hides'] });
+      toast({ title: 'Project unhidden' });
+    },
+    onError: (e: any) => {
+      toast({ title: 'Error', description: e?.message || 'Failed to unhide', variant: 'destructive' });
+    },
+  });
+
+  return {
+    hiddenIds: hiddenIds as string[],
+    isLoading,
+    isHidden: (id: string) => (hiddenIds as string[]).includes(id),
+    hideProject: hideProjectMutation.mutate,
+    unhideProject: unhideProjectMutation.mutate,
+  };
 };
 
 export const useProjectTeamMembers = (projectId?: string) => {

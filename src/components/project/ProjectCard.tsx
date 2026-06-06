@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Eye, Edit3, Trash2, MoreVertical, Star, GripVertical, Users, Calendar, FileText, Trophy } from 'lucide-react';
+import { Eye, Edit3, Trash2, MoreVertical, Star, GripVertical, Users, Calendar, FileText, Trophy, Archive, EyeOff, RotateCcw } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 const getProjectColor = (projectId: string) => {
@@ -44,6 +44,12 @@ interface ProjectCardProps {
   onView: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  isAdmin?: boolean;
+  isHidden?: boolean;
+  onArchive?: () => void;
+  onRestore?: () => void;
+  onHide?: () => void;
+  onUnhide?: () => void;
   isDragging?: boolean;
   translations: any;
   dragListeners?: any;
@@ -60,6 +66,12 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   onView,
   onEdit,
   onDelete,
+  isAdmin = false,
+  isHidden = false,
+  onArchive,
+  onRestore,
+  onHide,
+  onUnhide,
   isDragging,
   translations: t,
   dragListeners,
@@ -156,7 +168,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 <Eye className="h-4 w-4 mr-2 text-primary" />
                 <span className="text-primary">{t.viewDetails}</span>
               </DropdownMenuItem>
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onSelect={(e) => {
                   e.preventDefault();
                   onEdit();
@@ -166,16 +178,57 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 <Edit3 className="h-4 w-4 mr-2 text-accent" />
                 <span className="text-accent">{t.editProject}</span>
               </DropdownMenuItem>
-              <DropdownMenuItem 
-                onSelect={(e) => {
-                  e.preventDefault();
-                  onDelete();
-                }}
-                className="flex items-center cursor-pointer hover:bg-destructive/10 focus:bg-destructive/10"
-              >
-                <Trash2 className="h-4 w-4 mr-2 text-destructive" />
-                <span className="text-destructive">{t.deleteProject}</span>
-              </DropdownMenuItem>
+
+              {isAdmin ? (
+                <>
+                  {(project.lifecycle_status ?? 'active') === 'active' && onArchive && (
+                    <DropdownMenuItem
+                      onSelect={(e) => { e.preventDefault(); onArchive(); }}
+                      className="flex items-center cursor-pointer hover:bg-amber-500/10 focus:bg-amber-500/10"
+                    >
+                      <Archive className="h-4 w-4 mr-2 text-amber-600" />
+                      <span className="text-amber-600">Archive</span>
+                    </DropdownMenuItem>
+                  )}
+                  {(project.lifecycle_status ?? 'active') !== 'active' && onRestore && (
+                    <DropdownMenuItem
+                      onSelect={(e) => { e.preventDefault(); onRestore(); }}
+                      className="flex items-center cursor-pointer hover:bg-emerald-500/10 focus:bg-emerald-500/10"
+                    >
+                      <RotateCcw className="h-4 w-4 mr-2 text-emerald-600" />
+                      <span className="text-emerald-600">Restore</span>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      onDelete();
+                    }}
+                    className="flex items-center cursor-pointer hover:bg-destructive/10 focus:bg-destructive/10"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2 text-destructive" />
+                    <span className="text-destructive">{t.deleteProject}</span>
+                  </DropdownMenuItem>
+                </>
+              ) : (
+                isHidden ? (
+                  <DropdownMenuItem
+                    onSelect={(e) => { e.preventDefault(); onUnhide?.(); }}
+                    className="flex items-center cursor-pointer hover:bg-muted/40 focus:bg-muted/40"
+                  >
+                    <Eye className="h-4 w-4 mr-2" />
+                    <span>Unhide</span>
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem
+                    onSelect={(e) => { e.preventDefault(); onHide?.(); }}
+                    className="flex items-center cursor-pointer hover:bg-muted/40 focus:bg-muted/40"
+                  >
+                    <EyeOff className="h-4 w-4 mr-2" />
+                    <span>Hide</span>
+                  </DropdownMenuItem>
+                )
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

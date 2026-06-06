@@ -6,12 +6,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { ProjectIdBadge } from '@/components/ui/project-id-badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, FolderOpen, Users, Calendar, FileText, MoreVertical, Eye, Edit3, Trash2, Building2, Star, GitBranch, Milestone, Layers } from 'lucide-react';
+import { Plus, FolderOpen, Users, Calendar, FileText, MoreVertical, Eye, Edit3, Trash2, Building2, Star, GitBranch, Milestone, Layers, Archive, EyeOff, RotateCcw } from 'lucide-react';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { getCurrentTranslations } from '@/utils/translations';
-import { useProjects, useArchivedProjects } from '@/hooks/useProjects';
-import { Switch } from '@/components/ui/switch';
+import { useProjects, useArchivedProjects, useHiddenProjects } from '@/hooks/useProjects';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { usePlants } from '@/hooks/usePlants';
 import { useStations } from '@/hooks/useStations';
 import { useHubs } from '@/hooks/useHubs';
@@ -98,7 +98,7 @@ const SortableProjectCard = ({ project, ...props }: any) => {
 
 const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translations }: ProjectManagementPageProps) => {
   const navigate = useNavigate();
-  const { projects, isLoading, deleteProject, permanentlyDeleteProject } = useProjects();
+  const { projects, isLoading, deleteProject, permanentlyDeleteProject, archiveProject, restoreProject } = useProjects();
   const { plants } = usePlants();
   const { stations } = useStations();
   const { data: hubs = [] } = useHubs();
@@ -124,9 +124,14 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
   const [selectedHub, setSelectedHub] = useState('all');
   const [projectToDelete, setProjectToDelete] = useState<any>(null);
   const [hardDelete, setHardDelete] = useState(false);
-  const [showArchived, setShowArchived] = useState(false);
+  const [statusView, setStatusView] = useState<'active' | 'archived' | 'deleted' | 'hidden'>('active');
   const { isAdmin } = useIsAdminPermission();
-  const { data: archivedProjects = [] } = useArchivedProjects(isAdmin && showArchived);
+  const isAdminArchivedView = isAdmin && (statusView === 'archived' || statusView === 'deleted');
+  const { data: archivedProjects = [] } = useArchivedProjects(
+    isAdminArchivedView,
+    statusView === 'archived' ? 'archived' : 'deleted',
+  );
+  const { hiddenIds, hideProject, unhideProject, isHidden } = useHiddenProjects();
   
   // Get translations
   const t = translations || getCurrentTranslations(selectedLanguage);
@@ -161,7 +166,26 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
 
   // Filter and sort projects
   const filteredAndSortedProjects = useMemo(() => {
-    let filtered = [...(projects || []), ...(isAdmin && showArchived ? archivedProjects : [])];
+    // Source list depends on the selected status view.
+    let source: any[] = [];
+    if (statusView === 'active') {
+      source = (projects || []).filter((p: any) => !isHidden(p.id));
+    } else if (statusView === 'hidden') {
+      // Hidden view: show projects (active or otherwise) the user has hidden.
+      const all = [...(projects || []), ...(isAdmin ? archivedProjects : [])];
+      const seen = new Set<string>();
+      source = all.filter((p) => {
+        if (!isHidden(p.id)) return false;
+        if (seen.has(p.id)) return false;
+        seen.add(p.id);
+        return true;
+      });
+    } else {
+      // 'archived' or 'deleted' (admin only)
+      source = isAdmin ? archivedProjects : [];
+    }
+
+    let filtered = [...source];
 
     // Apply search filter
     if (searchQuery) {
@@ -222,8 +246,9 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
   }, [
     projects,
     archivedProjects,
-    showArchived,
+    statusView,
     isAdmin,
+    hiddenIds,
     searchQuery,
     selectedPlant,
     selectedHub,
@@ -255,17 +280,25 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
   };
 
   const getStatusBadge = (project: any) => {
-    if (project?.is_active === false) {
+    const status: string = project?.lifecycle_status ?? (project?.is_active === false ? 'deleted' : 'active');
+    if (status === 'archived') {
       return (
-        <Badge variant="outline" className="bg-muted text-muted-foreground border-border">
+        <Badge variant="outline" className="bg-amber-100/70 text-amber-700 border-amber-200/60">
           Archived
         </Badge>
       );
     }
+    if (status === 'deleted') {
+      return (
+        <Badge variant="outline" className="bg-muted text-muted-foreground border-border">
+          Deleted
+        </Badge>
+      );
+    }
     return (
-                      <Badge variant="outline" className="bg-green-100/80 text-green-700 border-green-200/60">
-                        {t.active}
-                      </Badge>
+      <Badge variant="outline" className="bg-green-100/80 text-green-700 border-green-200/60">
+        {t.active}
+      </Badge>
     );
   };
 
@@ -370,19 +403,33 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
           {/* Main Content */}
           <div className="flex-1 overflow-auto p-3 sm:p-4 md:p-6">
             <div className="max-w-[1600px] mx-auto space-y-4 sm:space-y-6">
-              <div className="flex items-center justify-end gap-4 mb-4">
-                {isAdmin && (
-                  <div className="flex items-center gap-2 rounded-md border border-border/60 bg-card/60 px-3 py-1.5">
-                    <Switch
-                      id="show-archived"
-                      checked={showArchived}
-                      onCheckedChange={setShowArchived}
-                    />
-                    <Label htmlFor="show-archived" className="text-sm cursor-pointer">
-                      Show archived (deleted) projects
-                    </Label>
-                  </div>
-                )}
+              <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
+                <ToggleGroup
+                  type="single"
+                  value={statusView}
+                  onValueChange={(v) => v && setStatusView(v as any)}
+                  className="bg-card/60 border border-border/60 rounded-md p-1"
+                >
+                  <ToggleGroupItem value="active" className="text-xs px-3">
+                    Active
+                  </ToggleGroupItem>
+                  {isAdmin && (
+                    <ToggleGroupItem value="archived" className="text-xs px-3">
+                      <Archive className="h-3.5 w-3.5 mr-1.5" />
+                      Archived
+                    </ToggleGroupItem>
+                  )}
+                  {isAdmin && (
+                    <ToggleGroupItem value="deleted" className="text-xs px-3">
+                      <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                      Deleted
+                    </ToggleGroupItem>
+                  )}
+                  <ToggleGroupItem value="hidden" className="text-xs px-3">
+                    <EyeOff className="h-3.5 w-3.5 mr-1.5" />
+                    Hidden ({hiddenIds.length})
+                  </ToggleGroupItem>
+                </ToggleGroup>
                 <Button 
                   onClick={() => setIsAddModalOpen(true)}
                   className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-200"
@@ -463,6 +510,12 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
                               }}
                               onEdit={() => setEditProject(project)}
                               onDelete={() => handleDeleteProject(project)}
+                              isAdmin={isAdmin}
+                              isHidden={isHidden(project.id)}
+                              onArchive={() => archiveProject(project.id)}
+                              onRestore={() => restoreProject(project.id)}
+                              onHide={() => hideProject(project.id)}
+                              onUnhide={() => unhideProject(project.id)}
                               translations={t}
                             />
                           ))}
@@ -528,7 +581,11 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
                                         <MoreVertical className="h-4 w-4" />
                                       </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-48 bg-white shadow-lg border border-gray-200/60">
+                                    <DropdownMenuContent
+                                      align="end"
+                                      className="w-52 bg-white shadow-lg border border-gray-200/60"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
                                       <DropdownMenuItem
                                         className="flex items-center text-blue-600 hover:bg-blue-50/80"
                                         onClick={() => setViewProject(project)}
@@ -543,13 +600,54 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
                                         <Edit3 className="h-4 w-4 mr-2" />
                                         {t.editProject}
                                       </DropdownMenuItem>
-                                      <DropdownMenuItem
-                                        className="flex items-center text-red-600 hover:bg-red-50/80"
-                                        onClick={() => handleDeleteProject(project)}
-                                      >
-                                        <Trash2 className="h-4 w-4 mr-2" />
-                                        {t.deleteProject}
-                                      </DropdownMenuItem>
+
+                                      {isAdmin ? (
+                                        <>
+                                          {(project.lifecycle_status ?? 'active') === 'active' && (
+                                            <DropdownMenuItem
+                                              className="flex items-center text-amber-700 hover:bg-amber-50/80"
+                                              onClick={() => archiveProject(project.id)}
+                                            >
+                                              <Archive className="h-4 w-4 mr-2" />
+                                              Archive
+                                            </DropdownMenuItem>
+                                          )}
+                                          {(project.lifecycle_status ?? 'active') !== 'active' && (
+                                            <DropdownMenuItem
+                                              className="flex items-center text-green-700 hover:bg-green-50/80"
+                                              onClick={() => restoreProject(project.id)}
+                                            >
+                                              <RotateCcw className="h-4 w-4 mr-2" />
+                                              Restore
+                                            </DropdownMenuItem>
+                                          )}
+                                          <DropdownMenuItem
+                                            className="flex items-center text-red-600 hover:bg-red-50/80"
+                                            onClick={() => handleDeleteProject(project)}
+                                          >
+                                            <Trash2 className="h-4 w-4 mr-2" />
+                                            {t.deleteProject}
+                                          </DropdownMenuItem>
+                                        </>
+                                      ) : (
+                                        isHidden(project.id) ? (
+                                          <DropdownMenuItem
+                                            className="flex items-center text-foreground hover:bg-muted/80"
+                                            onClick={() => unhideProject(project.id)}
+                                          >
+                                            <Eye className="h-4 w-4 mr-2" />
+                                            Unhide
+                                          </DropdownMenuItem>
+                                        ) : (
+                                          <DropdownMenuItem
+                                            className="flex items-center text-foreground hover:bg-muted/80"
+                                            onClick={() => hideProject(project.id)}
+                                          >
+                                            <EyeOff className="h-4 w-4 mr-2" />
+                                            Hide
+                                          </DropdownMenuItem>
+                                        )
+                                      )}
                                     </DropdownMenuContent>
                                   </DropdownMenu>
                                 </TableCell>
