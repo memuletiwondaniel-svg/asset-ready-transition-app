@@ -29,6 +29,19 @@ interface SOFApprover {
   rejection_linked_item?: string;
 }
 
+export interface SOFSignPayload {
+  approverId: string;
+  signatureData: string;
+  comments: string;
+  pr2Action?: { priority: 'Pr2'; description: string };
+}
+
+export interface SOFRejectPayload {
+  approverId: string;
+  description: string;
+  linkedItemId?: string;
+}
+
 interface SOFCertificateProps {
   certificateNumber: string;
   pssrReason: string;
@@ -39,8 +52,8 @@ interface SOFCertificateProps {
   approvers: SOFApprover[];
   issuedAt?: string;
   status: string;
-  onSignComplete?: (signatureData?: string) => void;
-  onRejectComplete?: () => void;
+  onSignComplete?: (payload: SOFSignPayload) => void;
+  onRejectComplete?: (payload: SOFRejectPayload) => void;
   isViewOnly?: boolean;
   pssrId?: string;
   sourceType?: string;
