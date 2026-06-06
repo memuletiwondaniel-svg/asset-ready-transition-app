@@ -412,7 +412,10 @@ export function ProjectsTable({
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start" className="w-48" onClick={(e) => e.stopPropagation()}>
-                          <DropdownMenuItem onClick={(e) => onToggleFavorite(e as any, project.id, project.is_favorite ?? null)}>
+                          <DropdownMenuItem
+                            className="hover:bg-yellow-500/10 focus:bg-yellow-500/10"
+                            onClick={(e) => onToggleFavorite(e as any, project.id, project.is_favorite ?? null)}
+                          >
                             <Star className={cn('h-4 w-4 mr-2', project.is_favorite && 'fill-yellow-400 text-yellow-400')} />
                             {project.is_favorite ? 'Remove favorite' : 'Mark as favorite'}
                           </DropdownMenuItem>
