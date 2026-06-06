@@ -422,7 +422,7 @@ export function ProjectsTable({
                               {(project.lifecycle_status ?? 'active') === 'active' ? (
                                 onArchive && (
                                   <DropdownMenuItem
-                                    className="text-amber-700 focus:text-amber-700"
+                                    className="text-indigo-600 focus:text-indigo-600 hover:bg-indigo-500/10 focus:bg-indigo-500/10"
                                     onClick={(e) => { e.stopPropagation(); onArchive(project.id); }}
                                   >
                                     <Archive className="h-4 w-4 mr-2" /> Archive
