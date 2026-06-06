@@ -213,18 +213,42 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
                   <ProjectColumnsMenu prefs={tablePrefs} setPrefs={setTablePrefs} reset={resetTablePrefs} />
                 )}
 
-                <ToggleGroup
-                  type="single"
-                  size="sm"
-                  value={statusView}
-                  onValueChange={(v) => v && setStatusView(v as typeof statusView)}
-                  className="border rounded-md"
-                >
-                  <ToggleGroupItem value="active" className="h-8 px-2 text-xs">Active</ToggleGroupItem>
-                  {isAdmin && <ToggleGroupItem value="archived" className="h-8 px-2 text-xs">Archived</ToggleGroupItem>}
-                  {isAdmin && <ToggleGroupItem value="deleted" className="h-8 px-2 text-xs">Deleted</ToggleGroupItem>}
-                  <ToggleGroupItem value="hidden" className="h-8 px-2 text-xs">Hidden</ToggleGroupItem>
-                </ToggleGroup>
+                {(() => {
+                  const viewOptions: { value: typeof statusView; label: string }[] = [
+                    { value: 'active', label: 'Active' },
+                    ...(isAdmin
+                      ? [
+                          { value: 'archived' as const, label: 'Archived' },
+                          { value: 'deleted' as const, label: 'Deleted' },
+                        ]
+                      : []),
+                    { value: 'hidden', label: 'Hidden' },
+                  ];
+                  const current = viewOptions.find((o) => o.value === statusView) ?? viewOptions[0];
+                  return (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="h-9 gap-1.5 text-xs font-medium">
+                          <span className="text-muted-foreground">View:</span>
+                          <span>{current.label}</span>
+                          <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-40">
+                        {viewOptions.map((opt) => (
+                          <DropdownMenuItem
+                            key={opt.value}
+                            onSelect={() => setStatusView(opt.value)}
+                            className="text-sm justify-between"
+                          >
+                            {opt.label}
+                            {statusView === opt.value && <Check className="h-3.5 w-3.5 opacity-70" />}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  );
+                })()}
 
                 {canPerformActions && (
                   <Button
