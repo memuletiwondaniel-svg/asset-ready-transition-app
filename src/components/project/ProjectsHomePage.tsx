@@ -5,7 +5,8 @@ import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useProjects, useHiddenProjects } from '@/hooks/useProjects';
+import { useProjects, useHiddenProjects, useArchivedProjects } from '@/hooks/useProjects';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { CreateProjectWizard } from '@/components/project/CreateProjectWizard';
 import { supabase } from '@/integrations/supabase/client';
@@ -47,9 +48,14 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
   const navigate = useNavigate();
   useLanguage();
   const { projects, isLoading, deleteProject, permanentlyDeleteProject, isDeleting, archiveProject, restoreProject } = useProjects();
-  const { isHidden, hideProject, unhideProject } = useHiddenProjects();
+  const { isHidden, hideProject, unhideProject, hiddenIds } = useHiddenProjects();
   const { canPerformActions } = useCanPerformActionsPermission();
   const { isAdmin } = useIsAdminPermission();
+  const [statusView, setStatusView] = useState<'active' | 'archived' | 'deleted' | 'hidden'>('active');
+  const { data: archivedProjects = [] } = useArchivedProjects(
+    isAdmin && (statusView === 'archived' || statusView === 'deleted'),
+    statusView === 'archived' ? 'archived' : statusView === 'deleted' ? 'deleted' : 'all',
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'heatmap' | 'list'>('list');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -64,7 +70,22 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
 
   const filteredProjects = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    const list = (projects ?? []).filter((project) => {
+    let source: Project[] = [];
+    if (statusView === 'active') {
+      source = (projects ?? []).filter((p) => !isHidden(p.id));
+    } else if (statusView === 'hidden') {
+      const allKnown = [...(projects ?? []), ...(isAdmin ? archivedProjects : [])];
+      const seen = new Set<string>();
+      source = allKnown.filter((p) => {
+        if (!hiddenIds.includes(p.id)) return false;
+        if (seen.has(p.id)) return false;
+        seen.add(p.id);
+        return true;
+      });
+    } else if (isAdmin) {
+      source = archivedProjects;
+    }
+    const list = source.filter((project) => {
       if (!q) return true;
       const code = `${project.project_id_prefix}-${project.project_id_number}`.toLowerCase();
       const codeNoDash = `${project.project_id_prefix}${project.project_id_number}`.toLowerCase();
@@ -91,7 +112,7 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
       if (!a.is_favorite && b.is_favorite) return 1;
       return 0;
     });
-  }, [projects, searchQuery]);
+  }, [projects, archivedProjects, hiddenIds, isHidden, isAdmin, statusView, searchQuery]);
 
   const visibleProjectIds = useMemo(() => filteredProjects.map(p => p.id), [filteredProjects]);
   const { data: progressMap } = useProjectsP2AProgress(visibleProjectIds);
@@ -185,6 +206,19 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
                 {viewMode === 'list' && (
                   <ProjectColumnsMenu prefs={tablePrefs} setPrefs={setTablePrefs} reset={resetTablePrefs} />
                 )}
+
+                <ToggleGroup
+                  type="single"
+                  size="sm"
+                  value={statusView}
+                  onValueChange={(v) => v && setStatusView(v as typeof statusView)}
+                  className="border rounded-md"
+                >
+                  <ToggleGroupItem value="active" className="h-8 px-2 text-xs">Active</ToggleGroupItem>
+                  {isAdmin && <ToggleGroupItem value="archived" className="h-8 px-2 text-xs">Archived</ToggleGroupItem>}
+                  {isAdmin && <ToggleGroupItem value="deleted" className="h-8 px-2 text-xs">Deleted</ToggleGroupItem>}
+                  <ToggleGroupItem value="hidden" className="h-8 px-2 text-xs">Hidden</ToggleGroupItem>
+                </ToggleGroup>
 
                 {canPerformActions && (
                   <Button
