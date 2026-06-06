@@ -370,7 +370,19 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
           {/* Main Content */}
           <div className="flex-1 overflow-auto p-3 sm:p-4 md:p-6">
             <div className="max-w-[1600px] mx-auto space-y-4 sm:space-y-6">
-              <div className="flex justify-end mb-4">
+              <div className="flex items-center justify-end gap-4 mb-4">
+                {isAdmin && (
+                  <div className="flex items-center gap-2 rounded-md border border-border/60 bg-card/60 px-3 py-1.5">
+                    <Switch
+                      id="show-archived"
+                      checked={showArchived}
+                      onCheckedChange={setShowArchived}
+                    />
+                    <Label htmlFor="show-archived" className="text-sm cursor-pointer">
+                      Show archived (deleted) projects
+                    </Label>
+                  </div>
+                )}
                 <Button 
                   onClick={() => setIsAddModalOpen(true)}
                   className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-200"
