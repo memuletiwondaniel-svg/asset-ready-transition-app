@@ -30,7 +30,7 @@ const inputCls =
   "pl-10 h-11 text-sm rounded-[10px] border border-[#e6e4de] bg-[#fafaf8] text-gray-900 placeholder:text-gray-400 focus-visible:border-[#2563eb] focus-visible:ring-0 focus-visible:shadow-[0_0_0_3px_rgba(37,99,235,0.12)] transition-all";
 
 const ssoBtnCls =
-  "w-full h-11 text-sm font-medium rounded-[10px] bg-white border border-[#e6e4de] text-gray-800 hover:bg-gray-50 hover:scale-100 active:scale-100 shadow-none";
+  "w-full h-11 text-sm font-medium rounded-[10px] bg-white border border-[#e6e4de] text-gray-800 shadow-none transition-all duration-150 ease-out hover:bg-[#f5f4f0] hover:border-[#d8d6cf] hover:shadow-[0_2px_8px_rgba(0,0,0,0.08)] hover:-translate-y-px hover:scale-100 active:translate-y-0 active:shadow-none active:scale-100";
 
 const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   isOpen,
@@ -124,7 +124,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
         
         <div className="w-screen h-screen flex items-center justify-center p-4 relative z-10 pointer-events-none">
           <div className="w-full max-w-sm relative z-10 pointer-events-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="bg-white rounded-[18px] shadow-[0_12px_40px_rgba(0,0,0,0.16)] p-8 relative overflow-hidden">
+            <div className="rounded-[18px] shadow-[0_12px_40px_rgba(0,0,0,0.16)] p-8 relative overflow-hidden bg-white supports-[backdrop-filter]:bg-white/[0.93] supports-[backdrop-filter]:backdrop-blur-[12px] [-webkit-backdrop-filter:blur(12px)]">
 
               <div className="relative z-10">
                 {/* Header */}
@@ -296,13 +296,16 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                               aria-describedby={loginFailed ? 'login-error' : undefined}
                               disabled={loading}
                             />
-                            <button 
-                              type="button" 
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors" 
-                              onClick={() => setShowPassword(!showPassword)}
-                            >
-                              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                            </button>
+                            {signInData.password.length > 0 && (
+                              <button 
+                                type="button" 
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors" 
+                                onClick={() => setShowPassword(!showPassword)}
+                                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                              >
+                                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              </button>
+                            )}
                           </div>
                         </div>
 
@@ -312,7 +315,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                               id="remember-me"
                               checked={rememberMe}
                               onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                              className="h-4 w-4 border-gray-300 data-[state=checked]:bg-[#2563eb] data-[state=checked]:border-[#2563eb]"
+                              className="h-4 w-4 border-gray-300 data-[state=checked]:bg-gray-400 data-[state=checked]:border-gray-400 data-[state=checked]:text-white"
                             />
                             <Label htmlFor="remember-me" className="text-sm text-gray-600 cursor-pointer">
                               Remember me
@@ -325,8 +328,8 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
 
                         <Button
                           type="submit"
-                          className="w-full h-[46px] text-sm font-medium rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] text-white transition-colors"
-                          disabled={loading}
+                          className="w-full h-[46px] text-sm font-medium rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] text-white transition-colors disabled:opacity-100 disabled:bg-[#2563eb]/40 disabled:hover:bg-[#2563eb]/40 disabled:cursor-not-allowed"
+                          disabled={loading || !signInData.email.trim() || !signInData.password}
                         >
                           {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Signing in...</> : 'Sign In'}
                         </Button>
