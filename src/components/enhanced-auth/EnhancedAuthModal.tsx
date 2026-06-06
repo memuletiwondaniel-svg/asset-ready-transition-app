@@ -124,7 +124,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
         
         <div className="w-screen h-screen flex items-center justify-center p-4 relative z-10 pointer-events-none">
           <div className="w-full max-w-sm relative z-10 pointer-events-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="bg-white rounded-[18px] shadow-[0_12px_40px_rgba(0,0,0,0.16)] p-8 relative overflow-hidden">
+            <div className="rounded-[18px] shadow-[0_12px_40px_rgba(0,0,0,0.16)] p-8 relative overflow-hidden bg-white supports-[backdrop-filter]:bg-white/[0.93] supports-[backdrop-filter]:backdrop-blur-[12px] [-webkit-backdrop-filter:blur(12px)]">
 
               <div className="relative z-10">
                 {/* Header */}
