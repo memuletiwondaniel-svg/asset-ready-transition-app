@@ -8,6 +8,7 @@ interface OrshLogoProps {
   variant?: 'full' | 'mark';
   className?: string;
   asLink?: boolean;
+  surface?: 'light' | 'dark';
 }
 
 const heightPx: Record<NonNullable<OrshLogoProps['size']>, number> = {
