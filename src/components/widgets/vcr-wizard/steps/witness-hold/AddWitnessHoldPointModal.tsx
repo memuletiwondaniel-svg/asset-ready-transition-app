@@ -149,8 +149,8 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
     <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); else onOpenChange(true); }}>
       <DialogContent
         ref={dialogContentRef}
-        className="sm:max-w-[440px] p-0 gap-0 z-[200]"
-        overlayClassName="z-[199] bg-black/80 backdrop-blur-sm"
+        className="sm:max-w-[440px] p-0 gap-0"
+        overlayClassName="bg-black/80 backdrop-blur-sm"
       >
         <DialogHeader className="px-6 pt-5 pb-0 space-y-1">
           <DialogTitle className="text-base font-medium">
@@ -189,7 +189,7 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
               </PopoverTrigger>
               <PopoverContent
                 container={dialogContentRef.current}
-                className="p-0 z-[210] w-[--radix-popover-trigger-width]"
+                className="p-0 w-[--radix-popover-trigger-width]"
                 align="start"
                 onWheel={(event) => event.stopPropagation()}
                 onPointerDownOutside={(event) => {

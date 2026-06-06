@@ -125,7 +125,7 @@ export const SignaturePadDialog: React.FC<SignaturePadDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-[95vw] sm:max-w-md !z-[250] p-4 sm:p-6">
+      <DialogContent overlayClassName="!z-overlay-critical" className="max-w-[95vw] sm:max-w-md !z-modal-critical p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="text-sm">Add Signature</DialogTitle>
         </DialogHeader>

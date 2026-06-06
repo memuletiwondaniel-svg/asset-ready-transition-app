@@ -894,7 +894,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
                                       <SelectTrigger className="w-full border-border/60 bg-background">
                                         <SelectValue placeholder="Select status" />
                                       </SelectTrigger>
-                                      <SelectContent className="bg-popover z-[100]">
+                                      <SelectContent className="bg-popover">
                                         <SelectItem value="all">All Status</SelectItem>
                                         <SelectItem value="active">Active</SelectItem>
                                         <SelectItem value="pending_approval">Awaiting Authentication</SelectItem>
@@ -909,7 +909,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
                                       <SelectTrigger className="w-full border-border/60 bg-background">
                                         <SelectValue placeholder="Select company" />
                                       </SelectTrigger>
-                                      <SelectContent className="bg-popover z-[100]">
+                                      <SelectContent className="bg-popover">
                                         <SelectItem value="all">All Companies</SelectItem>
                                         {companies.map(company => (
                                           <SelectItem key={company} value={company}>{company}</SelectItem>
@@ -923,7 +923,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
                                       <SelectTrigger className="w-full border-border/60 bg-background">
                                         <SelectValue placeholder="Select role" />
                                       </SelectTrigger>
-                                      <SelectContent className="bg-popover z-[100]">
+                                      <SelectContent className="bg-popover">
                                         <SelectItem value="all">All Roles</SelectItem>
                                         {roles.map(role => (
                                           <SelectItem key={role} value={role}>{role}</SelectItem>

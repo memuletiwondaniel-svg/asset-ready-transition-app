@@ -166,8 +166,8 @@ export const CheckAssaiModal: React.FC<CheckAssaiModalProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="sm:max-w-[1100px] h-[85vh] flex flex-col z-[200]"
-        overlayClassName="z-[199] bg-black/80 backdrop-blur-sm"
+        className="sm:max-w-[1100px] h-[85vh] flex flex-col"
+        overlayClassName="bg-black/80 backdrop-blur-sm"
       >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

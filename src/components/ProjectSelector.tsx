@@ -121,7 +121,7 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
             </Button>
           </PopoverTrigger>
           <PopoverContent 
-            className="w-[500px] p-0 bg-white border-2 shadow-xl z-[300]" 
+            className="w-[500px] p-0 bg-white border-2 shadow-xl" 
             align="start" 
             side="bottom"
             sideOffset={8}

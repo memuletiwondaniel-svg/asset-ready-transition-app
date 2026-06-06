@@ -105,7 +105,7 @@ export function Combobox({
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-[--radix-popover-trigger-width] p-0 z-[100] bg-popover border shadow-lg"
+        className="w-[--radix-popover-trigger-width] p-0 z-dropdown bg-popover border shadow-lg"
         onWheel={(e) => e.stopPropagation()}
       >
         <Command shouldFilter={false}>
@@ -207,7 +207,7 @@ export function MultiSelectCombobox({
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-[--radix-popover-trigger-width] p-0 z-[100] bg-popover border shadow-lg"
+        className="w-[--radix-popover-trigger-width] p-0 z-dropdown bg-popover border shadow-lg"
         onWheel={(e) => e.stopPropagation()}
       >
         <Command shouldFilter={false}>

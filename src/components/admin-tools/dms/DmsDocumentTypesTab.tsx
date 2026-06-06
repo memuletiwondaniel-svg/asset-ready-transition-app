@@ -135,7 +135,7 @@ const MultiSelectDropdown: React.FC<{
             <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 opacity-50 ml-2" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[340px] p-0 z-[200]" align="start">
+        <PopoverContent className="w-[340px] p-0" align="start">
           {searchable && (
             <div className="p-2 border-b">
               <Input
@@ -725,7 +725,7 @@ const DmsDocumentTypesTab: React.FC = () => {
 
       {/* ─── Add / Edit Document Type Side Sheet ─── */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent side="right" className="sm:max-w-xl z-[150] flex flex-col">
+        <SheetContent side="right" className="sm:max-w-xl flex flex-col">
           <SheetHeader className="pb-4 border-b">
             <SheetTitle className="text-lg font-semibold">{editingItem ? 'Edit Document Type' : 'Add Document Type'}</SheetTitle>
             <SheetDescription>
@@ -765,7 +765,7 @@ const DmsDocumentTypesTab: React.FC = () => {
                     <SelectTrigger>
                       <SelectValue placeholder="Select tier" />
                     </SelectTrigger>
-                    <SelectContent className="z-[200]">
+                    <SelectContent className="">
                       {TIER_OPTIONS.map(opt => (
                         <SelectItem key={opt.value} value={opt.value || 'none'}>
                           {opt.label}
@@ -780,7 +780,7 @@ const DmsDocumentTypesTab: React.FC = () => {
                     <SelectTrigger>
                       <SelectValue placeholder="Select RLMU" />
                     </SelectTrigger>
-                    <SelectContent className="z-[200]">
+                    <SelectContent className="">
                       {RLMU_OPTIONS.map(opt => (
                         <SelectItem key={opt.value} value={opt.value || 'none'}>
                           {opt.label}

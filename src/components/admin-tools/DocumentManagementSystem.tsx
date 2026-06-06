@@ -374,7 +374,7 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
 
       {/* Add / Edit Discipline Sheet */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent side="right" className="sm:max-w-md z-[150] flex flex-col">
+        <SheetContent side="right" className="sm:max-w-md flex flex-col">
           <SheetHeader className="pb-4 border-b">
             <SheetTitle className="text-lg font-semibold">{editingItem ? 'Edit Discipline' : 'Add Discipline'}</SheetTitle>
             <SheetDescription>{editingItem ? 'Modify the discipline details below.' : 'Fill in the details to create a new discipline code.'}</SheetDescription>

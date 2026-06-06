@@ -181,7 +181,7 @@ export const CMMSStep: React.FC<CMMSStepProps> = ({ vcrId }) => {
       )}
 
       <Sheet open={addOpen} onOpenChange={(o) => { setAddOpen(o); if (!o) setForm(EMPTY_FORM); }}>
-        <SheetContent className="w-full sm:max-w-md overflow-y-auto z-[150]" overlayClassName="z-[150]">
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto" overlayClassName="">
           <SheetHeader>
             <SheetTitle>Add CMMS Item</SheetTitle>
           </SheetHeader>
@@ -243,7 +243,7 @@ export const CMMSStep: React.FC<CMMSStepProps> = ({ vcrId }) => {
       </Sheet>
 
       <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
-        <AlertDialogContent className="z-[150]" overlayClassName="z-[149] bg-black/80 backdrop-blur-sm">
+        <AlertDialogContent className="" overlayClassName="bg-black/80 backdrop-blur-sm">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete CMMS Item</AlertDialogTitle>
             <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>

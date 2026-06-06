@@ -57,8 +57,8 @@ export const AddVCRModal: React.FC<AddVCRModalProps> = ({
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent
-        className="sm:max-w-md z-[300]"
-        overlayClassName="z-[299] bg-black/70 backdrop-blur-sm"
+        className="sm:max-w-md"
+        overlayClassName="bg-black/70 backdrop-blur-sm"
         onPointerDownOutside={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
       >

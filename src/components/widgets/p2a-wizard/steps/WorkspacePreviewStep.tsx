@@ -183,7 +183,7 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
                                   sideOffset={4}
                                   collisionPadding={16}
                                   avoidCollisions
-                                  className="w-60 p-2 rounded-xl shadow-xl border overflow-hidden z-[100] max-h-48 overflow-y-auto"
+                                  className="w-60 p-2 rounded-xl shadow-xl border overflow-hidden max-h-48 overflow-y-auto"
                                 >
                                   {vcrSystems.length === 0 ? (
                                     <p className="text-[10px] text-muted-foreground text-center py-2">

@@ -2229,7 +2229,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
       {/* Floating drag date tooltip */}
       {dragDatePreview && (
         <div
-          className="fixed z-[100] pointer-events-none px-2.5 py-1.5 rounded-md bg-popover border border-border shadow-lg text-[11px] font-medium text-popover-foreground whitespace-nowrap"
+          className="fixed z-tooltip pointer-events-none px-2.5 py-1.5 rounded-md bg-popover border border-border shadow-lg text-[11px] font-medium text-popover-foreground whitespace-nowrap"
           style={{
             left: dragDatePreview.mouseX + 12,
             top: dragDatePreview.mouseY - 32,
@@ -2242,7 +2242,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
       <AddFromCatalogDialog open={showCatalogDialog} onOpenChange={setShowCatalogDialog} existingIds={existingActivityIds} existingCodes={existingActivityCodes} onAdd={handleAddFromCatalog} onCancelEmpty={handleCatalogCancelEmpty} />
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <AlertDialogContent className="z-[200]">
+        <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Activity</AlertDialogTitle>
             <AlertDialogDescription>

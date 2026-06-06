@@ -686,7 +686,7 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
 
       {/* Add System Picker */}
       <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
-        <DialogContent className="max-w-lg z-[110]" overlayClassName="z-[105]">
+        <DialogContent className="max-w-lg" overlayClassName="">
           <DialogHeader>
             <DialogTitle>Add Systems to VCR</DialogTitle>
           </DialogHeader>
@@ -728,7 +728,7 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
       </Dialog>
 
       <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
-        <AlertDialogContent className="z-[110]">
+        <AlertDialogContent className="">
           <AlertDialogHeader>
             <AlertDialogTitle>Remove System</AlertDialogTitle>
             <AlertDialogDescription>

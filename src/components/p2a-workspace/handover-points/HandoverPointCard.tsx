@@ -116,7 +116,7 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
         sideOffset={4}
         collisionPadding={16}
         avoidCollisions
-        className="w-56 p-0 rounded-xl shadow-xl border overflow-hidden z-[100]"
+        className="w-56 p-0 rounded-xl shadow-xl border overflow-hidden"
       >
         <div
           className="px-3 py-2 border-b"
