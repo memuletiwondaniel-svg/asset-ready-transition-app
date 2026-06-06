@@ -20,6 +20,7 @@ export interface Project {
   created_at: string;
   updated_at: string;
   is_active: boolean;
+  lifecycle_status?: 'active' | 'archived' | 'deleted';
   is_favorite?: boolean;
   // Joined data
   plant_name?: string;
