@@ -3754,15 +3754,16 @@ export const translations = {
     // Welcome Screen
     welcomeTitle: '运营就绪',
     welcomeSubtitle: '启动与移交',
-    welcomeDescription: '通过 ORSH 平台改变您的项目启动和移交体验。',
+    welcomeDescription: '一个平台。各方参与。整合人员与系统，交付业务成果。',
     safeStartup: 'PSSR',
     safeStartupDesc: '启动前安全审查 - 使用 PSSR 检查表管理新设施碳氢化合物的安全引入',
-    p2oHandover: 'P2A 移交',
-    p2oHandoverDesc: '从建设和调试到资产运营的无缝过渡和移交',
+    p2oHandover: 'P2A',
+    p2oHandoverDesc: '协调从施工、调试到资产运营的过渡和移交。',
     accessButton: '访问 ORSH 平台',
     enterpriseSecure: '企业级安全',
-    isoCompliant: 'ISO 合规',
-    support24: '24/7 支持',
+    connectedPeople: '人员互联',
+    connectedSystems: '系统互联',
+    integratedDelivery: '集成交付',
     help: '帮助',
     
     // User Profile
