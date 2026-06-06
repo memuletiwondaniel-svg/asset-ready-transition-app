@@ -1982,7 +1982,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                           const isDragging = draggingId === deliverable.id;
                           const barL = isDragging && previewLeft !== null ? previewLeft : barPos.left;
                           const barW = isDragging && previewWidth !== null ? previewWidth : barPos.width;
-                          const mutedColor = BAR_COLORS_MUTED[prefix] || 'bg-muted';
+                          // bar styling provided by shared module (barStyle)
                           const isP2aActivity = deliverable.deliverable?.activity_code === 'P2A-01' || deliverable.deliverable?.activity_code === 'EXE-10' || deliverable.deliverable?.name?.toLowerCase().includes('p2a');
                           const p2aPlanIsDraft = existingP2APlan && existingP2APlan.status === 'DRAFT';
                           // Reconcile progress: ad-hoc reviewer-aware cap, then P2A draft cap
