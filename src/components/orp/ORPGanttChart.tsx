@@ -1999,7 +1999,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                               {/* Ghost bar at original position during drag */}
                               {isDragging && (
                                 <div
-                                  className={cn("absolute top-2 rounded opacity-25 border-2 border-dashed border-foreground/30", mutedColor)}
+                                  className={cn("absolute top-2 rounded opacity-25 border-2 border-dashed border-foreground/30", barStyle.track)}
                                   style={{ left: barPos.left, width: barPos.width, height: ROW_HEIGHT - 16 }}
                                 />
                               )}
@@ -2008,7 +2008,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                                   <div
                                     className={cn(
                                       "absolute top-2 rounded shadow-sm overflow-hidden transition-all group",
-                                      mutedColor,
+                                      barStyle.track,
                                       !readOnly && "cursor-grab hover:shadow-md",
                                       isDragging && "ring-2 ring-primary/50 shadow-lg cursor-grabbing z-30",
                                       isCritical && "ring-2 ring-destructive/70"
@@ -2028,13 +2028,15 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                                       openActivitySheet(deliverable);
                                     }}
                                   >
-                                    <div
-                                      className={cn("absolute h-full rounded-l", barColor)}
-                                      style={{ width: `${completion}%` }}
-                                    />
+                                    {completion > 0 && (
+                                      <div
+                                        className={cn("absolute h-full rounded-l", barStyle.fill)}
+                                        style={{ width: `${completion}%` }}
+                                      />
+                                    )}
                                     <div className="absolute inset-0 flex items-center justify-center z-10">
-                                      <span className="text-[9px] text-white font-medium drop-shadow-sm">
-                                        {completion}%
+                                      <span className={cn("text-[9px]", GANTT_BAR_LABEL_CLASS)}>
+                                        {completion > 0 ? `${completion}%` : ''}
                                       </span>
                                     </div>
                                     {!readOnly && (
