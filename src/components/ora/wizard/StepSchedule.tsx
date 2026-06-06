@@ -837,16 +837,21 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
                           >
                             <div className={cn("h-full rounded", barStyle.fill, "opacity-40")} style={{ width: '100%' }} />
                             {barPos.width > 24 && (
-                              <span className={cn("absolute inset-0 flex items-center justify-center text-[9px]", GANTT_BAR_LABEL_CLASS)}>
-                                {(() => {
-                                  const range = getParentDateRange(activity.id, selectedActivities, childrenMap);
-                                  if (range.minStart && range.maxEnd) {
-                                    return `${differenceInDays(parseISO(range.maxEnd), parseISO(range.minStart))}d`;
-                                  }
-                                  return '';
-                                })()}
-                              </span>
+                              <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+                                <span className={cn(GANTT_BAR_LABEL_CHIP_CLASS)}>
+                                  <span className={cn("text-[9px]", GANTT_BAR_LABEL_CLASS)}>
+                                    {(() => {
+                                      const range = getParentDateRange(activity.id, selectedActivities, childrenMap);
+                                      if (range.minStart && range.maxEnd) {
+                                        return `${differenceInDays(parseISO(range.maxEnd), parseISO(range.minStart))}d`;
+                                      }
+                                      return '';
+                                    })()}
+                                  </span>
+                                </span>
+                              </div>
                             )}
+
                           </div>
                         );
                       })()}
