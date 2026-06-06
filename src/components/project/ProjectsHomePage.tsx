@@ -46,7 +46,8 @@ interface ProjectsHomePageProps {
 const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
   const navigate = useNavigate();
   useLanguage();
-  const { projects, isLoading, deleteProject, permanentlyDeleteProject, isDeleting } = useProjects();
+  const { projects, isLoading, deleteProject, permanentlyDeleteProject, isDeleting, archiveProject, restoreProject } = useProjects();
+  const { isHidden, hideProject, unhideProject } = useHiddenProjects();
   const { canPerformActions } = useCanPerformActionsPermission();
   const { isAdmin } = useIsAdminPermission();
   const [searchQuery, setSearchQuery] = useState('');
