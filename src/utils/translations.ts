@@ -3027,15 +3027,16 @@ export const translations = {
     // Welcome Screen
     welcomeTitle: 'Операциялық дайындық',
     welcomeSubtitle: 'Іске қосу және тапсыру',
-    welcomeDescription: 'ORSH платформасымен жобаны іске қосу тәжірибесін өзгертіңіз.',
+    welcomeDescription: 'Бір платформа. Әрбір тарап. Адамдар мен жүйелерді интеграциялау арқылы бизнес нәтижелерін жеткізу.',
     safeStartup: 'PSSR',
     safeStartupDesc: 'Іске қосу алдындағы қауіпсіздік шолуы',
-    p2oHandover: 'P2A тапсыру',
-    p2oHandoverDesc: 'Құрылыстан актив операциясына біркелкі ауысу',
+    p2oHandover: 'P2A',
+    p2oHandoverDesc: 'Құрылыс және іске қосудан активтерді басқаруға дейінгі ауысу мен тапсырысты үйлестіреді.',
     accessButton: 'ORSH платформасына кіру',
     enterpriseSecure: 'Кәсіпорын қауіпсіздігі',
-    isoCompliant: 'ISO сәйкестігі',
-    support24: '24/7 қолдау',
+    connectedPeople: 'Қосылған адамдар',
+    connectedSystems: 'Қосылған жүйелер',
+    integratedDelivery: 'Кешенді жеткізу',
     
     // User Profile
     profile: 'Профиль',
