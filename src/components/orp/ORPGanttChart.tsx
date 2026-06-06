@@ -1972,11 +1972,14 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                               title={`${deliverable.deliverable?.name} (summary)`}
                             >
                               <div className={cn("absolute h-full rounded-l", barStyle.fill, "opacity-40")} style={{ width: '100%' }} />
-                              <div className="absolute inset-0 flex items-center justify-center z-10">
-                                <span className={cn("text-[9px]", GANTT_BAR_LABEL_CLASS)}>
-                                  {parentDuration !== null ? `${parentDuration}d` : ''}
+                              <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+                                <span className={cn(GANTT_BAR_LABEL_CHIP_CLASS)}>
+                                  <span className={cn("text-[9px]", GANTT_BAR_LABEL_CLASS)}>
+                                    {parentDuration !== null ? `${parentDuration}d` : ''}
+                                  </span>
                                 </span>
                               </div>
+
                             </div>
                           );
                         })()}
