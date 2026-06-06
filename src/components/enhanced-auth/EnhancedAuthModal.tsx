@@ -20,11 +20,17 @@ interface EnhancedAuthModalProps {
 
 const OrDivider = () => (
   <div className="flex items-center gap-3 my-1">
-    <div className="flex-1 h-px bg-border" />
-    <span className="text-xs text-muted-foreground font-medium">or</span>
-    <div className="flex-1 h-px bg-border" />
+    <div className="flex-1 h-px bg-[#ece9e2]" />
+    <span className="text-xs text-gray-400 lowercase">or</span>
+    <div className="flex-1 h-px bg-[#ece9e2]" />
   </div>
 );
+
+const inputCls =
+  "pl-10 h-11 text-sm rounded-[10px] border border-[#e6e4de] bg-[#fafaf8] text-gray-900 placeholder:text-gray-400 focus-visible:border-[#2563eb] focus-visible:ring-0 focus-visible:shadow-[0_0_0_3px_rgba(37,99,235,0.12)] transition-all";
+
+const ssoBtnCls =
+  "w-full h-11 text-sm font-medium rounded-[10px] bg-white border border-[#e6e4de] text-gray-800 hover:bg-gray-50 hover:scale-100 active:scale-100 shadow-none";
 
 const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   isOpen,
@@ -118,12 +124,8 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
         
         <div className="w-screen h-screen flex items-center justify-center p-4 relative z-10 pointer-events-none">
           <div className="w-full max-w-sm relative z-10 pointer-events-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="bg-card/80 backdrop-blur-2xl rounded-2xl shadow-[0_32px_64px_-12px_rgba(0,0,0,0.25)] border border-border/20 p-6 sm:p-8 relative overflow-hidden transition-all duration-500 hover:shadow-[0_40px_80px_-12px_rgba(0,0,0,0.3)] hover:bg-card/85">
-              
-              {/* Fluent Design Acrylic Effect */}
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-card/40 to-accent/6 rounded-2xl" />
-              <div className="absolute inset-0 bg-gradient-to-t from-transparent via-background/5 to-foreground/3 rounded-2xl" />
-              
+            <div className="bg-white rounded-[18px] shadow-[0_12px_40px_rgba(0,0,0,0.16)] p-8 relative overflow-hidden">
+
               <div className="relative z-10">
                 {/* Header */}
                 <div className="text-center mb-6">
@@ -131,13 +133,13 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                     {subdomainTenant?.logo_url ? (
                       <img src={subdomainTenant.logo_url} alt={subdomainTenant.name} className="h-12 w-auto" />
                     ) : (
-                      <OrshLogo className="h-12 w-auto" />
+                      <OrshLogo className="h-12 w-auto text-gray-900" />
                     )}
                   </div>
                   {subdomainTenant && (
-                    <p className="text-xs font-medium text-primary mb-1">{subdomainTenant.name}</p>
+                    <p className="text-xs font-medium text-[#2563eb] mb-1">{subdomainTenant.name}</p>
                   )}
-                  <p className="text-muted-foreground text-sm">
+                  <p className="text-gray-500 text-[13px]">
                     {activeTab === 'reset' ? 'Reset your password' : 'Sign in to your ORSH account'}
                   </p>
                 </div>
@@ -212,9 +214,9 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                             onClick={() => handleSSO(ssoConfig.supabase_sso_provider_id || 'saml')} 
                             disabled={loading} 
                             variant="outline"
-                            className="w-full h-11 text-sm font-semibold border-border hover:bg-muted/60 transition-all duration-200"
+                            className={ssoBtnCls}
                           >
-                            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Shield className="w-4 h-4 mr-2 text-muted-foreground" />}
+                            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Shield className="w-4 h-4 mr-2 text-gray-500" />}
                             {ssoConfig.button_label || 'Sign in with SSO'}
                           </Button>
                         </div>
@@ -224,7 +226,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                             onClick={() => handleSSO('azure')} 
                             disabled={loading} 
                             variant="outline"
-                            className="w-full h-11 text-sm font-semibold border-border hover:bg-muted/60 transition-all duration-200"
+                            className={ssoBtnCls}
                           >
                             {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (
                               <img src="/lovable-uploads/6e3cd7e2-9a08-4d20-88f7-d3a2ab9f4f7b.png" alt="BGC Logo" className="w-5 h-5 mr-2" />
@@ -235,7 +237,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                             onClick={() => handleSSO('google')} 
                             disabled={loading} 
                             variant="outline"
-                            className="w-full h-11 text-sm font-semibold border-border hover:bg-muted/60 transition-all duration-200"
+                            className={ssoBtnCls}
                           >
                             {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (
                               <img src="/lovable-uploads/dc6cee89-84f7-416a-b996-ec5cbb00d683.png" alt="Kent Logo" className="w-5 h-5 mr-2" />
@@ -259,17 +261,17 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                       )}
 
                       <form onSubmit={handleSignIn} className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="signin-email" className="text-sm font-medium">Email</Label>
+                        <div className="space-y-1.5">
+                          <Label htmlFor="signin-email" className="text-sm font-medium text-gray-700">Email</Label>
                           <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <Input
                               id="signin-email"
                               type="email"
                               placeholder="your.email@bgc.com"
                               value={signInData.email}
                               onChange={e => { setSignInData({ ...signInData, email: e.target.value }); setLoginFailed(false); }}
-                              className="pl-10 h-10 text-sm border-border bg-input focus-visible:ring-2 focus-visible:ring-ring"
+                              className={inputCls}
                               required
                               aria-invalid={loginFailed}
                               aria-describedby={loginFailed ? 'login-error' : undefined}
@@ -278,17 +280,17 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                           </div>
                         </div>
 
-                        <div className="space-y-2">
-                          <Label htmlFor="signin-password" className="text-sm font-medium">Password</Label>
+                        <div className="space-y-1.5">
+                          <Label htmlFor="signin-password" className="text-sm font-medium text-gray-700">Password</Label>
                           <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <Input
                               id="signin-password"
                               type={showPassword ? 'text' : 'password'}
                               placeholder="Enter your password"
                               value={signInData.password}
                               onChange={e => { setSignInData({ ...signInData, password: e.target.value }); setLoginFailed(false); }}
-                              className="pl-10 pr-10 h-10 text-sm border-border bg-input focus-visible:ring-2 focus-visible:ring-ring"
+                              className={`${inputCls} pr-10`}
                               required
                               aria-invalid={loginFailed}
                               aria-describedby={loginFailed ? 'login-error' : undefined}
@@ -296,7 +298,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                             />
                             <button 
                               type="button" 
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors" 
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors" 
                               onClick={() => setShowPassword(!showPassword)}
                             >
                               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -310,20 +312,20 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                               id="remember-me"
                               checked={rememberMe}
                               onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                              className="h-4 w-4"
+                              className="h-4 w-4 border-gray-300 data-[state=checked]:bg-[#2563eb] data-[state=checked]:border-[#2563eb]"
                             />
-                            <Label htmlFor="remember-me" className="text-sm text-muted-foreground cursor-pointer">
+                            <Label htmlFor="remember-me" className="text-sm text-gray-600 cursor-pointer">
                               Remember me
                             </Label>
                           </div>
-                          <Button variant="link" className="p-0 h-auto text-primary text-sm" onClick={() => setActiveTab('reset')}>
+                          <Button variant="link" className="p-0 h-auto text-[#2563eb] hover:text-[#1d4ed8] text-sm" onClick={() => setActiveTab('reset')}>
                             Forgot password?
                           </Button>
                         </div>
 
                         <Button
                           type="submit"
-                          className="w-full h-11 text-sm font-semibold transition-all duration-200 hover:scale-[1.01] active:scale-[0.98]"
+                          className="w-full h-[46px] text-sm font-medium rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] text-white transition-colors"
                           disabled={loading}
                         >
                           {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Signing in...</> : 'Sign In'}
@@ -331,20 +333,21 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                       </form>
 
                       {/* Register link */}
-                      <div className="text-center text-sm text-muted-foreground pt-3">
+                      <div className="text-center text-sm text-gray-600 pt-3">
                         New to ORSH?{' '}
-                        <Button variant="link" className="p-0 h-auto text-primary text-sm font-medium" onClick={() => setShowRegistrationForm(true)}>
+                        <Button variant="link" className="p-0 h-auto text-[#2563eb] hover:text-[#1d4ed8] text-sm font-medium" onClick={() => setShowRegistrationForm(true)}>
                           Create your account
                         </Button>
                       </div>
 
                       {/* Terms */}
-                      <div className="text-center text-xs text-muted-foreground pt-2">
+                      <div className="text-center text-xs text-gray-400 pt-2">
                         By signing in, you agree to our{' '}
-                        <Button variant="link" className="p-0 h-auto text-primary text-xs">Terms</Button>{' '}
+                        <Button variant="link" className="p-0 h-auto text-gray-500 hover:text-gray-700 text-xs underline">Terms</Button>{' '}
                         and{' '}
-                        <Button variant="link" className="p-0 h-auto text-primary text-xs">Privacy Policy</Button>
+                        <Button variant="link" className="p-0 h-auto text-gray-500 hover:text-gray-700 text-xs underline">Privacy Policy</Button>
                       </div>
+
                     </>
                   )}
                 </div>
