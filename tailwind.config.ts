@@ -130,6 +130,21 @@ export default {
 				'fluent': '30px',
 				'xs': '2px',
 			},
+			// Centralized overlay/z-index scale — see src/lib/z-index.ts for docs.
+			zIndex: {
+				'sticky': '20',
+				'overlay': '1200',
+				'modal': '1210',
+				'overlay-nested': '1300',
+				'modal-nested': '1310',
+				'overlay-viewer': '1400',
+				'modal-viewer': '1410',
+				'overlay-critical': '1500',
+				'modal-critical': '1510',
+				'dropdown': '1600',
+				'tooltip': '1650',
+				'toast': '1700',
+			},
 			keyframes: {
 				'pulse-subtle': {
 					'0%, 100%': { opacity: '1' },
