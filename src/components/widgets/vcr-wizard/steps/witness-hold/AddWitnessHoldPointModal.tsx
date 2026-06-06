@@ -42,6 +42,7 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
   const isEdit = !!editingActivityId;
 
   const [systemId, setSystemId] = useState<string>('');
+  const [systemOpen, setSystemOpen] = useState(false);
   const [activity, setActivity] = useState('');
   const [type, setType] = useState<InspectionType>('HOLD');
   const [notes, setNotes] = useState('');
