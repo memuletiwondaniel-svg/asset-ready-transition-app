@@ -8,9 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Select, SelectContent, SelectTrigger,
+  Select, SelectContent, SelectTrigger, SelectItem,
 } from '@/components/ui/select';
-import * as SelectPrimitive from '@radix-ui/react-select';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -206,25 +205,17 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
                 )}
               </SelectTrigger>
               <SelectContent className="z-[210]">
-                {systems.map((s) => (
-                  <SelectPrimitive.Item
-                    key={s.id}
-                    value={s.id}
-                    className={cn(
-                      'relative flex w-full cursor-pointer select-none items-center justify-between gap-3',
-                      'rounded-sm py-1.5 px-2 text-sm outline-none transition-colors',
-                      'hover:bg-accent/50 focus:bg-accent focus:text-accent-foreground',
-                      'data-[state=checked]:bg-accent/60 data-[state=checked]:font-medium',
-                      'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
-                    )}
-                  >
-                    <SelectPrimitive.ItemText>{s.name}</SelectPrimitive.ItemText>
-                    {s.code && (
-                      <span className="font-mono text-xs text-muted-foreground shrink-0">
-                        {s.code}
-                      </span>
-                    )}
-                  </SelectPrimitive.Item>
+                {systems.filter((s) => !!s.id).map((s) => (
+                  <SelectItem key={s.id} value={s.id} className="pl-2">
+                    <span className="flex items-baseline gap-2 min-w-0 w-full justify-between">
+                      <span className="truncate">{s.name}</span>
+                      {s.code && (
+                        <span className="font-mono text-xs text-muted-foreground shrink-0">
+                          {s.code}
+                        </span>
+                      )}
+                    </span>
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
