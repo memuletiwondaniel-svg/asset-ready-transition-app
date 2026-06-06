@@ -10,7 +10,8 @@ import { Plus, FolderOpen, Users, Calendar, FileText, MoreVertical, Eye, Edit3, 
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { getCurrentTranslations } from '@/utils/translations';
-import { useProjects } from '@/hooks/useProjects';
+import { useProjects, useArchivedProjects } from '@/hooks/useProjects';
+import { Switch } from '@/components/ui/switch';
 import { usePlants } from '@/hooks/usePlants';
 import { useStations } from '@/hooks/useStations';
 import { useHubs } from '@/hooks/useHubs';
@@ -123,7 +124,9 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
   const [selectedHub, setSelectedHub] = useState('all');
   const [projectToDelete, setProjectToDelete] = useState<any>(null);
   const [hardDelete, setHardDelete] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const { isAdmin } = useIsAdminPermission();
+  const { data: archivedProjects = [] } = useArchivedProjects(isAdmin && showArchived);
   
   // Get translations
   const t = translations || getCurrentTranslations(selectedLanguage);
@@ -158,7 +161,7 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
 
   // Filter and sort projects
   const filteredAndSortedProjects = useMemo(() => {
-    let filtered = [...(projects || [])];
+    let filtered = [...(projects || []), ...(isAdmin && showArchived ? archivedProjects : [])];
 
     // Apply search filter
     if (searchQuery) {
@@ -218,6 +221,9 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
     ];
   }, [
     projects,
+    archivedProjects,
+    showArchived,
+    isAdmin,
     searchQuery,
     selectedPlant,
     selectedHub,
@@ -249,6 +255,13 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
   };
 
   const getStatusBadge = (project: any) => {
+    if (project?.is_active === false) {
+      return (
+        <Badge variant="outline" className="bg-muted text-muted-foreground border-border">
+          Archived
+        </Badge>
+      );
+    }
     return (
                       <Badge variant="outline" className="bg-green-100/80 text-green-700 border-green-200/60">
                         {t.active}
@@ -270,6 +283,11 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
 
   const handleDeleteProject = (project: any) => {
     setProjectToDelete(project);
+    // For already-archived projects, default the admin checkbox to hard delete
+    // since soft-delete has already been applied.
+    if (project?.is_active === false && isAdmin) {
+      setHardDelete(true);
+    }
   };
 
   const confirmDeleteProject = async () => {
@@ -352,7 +370,19 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
           {/* Main Content */}
           <div className="flex-1 overflow-auto p-3 sm:p-4 md:p-6">
             <div className="max-w-[1600px] mx-auto space-y-4 sm:space-y-6">
-              <div className="flex justify-end mb-4">
+              <div className="flex items-center justify-end gap-4 mb-4">
+                {isAdmin && (
+                  <div className="flex items-center gap-2 rounded-md border border-border/60 bg-card/60 px-3 py-1.5">
+                    <Switch
+                      id="show-archived"
+                      checked={showArchived}
+                      onCheckedChange={setShowArchived}
+                    />
+                    <Label htmlFor="show-archived" className="text-sm cursor-pointer">
+                      Show archived (deleted) projects
+                    </Label>
+                  </div>
+                )}
                 <Button 
                   onClick={() => setIsAddModalOpen(true)}
                   className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-200"
