@@ -510,6 +510,12 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
                               }}
                               onEdit={() => setEditProject(project)}
                               onDelete={() => handleDeleteProject(project)}
+                              isAdmin={isAdmin}
+                              isHidden={isHidden(project.id)}
+                              onArchive={() => archiveProject(project.id)}
+                              onRestore={() => restoreProject(project.id)}
+                              onHide={() => hideProject(project.id)}
+                              onUnhide={() => unhideProject(project.id)}
                               translations={t}
                             />
                           ))}
