@@ -61,7 +61,7 @@ const OrshLogo: React.FC<OrshLogoProps> = ({
   const content = (
     <div className="flex flex-col items-center justify-center">
       <div className="flex items-end leading-none">
-        <OrshMarkSvg height={h} />
+        <OrshMarkSvg height={h} surface={surface} />
         {variant === 'full' && (
           <span
             className={cn(
