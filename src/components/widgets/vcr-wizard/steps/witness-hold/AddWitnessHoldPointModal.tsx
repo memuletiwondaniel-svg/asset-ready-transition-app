@@ -44,7 +44,7 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
   const [activity, setActivity] = useState('');
   const [type, setType] = useState<InspectionType>('HOLD');
   const [notes, setNotes] = useState('');
-  const [addAnother, setAddAnother] = useState(false);
+  
   const [saving, setSaving] = useState(false);
 
   // Fetch systems mapped to this VCR
