@@ -14195,6 +14195,7 @@ export type Database = {
           is_active: boolean | null
           is_favorite: boolean | null
           is_scorecard: boolean | null
+          lifecycle_status: string | null
           milestone_count: number | null
           next_milestone_date: string | null
           next_milestone_name: string | null
