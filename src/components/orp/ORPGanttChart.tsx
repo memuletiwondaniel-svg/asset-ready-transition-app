@@ -62,8 +62,11 @@ import {
   getGanttBarStyle,
   getGanttPhasePrefix as getPhasePrefix,
   GANTT_BAR_LABEL_CLASS,
+  GANTT_BAR_LABEL_CHIP_CLASS,
+  getGanttBarLabel,
   ID_BADGE_COLORS,
 } from '@/components/orp/utils/ganttBarStyles';
+
 
 // Neutral ID badge — single source of truth from shared module.
 function getIdBadgeColors(_code: string): { bg: string; text: string } {
@@ -1969,11 +1972,14 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                               title={`${deliverable.deliverable?.name} (summary)`}
                             >
                               <div className={cn("absolute h-full rounded-l", barStyle.fill, "opacity-40")} style={{ width: '100%' }} />
-                              <div className="absolute inset-0 flex items-center justify-center z-10">
-                                <span className={cn("text-[9px]", GANTT_BAR_LABEL_CLASS)}>
-                                  {parentDuration !== null ? `${parentDuration}d` : ''}
+                              <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+                                <span className={cn(GANTT_BAR_LABEL_CHIP_CLASS)}>
+                                  <span className={cn("text-[9px]", GANTT_BAR_LABEL_CLASS)}>
+                                    {parentDuration !== null ? `${parentDuration}d` : ''}
+                                  </span>
                                 </span>
                               </div>
+
                             </div>
                           );
                         })()}
@@ -2034,11 +2040,19 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                                         style={{ width: `${completion}%` }}
                                       />
                                     )}
-                                    <div className="absolute inset-0 flex items-center justify-center z-10">
-                                      <span className={cn("text-[9px]", GANTT_BAR_LABEL_CLASS)}>
-                                        {completion > 0 ? `${completion}%` : ''}
+                                    <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+                                      <span className={cn(GANTT_BAR_LABEL_CHIP_CLASS)}>
+                                        <span className={cn("text-[9px]", GANTT_BAR_LABEL_CLASS)}>
+                                          {getGanttBarLabel(
+                                            completion,
+                                            deliverable.start_date && deliverable.end_date
+                                              ? differenceInDays(parseISO(deliverable.end_date), parseISO(deliverable.start_date))
+                                              : null
+                                          )}
+                                        </span>
                                       </span>
                                     </div>
+
                                     {!readOnly && (
                                       <>
                                         <div
