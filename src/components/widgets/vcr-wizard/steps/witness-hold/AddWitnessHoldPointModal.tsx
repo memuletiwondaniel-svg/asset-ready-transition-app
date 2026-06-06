@@ -8,8 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Select, SelectContent, SelectTrigger, SelectItem,
+  Select, SelectContent, SelectTrigger,
 } from '@/components/ui/select';
+import * as SelectPrimitive from '@radix-ui/react-select';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -192,7 +193,7 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
                 title={noSystemsMapped ? 'Add systems first (step 1)' : undefined}
               >
                 {selectedSystem ? (
-                  <span className="flex items-baseline gap-2 min-w-0 text-left truncate">
+                  <span className="flex items-baseline gap-4 min-w-0 text-left truncate">
                     <span className="truncate">{selectedSystem.name}</span>
                     {selectedSystem.code && (
                       <span className="font-mono text-xs text-muted-foreground shrink-0">
@@ -206,18 +207,25 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
               </SelectTrigger>
               <SelectContent className="z-[210]">
                 {systems.filter((s) => !!s.id).map((s) => (
-                  <SelectItem key={s.id} value={s.id} className="pl-2">
-                    <span className="flex items-baseline gap-2 min-w-0 w-full justify-between">
-                      <span className="truncate">{s.name}</span>
-                      {s.code && (
-                        <span className="font-mono text-xs text-muted-foreground shrink-0">
-                          {s.code}
-                        </span>
-                      )}
-                    </span>
-                  </SelectItem>
+                  <SelectPrimitive.Item
+                    key={s.id}
+                    value={s.id}
+                    className="relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 px-2 text-sm outline-none transition-colors hover:bg-accent/50 focus:bg-accent focus:text-accent-foreground data-[state=checked]:bg-accent data-[state=checked]:font-medium data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
+                  >
+                    <SelectPrimitive.ItemText>
+                      <span className="flex items-baseline gap-4 min-w-0 w-full justify-between">
+                        <span className="truncate">{s.name}</span>
+                        {s.code && (
+                          <span className="font-mono text-xs text-muted-foreground shrink-0">
+                            {s.code}
+                          </span>
+                        )}
+                      </span>
+                    </SelectPrimitive.ItemText>
+                  </SelectPrimitive.Item>
                 ))}
               </SelectContent>
+
             </Select>
           </div>
 
