@@ -74,11 +74,70 @@ export const SOFCertificateNavigator: React.FC<SOFCertificateNavigatorProps> = (
   const [activeTab, setActiveTab] = useState<TabId>('sof');
   const [confirmationState, setConfirmationState] = useState<'approved' | 'rejected' | null>(null);
 
-  const handleSignComplete = () => {
+  // Live, locally-managed approver list. Seeded from props (which may be
+  // mock/static data); updated optimistically after sign/reject so the
+  // signature block reflects the new APPROVED/REJECTED state immediately.
+  const [liveApprovers, setLiveApprovers] = useState<SOFApprover[]>(approvers);
+  useEffect(() => {
+    setLiveApprovers(approvers);
+  }, [approvers]);
+
+  const isMockPssr = !pssrId || pssrId.startsWith('mock-');
+  const { approveSOF, rejectSOF } = useSOFApprovers(isMockPssr ? undefined : pssrId);
+
+  const handleSignComplete = async (payload: SOFSignPayload) => {
+    if (!isMockPssr) {
+      try {
+        await approveSOF.mutateAsync({
+          approverId: payload.approverId,
+          comments: payload.comments,
+          signatureData: payload.signatureData,
+        });
+      } catch {
+        // hook surfaces its own error toast; bail out without confirmation
+        return;
+      }
+    }
+    setLiveApprovers((prev) =>
+      prev.map((a) =>
+        a.id === payload.approverId
+          ? {
+              ...a,
+              status: 'APPROVED',
+              signature_data: payload.signatureData,
+              comments: payload.comments || a.comments,
+              approved_at: new Date().toISOString(),
+            }
+          : a
+      )
+    );
     setConfirmationState('approved');
   };
 
-  const handleRejectComplete = () => {
+  const handleRejectComplete = async (payload: SOFRejectPayload) => {
+    if (!isMockPssr) {
+      try {
+        await rejectSOF.mutateAsync({
+          approverId: payload.approverId,
+          comments: payload.description,
+        });
+      } catch {
+        return;
+      }
+    }
+    setLiveApprovers((prev) =>
+      prev.map((a) =>
+        a.id === payload.approverId
+          ? {
+              ...a,
+              status: 'REJECTED',
+              rejection_description: payload.description,
+              rejection_linked_item: payload.linkedItemId,
+              rejected_at: new Date().toISOString(),
+            }
+          : a
+      )
+    );
     setConfirmationState('rejected');
   };
 
