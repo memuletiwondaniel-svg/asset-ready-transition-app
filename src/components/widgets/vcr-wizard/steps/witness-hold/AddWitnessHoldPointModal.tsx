@@ -60,15 +60,15 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
       const seen = new Set<string>();
       return (data || [])
         .filter((row: any) => {
-          const system = row.p2a_systems;
+          const system = Array.isArray(row.p2a_systems) ? row.p2a_systems[0] : row.p2a_systems;
           if (!system?.id || seen.has(system.id)) return false;
           seen.add(system.id);
           return true;
         })
         .map((row: any) => ({
-          id: row.p2a_systems.id,
-          name: row.p2a_systems.name || 'Unknown',
-          code: row.p2a_systems.system_id || '',
+          id: (Array.isArray(row.p2a_systems) ? row.p2a_systems[0] : row.p2a_systems).id,
+          name: (Array.isArray(row.p2a_systems) ? row.p2a_systems[0] : row.p2a_systems).name || 'Unknown',
+          code: (Array.isArray(row.p2a_systems) ? row.p2a_systems[0] : row.p2a_systems).system_id || '',
         }))
         .sort((a: MappedSystem, b: MappedSystem) => a.name.localeCompare(b.name));
     },
@@ -215,16 +215,9 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
                   <SelectItem
                     key={s.id}
                     value={s.id}
-                    className="pl-2 pr-2 font-normal data-[state=checked]:font-medium [&>span:first-child]:hidden"
+                    className="px-2 font-normal data-[state=checked]:font-medium"
                   >
-                    <span className="flex items-baseline gap-4 min-w-0 w-full justify-between">
-                      <span className="truncate">{s.name}</span>
-                      {s.code && (
-                        <span className="font-mono text-xs text-muted-foreground shrink-0">
-                          {s.code}
-                        </span>
-                      )}
-                    </span>
+                    {s.code ? `${s.name} — ${s.code}` : s.name}
                   </SelectItem>
                 ))}
               </SelectContent>
