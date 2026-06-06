@@ -6,7 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProjects, useHiddenProjects, useArchivedProjects } from '@/hooks/useProjects';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Check, ChevronDown } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { CreateProjectWizard } from '@/components/project/CreateProjectWizard';
 import { supabase } from '@/integrations/supabase/client';
@@ -207,18 +213,42 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
                   <ProjectColumnsMenu prefs={tablePrefs} setPrefs={setTablePrefs} reset={resetTablePrefs} />
                 )}
 
-                <ToggleGroup
-                  type="single"
-                  size="sm"
-                  value={statusView}
-                  onValueChange={(v) => v && setStatusView(v as typeof statusView)}
-                  className="border rounded-md"
-                >
-                  <ToggleGroupItem value="active" className="h-8 px-2 text-xs">Active</ToggleGroupItem>
-                  {isAdmin && <ToggleGroupItem value="archived" className="h-8 px-2 text-xs">Archived</ToggleGroupItem>}
-                  {isAdmin && <ToggleGroupItem value="deleted" className="h-8 px-2 text-xs">Deleted</ToggleGroupItem>}
-                  <ToggleGroupItem value="hidden" className="h-8 px-2 text-xs">Hidden</ToggleGroupItem>
-                </ToggleGroup>
+                {(() => {
+                  const viewOptions: { value: typeof statusView; label: string }[] = [
+                    { value: 'active', label: 'Active' },
+                    ...(isAdmin
+                      ? [
+                          { value: 'archived' as const, label: 'Archived' },
+                          { value: 'deleted' as const, label: 'Deleted' },
+                        ]
+                      : []),
+                    { value: 'hidden', label: 'Hidden' },
+                  ];
+                  const current = viewOptions.find((o) => o.value === statusView) ?? viewOptions[0];
+                  return (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="h-9 gap-1.5 text-xs font-medium">
+                          <span className="text-muted-foreground">View:</span>
+                          <span>{current.label}</span>
+                          <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-40">
+                        {viewOptions.map((opt) => (
+                          <DropdownMenuItem
+                            key={opt.value}
+                            onSelect={() => setStatusView(opt.value)}
+                            className="text-sm justify-between"
+                          >
+                            {opt.label}
+                            {statusView === opt.value && <Check className="h-3.5 w-3.5 opacity-70" />}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  );
+                })()}
 
                 {canPerformActions && (
                   <Button
@@ -241,19 +271,53 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
               </div>
             )}
 
-            {!isLoading && filteredProjects.length === 0 && (
-              <EmptyState
-                icon={KeyRound}
-                title={searchQuery ? 'No projects found' : 'No projects yet'}
-                description={
-                  searchQuery
-                    ? "Try adjusting your search query to find what you're looking for."
-                    : 'Create your first project to begin managing Verification Certificates of Readiness and track operational milestones.'
-                }
-                actionLabel={!searchQuery && canPerformActions ? 'Create New Project' : undefined}
-                onAction={!searchQuery && canPerformActions ? () => setIsAddModalOpen(true) : undefined}
-              />
-            )}
+            {!isLoading && filteredProjects.length === 0 && (() => {
+              if (searchQuery) {
+                return (
+                  <EmptyState
+                    icon={KeyRound}
+                    title="No projects found"
+                    description="Try adjusting your search query to find what you're looking for."
+                  />
+                );
+              }
+              if (statusView === 'archived') {
+                return (
+                  <EmptyState
+                    icon={KeyRound}
+                    title="No archived projects"
+                    description="Archived projects will appear here. Admins can archive a project from its 3-dot menu."
+                  />
+                );
+              }
+              if (statusView === 'deleted') {
+                return (
+                  <EmptyState
+                    icon={KeyRound}
+                    title="No deleted projects"
+                    description="Soft-deleted projects will appear here. Admins can restore them or remove them permanently."
+                  />
+                );
+              }
+              if (statusView === 'hidden') {
+                return (
+                  <EmptyState
+                    icon={KeyRound}
+                    title="No hidden projects"
+                    description="Projects you hide from your personal list will appear here."
+                  />
+                );
+              }
+              return (
+                <EmptyState
+                  icon={KeyRound}
+                  title="No projects yet"
+                  description="Create your first project to begin managing Verification Certificates of Readiness and track operational milestones."
+                  actionLabel={canPerformActions ? 'Create New Project' : undefined}
+                  onAction={canPerformActions ? () => setIsAddModalOpen(true) : undefined}
+                />
+              );
+            })()}
 
             {!isLoading && filteredProjects.length > 0 && viewMode === 'heatmap' && (
               <P2AHeatmap projects={filteredProjects} onProjectClick={handleProjectClick} />

@@ -187,7 +187,7 @@ export const useProjects = () => {
     mutationFn: async (id: string) => {
       const { error } = await supabase
         .from('projects')
-        .update({ is_active: false })
+        .update({ is_active: false, lifecycle_status: 'deleted' } as any)
         .eq('id', id);
 
       if (error) throw error;
@@ -300,9 +300,10 @@ export const useArchivedProjects = (
     queryFn: async () => {
       let q = supabase
         .from('projects')
-        .select('id, project_id_prefix, project_id_number, project_title, plant_id, field_id, station_id, hub_id, region_id, project_scope, project_scope_image_url, created_by, created_at, updated_at, is_active, lifecycle_status')
-        .eq('is_active', false);
-      if (status !== 'all') {
+        .select('id, project_id_prefix, project_id_number, project_title, plant_id, field_id, station_id, hub_id, region_id, project_scope, project_scope_image_url, created_by, created_at, updated_at, is_active, lifecycle_status');
+      if (status === 'all') {
+        q = q.in('lifecycle_status', ['archived', 'deleted']);
+      } else {
         q = q.eq('lifecycle_status', status);
       }
       const { data, error } = await q.order('updated_at', { ascending: false });
