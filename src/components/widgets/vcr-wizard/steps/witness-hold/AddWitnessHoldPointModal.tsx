@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -40,6 +40,7 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
 }) => {
   const queryClient = useQueryClient();
   const isEdit = !!editingActivityId;
+  const dialogContentRef = useRef<HTMLDivElement | null>(null);
 
   const [systemId, setSystemId] = useState<string>('');
   const [systemOpen, setSystemOpen] = useState(false);
@@ -147,6 +148,7 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); else onOpenChange(true); }}>
       <DialogContent
+        ref={dialogContentRef}
         className="sm:max-w-[440px] p-0 gap-0 z-[200]"
         overlayClassName="z-[199] bg-black/80 backdrop-blur-sm"
       >
@@ -186,6 +188,7 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
                 </button>
               </PopoverTrigger>
               <PopoverContent
+                container={dialogContentRef.current}
                 className="p-0 z-[210] w-[--radix-popover-trigger-width]"
                 align="start"
               >
