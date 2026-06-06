@@ -880,9 +880,14 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
                               />
                             )}
                             {/* Label */}
-                            <div className="absolute inset-0 flex items-center px-1.5 z-10">
-                              <span className={cn("text-[9px] truncate", GANTT_BAR_LABEL_CLASS)}>{activity.durationDays}d</span>
+                            <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none px-1.5">
+                              <span className={cn(GANTT_BAR_LABEL_CHIP_CLASS, "truncate")}>
+                                <span className={cn("text-[9px]", GANTT_BAR_LABEL_CLASS)}>
+                                  {getGanttBarLabel(completion, activity.durationDays)}
+                                </span>
+                              </span>
                             </div>
+
                             {/* Left resize handle */}
                             <div
                               className="absolute left-0 top-0 bottom-0 w-[6px] cursor-col-resize z-20 hover:bg-foreground/10"
