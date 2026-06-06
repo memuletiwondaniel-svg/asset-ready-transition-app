@@ -9600,6 +9600,39 @@ export type Database = {
           },
         ]
       }
+      project_user_hides: {
+        Row: {
+          created_at: string
+          project_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          project_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          project_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_user_hides_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_user_hides_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_enriched"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           created_at: string
@@ -9613,6 +9646,7 @@ export type Database = {
           is_active: boolean
           is_favorite: boolean | null
           is_test_project: boolean
+          lifecycle_status: string
           plant_id: string | null
           project_id_number: string
           project_id_prefix: string
@@ -9636,6 +9670,7 @@ export type Database = {
           is_active?: boolean
           is_favorite?: boolean | null
           is_test_project?: boolean
+          lifecycle_status?: string
           plant_id?: string | null
           project_id_number: string
           project_id_prefix: string
@@ -9659,6 +9694,7 @@ export type Database = {
           is_active?: boolean
           is_favorite?: boolean | null
           is_test_project?: boolean
+          lifecycle_status?: string
           plant_id?: string | null
           project_id_number?: string
           project_id_prefix?: string
