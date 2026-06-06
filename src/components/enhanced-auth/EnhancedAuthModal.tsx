@@ -124,12 +124,8 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
         
         <div className="w-screen h-screen flex items-center justify-center p-4 relative z-10 pointer-events-none">
           <div className="w-full max-w-sm relative z-10 pointer-events-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="bg-card/80 backdrop-blur-2xl rounded-2xl shadow-[0_32px_64px_-12px_rgba(0,0,0,0.25)] border border-border/20 p-6 sm:p-8 relative overflow-hidden transition-all duration-500 hover:shadow-[0_40px_80px_-12px_rgba(0,0,0,0.3)] hover:bg-card/85">
-              
-              {/* Fluent Design Acrylic Effect */}
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-card/40 to-accent/6 rounded-2xl" />
-              <div className="absolute inset-0 bg-gradient-to-t from-transparent via-background/5 to-foreground/3 rounded-2xl" />
-              
+            <div className="bg-white rounded-[18px] shadow-[0_12px_40px_rgba(0,0,0,0.16)] p-8 relative overflow-hidden">
+
               <div className="relative z-10">
                 {/* Header */}
                 <div className="text-center mb-6">
@@ -137,13 +133,13 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                     {subdomainTenant?.logo_url ? (
                       <img src={subdomainTenant.logo_url} alt={subdomainTenant.name} className="h-12 w-auto" />
                     ) : (
-                      <OrshLogo className="h-12 w-auto" />
+                      <OrshLogo className="h-12 w-auto text-gray-900" />
                     )}
                   </div>
                   {subdomainTenant && (
-                    <p className="text-xs font-medium text-primary mb-1">{subdomainTenant.name}</p>
+                    <p className="text-xs font-medium text-[#2563eb] mb-1">{subdomainTenant.name}</p>
                   )}
-                  <p className="text-muted-foreground text-sm">
+                  <p className="text-gray-500 text-[13px]">
                     {activeTab === 'reset' ? 'Reset your password' : 'Sign in to your ORSH account'}
                   </p>
                 </div>
