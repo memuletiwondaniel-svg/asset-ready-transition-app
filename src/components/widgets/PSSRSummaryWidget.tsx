@@ -170,12 +170,18 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
   const handleVCRClick = (vcrId: string) => {
     const found = allVCRs.find(v => v.id === vcrId);
     if (!found) return;
-    const status = (found.status || '').toUpperCase();
-    const isApproved = status === 'SIGNED';
-    if (isApproved) {
-      setSelectedVCR(found);
-    } else {
+    const lifecycle = found.lifecycle;
+    // Wizard ONLY while the delivery plan is still being created/edited.
+    // Everything submitted/approved/handed-over opens the read-only detail overlay.
+    const stillEditable =
+      lifecycle === 'not_started' ||
+      lifecycle === 'draft' ||
+      // Fallback if lifecycle is somehow absent: preserve prior behaviour.
+      (!lifecycle && (found.status || '').toUpperCase() !== 'SIGNED');
+    if (stillEditable) {
       setWizardVCR(found);
+    } else {
+      setSelectedVCR(found);
     }
   };
 
