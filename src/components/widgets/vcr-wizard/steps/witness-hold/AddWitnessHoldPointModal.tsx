@@ -191,7 +191,7 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
               >
                 <Command>
                   <CommandInput placeholder="Search systems…" className="h-9" />
-                  <CommandList>
+                  <CommandList className="max-h-64 overflow-y-auto overscroll-contain">
                     <CommandEmpty>No systems found.</CommandEmpty>
                     <CommandGroup>
                       {systems.filter((s) => !!s.id).map((s) => (
