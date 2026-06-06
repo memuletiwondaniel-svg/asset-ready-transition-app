@@ -145,10 +145,6 @@ const Index = () => {
               {/* Trust Indicators */}
               <div className="flex flex-wrap items-center justify-center gap-6 text-white/75">
                 <div className="flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-green-400" />
-                  <span className="text-sm font-medium">{t.enterpriseSecure}</span>
-                </div>
-                <div className="flex items-center gap-2">
                   <Users className="w-4 h-4 text-cyan-400" />
                   <span className="text-sm font-medium">{t.connectedPeople}</span>
                 </div>
@@ -159,6 +155,10 @@ const Index = () => {
                 <div className="flex items-center gap-2">
                   <Target className="w-4 h-4 text-rose-400" />
                   <span className="text-sm font-medium">{t.integratedDelivery}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-green-400" />
+                  <span className="text-sm font-medium">{t.enterpriseSecure}</span>
                 </div>
               </div>
             </div>
