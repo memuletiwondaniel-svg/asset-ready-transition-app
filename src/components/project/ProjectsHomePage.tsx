@@ -207,6 +207,19 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
                   <ProjectColumnsMenu prefs={tablePrefs} setPrefs={setTablePrefs} reset={resetTablePrefs} />
                 )}
 
+                <ToggleGroup
+                  type="single"
+                  size="sm"
+                  value={statusView}
+                  onValueChange={(v) => v && setStatusView(v as typeof statusView)}
+                  className="border rounded-md"
+                >
+                  <ToggleGroupItem value="active" className="h-8 px-2 text-xs">Active</ToggleGroupItem>
+                  {isAdmin && <ToggleGroupItem value="archived" className="h-8 px-2 text-xs">Archived</ToggleGroupItem>}
+                  {isAdmin && <ToggleGroupItem value="deleted" className="h-8 px-2 text-xs">Deleted</ToggleGroupItem>}
+                  <ToggleGroupItem value="hidden" className="h-8 px-2 text-xs">Hidden</ToggleGroupItem>
+                </ToggleGroup>
+
                 {canPerformActions && (
                   <Button
                     size="sm"
