@@ -250,6 +250,28 @@ export const useProjects = () => {
   };
 };
 
+/**
+ * Admin-only: fetch soft-deleted (archived) projects directly from the
+ * `projects` table. The `projects_enriched` view filters them out, so we
+ * query the base table and provide just enough fields for the management UI.
+ */
+export const useArchivedProjects = (enabled: boolean) => {
+  return useQuery({
+    queryKey: ['projects', 'archived'],
+    enabled,
+    staleTime: 30000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('id, project_id_prefix, project_id_number, project_title, plant_id, field_id, station_id, hub_id, region_id, project_scope, project_scope_image_url, created_by, created_at, updated_at, is_active')
+        .eq('is_active', false)
+        .order('updated_at', { ascending: false });
+      if (error) throw error;
+      return (data || []) as Project[];
+    },
+  });
+};
+
 export const useProjectTeamMembers = (projectId?: string) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
