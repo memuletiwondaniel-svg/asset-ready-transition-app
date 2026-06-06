@@ -281,16 +281,6 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
             />
           </div>
 
-          {/* Add another */}
-          {!isEdit && (
-            <label className="flex items-center gap-2 cursor-pointer">
-              <Checkbox
-                checked={addAnother}
-                onCheckedChange={(c) => setAddAnother(!!c)}
-              />
-              <span className="text-xs text-muted-foreground">Add another after this one</span>
-            </label>
-          )}
         </div>
 
         <div className="px-6 py-3 border-t border-border/60 flex items-center justify-end gap-2">
