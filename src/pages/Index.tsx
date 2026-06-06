@@ -104,9 +104,10 @@ const Index = () => {
                 </span>
               </h1>
               
-              <p className="text-xl md:text-2xl text-white/85 font-light leading-relaxed max-w-2xl mx-auto">
+              <p className="text-lg md:text-xl lg:text-2xl text-white/85 font-light leading-relaxed mx-auto md:whitespace-nowrap">
                 {t.welcomeDescription}
               </p>
+
             </div>
             
             {/* Feature Cards */}
