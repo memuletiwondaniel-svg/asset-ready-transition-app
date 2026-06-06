@@ -1919,8 +1919,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                 <div style={{ width: timelineWidth, minWidth: '100%' }} className="relative">
                   {visibleRows.map((row, index) => {
                     const { deliverable, hasChildren, activityCode } = row;
-                    const prefix = getPhasePrefix(activityCode);
-                    const barColor = BAR_COLORS[prefix] || 'bg-primary';
+                    const barStyle = getGanttBarStyle(activityCode);
                     const isParent = hasChildren;
                     const hasDates = deliverable.start_date && deliverable.end_date;
                     const isCritical = showCriticalPath && criticalPathIds.has(deliverable.id);
