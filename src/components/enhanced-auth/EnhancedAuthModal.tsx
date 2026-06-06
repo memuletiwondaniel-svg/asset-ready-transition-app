@@ -20,11 +20,17 @@ interface EnhancedAuthModalProps {
 
 const OrDivider = () => (
   <div className="flex items-center gap-3 my-1">
-    <div className="flex-1 h-px bg-border" />
-    <span className="text-xs text-muted-foreground font-medium">or</span>
-    <div className="flex-1 h-px bg-border" />
+    <div className="flex-1 h-px bg-[#ece9e2]" />
+    <span className="text-xs text-gray-400 lowercase">or</span>
+    <div className="flex-1 h-px bg-[#ece9e2]" />
   </div>
 );
+
+const inputCls =
+  "pl-10 h-11 text-sm rounded-[10px] border border-[#e6e4de] bg-[#fafaf8] text-gray-900 placeholder:text-gray-400 focus-visible:border-[#2563eb] focus-visible:ring-0 focus-visible:shadow-[0_0_0_3px_rgba(37,99,235,0.12)] transition-all";
+
+const ssoBtnCls =
+  "w-full h-11 text-sm font-medium rounded-[10px] bg-white border border-[#e6e4de] text-gray-800 hover:bg-gray-50 hover:scale-100 active:scale-100 shadow-none";
 
 const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   isOpen,
