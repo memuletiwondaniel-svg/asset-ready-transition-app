@@ -403,19 +403,33 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
           {/* Main Content */}
           <div className="flex-1 overflow-auto p-3 sm:p-4 md:p-6">
             <div className="max-w-[1600px] mx-auto space-y-4 sm:space-y-6">
-              <div className="flex items-center justify-end gap-4 mb-4">
-                {isAdmin && (
-                  <div className="flex items-center gap-2 rounded-md border border-border/60 bg-card/60 px-3 py-1.5">
-                    <Switch
-                      id="show-archived"
-                      checked={showArchived}
-                      onCheckedChange={setShowArchived}
-                    />
-                    <Label htmlFor="show-archived" className="text-sm cursor-pointer">
-                      Show archived (deleted) projects
-                    </Label>
-                  </div>
-                )}
+              <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
+                <ToggleGroup
+                  type="single"
+                  value={statusView}
+                  onValueChange={(v) => v && setStatusView(v as any)}
+                  className="bg-card/60 border border-border/60 rounded-md p-1"
+                >
+                  <ToggleGroupItem value="active" className="text-xs px-3">
+                    Active
+                  </ToggleGroupItem>
+                  {isAdmin && (
+                    <ToggleGroupItem value="archived" className="text-xs px-3">
+                      <Archive className="h-3.5 w-3.5 mr-1.5" />
+                      Archived
+                    </ToggleGroupItem>
+                  )}
+                  {isAdmin && (
+                    <ToggleGroupItem value="deleted" className="text-xs px-3">
+                      <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                      Deleted
+                    </ToggleGroupItem>
+                  )}
+                  <ToggleGroupItem value="hidden" className="text-xs px-3">
+                    <EyeOff className="h-3.5 w-3.5 mr-1.5" />
+                    Hidden ({hiddenIds.length})
+                  </ToggleGroupItem>
+                </ToggleGroup>
                 <Button 
                   onClick={() => setIsAddModalOpen(true)}
                   className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-200"
