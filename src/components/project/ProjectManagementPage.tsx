@@ -221,6 +221,9 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
     ];
   }, [
     projects,
+    archivedProjects,
+    showArchived,
+    isAdmin,
     searchQuery,
     selectedPlant,
     selectedHub,
