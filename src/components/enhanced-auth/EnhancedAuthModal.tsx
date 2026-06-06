@@ -214,9 +214,9 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                             onClick={() => handleSSO(ssoConfig.supabase_sso_provider_id || 'saml')} 
                             disabled={loading} 
                             variant="outline"
-                            className="w-full h-11 text-sm font-semibold border-border hover:bg-muted/60 transition-all duration-200"
+                            className={ssoBtnCls}
                           >
-                            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Shield className="w-4 h-4 mr-2 text-muted-foreground" />}
+                            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Shield className="w-4 h-4 mr-2 text-gray-500" />}
                             {ssoConfig.button_label || 'Sign in with SSO'}
                           </Button>
                         </div>
@@ -226,7 +226,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                             onClick={() => handleSSO('azure')} 
                             disabled={loading} 
                             variant="outline"
-                            className="w-full h-11 text-sm font-semibold border-border hover:bg-muted/60 transition-all duration-200"
+                            className={ssoBtnCls}
                           >
                             {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (
                               <img src="/lovable-uploads/6e3cd7e2-9a08-4d20-88f7-d3a2ab9f4f7b.png" alt="BGC Logo" className="w-5 h-5 mr-2" />
@@ -237,7 +237,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                             onClick={() => handleSSO('google')} 
                             disabled={loading} 
                             variant="outline"
-                            className="w-full h-11 text-sm font-semibold border-border hover:bg-muted/60 transition-all duration-200"
+                            className={ssoBtnCls}
                           >
                             {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (
                               <img src="/lovable-uploads/dc6cee89-84f7-416a-b996-ec5cbb00d683.png" alt="Kent Logo" className="w-5 h-5 mr-2" />
