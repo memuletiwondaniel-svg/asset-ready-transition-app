@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Shield, FileCheck, Headphones, ClipboardCheck, Key } from "lucide-react";
+import { ArrowRight, Shield, Users, Network, Target, ClipboardCheck, Key } from "lucide-react";
 import { useAuth } from "@/components/enhanced-auth/AuthProvider";
 import { useTenantContext } from "@/contexts/TenantContext";
 import EnhancedAuthModal from "@/components/enhanced-auth/EnhancedAuthModal";
