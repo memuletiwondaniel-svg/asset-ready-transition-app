@@ -98,7 +98,7 @@ const SortableProjectCard = ({ project, ...props }: any) => {
 
 const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translations }: ProjectManagementPageProps) => {
   const navigate = useNavigate();
-  const { projects, isLoading, deleteProject, permanentlyDeleteProject } = useProjects();
+  const { projects, isLoading, deleteProject, permanentlyDeleteProject, archiveProject, restoreProject } = useProjects();
   const { plants } = usePlants();
   const { stations } = useStations();
   const { data: hubs = [] } = useHubs();
