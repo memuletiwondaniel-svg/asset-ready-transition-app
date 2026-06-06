@@ -68,7 +68,7 @@ const Index = () => {
             
             {/* ORSH Logo - Center */}
             <div className="absolute left-1/2 transform -translate-x-1/2">
-              <OrshLogo size="medium" />
+              <OrshLogo size="medium" className="text-white" />
             </div>
             
              {/* Tenant Logo - Right (only show if subdomain tenant) */}
