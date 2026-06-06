@@ -7,9 +7,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
-  Select, SelectContent, SelectTrigger, SelectValue,
+  Select, SelectContent, SelectTrigger,
 } from '@/components/ui/select';
 import * as SelectPrimitive from '@radix-ui/react-select';
 import { Loader2 } from 'lucide-react';
