@@ -1571,15 +1571,16 @@ export const translations = {
     // Welcome Screen
     welcomeTitle: 'Préparation Opérationnelle',
     welcomeSubtitle: 'Démarrage et Remise',
-    welcomeDescription: 'Transformez votre expérience de démarrage et de remise de projet avec la plateforme ORSH.',
+    welcomeDescription: 'Une plateforme. Chaque partie. Intégrer les personnes et les systèmes pour délivrer des résultats.',
     safeStartup: 'PSSR',
     safeStartupDesc: 'Revue de Sécurité Pré-Démarrage - Gérer l\'introduction sécurisée des hydrocarbures',
-    p2oHandover: 'Remise P2A',
-    p2oHandoverDesc: 'Transition et remise transparentes de la construction à l\'exploitation des actifs',
+    p2oHandover: 'P2A',
+    p2oHandoverDesc: 'Coordonne la transition et la remise de la construction et de la mise en service jusqu\'à l\'exploitation des actifs.',
     accessButton: 'Accéder à la Plateforme ORSH',
     enterpriseSecure: 'Sécurité Entreprise',
-    isoCompliant: 'Conforme ISO',
-    support24: 'Support 24/7',
+    connectedPeople: 'Personnes Connectées',
+    connectedSystems: 'Systèmes Connectés',
+    integratedDelivery: 'Livraison Intégrée',
     
     // User Profile
     profile: 'Profil',
