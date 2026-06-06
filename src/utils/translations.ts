@@ -843,15 +843,16 @@ export const translations = {
     // Welcome Screen
     welcomeTitle: 'جاهزية العمليات',
     welcomeSubtitle: 'البدء والتسليم',
-    welcomeDescription: 'حول تجربة بدء تشغيل وتسليم مشروعك مع منصة ORSH.',
+    welcomeDescription: 'منصة واحدة. كل طرف. دمج الأشخاص والأنظمة لتحقيق نتائج الأعمال.',
     safeStartup: 'PSSR',
     safeStartupDesc: 'مراجعة السلامة قبل البدء - إدارة الإدخال الآمن للهيدروكربونات في المنشآت الجديدة',
-    p2oHandover: 'تسليم P2A',
-    p2oHandoverDesc: 'انتقال وتسليم سلس من البناء والتشغيل إلى تشغيل الأصول',
+    p2oHandover: 'P2A',
+    p2oHandoverDesc: 'ينسق الانتقال والتسليم من البناء والتشغيل إلى تشغيل الأصول.',
     accessButton: 'الوصول إلى منصة ORSH',
     enterpriseSecure: 'أمان المؤسسة',
-    isoCompliant: 'متوافق مع ISO',
-    support24: 'دعم 24/7',
+    connectedPeople: 'أشخاص متصلون',
+    connectedSystems: 'أنظمة متصلة',
+    integratedDelivery: 'تسليم متكامل',
     
     // User Profile
     profile: 'الملف الشخصي',
