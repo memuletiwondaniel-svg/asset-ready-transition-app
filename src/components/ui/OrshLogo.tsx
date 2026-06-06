@@ -93,7 +93,7 @@ const OrshLogo: React.FC<OrshLogoProps> = ({
       <Link
         to="/"
         className={cn(
-          'flex items-center justify-center cursor-pointer text-foreground',
+          'flex items-center justify-center cursor-pointer text-foreground -ml-1',
           wrapperHeightClass[size],
           className,
         )}
@@ -106,7 +106,7 @@ const OrshLogo: React.FC<OrshLogoProps> = ({
   return (
     <div
       className={cn(
-        'flex items-center justify-center text-foreground',
+        'flex items-center justify-center text-foreground -ml-1',
         wrapperHeightClass[size],
         className,
       )}
