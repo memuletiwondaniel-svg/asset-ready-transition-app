@@ -44,6 +44,12 @@ interface ProjectCardProps {
   onView: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  isAdmin?: boolean;
+  isHidden?: boolean;
+  onArchive?: () => void;
+  onRestore?: () => void;
+  onHide?: () => void;
+  onUnhide?: () => void;
   isDragging?: boolean;
   translations: any;
   dragListeners?: any;
@@ -60,6 +66,12 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   onView,
   onEdit,
   onDelete,
+  isAdmin = false,
+  isHidden = false,
+  onArchive,
+  onRestore,
+  onHide,
+  onUnhide,
   isDragging,
   translations: t,
   dragListeners,
