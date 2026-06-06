@@ -5,108 +5,108 @@ import { cn } from '@/lib/utils';
 interface OrshLogoProps {
   size?: 'small' | 'medium' | 'large';
   showTagline?: boolean;
+  variant?: 'full' | 'mark';
   className?: string;
+  asLink?: boolean;
 }
 
-const OrshLogo: React.FC<OrshLogoProps> = ({ 
-  size = 'medium', 
-  showTagline = false,
-  className 
-}) => {
-  const sizeClasses = {
-    small: 'text-2xl',
-    medium: 'text-3xl',
-    large: 'text-4xl'
-  };
+const heightPx: Record<NonNullable<OrshLogoProps['size']>, number> = {
+  small: 28,
+  medium: 36,
+  large: 48,
+};
 
-  const heightClasses = {
-    small: 'h-10',
-    medium: 'h-12',
-    large: 'h-16'
-  };
+const wrapperHeightClass: Record<NonNullable<OrshLogoProps['size']>, string> = {
+  small: 'h-10',
+  medium: 'h-12',
+  large: 'h-16',
+};
 
+const OrshMarkSvg: React.FC<{ height: number; className?: string }> = ({ height, className }) => {
+  // Glyph viewBox 48x48
+  const width = height;
   return (
-    <Link to="/" className={cn('flex flex-col items-center justify-center group/logo cursor-pointer', heightClasses[size], className)}>
-      <div className="relative group">
-        {/* Modern minimalist logo with tighter spacing */}
-        <div className="flex items-center gap-0">
-          <span 
-            className={cn(
-              sizeClasses[size],
-              'font-bold bg-gradient-to-br from-primary via-primary/95 to-primary/80 bg-clip-text text-transparent',
-              'transition-all duration-300 drop-shadow-[0_2px_10px_rgba(var(--primary-rgb),0.25)]',
-              'relative inline-block group-hover/logo:scale-110'
-            )}
-            style={{ letterSpacing: '-0.02em' }}
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 48 48"
+      width={width}
+      height={height}
+      role="img"
+      aria-label="ORSH"
+      className={className}
+    >
+      <path
+        d="M30.16 7.09 A18 18 0 1 1 17.84 7.09 L19.55 9.78 A13 13 0 1 0 28.45 9.78 Z"
+        fill="currentColor"
+      />
+      <circle cx="24" cy="2.5" r="2.5" fill="#6FD4B3" />
+      <circle cx="24" cy="9.5" r="2.5" fill="#34B88E" />
+      <circle cx="24" cy="16.5" r="2.5" fill="#1D9E75" />
+      <circle cx="24" cy="23.5" r="2.5" fill="#0F7A5C" />
+    </svg>
+  );
+};
+
+const OrshLogo: React.FC<OrshLogoProps> = ({
+  size = 'medium',
+  showTagline = false,
+  variant = 'full',
+  className,
+  asLink = true,
+}) => {
+  const h = heightPx[size];
+
+  const content = (
+    <div className="flex flex-col items-center justify-center">
+      <div className="flex items-end gap-1 leading-none">
+        <OrshMarkSvg height={h} />
+        {variant === 'full' && (
+          <span
+            className="font-medium tracking-wide text-current"
+            style={{
+              fontSize: `${Math.round(h * 0.7)}px`,
+              lineHeight: 1,
+              letterSpacing: '0.04em',
+              marginBottom: `${Math.round(h * 0.06)}px`,
+            }}
           >
-            O
-            {/* 3D Green Dot */}
-            <span 
-              className={cn(
-                'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
-                size === 'small' && 'w-1.5 h-1.5',
-                size === 'medium' && 'w-2 h-2',
-                size === 'large' && 'w-2.5 h-2.5'
-              )}
-              style={{
-                background: 'radial-gradient(circle at 30% 30%, hsl(142, 76%, 45%), hsl(142, 76%, 36%))',
-                boxShadow: `
-                  inset -1px -1px 2px rgba(0, 0, 0, 0.3),
-                  inset 1px 1px 2px rgba(255, 255, 255, 0.4),
-                  0 2px 4px rgba(0, 0, 0, 0.2),
-                  0 0 8px hsla(142, 76%, 45%, 0.4)
-                `,
-                borderRadius: '50%',
-              }}
-            />
+            RSH
           </span>
-          <span 
-            className={cn(
-              sizeClasses[size],
-              'font-bold bg-gradient-to-br from-primary/95 via-primary to-primary/90 bg-clip-text text-transparent',
-              'transition-all duration-300 drop-shadow-[0_2px_10px_rgba(var(--primary-rgb),0.25)]',
-              'group-hover/logo:scale-110'
-            )}
-            style={{ letterSpacing: '-0.02em' }}
-          >
-            R
-          </span>
-          <span 
-            className={cn(
-              sizeClasses[size],
-              'font-bold bg-gradient-to-br from-primary to-primary/95 bg-clip-text text-transparent',
-              'transition-all duration-300 drop-shadow-[0_2px_10px_rgba(var(--primary-rgb),0.25)]',
-              'group-hover/logo:scale-110'
-            )}
-            style={{ letterSpacing: '-0.02em' }}
-          >
-            S
-          </span>
-          <span 
-            className={cn(
-              sizeClasses[size],
-              'font-bold bg-gradient-to-br from-primary/90 via-primary/85 to-primary/80 bg-clip-text text-transparent',
-              'transition-all duration-300 drop-shadow-[0_2px_10px_rgba(var(--primary-rgb),0.25)]',
-              'group-hover/logo:scale-110'
-            )}
-            style={{ letterSpacing: '-0.02em' }}
-          >
-            H
-          </span>
-        </div>
-        
-        {/* Subtle animated underline */}
-        <div className="absolute -bottom-0.5 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-primary/60 to-transparent opacity-70 group-hover/logo:opacity-100 transition-opacity duration-300" />
-        
-        {/* Ambient glow effect */}
-        <div className="absolute -inset-3 bg-gradient-to-r from-primary/0 via-primary/5 to-primary/0 rounded-lg opacity-0 group-hover/logo:opacity-100 blur-2xl transition-all duration-500 -z-10" />
+        )}
       </div>
       {showTagline && (
         <p className="text-[9px] text-muted-foreground/70 tracking-[0.15em] mt-1.5 uppercase font-medium">
           Operation Readiness
         </p>
       )}
-    </Link>
+    </div>
+  );
+
+  if (asLink) {
+    return (
+      <Link
+        to="/"
+        className={cn(
+          'flex items-center justify-center cursor-pointer text-foreground',
+          wrapperHeightClass[size],
+          className,
+        )}
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        'flex items-center justify-center text-foreground',
+        wrapperHeightClass[size],
+        className,
+      )}
+    >
+      {content}
+    </div>
   );
 };
 
