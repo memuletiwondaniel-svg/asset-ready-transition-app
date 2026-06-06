@@ -124,9 +124,14 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
   const [selectedHub, setSelectedHub] = useState('all');
   const [projectToDelete, setProjectToDelete] = useState<any>(null);
   const [hardDelete, setHardDelete] = useState(false);
-  const [showArchived, setShowArchived] = useState(false);
+  const [statusView, setStatusView] = useState<'active' | 'archived' | 'deleted' | 'hidden'>('active');
   const { isAdmin } = useIsAdminPermission();
-  const { data: archivedProjects = [] } = useArchivedProjects(isAdmin && showArchived);
+  const isAdminArchivedView = isAdmin && (statusView === 'archived' || statusView === 'deleted');
+  const { data: archivedProjects = [] } = useArchivedProjects(
+    isAdminArchivedView,
+    statusView === 'archived' ? 'archived' : 'deleted',
+  );
+  const { hiddenIds, hideProject, unhideProject, isHidden } = useHiddenProjects();
   
   // Get translations
   const t = translations || getCurrentTranslations(selectedLanguage);
