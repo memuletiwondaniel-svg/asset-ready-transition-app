@@ -166,7 +166,26 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
 
   // Filter and sort projects
   const filteredAndSortedProjects = useMemo(() => {
-    let filtered = [...(projects || []), ...(isAdmin && showArchived ? archivedProjects : [])];
+    // Source list depends on the selected status view.
+    let source: any[] = [];
+    if (statusView === 'active') {
+      source = (projects || []).filter((p: any) => !isHidden(p.id));
+    } else if (statusView === 'hidden') {
+      // Hidden view: show projects (active or otherwise) the user has hidden.
+      const all = [...(projects || []), ...(isAdmin ? archivedProjects : [])];
+      const seen = new Set<string>();
+      source = all.filter((p) => {
+        if (!isHidden(p.id)) return false;
+        if (seen.has(p.id)) return false;
+        seen.add(p.id);
+        return true;
+      });
+    } else {
+      // 'archived' or 'deleted' (admin only)
+      source = isAdmin ? archivedProjects : [];
+    }
+
+    let filtered = [...source];
 
     // Apply search filter
     if (searchQuery) {
@@ -227,8 +246,9 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
   }, [
     projects,
     archivedProjects,
-    showArchived,
+    statusView,
     isAdmin,
+    hiddenIds,
     searchQuery,
     selectedPlant,
     selectedHub,
