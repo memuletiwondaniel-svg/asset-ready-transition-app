@@ -271,7 +271,8 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
             {localApprovers.sort((a, b) => a.approver_level - b.approver_level).map((approver) => {
               const isPending = approver.status === 'PENDING';
               const isLocked = approver.status === 'LOCKED';
-              const isRejected = approver.status === 'REJECTED_PR1';
+              const isApproved = approver.status === 'APPROVED';
+              const isRejected = approver.status === 'REJECTED' || approver.status === 'REJECTED_PR1';
               const isClickable = !isViewOnly && isPending;
 
               const handleCardClick = () => {
@@ -285,11 +286,11 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
                   key={approver.id}
                   className={cn(
                     "border rounded-lg p-4 transition-all",
-                    approver.status === 'APPROVED'
+                    isApproved
                       ? 'border-green-200 bg-green-50/50 opacity-70'
-                      : approver.status === 'LOCKED'
+                      : isLocked
                       ? 'border-gray-200 bg-gray-50 opacity-80'
-                      : approver.status === 'REJECTED_PR1'
+                      : isRejected
                       ? 'border-red-300 bg-red-50/50'
                       : 'border-yellow-300 bg-yellow-50',
                     isClickable && 'ring-2 ring-primary ring-offset-2 cursor-pointer hover:shadow-lg opacity-100'
@@ -307,6 +308,16 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
                         alt={`${approver.approver_name}'s signature`}
                         className="max-h-16 max-w-full object-contain mix-blend-multiply"
                       />
+                    ) : isApproved ? (
+                      <div className="flex flex-col items-center gap-1 text-green-700">
+                        <CheckCircle2 className="h-6 w-6" />
+                        <span className="text-xs font-medium">Signed electronically</span>
+                        {approver.approved_at && (
+                          <span className="text-[10px] text-gray-500">
+                            {format(new Date(approver.approved_at), 'dd MMM yyyy, HH:mm')}
+                          </span>
+                        )}
+                      </div>
                     ) : isRejected ? (
                       <div
                         className="flex flex-col items-center gap-1 text-center px-2 cursor-pointer hover:bg-red-100/50 rounded py-1 transition-colors"
