@@ -271,19 +271,53 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
               </div>
             )}
 
-            {!isLoading && filteredProjects.length === 0 && (
-              <EmptyState
-                icon={KeyRound}
-                title={searchQuery ? 'No projects found' : 'No projects yet'}
-                description={
-                  searchQuery
-                    ? "Try adjusting your search query to find what you're looking for."
-                    : 'Create your first project to begin managing Verification Certificates of Readiness and track operational milestones.'
-                }
-                actionLabel={!searchQuery && canPerformActions ? 'Create New Project' : undefined}
-                onAction={!searchQuery && canPerformActions ? () => setIsAddModalOpen(true) : undefined}
-              />
-            )}
+            {!isLoading && filteredProjects.length === 0 && (() => {
+              if (searchQuery) {
+                return (
+                  <EmptyState
+                    icon={KeyRound}
+                    title="No projects found"
+                    description="Try adjusting your search query to find what you're looking for."
+                  />
+                );
+              }
+              if (statusView === 'archived') {
+                return (
+                  <EmptyState
+                    icon={KeyRound}
+                    title="No archived projects"
+                    description="Archived projects will appear here. Admins can archive a project from its 3-dot menu."
+                  />
+                );
+              }
+              if (statusView === 'deleted') {
+                return (
+                  <EmptyState
+                    icon={KeyRound}
+                    title="No deleted projects"
+                    description="Soft-deleted projects will appear here. Admins can restore them or remove them permanently."
+                  />
+                );
+              }
+              if (statusView === 'hidden') {
+                return (
+                  <EmptyState
+                    icon={KeyRound}
+                    title="No hidden projects"
+                    description="Projects you hide from your personal list will appear here."
+                  />
+                );
+              }
+              return (
+                <EmptyState
+                  icon={KeyRound}
+                  title="No projects yet"
+                  description="Create your first project to begin managing Verification Certificates of Readiness and track operational milestones."
+                  actionLabel={canPerformActions ? 'Create New Project' : undefined}
+                  onAction={canPerformActions ? () => setIsAddModalOpen(true) : undefined}
+                />
+              );
+            })()}
 
             {!isLoading && filteredProjects.length > 0 && viewMode === 'heatmap' && (
               <P2AHeatmap projects={filteredProjects} onProjectClick={handleProjectClick} />
