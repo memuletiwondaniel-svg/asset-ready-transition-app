@@ -117,7 +117,13 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
   };
 
   const handleSign = (signatureData: string, comments: string, pr2Action?: { priority: 'Pr2'; description: string }) => {
-    onSignComplete?.(signatureData);
+    if (!currentUserApprover) return;
+    onSignComplete?.({
+      approverId: currentUserApprover.id,
+      signatureData,
+      comments,
+      pr2Action,
+    });
 
     if (pr2Action) {
       toast({
@@ -133,7 +139,12 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
   };
 
   const handleReject = (priorityLevel: 'Pr1', description: string, linkedItemId?: string) => {
-    onRejectComplete?.();
+    if (!currentUserApprover) return;
+    onRejectComplete?.({
+      approverId: currentUserApprover.id,
+      description,
+      linkedItemId,
+    });
     toast({
       title: 'SoF Rejected - Priority 1 Action Created',
       description: 'PSSR Lead has been notified. This item must be resolved before re-review.',
