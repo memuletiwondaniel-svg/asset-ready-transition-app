@@ -575,7 +575,11 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
                                         <MoreVertical className="h-4 w-4" />
                                       </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-48 bg-white shadow-lg border border-gray-200/60">
+                                    <DropdownMenuContent
+                                      align="end"
+                                      className="w-52 bg-white shadow-lg border border-gray-200/60"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
                                       <DropdownMenuItem
                                         className="flex items-center text-blue-600 hover:bg-blue-50/80"
                                         onClick={() => setViewProject(project)}
@@ -590,13 +594,54 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
                                         <Edit3 className="h-4 w-4 mr-2" />
                                         {t.editProject}
                                       </DropdownMenuItem>
-                                      <DropdownMenuItem
-                                        className="flex items-center text-red-600 hover:bg-red-50/80"
-                                        onClick={() => handleDeleteProject(project)}
-                                      >
-                                        <Trash2 className="h-4 w-4 mr-2" />
-                                        {t.deleteProject}
-                                      </DropdownMenuItem>
+
+                                      {isAdmin ? (
+                                        <>
+                                          {(project.lifecycle_status ?? 'active') === 'active' && (
+                                            <DropdownMenuItem
+                                              className="flex items-center text-amber-700 hover:bg-amber-50/80"
+                                              onClick={() => archiveProject(project.id)}
+                                            >
+                                              <Archive className="h-4 w-4 mr-2" />
+                                              Archive
+                                            </DropdownMenuItem>
+                                          )}
+                                          {(project.lifecycle_status ?? 'active') !== 'active' && (
+                                            <DropdownMenuItem
+                                              className="flex items-center text-green-700 hover:bg-green-50/80"
+                                              onClick={() => restoreProject(project.id)}
+                                            >
+                                              <RotateCcw className="h-4 w-4 mr-2" />
+                                              Restore
+                                            </DropdownMenuItem>
+                                          )}
+                                          <DropdownMenuItem
+                                            className="flex items-center text-red-600 hover:bg-red-50/80"
+                                            onClick={() => handleDeleteProject(project)}
+                                          >
+                                            <Trash2 className="h-4 w-4 mr-2" />
+                                            {t.deleteProject}
+                                          </DropdownMenuItem>
+                                        </>
+                                      ) : (
+                                        isHidden(project.id) ? (
+                                          <DropdownMenuItem
+                                            className="flex items-center text-foreground hover:bg-muted/80"
+                                            onClick={() => unhideProject(project.id)}
+                                          >
+                                            <Eye className="h-4 w-4 mr-2" />
+                                            Unhide
+                                          </DropdownMenuItem>
+                                        ) : (
+                                          <DropdownMenuItem
+                                            className="flex items-center text-foreground hover:bg-muted/80"
+                                            onClick={() => hideProject(project.id)}
+                                          >
+                                            <EyeOff className="h-4 w-4 mr-2" />
+                                            Hide
+                                          </DropdownMenuItem>
+                                        )
+                                      )}
                                     </DropdownMenuContent>
                                   </DropdownMenu>
                                 </TableCell>
