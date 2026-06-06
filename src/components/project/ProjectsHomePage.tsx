@@ -48,9 +48,14 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
   const navigate = useNavigate();
   useLanguage();
   const { projects, isLoading, deleteProject, permanentlyDeleteProject, isDeleting, archiveProject, restoreProject } = useProjects();
-  const { isHidden, hideProject, unhideProject } = useHiddenProjects();
+  const { isHidden, hideProject, unhideProject, hiddenIds } = useHiddenProjects();
   const { canPerformActions } = useCanPerformActionsPermission();
   const { isAdmin } = useIsAdminPermission();
+  const [statusView, setStatusView] = useState<'active' | 'archived' | 'deleted' | 'hidden'>('active');
+  const { data: archivedProjects = [] } = useArchivedProjects(
+    isAdmin && (statusView === 'archived' || statusView === 'deleted'),
+    statusView === 'archived' ? 'archived' : statusView === 'deleted' ? 'deleted' : 'all',
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'heatmap' | 'list'>('list');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
