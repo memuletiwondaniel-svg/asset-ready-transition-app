@@ -25,6 +25,10 @@ import {
   ChevronUp,
   ChevronDown,
   ChevronsUpDown,
+  Archive,
+  RotateCcw,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import {
   DropdownMenu,
