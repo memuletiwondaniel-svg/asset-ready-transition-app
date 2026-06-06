@@ -137,11 +137,11 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete }) =>
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 animate-fade-in" />
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-overlay animate-fade-in" />
       
       {/* Tour Card */}
       <Card 
-        className="fixed z-[60] w-[400px] shadow-2xl border-2 border-primary/20 animate-scale-in"
+        className="fixed z-modal w-[400px] shadow-2xl border-2 border-primary/20 animate-scale-in"
         style={{ 
           top: `${position.top}px`, 
           left: `${position.left}px`,

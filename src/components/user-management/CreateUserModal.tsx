@@ -1207,7 +1207,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
 
         {/* Confirmation Dialog */}
         {showConfirmation && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-modal">
             <div className="bg-background border rounded-lg p-6 max-w-md w-full mx-4 shadow-lg">
               <h3 className="text-lg font-semibold mb-4">Confirm User Creation</h3>
               <div className="space-y-3 mb-6">

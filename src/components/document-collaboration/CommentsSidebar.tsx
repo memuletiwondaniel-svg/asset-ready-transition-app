@@ -135,7 +135,7 @@ export const CommentsSidebar: React.FC<CommentsSidebarProps> = ({
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent align="end" className="w-56 p-3 z-[260]">
+          <PopoverContent align="end" className="w-56 p-3">
             <div className="space-y-3">
               {/* Status */}
               <div>

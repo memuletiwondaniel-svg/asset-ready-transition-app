@@ -189,8 +189,8 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogPortal>
-        <DialogOverlay className="z-[200]" />
-        <DialogPrimitive.Content className="fixed z-[200] !inset-0 md:inset-auto md:left-[50%] md:top-[50%] md:translate-x-[-50%] md:translate-y-[-50%] !max-w-none md:!max-w-[95vw] md:!w-[95vw] !w-full h-[100dvh] md:h-[95vh] p-0 gap-0 overflow-hidden border-0 md:border bg-background shadow-lg md:rounded-lg rounded-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
+        <DialogOverlay className="z-overlay-viewer" />
+        <DialogPrimitive.Content className="fixed z-modal-viewer !inset-0 md:inset-auto md:left-[50%] md:top-[50%] md:translate-x-[-50%] md:translate-y-[-50%] !max-w-none md:!max-w-[95vw] md:!w-[95vw] !w-full h-[100dvh] md:h-[95vh] p-0 gap-0 overflow-hidden border-0 md:border bg-background shadow-lg md:rounded-lg rounded-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
         {/* Header */}
         <div className="flex items-center justify-between px-3 md:px-5 py-2.5 md:py-3 border-b shrink-0">
           <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
