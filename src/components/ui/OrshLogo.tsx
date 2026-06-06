@@ -8,6 +8,7 @@ interface OrshLogoProps {
   variant?: 'full' | 'mark';
   className?: string;
   asLink?: boolean;
+  surface?: 'light' | 'dark';
 }
 
 const heightPx: Record<NonNullable<OrshLogoProps['size']>, number> = {
@@ -53,6 +54,7 @@ const OrshLogo: React.FC<OrshLogoProps> = ({
   variant = 'full',
   className,
   asLink = true,
+  surface = 'light',
 }) => {
   const h = heightPx[size];
 
@@ -62,7 +64,10 @@ const OrshLogo: React.FC<OrshLogoProps> = ({
         <OrshMarkSvg height={h} />
         {variant === 'full' && (
           <span
-            className="font-medium tracking-wide text-current"
+            className={cn(
+              'font-medium tracking-wide',
+              surface === 'dark' ? 'text-current' : 'text-[#52525b]'
+            )}
             style={{
               fontSize: `${Math.round(h * 0.7)}px`,
               lineHeight: 1,
