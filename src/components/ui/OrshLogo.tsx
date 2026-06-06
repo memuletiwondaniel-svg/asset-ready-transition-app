@@ -54,6 +54,7 @@ const OrshLogo: React.FC<OrshLogoProps> = ({
   variant = 'full',
   className,
   asLink = true,
+  surface = 'light',
 }) => {
   const h = heightPx[size];
 
