@@ -99,15 +99,16 @@ export const translations = {
     // Welcome Screen
     welcomeTitle: 'Operation Readiness',
     welcomeSubtitle: 'Start-Up & Handover',
-    welcomeDescription: 'Transform your project start-up and handover experience with the ORSH platform.',
+    welcomeDescription: 'One platform. Every party. Integrating people and systems to deliver business outcomes.',
     safeStartup: 'PSSR',
-    safeStartupDesc: 'Pre-Start Up Safety Review - Manage the safe introduction of hydrocarbons into new facilities using PSSR checklists',
-    p2oHandover: 'P2A Plan',
-    p2oHandoverDesc: 'Seamless transition and handover from construction and commissioning to Asset Operation',
+    safeStartupDesc: 'Pre-Start-Up Safety Review - Manage the safe introduction of hydrocarbons into new facilities using PSSR checklists',
+    p2oHandover: 'P2A',
+    p2oHandoverDesc: 'Coordinates the transition and handover from construction and commissioning through to asset operation.',
     accessButton: 'Access ORSH Platform',
     enterpriseSecure: 'Enterprise Secure',
-    isoCompliant: 'ISO Compliant',
-    support24: '24/7 Support',
+    connectedPeople: 'Connected People',
+    connectedSystems: 'Connected Systems',
+    integratedDelivery: 'Integrated Delivery',
     help: 'Help',
     
     // User Profile
