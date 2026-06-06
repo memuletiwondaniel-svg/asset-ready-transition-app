@@ -66,32 +66,12 @@ type ColKey = keyof typeof COL_DEFS;
 const ALL_COLS: ColKey[] = ['id', 'name', 'start', 'end', 'duration', 'status'];
 const DEFAULT_VISIBLE: ColKey[] = ['id', 'name', 'start'];
 
-const PHASE_COLORS: Record<string, { bg: string; text: string }> = {
-  IDN: { bg: 'bg-blue-500/15', text: 'text-blue-700 dark:text-blue-400' },
-  ASS: { bg: 'bg-amber-500/15', text: 'text-amber-700 dark:text-amber-400' },
-  SEL: { bg: 'bg-emerald-500/15', text: 'text-emerald-700 dark:text-emerald-400' },
-  DEF: { bg: 'bg-teal-500/15', text: 'text-teal-700 dark:text-teal-400' },
-  EXE: { bg: 'bg-indigo-500/15', text: 'text-indigo-700 dark:text-indigo-400' },
-  OPR: { bg: 'bg-purple-500/15', text: 'text-purple-700 dark:text-purple-400' },
-};
-
-const BAR_COLORS: Record<string, string> = {
-  IDN: 'bg-blue-400 dark:bg-blue-500',
-  ASS: 'bg-amber-400 dark:bg-amber-500',
-  SEL: 'bg-emerald-400 dark:bg-emerald-500',
-  DEF: 'bg-teal-400 dark:bg-teal-500',
-  EXE: 'bg-indigo-400 dark:bg-indigo-500',
-  OPR: 'bg-purple-400 dark:bg-purple-500',
-};
-
-const BAR_COLORS_MUTED: Record<string, string> = {
-  IDN: 'bg-blue-200 dark:bg-blue-800',
-  ASS: 'bg-amber-200 dark:bg-amber-800',
-  SEL: 'bg-emerald-200 dark:bg-emerald-800',
-  DEF: 'bg-teal-200 dark:bg-teal-800',
-  EXE: 'bg-indigo-200 dark:bg-indigo-800',
-  OPR: 'bg-purple-200 dark:bg-purple-800',
-};
+import {
+  getGanttBarStyle,
+  getGanttPhasePrefix as getPhasePrefix,
+  GANTT_BAR_LABEL_CLASS,
+  ID_BADGE_COLORS,
+} from '@/components/orp/utils/ganttBarStyles';
 
 const STATUS_OPTIONS = [
   { value: 'NOT_STARTED', label: 'Not Started', class: 'bg-muted text-muted-foreground' },
@@ -105,33 +85,12 @@ const ZOOM_PRESETS = [
   { label: '24M', days: 730 },
 ];
 
-// Per-activity hue rotation palette for visual distinction
-const ACTIVITY_BADGE_PALETTE = [
-  { bg: 'bg-indigo-500/15', text: 'text-indigo-700 dark:text-indigo-400' },
-  { bg: 'bg-sky-500/15', text: 'text-sky-700 dark:text-sky-400' },
-  { bg: 'bg-rose-500/15', text: 'text-rose-700 dark:text-rose-400' },
-  { bg: 'bg-violet-500/15', text: 'text-violet-700 dark:text-violet-400' },
-  { bg: 'bg-teal-500/15', text: 'text-teal-700 dark:text-teal-400' },
-  { bg: 'bg-amber-500/15', text: 'text-amber-700 dark:text-amber-400' },
-  { bg: 'bg-emerald-500/15', text: 'text-emerald-700 dark:text-emerald-400' },
-  { bg: 'bg-fuchsia-500/15', text: 'text-fuchsia-700 dark:text-fuchsia-400' },
-  { bg: 'bg-cyan-500/15', text: 'text-cyan-700 dark:text-cyan-400' },
-  { bg: 'bg-orange-500/15', text: 'text-orange-700 dark:text-orange-400' },
-];
-
-function getPhasePrefix(code: string): string {
-  return code.split('-')[0];
+// Neutral ID badge — single source of truth from shared module.
+function getActivityBadgeClasses(_index: number) {
+  return ID_BADGE_COLORS;
 }
-function getBarColor(code: string): string {
-  return BAR_COLORS[getPhasePrefix(code)] || 'bg-primary';
-}
-function getActivityBadgeClasses(index: number) {
-  return ACTIVITY_BADGE_PALETTE[index % ACTIVITY_BADGE_PALETTE.length];
-}
-// Phase-based fallback for contexts without row index
-function getIdBadgeClasses(code: string) {
-  const prefix = getPhasePrefix(code);
-  return PHASE_COLORS[prefix] || { bg: 'bg-muted', text: 'text-foreground' };
+function getIdBadgeClasses(_code: string) {
+  return ID_BADGE_COLORS;
 }
 
 // Convert internal codes like "EXE-01" / "ASS-04.1" to display format "E.01" / "A.04.1"
