@@ -148,11 +148,11 @@ export const SidebarContent = memo<SidebarContentProps>(({
         )}
       >
         {isCollapsed ? (
-          <div className="flex items-center justify-center mb-4 h-[52px]">
+          <div className="flex items-center justify-center mb-4 h-[52px] pt-1.5">
             <OrshLogo size="small" variant="mark" />
           </div>
         ) : (
-          <div className="flex items-center justify-center mb-4 h-[52px]">
+          <div className="flex items-center justify-center mb-4 h-[52px] pt-1.5">
             <OrshLogo size="medium" />
           </div>
         )}
