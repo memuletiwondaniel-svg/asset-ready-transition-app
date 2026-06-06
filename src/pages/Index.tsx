@@ -69,7 +69,7 @@ const Index = () => {
             {/* ORSH Logo - Center (hidden when auth modal is open to avoid duplicate with card logo) */}
             {!showAuth && (
               <div className="absolute left-1/2 transform -translate-x-1/2">
-                <OrshLogo size="large" className="text-white" />
+                <OrshLogo size="large" className="text-white" surface="dark" />
               </div>
             )}
 
