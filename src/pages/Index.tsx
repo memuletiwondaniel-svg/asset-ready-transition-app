@@ -66,10 +66,13 @@ const Index = () => {
               />
             </div>
             
-            {/* ORSH Logo - Center */}
-            <div className="absolute left-1/2 transform -translate-x-1/2">
-              <OrshLogo size="medium" className="text-white" />
-            </div>
+            {/* ORSH Logo - Center (hidden when auth modal is open to avoid duplicate with card logo) */}
+            {!showAuth && (
+              <div className="absolute left-1/2 transform -translate-x-1/2">
+                <OrshLogo size="large" className="text-white" />
+              </div>
+            )}
+
             
              {/* Tenant Logo - Right (only show if subdomain tenant) */}
             <div className="flex items-center">
