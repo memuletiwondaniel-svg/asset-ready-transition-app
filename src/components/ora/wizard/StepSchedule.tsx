@@ -851,33 +851,33 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
                         const isDragging = draggingId === activity.id;
                         const barL = isDragging && previewLeft !== null ? previewLeft : barPos.left;
                         const barW = isDragging && previewWidth !== null ? previewWidth : barPos.width;
-                        const prefix = getPhasePrefix(activity.activityCode);
-                        const mutedColor = BAR_COLORS_MUTED[prefix] || 'bg-muted';
-                        const barColorSolid = getBarColor(activity.activityCode);
+                        const barStyle = getGanttBarStyle(activity.activityCode);
                         const completion = (activity as any).completionPercentage || 0;
 
                         return (
                           <div
                             className={cn(
                               "absolute top-2 rounded shadow-sm overflow-hidden transition-all group",
-                              mutedColor,
+                              barStyle.track,
                               isDragging && "ring-2 ring-primary/50 shadow-lg"
                             )}
                             style={{ left: barL, width: barW, height: ROW_HEIGHT - 16 }}
                             title={`${activity.activity}: ${activity.startDate} → ${activity.endDate || '?'} (${activity.durationDays || '?'}d)`}
                           >
                             {/* Progress fill */}
-                            <div
-                              className={cn("absolute h-full rounded-l", barColorSolid)}
-                              style={{ width: `${completion}%` }}
-                            />
+                            {completion > 0 && (
+                              <div
+                                className={cn("absolute h-full rounded-l", barStyle.fill)}
+                                style={{ width: `${completion}%` }}
+                              />
+                            )}
                             {/* Label */}
                             <div className="absolute inset-0 flex items-center px-1.5 z-10">
-                              <span className="text-[9px] text-white font-medium truncate drop-shadow-sm">{activity.durationDays}d</span>
+                              <span className={cn("text-[9px] truncate", GANTT_BAR_LABEL_CLASS)}>{activity.durationDays}d</span>
                             </div>
                             {/* Left resize handle */}
                             <div
-                              className="absolute left-0 top-0 bottom-0 w-[6px] cursor-col-resize z-20 hover:bg-white/30"
+                              className="absolute left-0 top-0 bottom-0 w-[6px] cursor-col-resize z-20 hover:bg-foreground/10"
                               onMouseDown={(e) => {
                                 if (!activity.startDate || !activity.endDate) return;
                                 handleMouseDown(e, 'left', activity.id, barPos.left, barPos.width, parseISO(activity.startDate), parseISO(activity.endDate));
@@ -885,7 +885,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
                             />
                             {/* Right resize handle */}
                             <div
-                              className="absolute right-0 top-0 bottom-0 w-[6px] cursor-col-resize z-20 hover:bg-white/30"
+                              className="absolute right-0 top-0 bottom-0 w-[6px] cursor-col-resize z-20 hover:bg-foreground/10"
                               onMouseDown={(e) => {
                                 if (!activity.startDate) return;
                                 const endDate = activity.endDate ? parseISO(activity.endDate) : addDays(parseISO(activity.startDate), activity.durationDays || 14);
