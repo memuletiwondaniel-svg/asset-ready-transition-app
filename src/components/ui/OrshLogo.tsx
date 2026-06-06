@@ -23,7 +23,7 @@ const wrapperHeightClass: Record<NonNullable<OrshLogoProps['size']>, string> = {
   large: 'h-16',
 };
 
-const OrshMarkSvg: React.FC<{ height: number; className?: string }> = ({ height, className }) => {
+const OrshMarkSvg: React.FC<{ height: number; className?: string; surface?: 'light' | 'dark' }> = ({ height, className, surface = 'light' }) => {
   // Glyph viewBox 48x48
   const width = height;
   return (
@@ -38,7 +38,7 @@ const OrshMarkSvg: React.FC<{ height: number; className?: string }> = ({ height,
     >
       <path
         d="M30.16 7.09 A18 18 0 1 1 17.84 7.09 L19.55 9.78 A13 13 0 1 0 28.45 9.78 Z"
-        fill="currentColor"
+        fill={surface === 'dark' ? 'currentColor' : '#a1a1aa'}
       />
       <circle cx="24" cy="2.5" r="2.5" fill="#6FD4B3" />
       <circle cx="24" cy="9.5" r="2.5" fill="#34B88E" />
