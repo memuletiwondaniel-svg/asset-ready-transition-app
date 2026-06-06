@@ -1442,7 +1442,7 @@ const VCRSoFTabContent: React.FC<{
         approvers={approvers}
         status={approvers.every((a) => a.status === 'SIGNED') ? 'COMPLETED' : 'PENDING_SIGNATURE'}
         sourceType="VCR"
-        onSignComplete={(sig) => handleSignComplete(sig)}
+        onSignComplete={(payload) => handleSignComplete(payload.signatureData)}
       />
       {approvers.length === 0 && (
         <div className="text-sm text-muted-foreground text-center py-8">

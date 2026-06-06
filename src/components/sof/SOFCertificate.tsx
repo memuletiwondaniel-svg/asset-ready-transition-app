@@ -29,6 +29,19 @@ interface SOFApprover {
   rejection_linked_item?: string;
 }
 
+export interface SOFSignPayload {
+  approverId: string;
+  signatureData: string;
+  comments: string;
+  pr2Action?: { priority: 'Pr2'; description: string };
+}
+
+export interface SOFRejectPayload {
+  approverId: string;
+  description: string;
+  linkedItemId?: string;
+}
+
 interface SOFCertificateProps {
   certificateNumber: string;
   pssrReason: string;
@@ -39,8 +52,8 @@ interface SOFCertificateProps {
   approvers: SOFApprover[];
   issuedAt?: string;
   status: string;
-  onSignComplete?: (signatureData?: string) => void;
-  onRejectComplete?: () => void;
+  onSignComplete?: (payload: SOFSignPayload) => void;
+  onRejectComplete?: (payload: SOFRejectPayload) => void;
   isViewOnly?: boolean;
   pssrId?: string;
   sourceType?: string;
@@ -104,7 +117,13 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
   };
 
   const handleSign = (signatureData: string, comments: string, pr2Action?: { priority: 'Pr2'; description: string }) => {
-    onSignComplete?.(signatureData);
+    if (!currentUserApprover) return;
+    onSignComplete?.({
+      approverId: currentUserApprover.id,
+      signatureData,
+      comments,
+      pr2Action,
+    });
 
     if (pr2Action) {
       toast({
@@ -120,7 +139,12 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
   };
 
   const handleReject = (priorityLevel: 'Pr1', description: string, linkedItemId?: string) => {
-    onRejectComplete?.();
+    if (!currentUserApprover) return;
+    onRejectComplete?.({
+      approverId: currentUserApprover.id,
+      description,
+      linkedItemId,
+    });
     toast({
       title: 'SoF Rejected - Priority 1 Action Created',
       description: 'PSSR Lead has been notified. This item must be resolved before re-review.',
@@ -140,6 +164,7 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
         return <Badge className="bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 border-yellow-500/30"><Clock className="w-3 h-3 mr-1" /> Pending</Badge>;
       case 'LOCKED':
         return <Badge className="bg-muted text-muted-foreground border-border"><Lock className="w-3 h-3 mr-1" /> Locked</Badge>;
+      case 'REJECTED':
       case 'REJECTED_PR1':
         return <Badge className="bg-red-500/20 text-red-700 dark:text-red-400 border-red-500/30">Rejected (Pr1)</Badge>;
       default:
@@ -246,7 +271,8 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
             {localApprovers.sort((a, b) => a.approver_level - b.approver_level).map((approver) => {
               const isPending = approver.status === 'PENDING';
               const isLocked = approver.status === 'LOCKED';
-              const isRejected = approver.status === 'REJECTED_PR1';
+              const isApproved = approver.status === 'APPROVED';
+              const isRejected = approver.status === 'REJECTED' || approver.status === 'REJECTED_PR1';
               const isClickable = !isViewOnly && isPending;
 
               const handleCardClick = () => {
@@ -260,11 +286,11 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
                   key={approver.id}
                   className={cn(
                     "border rounded-lg p-4 transition-all",
-                    approver.status === 'APPROVED'
+                    isApproved
                       ? 'border-green-200 bg-green-50/50 opacity-70'
-                      : approver.status === 'LOCKED'
+                      : isLocked
                       ? 'border-gray-200 bg-gray-50 opacity-80'
-                      : approver.status === 'REJECTED_PR1'
+                      : isRejected
                       ? 'border-red-300 bg-red-50/50'
                       : 'border-yellow-300 bg-yellow-50',
                     isClickable && 'ring-2 ring-primary ring-offset-2 cursor-pointer hover:shadow-lg opacity-100'
@@ -282,6 +308,16 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
                         alt={`${approver.approver_name}'s signature`}
                         className="max-h-16 max-w-full object-contain mix-blend-multiply"
                       />
+                    ) : isApproved ? (
+                      <div className="flex flex-col items-center gap-1 text-green-700">
+                        <CheckCircle2 className="h-6 w-6" />
+                        <span className="text-xs font-medium">Signed electronically</span>
+                        {approver.approved_at && (
+                          <span className="text-[10px] text-gray-500">
+                            {format(new Date(approver.approved_at), 'dd MMM yyyy, HH:mm')}
+                          </span>
+                        )}
+                      </div>
                     ) : isRejected ? (
                       <div
                         className="flex flex-col items-center gap-1 text-center px-2 cursor-pointer hover:bg-red-100/50 rounded py-1 transition-colors"
