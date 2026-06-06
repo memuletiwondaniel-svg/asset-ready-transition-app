@@ -244,7 +244,7 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
             <Input
               value={activity}
               onChange={(e) => setActivity(e.target.value)}
-              placeholder="e.g. Pigging witnessed by ORA, hydrotest sign-off"
+              placeholder="e.g. 72-Hour Performance Test"
               className="h-9 text-sm"
             />
           </div>
