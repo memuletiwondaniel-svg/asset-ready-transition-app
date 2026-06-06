@@ -6,12 +6,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { ProjectIdBadge } from '@/components/ui/project-id-badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, FolderOpen, Users, Calendar, FileText, MoreVertical, Eye, Edit3, Trash2, Building2, Star, GitBranch, Milestone, Layers } from 'lucide-react';
+import { Plus, FolderOpen, Users, Calendar, FileText, MoreVertical, Eye, Edit3, Trash2, Building2, Star, GitBranch, Milestone, Layers, Archive, EyeOff, RotateCcw } from 'lucide-react';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { getCurrentTranslations } from '@/utils/translations';
-import { useProjects, useArchivedProjects } from '@/hooks/useProjects';
-import { Switch } from '@/components/ui/switch';
+import { useProjects, useArchivedProjects, useHiddenProjects } from '@/hooks/useProjects';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { usePlants } from '@/hooks/usePlants';
 import { useStations } from '@/hooks/useStations';
 import { useHubs } from '@/hooks/useHubs';
