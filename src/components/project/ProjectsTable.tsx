@@ -442,7 +442,7 @@ export function ProjectsTable({
                                 )
                               )}
                               <DropdownMenuItem
-                                className="text-destructive focus:text-destructive"
+                                className="text-destructive focus:text-destructive hover:bg-destructive/10 focus:bg-destructive/10"
                                 onClick={(e) => { e.stopPropagation(); onDelete({ id: project.id, title: project.project_title }); }}
                               >
                                 <Trash2 className="h-4 w-4 mr-2" /> Delete project
