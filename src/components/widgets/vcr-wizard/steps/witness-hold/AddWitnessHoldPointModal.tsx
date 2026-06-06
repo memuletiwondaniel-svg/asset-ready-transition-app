@@ -92,7 +92,7 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
       setActivity(existing.activity_name || '');
       setType((existing.inspection_type === 'WITNESS' ? 'WITNESS' : 'HOLD') as InspectionType);
       setNotes(existing.notes || '');
-      setAddAnother(false);
+      
     } else if (!isEdit) {
       setSystemId(defaultSystemId || '');
       setActivity('');
