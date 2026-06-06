@@ -328,8 +328,8 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
 
                         <Button
                           type="submit"
-                          className="w-full h-[46px] text-sm font-medium rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] text-white transition-colors"
-                          disabled={loading}
+                          className="w-full h-[46px] text-sm font-medium rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] text-white transition-colors disabled:opacity-100 disabled:bg-[#2563eb]/40 disabled:hover:bg-[#2563eb]/40 disabled:cursor-not-allowed"
+                          disabled={loading || !signInData.email.trim() || !signInData.password}
                         >
                           {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Signing in...</> : 'Sign In'}
                         </Button>
