@@ -155,15 +155,7 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
         toast.success(type === 'HOLD' ? 'Hold point added' : 'Witness point added');
         queryClient.invalidateQueries({ queryKey: ['itp-activities', vcrId] });
         onAdded?.();
-
-        if (addAnother) {
-          // Keep system selection, reset the rest
-          setActivity('');
-          setNotes('');
-          setType('HOLD');
-        } else {
-          handleClose();
-        }
+        handleClose();
       }
     } catch (e: any) {
       toast.error(e?.message || 'Failed to save');
