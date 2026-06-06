@@ -221,9 +221,15 @@ interface ProjectsTableProps {
   projects: Project[];
   progressMap?: ProjectsP2AProgressMap;
   canPerformActions: boolean;
+  isAdmin?: boolean;
   onProjectClick: (id: string) => void;
   onToggleFavorite: (e: React.MouseEvent, id: string, current: boolean | null) => void;
   onDelete: (project: { id: string; title: string }) => void;
+  onArchive?: (id: string) => void;
+  onRestore?: (id: string) => void;
+  onHide?: (id: string) => void;
+  onUnhide?: (id: string) => void;
+  isHidden?: (id: string) => boolean;
   onOpenQualifications: (project: Project) => void;
   prefs?: TablePreferences;
   setPrefs?: React.Dispatch<React.SetStateAction<TablePreferences>>;
@@ -233,9 +239,15 @@ export function ProjectsTable({
   projects,
   progressMap,
   canPerformActions,
+  isAdmin = false,
   onProjectClick,
   onToggleFavorite,
   onDelete,
+  onArchive,
+  onRestore,
+  onHide,
+  onUnhide,
+  isHidden,
   onOpenQualifications,
   prefs: externalPrefs,
   setPrefs: externalSetPrefs,
