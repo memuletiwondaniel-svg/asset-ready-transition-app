@@ -58,24 +58,18 @@ const COL_WIDTHS = {
   status: 96,
 };
 
-// Phase-letter based ID badge palette — must match AddFromCatalogDialog (LETTER_COLOR)
-const LETTER_BADGE_COLORS: Record<string, { bg: string; text: string }> = {
-  A: { bg: 'bg-amber-50 dark:bg-amber-950/30', text: 'text-amber-600' },
-  S: { bg: 'bg-purple-50 dark:bg-purple-950/30', text: 'text-purple-600' },
-  D: { bg: 'bg-teal-50 dark:bg-teal-950/30', text: 'text-teal-600' },
-  E: { bg: 'bg-emerald-50 dark:bg-emerald-950/30', text: 'text-emerald-600' },
-  I: { bg: 'bg-blue-50 dark:bg-blue-950/30', text: 'text-blue-600' },
-  O: { bg: 'bg-indigo-50 dark:bg-indigo-950/30', text: 'text-indigo-600' },
-  C: { bg: 'bg-rose-50 dark:bg-rose-950/30', text: 'text-rose-600' },
-  V: { bg: 'bg-pink-50 dark:bg-pink-950/30', text: 'text-pink-600' },
-};
-function getIdBadgeColors(code: string): { bg: string; text: string } {
-  if (!code) return { bg: 'bg-muted', text: 'text-muted-foreground' };
-  if (code.startsWith('VCR-')) return LETTER_BADGE_COLORS.V;
-  const prefix = code.split(/[.\-]/)[0].toUpperCase();
-  const letter = CODE_PREFIX_TO_LETTER_LOCAL[prefix] || prefix.charAt(0);
-  return LETTER_BADGE_COLORS[letter] || { bg: 'bg-muted', text: 'text-muted-foreground' };
+import {
+  getGanttBarStyle,
+  getGanttPhasePrefix as getPhasePrefix,
+  GANTT_BAR_LABEL_CLASS,
+  ID_BADGE_COLORS,
+} from '@/components/orp/utils/ganttBarStyles';
+
+// Neutral ID badge — single source of truth from shared module.
+function getIdBadgeColors(_code: string): { bg: string; text: string } {
+  return ID_BADGE_COLORS;
 }
+
 const CODE_PREFIX_TO_LETTER_LOCAL: Record<string, string> = {
   IDN: 'I', ASS: 'A', SEL: 'S', DEF: 'D', EXE: 'E', OPR: 'O', CUSTOM: 'C',
 };
@@ -90,47 +84,11 @@ const TOGGLEABLE_COLUMNS: { key: ColumnKey; label: string }[] = [
   { key: 'status', label: 'Status' },
 ];
 
-const PHASE_COLORS: Record<string, { bg: string; text: string }> = {
-  IDN: { bg: 'bg-blue-500/15', text: 'text-blue-700 dark:text-blue-400' },
-  ASS: { bg: 'bg-amber-500/15', text: 'text-amber-700 dark:text-amber-400' },
-  SEL: { bg: 'bg-emerald-500/15', text: 'text-emerald-700 dark:text-emerald-400' },
-  DEF: { bg: 'bg-teal-500/15', text: 'text-teal-700 dark:text-teal-400' },
-  EXE: { bg: 'bg-indigo-500/15', text: 'text-indigo-700 dark:text-indigo-400' },
-  OPR: { bg: 'bg-purple-500/15', text: 'text-purple-700 dark:text-purple-400' },
-  VCR: { bg: 'bg-rose-500/15', text: 'text-rose-700 dark:text-rose-400' },
-};
-
-const BAR_COLORS: Record<string, string> = {
-  IDN: 'bg-blue-400 dark:bg-blue-500',
-  ASS: 'bg-amber-400 dark:bg-amber-500',
-  SEL: 'bg-emerald-400 dark:bg-emerald-500',
-  DEF: 'bg-teal-400 dark:bg-teal-500',
-  EXE: 'bg-indigo-400 dark:bg-indigo-500',
-  OPR: 'bg-purple-400 dark:bg-purple-500',
-  VCR: 'bg-rose-400 dark:bg-rose-500',
-};
-
-const BAR_COLORS_MUTED: Record<string, string> = {
-  IDN: 'bg-blue-200 dark:bg-blue-800',
-  ASS: 'bg-amber-200 dark:bg-amber-800',
-  SEL: 'bg-emerald-200 dark:bg-emerald-800',
-  DEF: 'bg-teal-200 dark:bg-teal-800',
-  EXE: 'bg-indigo-200 dark:bg-indigo-800',
-  OPR: 'bg-purple-200 dark:bg-purple-800',
-  VCR: 'bg-rose-200 dark:bg-rose-800',
-};
-
 const ZOOM_PRESETS = [
   { label: '6M', days: 180 },
   { label: '12M', days: 365 },
   { label: '24M', days: 730 },
 ];
-
-function getPhasePrefix(code: string): string {
-  if (!code) return '';
-  if (code.startsWith('VCR-')) return 'VCR';
-  return code.split('-')[0];
-}
 
 const CODE_PREFIX_TO_LETTER: Record<string, string> = {
   IDN: 'I', ASS: 'A', SEL: 'S', DEF: 'D', EXE: 'E', OPR: 'O', CUSTOM: 'C',
