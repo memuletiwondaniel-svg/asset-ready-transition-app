@@ -184,10 +184,10 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                   {(project.lifecycle_status ?? 'active') === 'active' && onArchive && (
                     <DropdownMenuItem
                       onSelect={(e) => { e.preventDefault(); onArchive(); }}
-                      className="flex items-center cursor-pointer hover:bg-amber-500/10 focus:bg-amber-500/10"
+                      className="flex items-center cursor-pointer hover:bg-indigo-500/10 focus:bg-indigo-500/10"
                     >
-                      <Archive className="h-4 w-4 mr-2 text-amber-600" />
-                      <span className="text-amber-600">Archive</span>
+                      <Archive className="h-4 w-4 mr-2 text-indigo-600" />
+                      <span className="text-indigo-600">Archive</span>
                     </DropdownMenuItem>
                   )}
                   {(project.lifecycle_status ?? 'active') !== 'active' && onRestore && (
