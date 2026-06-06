@@ -8,9 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Select, SelectContent, SelectTrigger,
+  Select, SelectContent, SelectItem, SelectTrigger,
 } from '@/components/ui/select';
-import * as SelectPrimitive from '@radix-ui/react-select';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -52,20 +51,26 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
     queryKey: ['itp-systems', vcrId],
     enabled: open,
     queryFn: async () => {
-      const { data: mappings } = await (supabase as any)
+      const { data, error } = await (supabase as any)
         .from('p2a_handover_point_systems')
-        .select('system_id')
+        .select('system_id, p2a_systems!inner(id, name, system_id)')
         .eq('handover_point_id', vcrId);
-      const ids = [...new Set((mappings || []).map((r: any) => r.system_id))] as string[];
-      if (ids.length === 0) return [];
-      const { data: sysData } = await (supabase as any)
-        .from('p2a_systems')
-        .select('id, name, system_id')
-        .in('id', ids)
-        .order('name');
-      return (sysData || []).map((s: any) => ({
-        id: s.id, name: s.name || 'Unknown', code: s.system_id || '',
-      }));
+      if (error) throw error;
+
+      const seen = new Set<string>();
+      return (data || [])
+        .filter((row: any) => {
+          const system = row.p2a_systems;
+          if (!system?.id || seen.has(system.id)) return false;
+          seen.add(system.id);
+          return true;
+        })
+        .map((row: any) => ({
+          id: row.p2a_systems.id,
+          name: row.p2a_systems.name || 'Unknown',
+          code: row.p2a_systems.system_id || '',
+        }))
+        .sort((a: MappedSystem, b: MappedSystem) => a.name.localeCompare(b.name));
     },
   });
 
@@ -207,22 +212,20 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
               </SelectTrigger>
               <SelectContent className="z-[210]">
                 {systems.filter((s) => !!s.id).map((s) => (
-                  <SelectPrimitive.Item
+                  <SelectItem
                     key={s.id}
                     value={s.id}
-                    className="relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 px-2 text-sm outline-none transition-colors hover:bg-accent/50 focus:bg-accent focus:text-accent-foreground data-[state=checked]:bg-accent data-[state=checked]:font-medium data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
+                    className="pl-2 pr-2 font-normal data-[state=checked]:font-medium [&>span:first-child]:hidden"
                   >
-                    <SelectPrimitive.ItemText>
-                      <span className="flex items-baseline gap-4 min-w-0 w-full justify-between">
-                        <span className="truncate">{s.name}</span>
-                        {s.code && (
-                          <span className="font-mono text-xs text-muted-foreground shrink-0">
-                            {s.code}
-                          </span>
-                        )}
-                      </span>
-                    </SelectPrimitive.ItemText>
-                  </SelectPrimitive.Item>
+                    <span className="flex items-baseline gap-4 min-w-0 w-full justify-between">
+                      <span className="truncate">{s.name}</span>
+                      {s.code && (
+                        <span className="font-mono text-xs text-muted-foreground shrink-0">
+                          {s.code}
+                        </span>
+                      )}
+                    </span>
+                  </SelectItem>
                 ))}
               </SelectContent>
 
