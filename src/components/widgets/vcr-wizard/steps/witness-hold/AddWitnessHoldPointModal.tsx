@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 
 export interface AddWitnessHoldPointModalProps {
   vcrId: string;
+  systems?: { id: string; name: string; code: string }[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
   defaultSystemId?: string;
@@ -34,7 +35,7 @@ interface MappedSystem {
 }
 
 export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> = ({
-  vcrId, open, onOpenChange, defaultSystemId, editingActivityId, onAdded, onUpdated, onClose,
+  vcrId, systems = [], open, onOpenChange, defaultSystemId, editingActivityId, onAdded, onUpdated, onClose,
 }) => {
   const queryClient = useQueryClient();
   const isEdit = !!editingActivityId;
@@ -45,32 +46,6 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
   const [notes, setNotes] = useState('');
   
   const [saving, setSaving] = useState(false);
-
-  // Fetch systems mapped to this VCR
-  const { data: systems = [] } = useQuery<MappedSystem[]>({
-    queryKey: ['itp-systems', vcrId],
-    enabled: open,
-    queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from('p2a_handover_point_systems')
-        .select('system_id, p2a_systems(id, system_id, name)')
-        .eq('handover_point_id', vcrId);
-      if (error) throw error;
-
-      const seen = new Set<string>();
-      return (data || [])
-        .filter((r: any) => {
-          if (!r.p2a_systems || seen.has(r.system_id)) return false;
-          seen.add(r.system_id);
-          return true;
-        })
-        .map((r: any) => ({
-          id: r.system_id,
-          name: r.p2a_systems.name || 'Unknown',
-          code: r.p2a_systems.system_id || '',
-        }));
-    },
-  });
 
   // Load existing row when editing
   const { data: existing } = useQuery({
