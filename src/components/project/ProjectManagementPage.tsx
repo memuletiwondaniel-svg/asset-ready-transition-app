@@ -255,6 +255,13 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
   };
 
   const getStatusBadge = (project: any) => {
+    if (project?.is_active === false) {
+      return (
+        <Badge variant="outline" className="bg-muted text-muted-foreground border-border">
+          Archived
+        </Badge>
+      );
+    }
     return (
                       <Badge variant="outline" className="bg-green-100/80 text-green-700 border-green-200/60">
                         {t.active}
