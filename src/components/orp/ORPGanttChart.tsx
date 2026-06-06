@@ -2040,11 +2040,19 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                                         style={{ width: `${completion}%` }}
                                       />
                                     )}
-                                    <div className="absolute inset-0 flex items-center justify-center z-10">
-                                      <span className={cn("text-[9px]", GANTT_BAR_LABEL_CLASS)}>
-                                        {completion > 0 ? `${completion}%` : ''}
+                                    <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+                                      <span className={cn(GANTT_BAR_LABEL_CHIP_CLASS)}>
+                                        <span className={cn("text-[9px]", GANTT_BAR_LABEL_CLASS)}>
+                                          {getGanttBarLabel(
+                                            completion,
+                                            deliverable.start_date && deliverable.end_date
+                                              ? differenceInDays(parseISO(deliverable.end_date), parseISO(deliverable.start_date))
+                                              : null
+                                          )}
+                                        </span>
                                       </span>
                                     </div>
+
                                     {!readOnly && (
                                       <>
                                         <div
