@@ -164,6 +164,7 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
         return <Badge className="bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 border-yellow-500/30"><Clock className="w-3 h-3 mr-1" /> Pending</Badge>;
       case 'LOCKED':
         return <Badge className="bg-muted text-muted-foreground border-border"><Lock className="w-3 h-3 mr-1" /> Locked</Badge>;
+      case 'REJECTED':
       case 'REJECTED_PR1':
         return <Badge className="bg-red-500/20 text-red-700 dark:text-red-400 border-red-500/30">Rejected (Pr1)</Badge>;
       default:
