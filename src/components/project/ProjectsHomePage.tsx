@@ -230,9 +230,15 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
                 projects={filteredProjects}
                 progressMap={mergedProgressMap}
                 canPerformActions={canPerformActions}
+                isAdmin={isAdmin}
                 onProjectClick={handleProjectClick}
                 onToggleFavorite={handleToggleFavorite}
                 onDelete={setProjectToDelete}
+                onArchive={archiveProject}
+                onRestore={restoreProject}
+                onHide={hideProject}
+                onUnhide={unhideProject}
+                isHidden={isHidden}
                 onOpenQualifications={setQualProject}
                 prefs={tablePrefs}
                 setPrefs={setTablePrefs}
