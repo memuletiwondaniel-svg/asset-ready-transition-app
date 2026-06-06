@@ -261,17 +261,17 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                       )}
 
                       <form onSubmit={handleSignIn} className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="signin-email" className="text-sm font-medium">Email</Label>
+                        <div className="space-y-1.5">
+                          <Label htmlFor="signin-email" className="text-sm font-medium text-gray-700">Email</Label>
                           <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <Input
                               id="signin-email"
                               type="email"
                               placeholder="your.email@bgc.com"
                               value={signInData.email}
                               onChange={e => { setSignInData({ ...signInData, email: e.target.value }); setLoginFailed(false); }}
-                              className="pl-10 h-10 text-sm border-border bg-input focus-visible:ring-2 focus-visible:ring-ring"
+                              className={inputCls}
                               required
                               aria-invalid={loginFailed}
                               aria-describedby={loginFailed ? 'login-error' : undefined}
@@ -280,17 +280,17 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                           </div>
                         </div>
 
-                        <div className="space-y-2">
-                          <Label htmlFor="signin-password" className="text-sm font-medium">Password</Label>
+                        <div className="space-y-1.5">
+                          <Label htmlFor="signin-password" className="text-sm font-medium text-gray-700">Password</Label>
                           <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <Input
                               id="signin-password"
                               type={showPassword ? 'text' : 'password'}
                               placeholder="Enter your password"
                               value={signInData.password}
                               onChange={e => { setSignInData({ ...signInData, password: e.target.value }); setLoginFailed(false); }}
-                              className="pl-10 pr-10 h-10 text-sm border-border bg-input focus-visible:ring-2 focus-visible:ring-ring"
+                              className={`${inputCls} pr-10`}
                               required
                               aria-invalid={loginFailed}
                               aria-describedby={loginFailed ? 'login-error' : undefined}
@@ -298,7 +298,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                             />
                             <button 
                               type="button" 
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors" 
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors" 
                               onClick={() => setShowPassword(!showPassword)}
                             >
                               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -312,20 +312,20 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                               id="remember-me"
                               checked={rememberMe}
                               onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                              className="h-4 w-4"
+                              className="h-4 w-4 border-gray-300 data-[state=checked]:bg-[#2563eb] data-[state=checked]:border-[#2563eb]"
                             />
-                            <Label htmlFor="remember-me" className="text-sm text-muted-foreground cursor-pointer">
+                            <Label htmlFor="remember-me" className="text-sm text-gray-600 cursor-pointer">
                               Remember me
                             </Label>
                           </div>
-                          <Button variant="link" className="p-0 h-auto text-primary text-sm" onClick={() => setActiveTab('reset')}>
+                          <Button variant="link" className="p-0 h-auto text-[#2563eb] hover:text-[#1d4ed8] text-sm" onClick={() => setActiveTab('reset')}>
                             Forgot password?
                           </Button>
                         </div>
 
                         <Button
                           type="submit"
-                          className="w-full h-11 text-sm font-semibold transition-all duration-200 hover:scale-[1.01] active:scale-[0.98]"
+                          className="w-full h-[46px] text-sm font-medium rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] text-white transition-colors"
                           disabled={loading}
                         >
                           {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Signing in...</> : 'Sign In'}
@@ -333,20 +333,21 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                       </form>
 
                       {/* Register link */}
-                      <div className="text-center text-sm text-muted-foreground pt-3">
+                      <div className="text-center text-sm text-gray-600 pt-3">
                         New to ORSH?{' '}
-                        <Button variant="link" className="p-0 h-auto text-primary text-sm font-medium" onClick={() => setShowRegistrationForm(true)}>
+                        <Button variant="link" className="p-0 h-auto text-[#2563eb] hover:text-[#1d4ed8] text-sm font-medium" onClick={() => setShowRegistrationForm(true)}>
                           Create your account
                         </Button>
                       </div>
 
                       {/* Terms */}
-                      <div className="text-center text-xs text-muted-foreground pt-2">
+                      <div className="text-center text-xs text-gray-400 pt-2">
                         By signing in, you agree to our{' '}
-                        <Button variant="link" className="p-0 h-auto text-primary text-xs">Terms</Button>{' '}
+                        <Button variant="link" className="p-0 h-auto text-gray-500 hover:text-gray-700 text-xs underline">Terms</Button>{' '}
                         and{' '}
-                        <Button variant="link" className="p-0 h-auto text-primary text-xs">Privacy Policy</Button>
+                        <Button variant="link" className="p-0 h-auto text-gray-500 hover:text-gray-700 text-xs underline">Privacy Policy</Button>
                       </div>
+
                     </>
                   )}
                 </div>
