@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FileText, MessageSquare, ClipboardList, ShieldAlert, CheckCircle2, LogOut, ExternalLink, XCircle, FolderOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SOFCertificate } from './SOFCertificate';
+import type { SOFSignPayload, SOFRejectPayload } from './SOFCertificate';
 import { SOFCommentsPanel } from './SOFCommentsPanel';
 import { SOFQualificationsPanel } from './SOFQualificationsPanel';
 import { SOFProjectOverviewPanel } from './SOFProjectOverviewPanel';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useSOFApprovers } from '@/hooks/useSOFCertificates';
 
 
 interface SOFApprover {
