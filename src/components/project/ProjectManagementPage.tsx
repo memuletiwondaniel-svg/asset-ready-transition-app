@@ -280,17 +280,25 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
   };
 
   const getStatusBadge = (project: any) => {
-    if (project?.is_active === false) {
+    const status: string = project?.lifecycle_status ?? (project?.is_active === false ? 'deleted' : 'active');
+    if (status === 'archived') {
       return (
-        <Badge variant="outline" className="bg-muted text-muted-foreground border-border">
+        <Badge variant="outline" className="bg-amber-100/70 text-amber-700 border-amber-200/60">
           Archived
         </Badge>
       );
     }
+    if (status === 'deleted') {
+      return (
+        <Badge variant="outline" className="bg-muted text-muted-foreground border-border">
+          Deleted
+        </Badge>
+      );
+    }
     return (
-                      <Badge variant="outline" className="bg-green-100/80 text-green-700 border-green-200/60">
-                        {t.active}
-                      </Badge>
+      <Badge variant="outline" className="bg-green-100/80 text-green-700 border-green-200/60">
+        {t.active}
+      </Badge>
     );
   };
 
