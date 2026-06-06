@@ -62,8 +62,11 @@ import {
   getGanttBarStyle,
   getGanttPhasePrefix as getPhasePrefix,
   GANTT_BAR_LABEL_CLASS,
+  GANTT_BAR_LABEL_CHIP_CLASS,
+  getGanttBarLabel,
   ID_BADGE_COLORS,
 } from '@/components/orp/utils/ganttBarStyles';
+
 
 // Neutral ID badge — single source of truth from shared module.
 function getIdBadgeColors(_code: string): { bg: string; text: string } {

@@ -70,8 +70,11 @@ import {
   getGanttBarStyle,
   getGanttPhasePrefix as getPhasePrefix,
   GANTT_BAR_LABEL_CLASS,
+  GANTT_BAR_LABEL_CHIP_CLASS,
+  getGanttBarLabel,
   ID_BADGE_COLORS,
 } from '@/components/orp/utils/ganttBarStyles';
+
 
 const STATUS_OPTIONS = [
   { value: 'NOT_STARTED', label: 'Not Started', class: 'bg-muted text-muted-foreground' },
