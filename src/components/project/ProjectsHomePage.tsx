@@ -70,7 +70,22 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
 
   const filteredProjects = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    const list = (projects ?? []).filter((project) => {
+    let source: Project[] = [];
+    if (statusView === 'active') {
+      source = (projects ?? []).filter((p) => !isHidden(p.id));
+    } else if (statusView === 'hidden') {
+      const allKnown = [...(projects ?? []), ...(isAdmin ? archivedProjects : [])];
+      const seen = new Set<string>();
+      source = allKnown.filter((p) => {
+        if (!hiddenIds.includes(p.id)) return false;
+        if (seen.has(p.id)) return false;
+        seen.add(p.id);
+        return true;
+      });
+    } else if (isAdmin) {
+      source = archivedProjects;
+    }
+    const list = source.filter((project) => {
       if (!q) return true;
       const code = `${project.project_id_prefix}-${project.project_id_number}`.toLowerCase();
       const codeNoDash = `${project.project_id_prefix}${project.project_id_number}`.toLowerCase();
@@ -97,7 +112,7 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
       if (!a.is_favorite && b.is_favorite) return 1;
       return 0;
     });
-  }, [projects, searchQuery]);
+  }, [projects, archivedProjects, hiddenIds, isHidden, isAdmin, statusView, searchQuery]);
 
   const visibleProjectIds = useMemo(() => filteredProjects.map(p => p.id), [filteredProjects]);
   const { data: progressMap } = useProjectsP2AProgress(visibleProjectIds);
