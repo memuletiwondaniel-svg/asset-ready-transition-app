@@ -66,10 +66,13 @@ const Index = () => {
               />
             </div>
             
-            {/* ORSH Logo - Center */}
-            <div className="absolute left-1/2 transform -translate-x-1/2">
-              <OrshLogo size="medium" className="text-white" />
-            </div>
+            {/* ORSH Logo - Center (hidden when auth modal is open to avoid duplicate with card logo) */}
+            {!showAuth && (
+              <div className="absolute left-1/2 transform -translate-x-1/2">
+                <OrshLogo size="large" className="text-white" />
+              </div>
+            )}
+
             
              {/* Tenant Logo - Right (only show if subdomain tenant) */}
             <div className="flex items-center">
@@ -101,9 +104,10 @@ const Index = () => {
                 </span>
               </h1>
               
-              <p className="text-xl md:text-2xl text-white/85 font-light leading-relaxed max-w-2xl mx-auto">
+              <p className="text-lg md:text-xl lg:text-2xl text-white/85 font-light leading-relaxed mx-auto md:whitespace-nowrap">
                 {t.welcomeDescription}
               </p>
+
             </div>
             
             {/* Feature Cards */}
