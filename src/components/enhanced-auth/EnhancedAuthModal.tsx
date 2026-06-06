@@ -315,7 +315,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                               id="remember-me"
                               checked={rememberMe}
                               onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                              className="h-4 w-4 border-gray-300 data-[state=checked]:bg-[#2563eb] data-[state=checked]:border-[#2563eb]"
+                              className="h-4 w-4 border-gray-300 data-[state=checked]:bg-gray-400 data-[state=checked]:border-gray-400 data-[state=checked]:text-white"
                             />
                             <Label htmlFor="remember-me" className="text-sm text-gray-600 cursor-pointer">
                               Remember me
