@@ -822,22 +822,19 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
                         );
                       })()}
                       {barPos && isParent && (() => {
-                        const prefix = getPhasePrefix(activity.activityCode);
-                        const mutedColor = BAR_COLORS_MUTED[prefix] || 'bg-muted';
-                        const barColorSolid = getBarColor(activity.activityCode);
-
+                        const barStyle = getGanttBarStyle(activity.activityCode);
                         return (
                           <div
                             className={cn(
                               "absolute top-2 rounded shadow-sm overflow-hidden",
-                              mutedColor,
+                              barStyle.track,
                             )}
                             style={{ left: barPos.left, width: barPos.width, height: ROW_HEIGHT - 16 }}
                             title={`${activity.activity} (summary)`}
                           >
-                            <div className={cn("h-full rounded", barColorSolid, "opacity-50")} style={{ width: '100%' }} />
+                            <div className={cn("h-full rounded", barStyle.fill, "opacity-40")} style={{ width: '100%' }} />
                             {barPos.width > 24 && (
-                              <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-white drop-shadow-sm">
+                              <span className={cn("absolute inset-0 flex items-center justify-center text-[9px]", GANTT_BAR_LABEL_CLASS)}>
                                 {(() => {
                                   const range = getParentDateRange(activity.id, selectedActivities, childrenMap);
                                   if (range.minStart && range.maxEnd) {
