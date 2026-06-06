@@ -283,6 +283,11 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
 
   const handleDeleteProject = (project: any) => {
     setProjectToDelete(project);
+    // For already-archived projects, default the admin checkbox to hard delete
+    // since soft-delete has already been applied.
+    if (project?.is_active === false && isAdmin) {
+      setHardDelete(true);
+    }
   };
 
   const confirmDeleteProject = async () => {
