@@ -66,7 +66,7 @@ const OrshLogo: React.FC<OrshLogoProps> = ({
           <span
             className={cn(
               'font-medium tracking-wide',
-              surface === 'dark' ? 'text-current' : 'text-[#52525b]'
+              surface === 'dark' ? 'text-current' : 'text-[#a1a1aa]'
             )}
             style={{
               fontSize: `${Math.round(h * 0.7)}px`,
