@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Eye, Edit3, Trash2, MoreVertical, Star, GripVertical, Users, Calendar, FileText, Trophy } from 'lucide-react';
+import { Eye, Edit3, Trash2, MoreVertical, Star, GripVertical, Users, Calendar, FileText, Trophy, Archive, EyeOff, RotateCcw } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 const getProjectColor = (projectId: string) => {
