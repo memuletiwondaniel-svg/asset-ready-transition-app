@@ -2299,15 +2299,16 @@ export const translations = {
     // Welcome Screen
     welcomeTitle: 'Kesediaan Operasi',
     welcomeSubtitle: 'Permulaan & Penyerahan',
-    welcomeDescription: 'Transformasikan pengalaman permulaan dan penyerahan projek anda dengan platform ORSH.',
+    welcomeDescription: 'Satu platform. Setiap pihak. Mengintegrasikan orang dan sistem untuk menghasilkan keputusan perniagaan.',
     safeStartup: 'PSSR',
     safeStartupDesc: 'Kajian Keselamatan Pra-Permulaan - Menguruskan pengenalan hidrokarbon yang selamat',
-    p2oHandover: 'Penyerahan P2A',
-    p2oHandoverDesc: 'Peralihan dan penyerahan yang lancar dari pembinaan kepada Operasi Aset',
+    p2oHandover: 'P2A',
+    p2oHandoverDesc: 'Mengkoordinasikan peralihan dan penyerahan dari pembinaan dan penyuapan kepada operasi aset.',
     accessButton: 'Akses Platform ORSH',
     enterpriseSecure: 'Keselamatan Perusahaan',
-    isoCompliant: 'Patuh ISO',
-    support24: 'Sokongan 24/7',
+    connectedPeople: 'Orang Berhubung',
+    connectedSystems: 'Sistem Berhubung',
+    integratedDelivery: 'Penyerahan Bersepadu',
     
     // User Profile
     profile: 'Profil',
