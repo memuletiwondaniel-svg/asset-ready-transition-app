@@ -58,29 +58,24 @@ const Index = () => {
       <header className="fixed top-0 left-0 right-0 z-30 px-6 py-4">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between">
-            {/* Language Selector - Left */}
-            <div className="flex items-center">
+            {/* ORSH Logo - Left */}
+            {!showAuth && (
+              <div className="flex items-center">
+                <OrshLogo size="small" className="text-white" surface="dark" />
+              </div>
+            )}
+            
+            {/* Language Selector - Right */}
+            <div className="flex items-center gap-4">
               <LandingLanguageSelector 
                 selectedLanguage={language}
                 onLanguageChange={setLanguage}
               />
-            </div>
-            
-            {/* ORSH Logo - Center (hidden when auth modal is open to avoid duplicate with card logo) */}
-            {!showAuth && (
-              <div className="absolute left-1/2 transform -translate-x-1/2">
-                <OrshLogo size="large" className="text-white" surface="dark" />
-              </div>
-            )}
-
-            
-             {/* Tenant Logo - Right (only show if subdomain tenant) */}
-            <div className="flex items-center">
               {subdomainTenant?.logo_url && (
                 <img 
                   src={subdomainTenant.logo_url} 
                   alt={subdomainTenant.name} 
-                  className="h-12 w-auto drop-shadow-lg"
+                  className="h-8 w-auto drop-shadow-lg"
                 />
               )}
             </div>
