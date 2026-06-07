@@ -27,6 +27,7 @@ const OrshMarkSvg: React.FC<{ height: number; surface?: 'light' | 'dark'; classN
   const width = height;
   const barGradId = useId();
   const sparkGradId = useId();
+  const ringMaskId = useId();
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -48,12 +49,26 @@ const OrshMarkSvg: React.FC<{ height: number; surface?: 'light' | 'dark'; classN
           <stop offset="0%" stopColor="#d8fff0" />
           <stop offset="100%" stopColor="#34B88E" />
         </linearGradient>
+        <mask id={ringMaskId} maskUnits="userSpaceOnUse">
+          <rect width="48" height="48" fill="black" />
+          <circle
+            className="orsh-ring-mask"
+            cx="24"
+            cy="24"
+            r="15"
+            fill="none"
+            stroke="white"
+            strokeWidth="18"
+            pathLength={100}
+            transform="rotate(-90 24 24)"
+          />
+        </mask>
       </defs>
       <path
         className="orsh-ring"
         d="M 26.5 6.17 A 18 18 0 1 1 21.5 6.17 L 21.5 11.72 A 14 14 0 1 0 26.5 11.72 Z"
         fill={surface === 'dark' ? 'currentColor' : '#a1a1aa'}
-        pathLength={100}
+        mask={`url(#${ringMaskId})`}
       />
       <rect x="21.5" y="1.5" width="5" height="24" rx="2.5" fill={`url(#${barGradId})`} />
       <rect
