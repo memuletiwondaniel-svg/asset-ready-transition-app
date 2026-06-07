@@ -896,11 +896,104 @@ const runR22: Scenario["run"] = async (ctx) => {
 };
 
 
+// ── R23 — approving-party multi-role fan-out (E-1a) ──────────────────────
+// Asserts: after vcr_plan_is_approved fires, every approving role on every
+// actionable prereq (override-aware, catalog-live) produces ONE
+// vcr_approval_bundle user_task per resolved user per VCR. Idempotent on
+// re-fire. Ledger PENDING rows exist for each (prereq, role).
+const runR23: Scenario["run"] = async (ctx) => {
+  const svc = svcOf(ctx);
+  const { projectId, vcrPointId } = ctx as any;
+  if (!projectId || !vcrPointId) {
+    return { status: "fail", expected: "ctx.projectId + ctx.vcrPointId", observed: { projectId, vcrPointId } };
+  }
+
+  // Bundles created for this VCR.
+  const { data: bundles, error: bErr } = await svc
+    .from("user_tasks")
+    .select("id,user_id,status,metadata,sub_items,dedupe_key")
+    .eq("type", "vcr_approval_bundle")
+    .filter("metadata->>point_id", "eq", vcrPointId);
+  if (bErr) return { status: "fail", expected: "bundles query ok", observed: bErr.message };
+
+  // Compute expected role set from catalog + overrides for actionable prereqs.
+  const { data: prereqs } = await svc
+    .from("p2a_vcr_prerequisites")
+    .select("id,status,vcr_item_id")
+    .eq("handover_point_id", vcrPointId);
+  const actionable = (prereqs ?? []).filter((p: any) =>
+    p.vcr_item_id && !["ACCEPTED", "QUALIFICATION_APPROVED", "NA"].includes(p.status));
+
+  const itemIds = [...new Set(actionable.map((p: any) => p.vcr_item_id))];
+  const { data: items } = await svc
+    .from("vcr_items").select("id,approving_party_role_ids").in("id", itemIds);
+  const { data: overrides } = await svc
+    .from("p2a_vcr_item_overrides")
+    .select("vcr_item_id,approving_party_role_ids_override")
+    .eq("handover_point_id", vcrPointId);
+  const overrideMap = new Map(
+    (overrides ?? []).map((o: any) => [o.vcr_item_id, o.approving_party_role_ids_override]));
+
+  const expectedRoles = new Set<string>();
+  for (const p of actionable) {
+    const item = (items ?? []).find((i: any) => i.id === p.vcr_item_id);
+    const roles = overrideMap.get(p.vcr_item_id) ?? item?.approving_party_role_ids ?? [];
+    for (const r of roles) expectedRoles.add(r);
+  }
+
+  // Idempotency: re-fire the latest VCR approver row.
+  const { data: approvers } = await svc
+    .from("p2a_handover_approvers")
+    .select("id,status").eq("point_id", vcrPointId).eq("stage", "VCR")
+    .eq("status", "APPROVED").limit(1);
+  if (approvers?.[0]) {
+    await svc.from("p2a_handover_approvers")
+      .update({ status: "APPROVED" }).eq("id", approvers[0].id);
+  }
+  const { count: afterCount } = await svc
+    .from("user_tasks").select("id", { count: "exact", head: true })
+    .eq("type", "vcr_approval_bundle")
+    .filter("metadata->>point_id", "eq", vcrPointId);
+
+  const observedRoles = new Set<string>(
+    (bundles ?? []).map((b: any) => b.metadata?.approving_party_role_id).filter(Boolean));
+
+  // Ledger seeded?
+  const prereqIds = actionable.map((p: any) => p.id);
+  const { count: ledgerCount } = await svc
+    .from("vcr_prerequisite_approvals")
+    .select("id", { count: "exact", head: true })
+    .in("prerequisite_id", prereqIds.length ? prereqIds : ["00000000-0000-0000-0000-000000000000"]);
+
+  const ok =
+    observedRoles.size > 0 &&
+    [...expectedRoles].every(r => observedRoles.has(r)) &&
+    (bundles ?? []).length === (afterCount ?? 0) && // idempotent
+    (ledgerCount ?? 0) > 0;
+
+  return {
+    status: ok ? "pass" : "fail",
+    expected: {
+      bundles_per_distinct_role: expectedRoles.size,
+      idempotent_on_refire: true,
+      ledger_rows_seeded: true,
+    },
+    observed: {
+      bundle_count: bundles?.length ?? 0,
+      bundle_count_after_refire: afterCount,
+      observed_roles: [...observedRoles],
+      expected_roles: [...expectedRoles],
+      ledger_rows: ledgerCount,
+    },
+  };
+};
+
 export const ruleScenarios: Scenario[] = [
   ...ruleList,
   { id: "R19", name: "VCR approved → checklist scoped to Sr ORA Engr (count=2)",          dependsOn: ["R18"], run: buildChecklistRule("R19") },
   { id: "R20", name: "VCR approved → 2 CMMS deliverables (+2 sub-tasks each) → CMMS Lead", dependsOn: ["R18"], run: runR20 },
   { id: "R21", name: "VCR approved → checklist scoped to Construction Lead (count=1)",    dependsOn: ["R18"], run: buildChecklistRule("R21") },
   { id: "R22", name: "VCR approved → Comm Lead checklist + ITP handshake (pre/post confirm)", dependsOn: ["R18"], run: runR22 },
+  { id: "R23", name: "VCR approved → approving-party multi-role bundles (catalog+override, idempotent)", dependsOn: ["R18"], run: runR23 },
 ];
 

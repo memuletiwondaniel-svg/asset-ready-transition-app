@@ -236,6 +236,24 @@ export const SPEC: Record<string, RuleSpec> = {
       { title: "{projCode}: Complete ITP for {vcrCode}",          assigneeRole: "Commissioning Lead", action: "complete_itp",       cardinality: "per_vcr", hasSubTasks: true, excludesCancelledSuperseded: true, requiresSrOraConfirmation: true },
     ],
   },
+  // ── R23 — APPROVING-PARTY MULTI-ROLE FAN-OUT (E-1a) ──────────────────────
+  // One consolidated `vcr_approval_bundle` user_task per resolved approving-
+  // role user per VCR. Cardinality = distinct(union over actionable prereqs of
+  // COALESCE(p2a_vcr_item_overrides.approving_party_role_ids_override,
+  //          vcr_items.approving_party_role_ids)) — only roles whose user
+  // resolves via resolve_project_role_user produce a task.
+  R23: {
+    id: "R23",
+    trigger: "vcr_plan_is_approved → fan-out to every approving-party role on every actionable prereq",
+    gate: "vcr_plan_is_approved",
+    status: "pending",
+    expects: [{
+      title: "VCR Review Items – {vcrCode}",
+      assigneeRole: "(per approving role)",
+      action: "review_vcr_checklist_bundle",
+      cardinality: "per_delivering",
+    }],
+  },
 };
 
 /** Cross-cutting invariants — asserted by crossCuttingScenarios. */

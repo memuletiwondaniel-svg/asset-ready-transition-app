@@ -246,6 +246,13 @@ export const CreateVCRWizard: React.FC<CreateVCRWizardProps> = ({
           delivering_party_id: template.delivering_party_role_id,
           receiving_party_id: template.receiving_party_role_id,
           display_order: index,
+          // E-1a: link instance back to vcr_items catalog so R23 can read
+          // approving_party_role_ids live (override-aware) at fan-out time.
+          // Best-effort: a template may map to 1..N vcr_items via template_items;
+          // when 1:1 we set it here, otherwise the DB backfill resolves by summary.
+          vcr_item_id: template.template_items?.length === 1
+            ? template.template_items[0].vcr_item_id
+            : null,
         }));
 
         await supabase.from('p2a_vcr_prerequisites').insert(prereqs);
