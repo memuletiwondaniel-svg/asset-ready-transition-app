@@ -1,7 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-export type VCRLifecycle = 'not_started' | 'draft' | 'in_approval' | 'approved' | 'handed_over';
+export type VCRLifecycle =
+  | 'not_started'
+  | 'draft'
+  | 'in_progress'
+  | 'in_approval'
+  | 'approved'
+  | 'handed_over';
 export type VCRGate = 'SOF' | 'PAC';
 
 export interface ProjectVCR {
@@ -31,7 +37,13 @@ export interface ProjectVCR {
   lifecycle?: VCRLifecycle;
   systems_count: number;
   has_hydrocarbon: boolean;
+  /** Plan-creation wizard progress 0–100 (normalized from raw 0–83). */
+  planProgress?: number;
+  /** Plan-creation wizard step 1–10 derived for "Step X of 10". */
+  planStep?: number;
 }
+
+const DRAFT_COMPLETE_PROGRESS = 83;
 
 export function useProjectVCRs(projectId: string) {
   return useQuery({
@@ -61,6 +73,22 @@ export function useProjectVCRs(projectId: string) {
       if (!vcrsResult.data) return [];
 
       const vcrs = vcrsResult.data;
+      const vcrIds = vcrs.map((v: any) => v.id);
+
+      // Batched fetch of plan-creation wizard progress for these VCRs.
+      const planProgressMap = new Map<string, { raw: number; commenced: boolean }>();
+      if (vcrIds.length > 0) {
+        const planActResult = await client
+          .from('ora_plan_activities')
+          .select('source_ref_id, completion_percentage, status')
+          .eq('source_type', 'vcr_delivery_plan')
+          .in('source_ref_id', vcrIds);
+        for (const row of planActResult.data || []) {
+          const raw = Number(row.completion_percentage) || 0;
+          const commenced = raw > 0 || row.status === 'IN_PROGRESS';
+          planProgressMap.set(row.source_ref_id, { raw, commenced });
+        }
+      }
 
       const vcrsWithProgress = await Promise.all(
         vcrs.map(async (vcr: any) => {
@@ -108,18 +136,31 @@ export function useProjectVCRs(projectId: string) {
           const gateSigned = sofSigned || pacSigned;
           const gateSignedAt: string | null = (hasHydrocarbon ? vcr.sof_signed_at : vcr.pac_signed_at) ?? null;
 
-          // Lifecycle derivation
+          const planInfo = planProgressMap.get(vcr.id);
+          const planCommenced = !!planInfo?.commenced;
+          const planRaw = planInfo?.raw ?? 0;
+          const planProgress = Math.max(0, Math.min(100, Math.round((planRaw / DRAFT_COMPLETE_PROGRESS) * 100)));
+          const planStep = Math.max(1, Math.min(10, Math.round((planRaw / DRAFT_COMPLETE_PROGRESS) * 10)));
+
+          // Lifecycle derivation (precedence)
           let lifecycle: VCRLifecycle;
           if (gateSigned) {
             lifecycle = 'handed_over';
-          } else if (total === 0 && !submittedAt && !approvedAt) {
-            lifecycle = 'not_started';
           } else if (status === 'SIGNED' || execStatus === 'APPROVED') {
             lifecycle = 'approved';
-          } else if (submittedAt || execStatus === 'SUBMITTED' || execStatus === 'IN_APPROVAL' || execStatus === 'PENDING_APPROVAL') {
+          } else if (
+            submittedAt ||
+            execStatus === 'SUBMITTED' ||
+            execStatus === 'IN_APPROVAL' ||
+            execStatus === 'PENDING_APPROVAL'
+          ) {
             lifecycle = 'in_approval';
-          } else {
+          } else if (total > 0) {
+            lifecycle = 'in_progress';
+          } else if (planCommenced) {
             lifecycle = 'draft';
+          } else {
+            lifecycle = 'not_started';
           }
 
           // Weighted progress: checklist = 95%, gate sign-off = 5%. Handed over forces 100.
@@ -149,6 +190,8 @@ export function useProjectVCRs(projectId: string) {
             lifecycle,
             systems_count: systemsCount,
             has_hydrocarbon: hasHydrocarbon,
+            planProgress,
+            planStep,
           } as ProjectVCR;
         })
       );
