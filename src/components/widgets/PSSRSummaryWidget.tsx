@@ -291,14 +291,24 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                 ))}
               </div>
             ) : showVCRList ? (
-              <div className="space-y-2 overflow-y-auto overscroll-contain pr-1 flex-1 min-h-0 scrollbar-modern">
-                {allVCRs.map((vcr) => (
-                  <VCRCard
-                    key={vcr.id}
-                    vcr={vcr}
-                    onClick={handleVCRClick}
-                    isActive={(wizardVCR?.id ?? selectedVCR?.id) === vcr.id}
-                  />
+              <div className="space-y-3 overflow-y-auto overscroll-contain pr-1 flex-1 min-h-0 scrollbar-modern">
+                {vcrGroups.map(group => group.items.length === 0 ? null : (
+                  <div key={group.key} className="space-y-2">
+                    <div className="flex items-center gap-2 pt-1">
+                      <span className="text-[10px] uppercase tracking-[0.08em] font-medium text-muted-foreground">
+                        {group.label} · {group.items.length}
+                      </span>
+                      <div className="flex-1 h-px bg-border/60" />
+                    </div>
+                    {group.items.map(vcr => (
+                      <VCRCard
+                        key={vcr.id}
+                        vcr={vcr}
+                        onClick={handleVCRClick}
+                        isActive={(wizardVCR?.id ?? selectedVCR?.id) === vcr.id}
+                      />
+                    ))}
+                  </div>
                 ))}
               </div>
             ) : p2aPlanByProject ? (
