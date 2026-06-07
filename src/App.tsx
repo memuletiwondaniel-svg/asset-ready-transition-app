@@ -42,6 +42,7 @@ const SelmaAnalytics = React.lazy(() => import("@/pages/admin/SelmaAnalytics"));
 const FredValidation = React.lazy(() => import("@/pages/admin/FredValidation"));
 const FredAnalytics = React.lazy(() => import("@/pages/admin/FredAnalytics"));
 const AIAgentHub = React.lazy(() => import("@/pages/admin/AIAgentHub"));
+const HarnessRunner = React.lazy(() => import("@/pages/admin/HarnessRunner"));
 
 // Create QueryClient outside component to prevent recreation on every render
 const queryClient = new QueryClient({
@@ -127,6 +128,11 @@ const App = () => (
                       <Route path="/admin/ai-agents/:agentCode" element={
                         <React.Suspense fallback={<div className="flex items-center justify-center h-screen"><span className="text-muted-foreground">Loading...</span></div>}>
                           <AIAgentHub />
+                        </React.Suspense>
+                      } />
+                      <Route path="/admin/harness" element={
+                        <React.Suspense fallback={<div className="flex items-center justify-center h-screen"><span className="text-muted-foreground">Loading...</span></div>}>
+                          <HarnessRunner />
                         </React.Suspense>
                       } />
                     </Route>
