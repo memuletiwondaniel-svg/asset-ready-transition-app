@@ -61,7 +61,7 @@ const Index = () => {
             {/* ORSH Logo - Left */}
             {!showAuth && (
               <div className="flex items-center">
-                <OrshLogo size="medium" className="text-white" surface="dark" />
+                <OrshLogo size="large" className="text-white" surface="dark" />
               </div>
             )}
             
