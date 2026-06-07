@@ -27,6 +27,8 @@ const OrshMarkSvg: React.FC<{ height: number; surface?: 'light' | 'dark'; classN
   const width = height;
   const barGradId = useId();
   const sparkGradId = useId();
+  const maskId = useId();
+  const ringColor = surface === 'dark' ? 'currentColor' : '#a1a1aa';
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -48,15 +50,26 @@ const OrshMarkSvg: React.FC<{ height: number; surface?: 'light' | 'dark'; classN
           <stop offset="0%" stopColor="#d8fff0" />
           <stop offset="100%" stopColor="#0B5C44" />
         </linearGradient>
+        <mask id={maskId} maskUnits="userSpaceOnUse">
+          <rect x="0" y="0" width="48" height="48" fill="black" />
+          <path
+            className="orsh-ring"
+            d="M 29.3 9.44 A 15.5 15.5 0 1 1 18.7 9.44"
+            fill="none"
+            stroke="white"
+            strokeWidth="7"
+            strokeLinecap="butt"
+            pathLength={100}
+          />
+        </mask>
       </defs>
+      {/* Tapered ring: outer circle r=15.5 centered (24,24); inner circle r=13 shifted down (24,24.6).
+          Top thickness ≈ 3.1, bottom thickness ≈ 1.9 → gentle taper top→bottom→top. */}
       <path
-        className="orsh-ring"
-        d="M 29.3 9.44 A 15.5 15.5 0 1 1 18.7 9.44"
-        fill="none"
-        stroke={surface === 'dark' ? 'currentColor' : '#a1a1aa'}
-        strokeWidth="5"
-        strokeLinecap="butt"
-        pathLength={100}
+        d="M 8.5 24 A 15.5 15.5 0 1 0 39.5 24 A 15.5 15.5 0 1 0 8.5 24 Z M 11.6 24.6 A 13 13 0 1 1 37.6 24.6 A 13 13 0 1 1 11.6 24.6 Z"
+        fillRule="evenodd"
+        fill={ringColor}
+        mask={`url(#${maskId})`}
       />
       <rect x="21.5" y="1.5" width="5" height="24" rx="2.5" fill={`url(#${barGradId})`} />
       <rect
