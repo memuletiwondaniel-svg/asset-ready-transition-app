@@ -291,6 +291,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
       columns: 3 as const,
       items: [
         { id: 'audit-logs', title: 'Audit Log', description: 'Security events, user actions', icon: FileSearch, gradient: 'from-slate-600 to-zinc-700', onClick: () => setActiveView('audit-logs') },
+        { id: 'harness-runner', title: 'Workflow Harness', description: 'Run test-workflow-e2e E2E suite', icon: FlaskConical, gradient: 'from-purple-500 to-fuchsia-600', onClick: () => navigate('/admin/harness') },
         { id: 'activity-log', title: 'Activity Log', description: 'Recent system activity', icon: Activity, gradient: 'from-cyan-500 to-cyan-600', onClick: () => setActiveView('activity-log') },
         { id: 'session-timeout', title: 'Session Timeout', description: 'Auto-logout, idle lock policies', icon: Timer, gradient: 'from-indigo-500 to-violet-600', onClick: () => setActiveView('session-timeout') },
         { id: 'brute-force', title: 'Brute-Force Protection', description: 'Account lockout thresholds', icon: ShieldAlert, gradient: 'from-red-500 to-rose-600', onClick: () => setActiveView('brute-force') },
