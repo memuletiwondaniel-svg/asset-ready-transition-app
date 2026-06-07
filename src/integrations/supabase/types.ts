@@ -7857,6 +7857,7 @@ export type Database = {
           submitted_at: string | null
           summary: string
           updated_at: string
+          vcr_item_id: string | null
         }
         Insert: {
           comments?: string | null
@@ -7876,6 +7877,7 @@ export type Database = {
           submitted_at?: string | null
           summary: string
           updated_at?: string
+          vcr_item_id?: string | null
         }
         Update: {
           comments?: string | null
@@ -7895,6 +7897,7 @@ export type Database = {
           submitted_at?: string | null
           summary?: string
           updated_at?: string
+          vcr_item_id?: string | null
         }
         Relationships: [
           {
@@ -7909,6 +7912,13 @@ export type Database = {
             columns: ["pac_prerequisite_id"]
             isOneToOne: false
             referencedRelation: "pac_prerequisites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_prerequisites_vcr_item_id_fkey"
+            columns: ["vcr_item_id"]
+            isOneToOne: false
+            referencedRelation: "vcr_items"
             referencedColumns: ["id"]
           },
         ]
@@ -13594,6 +13604,57 @@ export type Database = {
           },
         ]
       }
+      vcr_prerequisite_approvals: {
+        Row: {
+          approver_role_id: string
+          approver_user_id: string | null
+          comment: string | null
+          created_at: string
+          decided_at: string | null
+          id: string
+          prerequisite_id: string
+          status: Database["public"]["Enums"]["vcr_prereq_approval_status"]
+          updated_at: string
+        }
+        Insert: {
+          approver_role_id: string
+          approver_user_id?: string | null
+          comment?: string | null
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          prerequisite_id: string
+          status?: Database["public"]["Enums"]["vcr_prereq_approval_status"]
+          updated_at?: string
+        }
+        Update: {
+          approver_role_id?: string
+          approver_user_id?: string | null
+          comment?: string | null
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          prerequisite_id?: string
+          status?: Database["public"]["Enums"]["vcr_prereq_approval_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vcr_prerequisite_approvals_approver_role_id_fkey"
+            columns: ["approver_role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vcr_prerequisite_approvals_prerequisite_id_fkey"
+            columns: ["prerequisite_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_vcr_prerequisites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vcr_sof_approvers: {
         Row: {
           approver_level: number
@@ -14599,6 +14660,10 @@ export type Database = {
         Returns: number
       }
       reconcile_ora_plan_tasks: { Args: { p_plan_id: string }; Returns: Json }
+      reconcile_vcr_approval_bundles: {
+        Args: { p_point_id: string }
+        Returns: Json
+      }
       reject_user_account: {
         Args: { rejection_reason_text?: string; target_user_id: string }
         Returns: boolean
@@ -14906,6 +14971,11 @@ export type Database = {
         | "pending_approval"
         | "rejected"
         | "new"
+      vcr_prereq_approval_status:
+        | "PENDING"
+        | "ACCEPTED"
+        | "REJECTED"
+        | "QUALIFIED"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -15267,6 +15337,12 @@ export const Constants = {
         "pending_approval",
         "rejected",
         "new",
+      ],
+      vcr_prereq_approval_status: [
+        "PENDING",
+        "ACCEPTED",
+        "REJECTED",
+        "QUALIFIED",
       ],
     },
   },
