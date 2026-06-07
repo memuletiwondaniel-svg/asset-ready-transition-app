@@ -89,7 +89,7 @@ const OrshLogo: React.FC<OrshLogoProps> = ({
 
   const content = (
     <div className="flex flex-col items-center justify-center">
-      <div className="flex items-end leading-none">
+      <div className="flex items-start leading-none">
         <OrshMarkSvg height={h} surface={surface} />
         {variant === 'full' && (
           <span
@@ -101,7 +101,7 @@ const OrshLogo: React.FC<OrshLogoProps> = ({
               fontSize: `${Math.round(h * 0.55)}px`,
               lineHeight: 1,
               letterSpacing: '0.04em',
-              marginBottom: `${Math.round(h * 0.06)}px`,
+              marginTop: `${Math.round(h * 0.04)}px`,
               marginLeft: `-${Math.max(2, Math.round(h * 0.06))}px`,
             }}
           >
