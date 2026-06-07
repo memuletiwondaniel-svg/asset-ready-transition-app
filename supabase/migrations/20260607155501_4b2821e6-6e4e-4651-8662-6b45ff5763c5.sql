@@ -1,0 +1,1 @@
+ALTER TYPE p2a_vcr_prerequisite_status ADD VALUE IF NOT EXISTS 'NA';

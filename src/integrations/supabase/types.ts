@@ -14913,6 +14913,7 @@ export type Database = {
         | "REJECTED"
         | "QUALIFICATION_REQUESTED"
         | "QUALIFICATION_APPROVED"
+        | "NA"
       pssr_action_status: "open" | "in_progress" | "closed"
       pssr_item_approval_status:
         | "pending"
@@ -15272,6 +15273,7 @@ export const Constants = {
         "REJECTED",
         "QUALIFICATION_REQUESTED",
         "QUALIFICATION_APPROVED",
+        "NA",
       ],
       pssr_action_status: ["open", "in_progress", "closed"],
       pssr_item_approval_status: [
