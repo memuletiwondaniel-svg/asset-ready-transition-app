@@ -51,8 +51,12 @@ const OrshMarkSvg: React.FC<{ height: number; surface?: 'light' | 'dark'; classN
       </defs>
       <path
         className="orsh-ring"
-        d="M30.16 7.09 A18 18 0 1 1 17.84 7.09 L19.55 9.78 A13 13 0 1 0 28.45 9.78 Z"
-        fill={surface === 'dark' ? 'currentColor' : '#a1a1aa'}
+        d="M 29.3 9.44 A 15.5 15.5 0 1 1 18.7 9.44"
+        fill="none"
+        stroke={surface === 'dark' ? 'currentColor' : '#a1a1aa'}
+        strokeWidth="5"
+        strokeLinecap="butt"
+        pathLength={100}
       />
       <rect x="21.5" y="1.5" width="5" height="24" rx="2.5" fill={`url(#${barGradId})`} />
       <rect
