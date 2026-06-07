@@ -15,55 +15,21 @@ const shortCode = (code?: string) => {
   return code.replace(/^VCR-[A-Z0-9]+-/, 'VCR-');
 };
 
-// State-coded hex palette (authoritative per brief — do not tokenize)
 const LIFECYCLE_STYLE: Record<
   VCRLifecycle,
-  {
-    pillBg: string;
-    pillText: string;
-    pillDot: string;
-    label: string;
-    barFill: string;
-  }
+  { pillBg: string; pillText: string; label: string; barFill: string }
 > = {
   not_started: {
     pillBg: 'hsl(var(--secondary))',
     pillText: 'hsl(var(--muted-foreground))',
-    pillDot: 'hsl(var(--muted-foreground))',
     label: 'Not started',
     barFill: '#9CA3AF',
   },
-  draft: {
-    pillBg: '#FAEEDA',
-    pillText: '#854F0B',
-    pillDot: '#BA7517',
-    label: 'Draft',
-    barFill: '#BA7517',
-  },
-  in_approval: {
-    pillBg: '#E6F1FB',
-    pillText: '#0C447C',
-    pillDot: '#185FA5',
-    label: 'In approval',
-    barFill: '#185FA5',
-  },
-  approved: {
-    pillBg: '#E1F5EE',
-    pillText: '#085041',
-    pillDot: '#0F6E56',
-    label: 'Approved',
-    barFill: '#0F6E56',
-  },
-  handed_over: {
-    pillBg: '#D1FAE5',
-    pillText: '#064E3B',
-    pillDot: '#059669',
-    label: 'Handed Over',
-    barFill: '#059669',
-  },
+  draft: { pillBg: '#FAEEDA', pillText: '#854F0B', label: 'Draft', barFill: '#BA7517' },
+  in_approval: { pillBg: '#E6F1FB', pillText: '#0C447C', label: 'In approval', barFill: '#185FA5' },
+  approved: { pillBg: '#E1F5EE', pillText: '#085041', label: 'Approved', barFill: '#0F6E56' },
+  handed_over: { pillBg: '#D1FAE5', pillText: '#064E3B', label: 'Handed Over', barFill: '#059669' },
 };
-
-const GATE_SIGNED_COLOR = '#0F6E56';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -91,14 +57,6 @@ const formatRelative = (iso: string | null) => {
   return `${Math.floor(months / 12)}y ago`;
 };
 
-const Dot: React.FC = () => (
-  <span
-    aria-hidden
-    className="inline-block w-[3px] h-[3px] rounded-full mx-1.5 align-middle"
-    style={{ backgroundColor: 'hsl(var(--muted-foreground) / 0.5)' }}
-  />
-);
-
 export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false }) => {
   const displayCode = shortCode(vcr.vcr_code);
   const lifecycle: VCRLifecycle = vcr.lifecycle ?? 'draft';
@@ -110,76 +68,27 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
   const gate = vcr.gate ?? (vcr.has_hydrocarbon ? 'SOF' : 'PAC');
   const gateLabel = gate === 'SOF' ? 'SoF' : 'PAC';
   const gateSigned = vcr.gate_signed ?? vcr.sof_signed ?? false;
+  const systemsLabel = `${vcr.systems_count} system${vcr.systems_count === 1 ? '' : 's'}`;
 
-  // Summary line
-  let summary: React.ReactNode = null;
+  // Row 4 content per lifecycle
+  let ctxLeft: React.ReactNode = null;
+  let ctxRight = '';
   if (isNotStarted) {
-    summary = (
-      <p
-        className="text-[12px] italic leading-[1.4] mb-1"
-        style={{ color: 'hsl(var(--muted-foreground))' }}
-      >
-        No checklist items yet — click to begin
-      </p>
-    );
+    // handled separately below
   } else if (lifecycle === 'draft') {
-    summary = (
-      <p className="text-[12px] leading-[1.4] mb-2.5 text-muted-foreground">
-        {closedItems} of {totalItems} checklist items closed
-      </p>
-    );
+    ctxLeft = `${closedItems} of ${totalItems} items closed`;
+    ctxRight = vcr.updated_at ? `Updated ${formatRelative(vcr.updated_at)}` : '';
   } else if (lifecycle === 'in_approval') {
-    const text =
-      totalItems > 0 && closedItems >= totalItems
-        ? `All ${totalItems} items closed · awaiting ${gateLabel} sign-off`
-        : `${closedItems} of ${totalItems} items closed · submitted for approval`;
-    summary = <p className="text-[12px] leading-[1.4] mb-2.5 text-muted-foreground">{text}</p>;
-  } else {
-    summary = (
-      <p className="text-[12px] leading-[1.4] mb-2.5 text-muted-foreground">
-        All items closed · {gateLabel} signed off
-      </p>
-    );
+    ctxLeft = `${systemsLabel} · ${gateLabel} ${gateSigned ? 'signed' : 'pending'}`;
+    ctxRight = vcr.submitted_at ? `Submitted ${formatShortDate(vcr.submitted_at)}` : '';
+  } else if (lifecycle === 'approved') {
+    ctxLeft = systemsLabel;
+    ctxRight = vcr.approved_at ? `Approved ${formatShortDate(vcr.approved_at)}` : '';
+  } else if (lifecycle === 'handed_over') {
+    ctxLeft = `${systemsLabel} · ${gateLabel} signed`;
+    ctxRight = vcr.gate_signed_at ? `Handed over ${formatShortDate(vcr.gate_signed_at)}` : '';
   }
 
-  // Footer
-  let footer: React.ReactNode = null;
-  if (!isNotStarted) {
-    const sysLabel = `${vcr.systems_count} system${vcr.systems_count === 1 ? '' : 's'}`;
-    let left: React.ReactNode = sysLabel;
-    let right = '';
-    if (lifecycle === 'draft') {
-      right = vcr.updated_at ? `Updated ${formatRelative(vcr.updated_at)}` : '';
-    } else if (lifecycle === 'in_approval') {
-      left = (
-        <>
-          {sysLabel}
-          <Dot />
-          {gateSigned ? `${gateLabel} signed` : `${gateLabel} pending`}
-        </>
-      );
-      right = vcr.submitted_at ? `Submitted ${formatShortDate(vcr.submitted_at)}` : '';
-    } else if (lifecycle === 'approved') {
-      right = vcr.approved_at ? `Approved ${formatShortDate(vcr.approved_at)}` : '';
-    } else if (lifecycle === 'handed_over') {
-      left = (
-        <>
-          {sysLabel}
-          <Dot />
-          {gateLabel} signed
-        </>
-      );
-      right = vcr.gate_signed_at ? `Handed over ${formatShortDate(vcr.gate_signed_at)}` : '';
-    }
-    footer = (
-      <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-        <span className="truncate">{left}</span>
-        {right && <span className="shrink-0 ml-2">{right}</span>}
-      </div>
-    );
-  }
-
-  // Interaction colours
   const activeBorder = 'hsl(var(--primary))';
   const activeBg = 'hsl(var(--primary) / 0.08)';
   const activeText = 'hsl(var(--primary))';
@@ -190,21 +99,18 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
       onClick={() => onClick(vcr.id)}
       className={cn(
         'group/vcr w-full text-left rounded-lg px-3.5 py-3',
-        'transition-[border-color,background-color,box-shadow] duration-150 ease-in-out',
+        'transition-[background-color,border-color,box-shadow,transform] duration-150 ease-out',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30',
-        // Default + hover (active overrides via inline styles below)
-        !isActive && 'bg-muted/40 dark:bg-muted/30 border border-border/60 hover:bg-muted/20 hover:border-border hover:shadow-sm'
+        !isActive &&
+          'bg-muted dark:bg-muted/60 border border-border hover:bg-card hover:border-foreground/20 hover:shadow-md hover:-translate-y-px'
       )}
       style={
         isActive
-          ? {
-              backgroundColor: activeBg,
-              border: `1px solid ${activeBorder}`,
-            }
+          ? { backgroundColor: activeBg, border: `1px solid ${activeBorder}` }
           : undefined
       }
     >
-      {/* Top row: code + status pill */}
+      {/* Row 1: ID + status pill */}
       <div className="flex items-center justify-between mb-2">
         <span
           className="text-[12px] font-medium tracking-[0.02em]"
@@ -217,36 +123,48 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
         </span>
         <span
           className="inline-flex items-center text-[11px] font-medium rounded-full"
-          style={{
-            padding: '2px 8px',
-            backgroundColor: style.pillBg,
-            color: style.pillText,
-          }}
+          style={{ padding: '2px 8px', backgroundColor: style.pillBg, color: style.pillText }}
         >
           {style.label}
         </span>
       </div>
 
-      {/* Title */}
-      <h3 className="text-[14px] font-medium leading-[1.4] text-foreground mb-1.5 truncate">
+      {/* Row 2: Title */}
+      <h3 className="text-[14px] font-medium leading-[1.4] text-foreground mb-2 truncate">
         {vcr.name}
       </h3>
 
-      {/* Summary */}
-      {summary}
-
-      {/* Progress block (skipped for Not started) */}
-      {!isNotStarted && (
-        <div className="mb-2.5">
-          <div className="flex items-baseline justify-between mb-1">
-            <span
-              className="text-[11px] tracking-[0.02em]"
-              style={{ color: 'hsl(var(--muted-foreground))' }}
+      {isNotStarted ? (
+        <p
+          className="text-[12px] italic leading-[1.4]"
+          style={{ color: 'hsl(var(--muted-foreground))' }}
+        >
+          No checklist items yet — click to begin
+        </p>
+      ) : (
+        <>
+          {/* Row 3: bar + % on one line */}
+          <div className="flex items-center gap-2.5 mb-2">
+            <div
+              className="relative flex-1 rounded-full overflow-hidden"
+              style={{
+                height: 3,
+                backgroundColor: isActive
+                  ? 'rgba(255,255,255,0.5)'
+                  : 'hsl(var(--foreground) / 0.10)',
+              }}
             >
-              VCR progress
-            </span>
+              <div
+                className="h-full rounded-full"
+                style={{
+                  width: `${percent}%`,
+                  backgroundColor: style.barFill,
+                  transition: 'width 0.4s cubic-bezier(0.4, 0.0, 0.2, 1)',
+                }}
+              />
+            </div>
             <span
-              className="text-[13px] font-medium tracking-[0.02em] tabular-nums"
+              className="text-[13px] font-medium tracking-[0.02em] tabular-nums shrink-0"
               style={{
                 fontFamily: "'JetBrains Mono', ui-monospace, monospace",
                 color: isActive ? activeText : 'hsl(var(--foreground))',
@@ -255,43 +173,14 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
               {percent}%
             </span>
           </div>
-          <div
-            className="relative w-full rounded-full overflow-visible"
-            style={{
-              height: 3,
-              backgroundColor: isActive
-                ? 'rgba(255,255,255,0.5)'
-                : 'hsl(var(--secondary))',
-            }}
-          >
-            <div
-              className="h-full rounded-full"
-              style={{
-                width: `${percent}%`,
-                backgroundColor: style.barFill,
-                transition: 'width 0.4s cubic-bezier(0.4, 0.0, 0.2, 1)',
-              }}
-            />
-            {/* Gate marker at right edge (SoF for HC, PAC for non-HC) */}
-            <span
-              aria-hidden
-              title={`${gateLabel} sign-off`}
-              className="absolute rounded-full"
-              style={{
-                top: -3,
-                left: '100%',
-                transform: 'translateX(-50%)',
-                width: 9,
-                height: 9,
-                backgroundColor: gateSigned ? GATE_SIGNED_COLOR : 'hsl(var(--card))',
-                border: `1.5px solid ${gateSigned ? GATE_SIGNED_COLOR : 'hsl(var(--muted-foreground))'}`,
-              }}
-            />
-          </div>
-        </div>
-      )}
 
-      {footer}
+          {/* Row 4: context line */}
+          <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+            <span className="truncate">{ctxLeft}</span>
+            {ctxRight && <span className="shrink-0 ml-2">{ctxRight}</span>}
+          </div>
+        </>
+      )}
     </button>
   );
 };
