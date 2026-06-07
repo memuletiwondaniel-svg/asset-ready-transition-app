@@ -1047,7 +1047,7 @@
   stroke-dashoffset: 0;
 }
 .orsh-logo:hover .orsh-ring {
-  animation: orsh-ring-draw 780ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: orsh-ring-draw 1200ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 .orsh-logo:hover .orsh-spark {
   animation: orsh-charge 900ms cubic-bezier(0.22, 1, 0.36, 1) 480ms 1;

@@ -40,13 +40,13 @@ const OrshMarkSvg: React.FC<{ height: number; surface?: 'light' | 'dark'; classN
     >
       <defs>
         <linearGradient id={barGradId} x1="0" y1="1" x2="0" y2="0">
-          <stop offset="0%" stopColor="#0F7A5C" />
+          <stop offset="0%" stopColor="#6FD4B3" />
           <stop offset="50%" stopColor="#1D9E75" />
-          <stop offset="100%" stopColor="#6FD4B3" />
+          <stop offset="100%" stopColor="#0F7A5C" />
         </linearGradient>
         <linearGradient id={sparkGradId} x1="0" y1="1" x2="0" y2="0">
           <stop offset="0%" stopColor="#d8fff0" />
-          <stop offset="100%" stopColor="#34B88E" />
+          <stop offset="100%" stopColor="#0B5C44" />
         </linearGradient>
       </defs>
       <path
