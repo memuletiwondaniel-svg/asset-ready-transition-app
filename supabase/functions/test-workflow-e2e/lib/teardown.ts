@@ -12,6 +12,7 @@ export async function sweepByRunId(
   svc: SupabaseClient,
   runId: string,
   projectIds: string[],
+  plantIds: string[] = [],
 ): Promise<{ deleted: Record<string, number>; errors: string[] }> {
   const deleted: Record<string, number> = {};
   const errors: string[] = [];
@@ -41,6 +42,14 @@ export async function sweepByRunId(
     );
     await safe("projects", () =>
       svc.from("projects").delete({ count: "exact" }).in("id", projectIds) as any,
+    );
+  }
+
+  // Throwaway plants created by createTestPlant — sweep AFTER projects so
+  // any plant_id FK from projects is already cleared.
+  if (plantIds.length > 0) {
+    await safe("plant", () =>
+      svc.from("plant").delete({ count: "exact" }).in("id", plantIds) as any,
     );
   }
 
