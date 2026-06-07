@@ -11,7 +11,7 @@ import { useP2APlanWizard } from '@/hooks/useP2APlanWizard';
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 import { VCRCard } from './VCRCard';
 import { useProjectPSSRs } from '@/hooks/useProjectPSSRs';
-import { useProjectVCRs, ProjectVCR } from '@/hooks/useProjectVCRs';
+import { useProjectVCRs, ProjectVCR, VCRLifecycle } from '@/hooks/useProjectVCRs';
 import { useProjectORPPlans } from '@/hooks/useProjectORPPlans';
 import { useProjectMilestones } from '@/hooks/useProjects';
 import { PSSRQuickViewOverlay } from '@/components/pssr/PSSRQuickViewOverlay';
