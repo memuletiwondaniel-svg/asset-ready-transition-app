@@ -14,13 +14,13 @@ interface OrshLogoProps {
 const heightPx: Record<NonNullable<OrshLogoProps['size']>, number> = {
   small: 28,
   medium: 36,
-  large: 48,
+  large: 40,
 };
 
 const wrapperHeightClass: Record<NonNullable<OrshLogoProps['size']>, string> = {
   small: 'h-10',
   medium: 'h-12',
-  large: 'h-16',
+  large: 'h-11',
 };
 
 const OrshMarkSvg: React.FC<{ height: number; surface?: 'light' | 'dark'; className?: string }> = ({ height, surface = 'light', className }) => {
