@@ -142,8 +142,39 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
     target_date: m.milestone_date,
   }));
 
-  // Sort VCRs by vcr_code for sequential display
-  const allVCRs = [...(vcrs || [])].sort((a, b) => (a.vcr_code || '').localeCompare(b.vcr_code || ''));
+  // Sort VCRs by lifecycle progression (least-complete first), vcr_code tiebreaker
+  const LIFECYCLE_ORDER: Record<VCRLifecycle, number> = {
+    not_started: 0, draft: 1, in_approval: 2, approved: 3, handed_over: 4,
+  };
+  const allVCRs = [...(vcrs || [])].sort((a, b) => {
+    const ra = LIFECYCLE_ORDER[a.lifecycle ?? 'draft'] ?? 99;
+    const rb = LIFECYCLE_ORDER[b.lifecycle ?? 'draft'] ?? 99;
+    return ra !== rb ? ra - rb : (a.vcr_code || '').localeCompare(b.vcr_code || '');
+  });
+
+  const vcrGroups: Array<{ key: string; label: string; items: ProjectVCR[] }> = [
+    {
+      key: 'action',
+      label: 'Action needed',
+      items: allVCRs.filter(v => {
+        const lc = v.lifecycle ?? 'draft';
+        return lc === 'not_started' || lc === 'draft';
+      }),
+    },
+    {
+      key: 'progress',
+      label: 'In progress',
+      items: allVCRs.filter(v => {
+        const lc = v.lifecycle ?? 'draft';
+        return lc === 'in_approval' || lc === 'approved';
+      }),
+    },
+    {
+      key: 'completed',
+      label: 'Completed',
+      items: allVCRs.filter(v => (v.lifecycle ?? 'draft') === 'handed_over'),
+    },
+  ];
 
   // VCRs should only be shown in the widget after the plan is approved
   const showVCRList = planIsApproved && allVCRs.length > 0;
