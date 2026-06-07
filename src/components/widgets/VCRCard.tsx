@@ -190,16 +190,16 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
       onClick={() => onClick(vcr.id)}
       className={cn(
         'group/vcr w-full text-left rounded-lg px-3.5 py-3',
-        'transition-[border-color,background-color] duration-150 ease-in-out',
+        'transition-[border-color,background-color,box-shadow] duration-150 ease-in-out',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30',
         // Default + hover (active overrides via inline styles below)
-        !isActive && 'bg-card border-[0.5px] border-border/70 hover:bg-muted/50 hover:border-border'
+        !isActive && 'bg-muted/40 dark:bg-muted/30 border border-border/60 hover:bg-muted/20 hover:border-border hover:shadow-sm'
       )}
       style={
         isActive
           ? {
               backgroundColor: activeBg,
-              border: `0.5px solid ${activeBorder}`,
+              border: `1px solid ${activeBorder}`,
             }
           : undefined
       }
@@ -210,24 +210,19 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
           className="text-[12px] font-medium tracking-[0.02em]"
           style={{
             fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-            color: isActive ? activeText : 'hsl(var(--foreground))',
+            color: isActive ? activeText : 'hsl(var(--muted-foreground))',
           }}
         >
           {displayCode}
         </span>
         <span
-          className="inline-flex items-center gap-1 text-[11px] font-medium rounded-full"
+          className="inline-flex items-center text-[11px] font-medium rounded-full"
           style={{
             padding: '2px 8px',
             backgroundColor: style.pillBg,
             color: style.pillText,
           }}
         >
-          <span
-            aria-hidden
-            className="inline-block rounded-full"
-            style={{ width: 6, height: 6, backgroundColor: style.pillDot }}
-          />
           {style.label}
         </span>
       </div>
