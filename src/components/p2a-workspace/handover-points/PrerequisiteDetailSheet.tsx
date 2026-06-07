@@ -64,13 +64,28 @@ export const PrerequisiteDetailSheet: React.FC<PrerequisiteDetailSheetProps> = (
   const { id: projectId } = useParams<{ id: string }>();
   const [addPartyOpen, setAddPartyOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const { toast } = useToast();
 
   const { members: deliveringParties, addMember, removeMember } = useVCRItemDeliveringParties({ prerequisiteId: prerequisite?.id });
   const { data: teamMembers = [] } = useProjectTeamSearch(projectId);
+  const { updatePrerequisiteStatus, isUpdating } = useVCRPrerequisites(prerequisite?.handover_point_id || '');
+  const { ledger, canDecide, accept, reject, qualify, isDeciding } = useMyPrereqApproval(prerequisite?.id);
 
   if (!prerequisite) return null;
 
   const statusConfig = getPrerequisiteStatusConfig(prerequisite.status);
+  const hasEvidence = (prerequisite.evidence?.length ?? 0) > 0;
+
+  const handleSubmitForReview = () => {
+    if (!hasEvidence) {
+      // SOFT warning: still allowed, but flag the gap.
+      toast({
+        title: 'Submitted without evidence',
+        description: 'Approvers will see no supporting files. You can attach evidence later from this panel.',
+      });
+    }
+    updatePrerequisiteStatus({ id: prerequisite.id, status: 'READY_FOR_REVIEW' });
+  };
 
   const getFileIcon = (fileType?: string) => FileText;
 
