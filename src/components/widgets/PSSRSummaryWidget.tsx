@@ -11,7 +11,7 @@ import { useP2APlanWizard } from '@/hooks/useP2APlanWizard';
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 import { VCRCard } from './VCRCard';
 import { useProjectPSSRs } from '@/hooks/useProjectPSSRs';
-import { useProjectVCRs, ProjectVCR } from '@/hooks/useProjectVCRs';
+import { useProjectVCRs, ProjectVCR, VCRLifecycle } from '@/hooks/useProjectVCRs';
 import { useProjectORPPlans } from '@/hooks/useProjectORPPlans';
 import { useProjectMilestones } from '@/hooks/useProjects';
 import { PSSRQuickViewOverlay } from '@/components/pssr/PSSRQuickViewOverlay';
@@ -142,8 +142,39 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
     target_date: m.milestone_date,
   }));
 
-  // Sort VCRs by vcr_code for sequential display
-  const allVCRs = [...(vcrs || [])].sort((a, b) => (a.vcr_code || '').localeCompare(b.vcr_code || ''));
+  // Sort VCRs by lifecycle progression (least-complete first), vcr_code tiebreaker
+  const LIFECYCLE_ORDER: Record<VCRLifecycle, number> = {
+    not_started: 0, draft: 1, in_approval: 2, approved: 3, handed_over: 4,
+  };
+  const allVCRs = [...(vcrs || [])].sort((a, b) => {
+    const ra = LIFECYCLE_ORDER[a.lifecycle ?? 'draft'] ?? 99;
+    const rb = LIFECYCLE_ORDER[b.lifecycle ?? 'draft'] ?? 99;
+    return ra !== rb ? ra - rb : (a.vcr_code || '').localeCompare(b.vcr_code || '');
+  });
+
+  const vcrGroups: Array<{ key: string; label: string; items: ProjectVCR[] }> = [
+    {
+      key: 'action',
+      label: 'Action needed',
+      items: allVCRs.filter(v => {
+        const lc = v.lifecycle ?? 'draft';
+        return lc === 'not_started' || lc === 'draft';
+      }),
+    },
+    {
+      key: 'progress',
+      label: 'In progress',
+      items: allVCRs.filter(v => {
+        const lc = v.lifecycle ?? 'draft';
+        return lc === 'in_approval' || lc === 'approved';
+      }),
+    },
+    {
+      key: 'completed',
+      label: 'Completed',
+      items: allVCRs.filter(v => (v.lifecycle ?? 'draft') === 'handed_over'),
+    },
+  ];
 
   // VCRs should only be shown in the widget after the plan is approved
   const showVCRList = planIsApproved && allVCRs.length > 0;
@@ -260,14 +291,24 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                 ))}
               </div>
             ) : showVCRList ? (
-              <div className="space-y-2 overflow-y-auto overscroll-contain pr-1 flex-1 min-h-0 scrollbar-modern">
-                {allVCRs.map((vcr) => (
-                  <VCRCard
-                    key={vcr.id}
-                    vcr={vcr}
-                    onClick={handleVCRClick}
-                    isActive={(wizardVCR?.id ?? selectedVCR?.id) === vcr.id}
-                  />
+              <div className="space-y-3 overflow-y-auto overscroll-contain pr-1 flex-1 min-h-0 scrollbar-modern">
+                {vcrGroups.map(group => group.items.length === 0 ? null : (
+                  <div key={group.key} className="space-y-2">
+                    <div className="flex items-center gap-2 pt-1">
+                      <span className="text-[10px] uppercase tracking-[0.08em] font-medium text-muted-foreground">
+                        {group.label} · {group.items.length}
+                      </span>
+                      <div className="flex-1 h-px bg-border/60" />
+                    </div>
+                    {group.items.map(vcr => (
+                      <VCRCard
+                        key={vcr.id}
+                        vcr={vcr}
+                        onClick={handleVCRClick}
+                        isActive={(wizardVCR?.id ?? selectedVCR?.id) === vcr.id}
+                      />
+                    ))}
+                  </div>
                 ))}
               </div>
             ) : p2aPlanByProject ? (
