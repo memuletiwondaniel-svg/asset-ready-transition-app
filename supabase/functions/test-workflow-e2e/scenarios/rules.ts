@@ -903,12 +903,11 @@ const runR22: Scenario["run"] = async (ctx) => {
 // re-fire. Ledger PENDING rows exist for each (prereq, role).
 const runR23: Scenario["run"] = async (ctx) => {
   const svc = svcOf(ctx);
-  const { projectId, vcrPointId } = ctx as any;
-  if (!projectId || !vcrPointId) {
-    return { status: "fail", expected: "ctx.projectId + ctx.vcrPointId", observed: { projectId, vcrPointId } };
-  }
+  const pt = await getFirstPoint(svc, ctx);
+  const projectId = ctx.project.id;
+  const vcrPointId = pt.id;
 
-  // Bundles created for this VCR.
+  // Bundles created for this VCR (pre-refire).
   const { data: bundles, error: bErr } = await svc
     .from("user_tasks")
     .select("id,user_id,status,metadata,sub_items,dedupe_key")
@@ -934,14 +933,31 @@ const runR23: Scenario["run"] = async (ctx) => {
   const overrideMap = new Map(
     (overrides ?? []).map((o: any) => [o.vcr_item_id, o.approving_party_role_ids_override]));
 
+  // (a) Expected distinct approving roles across all actionable prereqs.
   const expectedRoles = new Set<string>();
+  // (b) Expected ledger seed: one PENDING row per (prereq, role).
+  const expectedLedgerPairs = new Set<string>();
   for (const p of actionable) {
     const item = (items ?? []).find((i: any) => i.id === p.vcr_item_id);
-    const roles = overrideMap.get(p.vcr_item_id) ?? item?.approving_party_role_ids ?? [];
-    for (const r of roles) expectedRoles.add(r);
+    const roles: string[] = overrideMap.get(p.vcr_item_id) ?? item?.approving_party_role_ids ?? [];
+    for (const r of roles) {
+      expectedRoles.add(r);
+      expectedLedgerPairs.add(`${p.id}::${r}`);
+    }
   }
 
-  // Idempotency: re-fire the latest VCR approver row.
+  const prereqIds = actionable.map((p: any) => p.id);
+  const ledgerKey = (r: any) => `${r.prerequisite_id}::${r.approver_role_id}`;
+
+  // Pre-refire ledger snapshot.
+  const { data: ledgerBefore } = await svc
+    .from("vcr_prerequisite_approvals")
+    .select("id,prerequisite_id,approver_role_id,status")
+    .in("prerequisite_id", prereqIds.length ? prereqIds : ["00000000-0000-0000-0000-000000000000"]);
+  const ledgerBeforeKeys = new Set((ledgerBefore ?? []).map(ledgerKey));
+  const pendingBeforeCount = (ledgerBefore ?? []).filter((r: any) => r.status === "PENDING").length;
+
+  // (c) Idempotency: re-fire the latest VCR approver row.
   const { data: approvers } = await svc
     .from("p2a_handover_approvers")
     .select("id,status").eq("point_id", vcrPointId).eq("stage", "VCR")
@@ -950,40 +966,55 @@ const runR23: Scenario["run"] = async (ctx) => {
     await svc.from("p2a_handover_approvers")
       .update({ status: "APPROVED" }).eq("id", approvers[0].id);
   }
-  const { count: afterCount } = await svc
-    .from("user_tasks").select("id", { count: "exact", head: true })
+
+  // Post-refire counts.
+  const { data: bundlesAfter } = await svc
+    .from("user_tasks")
+    .select("id,metadata")
     .eq("type", "vcr_approval_bundle")
     .filter("metadata->>point_id", "eq", vcrPointId);
+  const { data: ledgerAfter } = await svc
+    .from("vcr_prerequisite_approvals")
+    .select("id,prerequisite_id,approver_role_id,status")
+    .in("prerequisite_id", prereqIds.length ? prereqIds : ["00000000-0000-0000-0000-000000000000"]);
 
   const observedRoles = new Set<string>(
     (bundles ?? []).map((b: any) => b.metadata?.approving_party_role_id).filter(Boolean));
+  const observedLedgerPairs = new Set((ledgerBefore ?? []).map(ledgerKey));
 
-  // Ledger seeded?
-  const prereqIds = actionable.map((p: any) => p.id);
-  const { count: ledgerCount } = await svc
-    .from("vcr_prerequisite_approvals")
-    .select("id", { count: "exact", head: true })
-    .in("prerequisite_id", prereqIds.length ? prereqIds : ["00000000-0000-0000-0000-000000000000"]);
+  // (a) one bundle per distinct resolved role; roles match expected set exactly.
+  const rolesMatch =
+    observedRoles.size === expectedRoles.size &&
+    [...expectedRoles].every(r => observedRoles.has(r));
+  const bundleCountMatches = (bundles?.length ?? 0) === expectedRoles.size;
 
-  const ok =
-    observedRoles.size > 0 &&
-    [...expectedRoles].every(r => observedRoles.has(r)) &&
-    (bundles ?? []).length === (afterCount ?? 0) && // idempotent
-    (ledgerCount ?? 0) > 0;
+  // (b) every (prereq, role) PENDING ledger row exists.
+  const ledgerSeeded =
+    expectedLedgerPairs.size > 0 &&
+    [...expectedLedgerPairs].every(k => observedLedgerPairs.has(k));
+
+  // (c) idempotency — no new bundles, no new ledger rows on re-fire.
+  const idempotentBundles = (bundles?.length ?? 0) === (bundlesAfter?.length ?? 0);
+  const idempotentLedger = (ledgerBefore?.length ?? 0) === (ledgerAfter?.length ?? 0);
+
+  const ok = rolesMatch && bundleCountMatches && ledgerSeeded && idempotentBundles && idempotentLedger;
 
   return {
     status: ok ? "pass" : "fail",
     expected: {
-      bundles_per_distinct_role: expectedRoles.size,
+      bundles_one_per_distinct_role: expectedRoles.size,
+      ledger_pending_pairs: expectedLedgerPairs.size,
       idempotent_on_refire: true,
-      ledger_rows_seeded: true,
     },
     observed: {
       bundle_count: bundles?.length ?? 0,
-      bundle_count_after_refire: afterCount,
+      bundle_count_after_refire: bundlesAfter?.length ?? 0,
       observed_roles: [...observedRoles],
       expected_roles: [...expectedRoles],
-      ledger_rows: ledgerCount,
+      ledger_rows_before: ledgerBefore?.length ?? 0,
+      ledger_rows_after: ledgerAfter?.length ?? 0,
+      ledger_pending_before: pendingBeforeCount,
+      missing_ledger_pairs: [...expectedLedgerPairs].filter(k => !observedLedgerPairs.has(k)),
     },
   };
 };
