@@ -369,28 +369,73 @@ export const PrerequisiteDetailSheet: React.FC<PrerequisiteDetailSheetProps> = (
         </ScrollArea>
 
         {/* Footer Actions */}
-        <div className="border-t pt-4 mt-auto flex gap-2">
+        <div className="border-t pt-4 mt-auto flex flex-col gap-2">
+          {/* Delivering-side: Start / Submit-for-Review */}
           {prerequisite.status === 'NOT_STARTED' && (
-            <Button className="flex-1" variant="default">
+            <Button
+              className="w-full"
+              variant="default"
+              onClick={() => updatePrerequisiteStatus({ id: prerequisite.id, status: 'IN_PROGRESS' })}
+              disabled={isUpdating}
+            >
               Start Progress
             </Button>
           )}
           {prerequisite.status === 'IN_PROGRESS' && (
-            <Button className="flex-1" variant="default">
+            <Button
+              className="w-full"
+              variant="default"
+              onClick={handleSubmitForReview}
+              disabled={isUpdating}
+            >
               Submit for Review
             </Button>
           )}
-          {prerequisite.status === 'READY_FOR_REVIEW' && (
+
+          {/* Approver-side: only the current user's own ledger row is written. */}
+          {prerequisite.status === 'READY_FOR_REVIEW' && ledger && (
             <>
-              <Button className="flex-1" variant="outline">
-                Request Qualification
-              </Button>
-              <Button className="flex-1" variant="default">
-                Approve
-              </Button>
+              {canDecide ? (
+                <div className="flex gap-2">
+                  <Button
+                    className="flex-1"
+                    variant="outline"
+                    onClick={() => qualify()}
+                    disabled={isDeciding}
+                  >
+                    Raise Qualification
+                  </Button>
+                  <Button
+                    className="flex-1"
+                    variant="destructive"
+                    onClick={() => reject()}
+                    disabled={isDeciding}
+                  >
+                    Reject
+                  </Button>
+                  <Button
+                    className="flex-1"
+                    variant="default"
+                    onClick={() => accept()}
+                    disabled={isDeciding}
+                  >
+                    Accept
+                  </Button>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground italic text-center">
+                  Your decision is recorded: <span className="font-medium">{ledger.status}</span>. Awaiting other approvers.
+                </p>
+              )}
             </>
           )}
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          {prerequisite.status === 'READY_FOR_REVIEW' && !ledger && (
+            <p className="text-xs text-muted-foreground italic text-center">
+              You are not an approver for this item.
+            </p>
+          )}
+
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full">
             Close
           </Button>
         </div>
