@@ -89,12 +89,12 @@ const Index = () => {
           <div className="max-w-4xl mx-auto text-center space-y-10">
             
             {/* Hero Text */}
-            <div className="space-y-4 animate-fade-in">
-              <h1 className="font-light text-white leading-tight">
-                <span className="block text-5xl md:text-6xl lg:text-7xl font-extralight tracking-tight drop-shadow-2xl">
+            <div className="space-y-8 animate-fade-in">
+              <h1 className="text-white leading-tight">
+                <span className="block text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight drop-shadow-2xl">
                   {t.welcomeTitle}
                 </span>
-                <span className="block text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-white via-cyan-100 to-blue-100 bg-clip-text text-transparent mt-2 drop-shadow-xl">
+                <span className="block text-2xl md:text-3xl lg:text-4xl font-normal text-white/80 mt-2 drop-shadow-xl">
                   {t.welcomeSubtitle}
                 </span>
               </h1>
@@ -102,7 +102,6 @@ const Index = () => {
               <p className="text-lg md:text-xl lg:text-2xl text-white/85 font-light leading-relaxed mx-auto md:whitespace-nowrap">
                 {t.welcomeDescription}
               </p>
-
             </div>
             
             {/* Feature Cards */}
