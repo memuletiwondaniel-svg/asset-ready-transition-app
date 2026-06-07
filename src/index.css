@@ -1031,3 +1031,23 @@
   padding: 4px 8px;
   border-radius: 0 4px 4px 0;
 }
+
+/* ─── ORSH logo "charge up" hover animation ─── */
+@keyframes orsh-charge {
+  0%   { opacity: 0;    transform: scaleY(0); }
+  28%  { opacity: 0.95; }
+  100% { opacity: 0;    transform: scaleY(1); }
+}
+.orsh-logo .orsh-ring {
+  transition: filter 0.3s ease-out;
+}
+.orsh-logo:hover .orsh-ring {
+  filter: drop-shadow(0 0 2.5px rgba(16, 122, 92, 0.55));
+}
+.orsh-logo:hover .orsh-spark {
+  animation: orsh-charge 720ms ease-out 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .orsh-logo:hover .orsh-spark { animation: none; opacity: 0; }
+  .orsh-logo:hover .orsh-ring { filter: none; }
+}

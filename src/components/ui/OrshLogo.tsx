@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
@@ -24,8 +24,9 @@ const wrapperHeightClass: Record<NonNullable<OrshLogoProps['size']>, string> = {
 };
 
 const OrshMarkSvg: React.FC<{ height: number; surface?: 'light' | 'dark'; className?: string }> = ({ height, surface = 'light', className }) => {
-  // Glyph viewBox 48x48
   const width = height;
+  const barGradId = useId();
+  const sparkGradId = useId();
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -34,16 +35,40 @@ const OrshMarkSvg: React.FC<{ height: number; surface?: 'light' | 'dark'; classN
       height={height}
       role="img"
       aria-label="ORSH"
-      className={className}
+      className={cn('orsh-mark-svg overflow-visible', className)}
+      style={{ overflow: 'visible' }}
     >
+      <defs>
+        <linearGradient id={barGradId} x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0%" stopColor="#0F7A5C" />
+          <stop offset="50%" stopColor="#1D9E75" />
+          <stop offset="100%" stopColor="#6FD4B3" />
+        </linearGradient>
+        <linearGradient id={sparkGradId} x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0%" stopColor="#d8fff0" />
+          <stop offset="100%" stopColor="#34B88E" />
+        </linearGradient>
+      </defs>
       <path
+        className="orsh-ring"
         d="M30.16 7.09 A18 18 0 1 1 17.84 7.09 L19.55 9.78 A13 13 0 1 0 28.45 9.78 Z"
         fill={surface === 'dark' ? 'currentColor' : '#a1a1aa'}
       />
-      <circle cx="24" cy="2.5" r="2.5" fill="#6FD4B3" />
-      <circle cx="24" cy="9.5" r="2.5" fill="#34B88E" />
-      <circle cx="24" cy="16.5" r="2.5" fill="#1D9E75" />
-      <circle cx="24" cy="23.5" r="2.5" fill="#0F7A5C" />
+      <rect x="21.5" y="1.5" width="5" height="24" rx="2.5" fill={`url(#${barGradId})`} />
+      <rect
+        className="orsh-spark"
+        x="21.5"
+        y="1.5"
+        width="5"
+        height="24"
+        rx="2.5"
+        fill={`url(#${sparkGradId})`}
+        style={{
+          transformBox: 'fill-box',
+          transformOrigin: '50% 100%',
+          opacity: 0,
+        }}
+      />
     </svg>
   );
 };
@@ -88,32 +113,21 @@ const OrshLogo: React.FC<OrshLogoProps> = ({
     </div>
   );
 
+  const wrapperClass = cn(
+    'orsh-logo group flex items-center justify-center text-foreground -ml-1 overflow-visible',
+    wrapperHeightClass[size],
+    className,
+  );
+
   if (asLink) {
     return (
-      <Link
-        to="/"
-        className={cn(
-          'flex items-center justify-center cursor-pointer text-foreground -ml-1',
-          wrapperHeightClass[size],
-          className,
-        )}
-      >
+      <Link to="/" className={cn(wrapperClass, 'cursor-pointer')}>
         {content}
       </Link>
     );
   }
 
-  return (
-    <div
-      className={cn(
-        'flex items-center justify-center text-foreground -ml-1',
-        wrapperHeightClass[size],
-        className,
-      )}
-    >
-      {content}
-    </div>
-  );
+  return <div className={wrapperClass}>{content}</div>;
 };
 
 export default OrshLogo;
