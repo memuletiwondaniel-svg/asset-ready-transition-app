@@ -94,7 +94,7 @@ const OrshLogo: React.FC<OrshLogoProps> = ({
               surface === 'dark' ? 'text-current' : 'text-[#a1a1aa]'
             )}
             style={{
-              fontSize: `${Math.round(h * 0.7)}px`,
+              fontSize: `${Math.round(h * 0.55)}px`,
               lineHeight: 1,
               letterSpacing: '0.04em',
               marginBottom: `${Math.round(h * 0.06)}px`,
