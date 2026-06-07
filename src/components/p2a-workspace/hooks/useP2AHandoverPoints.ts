@@ -538,6 +538,8 @@ export const useP2AHandoverPoints = (handoverPlanId: string) => {
             evidence_links: p.evidence_links,
             comments: p.comments,
             display_order: idx,
+            // E-1a: carry catalog FK so R23 reads approving roles from vcr_items.
+            vcr_item_id: (p as any).vcr_item_id ?? null,
           }))
         );
       }
