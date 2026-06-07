@@ -97,14 +97,14 @@ export const translations = {
     collapseSidebar: 'Collapse Sidebar',
     
     // Welcome Screen
-    welcomeTitle: 'Operation Readiness',
+    welcomeTitle: 'Operations Readiness',
     welcomeSubtitle: 'Start-Up & Handover',
     welcomeDescription: 'Integrating people and systems to deliver business outcomes.',
     safeStartup: 'PSSR',
     safeStartupDesc: 'Pre-Start-Up Safety Review - Manage the safe introduction of hydrocarbons into new facilities using PSSR checklists',
     p2oHandover: 'P2A',
     p2oHandoverDesc: 'Coordinates the transition and handover from construction and commissioning through to asset operation.',
-    accessButton: 'Access ORSH Platform',
+    accessButton: 'Access ORSH',
     enterpriseSecure: 'Enterprise Secure',
     connectedPeople: 'Connected People',
     connectedSystems: 'Connected Systems',
