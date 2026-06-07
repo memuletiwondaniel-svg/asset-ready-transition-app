@@ -144,11 +144,11 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
 
   // Sort VCRs by lifecycle progression (least-complete first), vcr_code tiebreaker
   const LIFECYCLE_ORDER: Record<VCRLifecycle, number> = {
-    not_started: 0, draft: 1, in_approval: 2, approved: 3, handed_over: 4,
+    not_started: 0, draft: 1, in_progress: 2, in_approval: 3, approved: 4, handed_over: 5,
   };
   const allVCRs = [...(vcrs || [])].sort((a, b) => {
-    const ra = LIFECYCLE_ORDER[a.lifecycle ?? 'draft'] ?? 99;
-    const rb = LIFECYCLE_ORDER[b.lifecycle ?? 'draft'] ?? 99;
+    const ra = LIFECYCLE_ORDER[a.lifecycle ?? 'not_started'] ?? 99;
+    const rb = LIFECYCLE_ORDER[b.lifecycle ?? 'not_started'] ?? 99;
     return ra !== rb ? ra - rb : (a.vcr_code || '').localeCompare(b.vcr_code || '');
   });
 
@@ -157,7 +157,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
       key: 'action',
       label: 'Action needed',
       items: allVCRs.filter(v => {
-        const lc = v.lifecycle ?? 'draft';
+        const lc = v.lifecycle ?? 'not_started';
         return lc === 'not_started' || lc === 'draft';
       }),
     },
@@ -165,14 +165,14 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
       key: 'progress',
       label: 'In progress',
       items: allVCRs.filter(v => {
-        const lc = v.lifecycle ?? 'draft';
-        return lc === 'in_approval' || lc === 'approved';
+        const lc = v.lifecycle ?? 'not_started';
+        return lc === 'in_progress' || lc === 'in_approval' || lc === 'approved';
       }),
     },
     {
       key: 'completed',
       label: 'Completed',
-      items: allVCRs.filter(v => (v.lifecycle ?? 'draft') === 'handed_over'),
+      items: allVCRs.filter(v => (v.lifecycle ?? 'not_started') === 'handed_over'),
     },
   ];
 
@@ -202,12 +202,12 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
     const found = allVCRs.find(v => v.id === vcrId);
     if (!found) return;
     const lifecycle = found.lifecycle;
-    // Wizard ONLY while the delivery plan is still being created/edited.
-    // Everything submitted/approved/handed-over opens the read-only detail overlay.
+    // Wizard for editable states: not_started, draft (plan setup), in_progress (checklist work).
+    // Detail overlay (read-only) for in_approval / approved / handed_over.
     const stillEditable =
       lifecycle === 'not_started' ||
       lifecycle === 'draft' ||
-      // Fallback if lifecycle is somehow absent: preserve prior behaviour.
+      lifecycle === 'in_progress' ||
       (!lifecycle && (found.status || '').toUpperCase() !== 'SIGNED');
     if (stillEditable) {
       setWizardVCR(found);

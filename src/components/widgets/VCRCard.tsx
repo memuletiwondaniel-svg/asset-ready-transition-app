@@ -20,14 +20,15 @@ const LIFECYCLE_STYLE: Record<
   { pillBg: string; pillText: string; label: string; barFill: string }
 > = {
   not_started: {
-    pillBg: 'hsl(var(--secondary))',
-    pillText: 'hsl(var(--muted-foreground))',
+    pillBg: 'hsl(220 14% 92%)',
+    pillText: 'hsl(220 9% 40%)',
     label: 'Not started',
     barFill: '#9CA3AF',
   },
   draft: { pillBg: '#FAEEDA', pillText: '#854F0B', label: 'Draft', barFill: '#BA7517' },
+  in_progress: { pillBg: '#CFFAFE', pillText: '#155E75', label: 'In progress', barFill: '#0891B2' },
   in_approval: { pillBg: '#E6F1FB', pillText: '#0C447C', label: 'In approval', barFill: '#185FA5' },
-  approved: { pillBg: '#E1F5EE', pillText: '#085041', label: 'Approved', barFill: '#0F6E56' },
+  approved: { pillBg: '#E1F5EE', pillText: '#085041', label: 'Approved', barFill: '#0E9F6E' },
   handed_over: { pillBg: '#D1FAE5', pillText: '#064E3B', label: 'Handed Over', barFill: '#059669' },
 };
 
@@ -59,10 +60,9 @@ const formatRelative = (iso: string | null) => {
 
 export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false }) => {
   const displayCode = shortCode(vcr.vcr_code);
-  const lifecycle: VCRLifecycle = vcr.lifecycle ?? 'draft';
+  const lifecycle: VCRLifecycle = vcr.lifecycle ?? 'not_started';
   const style = LIFECYCLE_STYLE[lifecycle];
   const isNotStarted = lifecycle === 'not_started';
-  const percent = Math.max(0, Math.min(100, vcr.progress));
   const closedItems = vcr.closed_items ?? 0;
   const totalItems = vcr.total_items ?? 0;
   const gate = vcr.gate ?? (vcr.has_hydrocarbon ? 'SOF' : 'PAC');
@@ -70,21 +70,37 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
   const gateSigned = vcr.gate_signed ?? vcr.sof_signed ?? false;
   const systemsLabel = `${vcr.systems_count} system${vcr.systems_count === 1 ? '' : 's'}`;
 
-  // Row 4 content per lifecycle
+  // Derive bar percent + trailing value per state
+  let barPercent = 0;
+  let trailingValue = '';
   let ctxLeft: React.ReactNode = null;
   let ctxRight = '';
-  if (isNotStarted) {
-    // handled separately below
-  } else if (lifecycle === 'draft') {
+
+  if (lifecycle === 'draft') {
+    barPercent = Math.max(0, Math.min(100, vcr.planProgress ?? 0));
+    const step = Math.max(1, Math.min(10, vcr.planStep ?? 1));
+    trailingValue = `Step ${step}/10`;
+    ctxLeft = 'Plan setup in progress';
+    ctxRight = 'click to continue';
+  } else if (lifecycle === 'in_progress') {
+    const checklistPct = totalItems > 0 ? Math.round((closedItems / totalItems) * 100) : 0;
+    barPercent = checklistPct;
+    trailingValue = `${checklistPct}%`;
     ctxLeft = `${closedItems} of ${totalItems} items closed`;
     ctxRight = vcr.updated_at ? `Updated ${formatRelative(vcr.updated_at)}` : '';
   } else if (lifecycle === 'in_approval') {
+    barPercent = 100;
+    trailingValue = '100%';
     ctxLeft = `${systemsLabel} · ${gateLabel} ${gateSigned ? 'signed' : 'pending'}`;
     ctxRight = vcr.submitted_at ? `Submitted ${formatShortDate(vcr.submitted_at)}` : '';
   } else if (lifecycle === 'approved') {
+    barPercent = 100;
+    trailingValue = '100%';
     ctxLeft = systemsLabel;
     ctxRight = vcr.approved_at ? `Approved ${formatShortDate(vcr.approved_at)}` : '';
   } else if (lifecycle === 'handed_over') {
+    barPercent = 100;
+    trailingValue = '100%';
     ctxLeft = `${systemsLabel} · ${gateLabel} signed`;
     ctxRight = vcr.gate_signed_at ? `Handed over ${formatShortDate(vcr.gate_signed_at)}` : '';
   }
@@ -139,11 +155,11 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
           className="text-[12px] italic leading-[1.4]"
           style={{ color: 'hsl(var(--muted-foreground))' }}
         >
-          No checklist items yet — click to begin
+          No plan yet — click to begin
         </p>
       ) : (
         <>
-          {/* Row 3: bar + % on one line */}
+          {/* Row 3: bar + trailing value on one line */}
           <div className="flex items-center gap-2.5 mb-2">
             <div
               className="relative flex-1 rounded-full overflow-hidden"
@@ -151,13 +167,13 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
                 height: 3,
                 backgroundColor: isActive
                   ? 'rgba(255,255,255,0.5)'
-                  : 'hsl(var(--foreground) / 0.10)',
+                  : 'hsl(var(--foreground) / 0.12)',
               }}
             >
               <div
                 className="h-full rounded-full"
                 style={{
-                  width: `${percent}%`,
+                  width: `${barPercent}%`,
                   backgroundColor: style.barFill,
                   transition: 'width 0.4s cubic-bezier(0.4, 0.0, 0.2, 1)',
                 }}
@@ -170,7 +186,7 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
                 color: isActive ? activeText : 'hsl(var(--foreground))',
               }}
             >
-              {percent}%
+              {trailingValue}
             </span>
           </div>
 
