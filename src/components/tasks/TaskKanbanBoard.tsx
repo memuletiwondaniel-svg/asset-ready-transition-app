@@ -626,6 +626,8 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   const queryClient = useQueryClient();
   const [selectedTask, setSelectedTask] = useState<UserTask | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [approvalBundle, setApprovalBundle] = useState<VCRBundleTask | null>(null);
+  const [approvalBundleOpen, setApprovalBundleOpen] = useState(false);
   const [activeTask, setActiveTask] = useState<UnifiedTask | null>(null);
   const { moveTaskToColumn } = useKanbanDragDrop();
 
