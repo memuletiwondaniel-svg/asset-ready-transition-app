@@ -9,6 +9,8 @@ import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { TaskDetailSheet } from './TaskDetailSheet';
+import { VCRApprovalBundleSheet } from './VCRApprovalBundleSheet';
+import type { VCRBundleTask } from '@/hooks/useUserVCRBundleTasks';
 import { ORAActivityTaskSheet } from './ORAActivityTaskSheet';
 import { P2APlanCreationWizard } from '@/components/widgets/p2a-wizard/P2APlanCreationWizard';
 import { P2AWorkspaceOverlay } from '@/components/widgets/P2AWorkspaceOverlay';
@@ -624,6 +626,8 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   const queryClient = useQueryClient();
   const [selectedTask, setSelectedTask] = useState<UserTask | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [approvalBundle, setApprovalBundle] = useState<VCRBundleTask | null>(null);
+  const [approvalBundleOpen, setApprovalBundleOpen] = useState(false);
   const [activeTask, setActiveTask] = useState<UnifiedTask | null>(null);
   const { moveTaskToColumn } = useKanbanDragDrop();
 
@@ -840,6 +844,15 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
 
   const handleTaskClick = useCallback((task: UnifiedTask) => {
     if (task.isWaiting) return;
+
+    // VCR approval bundle: open the per-prereq approver action sheet (E-1c).
+    // Do NOT route to TaskDetailSheet — it has no branch for this type.
+    if (task.bundleTask?.type === 'vcr_approval_bundle') {
+      setApprovalBundle(task.bundleTask);
+      setApprovalBundleOpen(true);
+      return;
+    }
+
     if (task.userTask) {
       const meta = task.userTask.metadata as Record<string, any> | undefined;
       const isReviewTask = meta?.source === 'task_review';
@@ -1093,6 +1106,15 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         onOpenChange={setDetailOpen}
         onApprove={handleApprove}
         onReject={handleReject}
+      />
+
+      <VCRApprovalBundleSheet
+        bundle={approvalBundle}
+        open={approvalBundleOpen}
+        onOpenChange={(o) => {
+          setApprovalBundleOpen(o);
+          if (!o) setApprovalBundle(null);
+        }}
       />
 
       {/* ORA Activity sheet opened when dragging to Done - forces evidence/comments */}

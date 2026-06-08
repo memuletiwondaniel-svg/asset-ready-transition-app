@@ -59,6 +59,8 @@ export interface UnifiedTask {
   // Parent/child nesting (parent_task_id from user_tasks)
   parentTaskId?: string | null;
   children?: UnifiedTask[];
+  // Raw bundle task (vcr_*_bundle / pssr_*_bundle) for action-surface dialogs.
+  bundleTask?: any;
 }
 
 export const FILTER_OPTIONS: { value: CategoryFilter; label: string }[] = [
@@ -411,6 +413,7 @@ export function useUnifiedTasks(userId: string) {
           ? (meta?.pssr_id ? `/pssr/${meta.pssr_id}/review` : '/my-tasks')
           : '/my-tasks',
         kanbanColumn: mapToKanbanColumn({ status: task.status, isWaiting, progressPercentage: pct }),
+        bundleTask: task,
       });
     });
 
