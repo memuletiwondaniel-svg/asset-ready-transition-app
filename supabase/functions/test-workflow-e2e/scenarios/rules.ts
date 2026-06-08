@@ -568,6 +568,77 @@ async function ensureVCRFixtures(svc: SupabaseClient, ctx: any, pointId: string,
       if (error) return `${table} insert #${i}: ${error.message}`;
     }
   }
+
+  // 5) R23 approving-party fan-out fixtures.
+  //    Catalog vcr_items + matching p2a_vcr_prerequisites + one override row
+  //    so create_vcr_approval_fanout has actionable inputs.
+  //    Naming pattern `M11 <runId> ...` lets teardown sweep by ILIKE.
+  //
+  //    Layout:
+  //      itemA → approving = [Construction Lead, Commissioning Lead]   (2 roles, catalog)
+  //      itemB → approving = [Project Hub Lead]                         (catalog)
+  //               + override on this point → [Dep. Plant Director]      (proves COALESCE precedence)
+  //    Expected distinct resolved roles: Construction, Commissioning, DPD = 3 bundles.
+  //    Expected ledger: prereq1×Construction, prereq1×Commissioning, prereq2×DPD = 3 pairs.
+  const ROLE_IDS = {
+    "Construction Lead":  "82b98733-1690-4d04-b2bb-e9c24ec18325",
+    "Commissioning Lead": "d88df696-db5f-4952-b685-1b907b472dcb",
+    "Project Hub Lead":   "1d6b2c15-5283-4800-904e-9849672a20a2",
+    "Dep. Plant Director":"0e8c8c81-578a-4f7b-9d3f-929737dd8b29",
+  } as const;
+  const itemAName = `M11 ${ctx.runId} VCR Item A`;
+  const itemBName = `M11 ${ctx.runId} VCR Item B`;
+
+  async function ensureItem(name: string, approvingRoles: string[], order: number): Promise<{ id: string } | string> {
+    const { data: existing } = await svc.from("vcr_items").select("id").eq("vcr_item", name).maybeSingle();
+    if (existing?.id) return { id: existing.id as string };
+    const { data, error } = await svc.from("vcr_items").insert({
+      vcr_item: name,
+      approving_party_role_ids: approvingRoles,
+      display_order: order,
+      is_active: true,
+    }).select("id").single();
+    if (error) return `vcr_items insert (${name}): ${error.message}`;
+    return { id: data!.id as string };
+  }
+
+  const itemA = await ensureItem(itemAName, [ROLE_IDS["Construction Lead"], ROLE_IDS["Commissioning Lead"]], 1);
+  if (typeof itemA === "string") return itemA;
+  const itemB = await ensureItem(itemBName, [ROLE_IDS["Project Hub Lead"]], 2);
+  if (typeof itemB === "string") return itemB;
+
+  // Prereq rows — one per item, linked via vcr_item_id, status NOT_STARTED.
+  const prereqSeeds: Array<{ summary: string; vcr_item_id: string; order: number }> = [
+    { summary: `M11 ${ctx.runId} Prereq A`, vcr_item_id: itemA.id, order: 1 },
+    { summary: `M11 ${ctx.runId} Prereq B`, vcr_item_id: itemB.id, order: 2 },
+  ];
+  for (const p of prereqSeeds) {
+    const { data: existing } = await svc.from("p2a_vcr_prerequisites")
+      .select("id").eq("handover_point_id", pointId).eq("summary", p.summary).maybeSingle();
+    if (existing?.id) continue;
+    const { error } = await svc.from("p2a_vcr_prerequisites").insert({
+      handover_point_id: pointId,
+      vcr_item_id: p.vcr_item_id,
+      summary: p.summary,
+      status: "NOT_STARTED",
+      display_order: p.order,
+    });
+    if (error) return `p2a_vcr_prerequisites insert (${p.summary}): ${error.message}`;
+  }
+
+  // Override on itemB at this point → [DPD]. Proves COALESCE override→catalog.
+  const { data: ovExisting } = await svc.from("p2a_vcr_item_overrides")
+    .select("id").eq("handover_point_id", pointId).eq("vcr_item_id", itemB.id).maybeSingle();
+  if (!ovExisting?.id) {
+    const { error } = await svc.from("p2a_vcr_item_overrides").insert({
+      handover_point_id: pointId,
+      vcr_item_id: itemB.id,
+      approving_party_role_ids_override: [ROLE_IDS["Dep. Plant Director"]],
+      is_na: false,
+    });
+    if (error) return `p2a_vcr_item_overrides insert: ${error.message}`;
+  }
+
   return null;
 }
 
