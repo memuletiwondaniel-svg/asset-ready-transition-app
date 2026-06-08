@@ -844,6 +844,15 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
 
   const handleTaskClick = useCallback((task: UnifiedTask) => {
     if (task.isWaiting) return;
+
+    // VCR approval bundle: open the per-prereq approver action sheet (E-1c).
+    // Do NOT route to TaskDetailSheet — it has no branch for this type.
+    if (task.bundleTask?.type === 'vcr_approval_bundle') {
+      setApprovalBundle(task.bundleTask);
+      setApprovalBundleOpen(true);
+      return;
+    }
+
     if (task.userTask) {
       const meta = task.userTask.metadata as Record<string, any> | undefined;
       const isReviewTask = meta?.source === 'task_review';
