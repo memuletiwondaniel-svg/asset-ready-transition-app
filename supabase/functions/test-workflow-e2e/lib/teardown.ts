@@ -53,6 +53,15 @@ export async function sweepByRunId(
     );
   }
 
+  // R23 fixtures — catalog vcr_items inserted by ensureVCRFixtures, named
+  // `M11 <runId> VCR Item %`. p2a_vcr_item_overrides cascades via
+  // vcr_items.id FK; p2a_vcr_prerequisites.vcr_item_id is ON DELETE SET NULL
+  // but those prereq rows are already gone via the p2a_handover_points →
+  // projects cascade above. Sweep by exact runId prefix.
+  await safe("vcr_items", () =>
+    svc.from("vcr_items").delete({ count: "exact" }).like("vcr_item", `M11 ${runId} %`) as any,
+  );
+
   // Collect harness user_ids BEFORE deleting membership/users so we can
   // sweep profiles by an explicit id list. profiles.user_id is ON DELETE
   // CASCADE from auth.users, but we delete profiles explicitly first so
