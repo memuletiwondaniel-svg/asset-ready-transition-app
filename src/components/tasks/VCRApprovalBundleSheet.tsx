@@ -34,9 +34,8 @@ interface Props {
  * roll-up. We never flip prereq.status from the client.
  */
 export const VCRApprovalBundleSheet: React.FC<Props> = ({ bundle, open, onOpenChange }) => {
-  if (!bundle) return null;
-
-  const prereqIds = (bundle.sub_items || [])
+  const subItems = bundle?.sub_items || [];
+  const prereqIds = subItems
     .map((s) => s.prerequisite_id)
     .filter((x): x is string => !!x);
 
@@ -62,10 +61,10 @@ export const VCRApprovalBundleSheet: React.FC<Props> = ({ bundle, open, onOpenCh
   });
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open && !!bundle} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>{bundle.title}</SheetTitle>
+          <SheetTitle>{bundle?.title || 'VCR review items'}</SheetTitle>
           <SheetDescription>
             Decide each prerequisite below. Your decision is recorded for your
             approver role only — other approvers act independently.
@@ -74,7 +73,7 @@ export const VCRApprovalBundleSheet: React.FC<Props> = ({ bundle, open, onOpenCh
 
         <ScrollArea className="mt-4 max-h-[calc(100vh-12rem)] pr-2">
           <div className="space-y-3">
-            {bundle.sub_items.map((item, idx) => (
+            {subItems.map((item, idx) => (
               <PrereqRow
                 key={item.prerequisite_id ?? idx}
                 item={item}
