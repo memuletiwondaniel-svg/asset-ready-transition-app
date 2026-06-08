@@ -59,6 +59,8 @@ export interface UnifiedTask {
   // Parent/child nesting (parent_task_id from user_tasks)
   parentTaskId?: string | null;
   children?: UnifiedTask[];
+  // Raw bundle task (vcr_*_bundle / pssr_*_bundle) for action-surface dialogs.
+  bundleTask?: any;
 }
 
 export const FILTER_OPTIONS: { value: CategoryFilter; label: string }[] = [
