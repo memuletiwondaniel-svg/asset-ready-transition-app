@@ -847,8 +847,12 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
 
     // VCR approval bundle: open the per-prereq approver action sheet (E-1c).
     // Do NOT route to TaskDetailSheet — it has no branch for this type.
-    if (task.bundleTask?.type === 'vcr_approval_bundle') {
-      setApprovalBundle(task.bundleTask);
+    const bundle = task.bundleTask as VCRBundleTask | undefined;
+    const bundleType = bundle?.type ?? (task as { type?: string }).type ?? task.userTask?.type;
+    if (bundle && bundleType === 'vcr_approval_bundle') {
+      setSelectedTask(null);
+      setDetailOpen(false);
+      setApprovalBundle(bundle);
       setApprovalBundleOpen(true);
       return;
     }
