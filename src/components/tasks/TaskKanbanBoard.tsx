@@ -1108,6 +1108,15 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         onReject={handleReject}
       />
 
+      <VCRApprovalBundleSheet
+        bundle={approvalBundle}
+        open={approvalBundleOpen}
+        onOpenChange={(o) => {
+          setApprovalBundleOpen(o);
+          if (!o) setApprovalBundle(null);
+        }}
+      />
+
       {/* ORA Activity sheet opened when dragging to Done - forces evidence/comments */}
       <ORAActivityTaskSheet
         task={oraActivityTask}
