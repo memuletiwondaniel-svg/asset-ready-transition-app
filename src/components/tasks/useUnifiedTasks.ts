@@ -413,6 +413,7 @@ export function useUnifiedTasks(userId: string) {
           ? (meta?.pssr_id ? `/pssr/${meta.pssr_id}/review` : '/my-tasks')
           : '/my-tasks',
         kanbanColumn: mapToKanbanColumn({ status: task.status, isWaiting, progressPercentage: pct }),
+        bundleTask: task,
       });
     });
 
