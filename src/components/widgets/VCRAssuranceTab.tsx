@@ -76,14 +76,13 @@ const DisciplineTile: React.FC<{ assurance: DisciplineAssurance; profileAvatars:
   const meta = disciplineMeta(assurance.discipline_role_name);
   const fullName = assurance.reviewer?.full_name || 'Unknown reviewer';
   const realAvatar = resolveAvatarUrl(assurance.reviewer?.avatar_url) || profileAvatars.get(fullName.toLowerCase()) || null;
-  const avatarSrc = realAvatar || avatarUrlFor(fullName);
   const initials = fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
   return (
     <div className="group rounded-xl border border-border/60 bg-card p-4 flex flex-col gap-3 shadow-sm transition-all duration-200 hover:shadow-lg hover:border-primary/40 hover:-translate-y-0.5 cursor-default">
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2.5 min-w-0">
           <Avatar className="h-10 w-10 shrink-0 ring-2 ring-background shadow-sm">
-            <AvatarImage src={avatarSrc} alt={fullName} />
+            {realAvatar && <AvatarImage src={realAvatar} alt={fullName} />}
             <AvatarFallback className={cn('text-[11px] font-medium', meta.iconBg, meta.iconColor)}>
               {initials}
             </AvatarFallback>
