@@ -299,7 +299,7 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
             submitted_at: '2026-06-03T09:15:00Z',
             created_at: '2026-06-03T09:15:00Z',
             updated_at: '2026-06-03T09:15:00Z',
-            reviewer: { full_name: 'Daniel Memuletiwon', avatar_url: avatarUrlFor('Daniel Memuletiwon') },
+            reviewer: { full_name: 'Daniel Memuletiwon', avatar_url: null },
           }
       : null;
 
