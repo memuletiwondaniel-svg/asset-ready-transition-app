@@ -70,10 +70,10 @@ const DisciplineTile: React.FC<{ assurance: DisciplineAssurance }> = ({ assuranc
   const avatarSrc = assurance.reviewer?.avatar_url || avatarUrlFor(fullName);
   const initials = fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
   return (
-    <div className="rounded-xl border border-border/60 bg-card p-4 flex flex-col gap-3 hover:border-border transition-colors">
+    <div className="group rounded-xl border border-border/60 bg-card p-4 flex flex-col gap-3 shadow-sm transition-all duration-200 hover:shadow-lg hover:border-primary/40 hover:-translate-y-0.5 cursor-default">
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2.5 min-w-0">
-          <Avatar className="h-9 w-9 shrink-0">
+          <Avatar className="h-10 w-10 shrink-0 ring-2 ring-background shadow-sm">
             <AvatarImage src={avatarSrc} alt={fullName} />
             <AvatarFallback className={cn('text-[11px] font-medium', meta.iconBg, meta.iconColor)}>
               {initials}
@@ -81,7 +81,7 @@ const DisciplineTile: React.FC<{ assurance: DisciplineAssurance }> = ({ assuranc
           </Avatar>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-foreground truncate leading-tight">{fullName}</p>
-            <p className="text-[11px] text-muted-foreground truncate">{meta.short}</p>
+            <p className="text-[11px] text-muted-foreground truncate">{assurance.discipline_role_name}</p>
           </div>
         </div>
         <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-emerald-200 text-emerald-700 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/30 shrink-0">
@@ -91,9 +91,8 @@ const DisciplineTile: React.FC<{ assurance: DisciplineAssurance }> = ({ assuranc
       <p className="text-xs text-muted-foreground leading-relaxed line-clamp-4">
         {assurance.assurance_statement}
       </p>
-      <div className="flex items-center justify-between pt-2 border-t border-border/40 text-[11px] text-muted-foreground">
-        <span className="truncate font-medium">{assurance.discipline_role_name}</span>
-        <span className="shrink-0 ml-2">{format(new Date(assurance.submitted_at), 'dd MMM yyyy')}</span>
+      <div className="flex items-center justify-end pt-2 border-t border-border/40 text-[11px] text-muted-foreground">
+        <span className="shrink-0">{format(new Date(assurance.submitted_at), 'dd MMM yyyy')}</span>
       </div>
     </div>
   );
