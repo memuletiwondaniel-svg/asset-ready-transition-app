@@ -110,7 +110,6 @@ const DisciplineTile: React.FC<{ assurance: DisciplineAssurance; profileAvatars:
 const InterdisciplinaryHero: React.FC<{ assurance: DisciplineAssurance; profileAvatars: Map<string, string> }> = ({ assurance, profileAvatars }) => {
   const fullName = assurance.reviewer?.full_name || 'Interdisciplinary Lead';
   const realAvatar = resolveAvatarUrl(assurance.reviewer?.avatar_url) || profileAvatars.get(fullName.toLowerCase()) || null;
-  const avatarSrc = realAvatar || avatarUrlFor(fullName);
   const initials = fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
   return (
@@ -136,7 +135,7 @@ const InterdisciplinaryHero: React.FC<{ assurance: DisciplineAssurance; profileA
         <div className="flex items-center justify-between pt-3 border-t border-border/40 text-xs text-muted-foreground">
           <div className="flex items-center gap-2 min-w-0">
             <Avatar className="h-6 w-6">
-              <AvatarImage src={avatarSrc} />
+              {realAvatar && <AvatarImage src={realAvatar} />}
               <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
             </Avatar>
             <span className="truncate font-medium">{assurance.discipline_role_name} · {fullName}</span>
