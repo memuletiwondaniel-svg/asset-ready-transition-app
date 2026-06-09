@@ -38,7 +38,7 @@ const DialogContent = React.forwardRef<
       ref={ref}
       className={cn(
         // Mobile: full-screen with safe area. Desktop: centered modal.
-        "dark fixed z-modal grid w-full gap-4 overflow-y-auto border bg-background text-foreground shadow-lg duration-200",
+        "fixed z-modal grid w-full gap-4 overflow-y-auto border bg-background shadow-lg duration-200",
         "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
         // Mobile: full screen
         "inset-0 max-h-full rounded-none p-4",
