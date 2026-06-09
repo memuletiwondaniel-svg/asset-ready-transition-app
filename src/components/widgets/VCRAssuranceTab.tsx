@@ -38,8 +38,6 @@ interface VCRAssuranceTabProps {
   vcrCode?: string;
 }
 
-const avatarUrlFor = (name: string) =>
-  `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name || 'user')}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
 
 const resolveAvatarUrl = (avatarUrl: string | null | undefined): string | null => {
   if (!avatarUrl) return null;
@@ -76,14 +74,13 @@ const DisciplineTile: React.FC<{ assurance: DisciplineAssurance; profileAvatars:
   const meta = disciplineMeta(assurance.discipline_role_name);
   const fullName = assurance.reviewer?.full_name || 'Unknown reviewer';
   const realAvatar = resolveAvatarUrl(assurance.reviewer?.avatar_url) || profileAvatars.get(fullName.toLowerCase()) || null;
-  const avatarSrc = realAvatar || avatarUrlFor(fullName);
   const initials = fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
   return (
     <div className="group rounded-xl border border-border/60 bg-card p-4 flex flex-col gap-3 shadow-sm transition-all duration-200 hover:shadow-lg hover:border-primary/40 hover:-translate-y-0.5 cursor-default">
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2.5 min-w-0">
           <Avatar className="h-10 w-10 shrink-0 ring-2 ring-background shadow-sm">
-            <AvatarImage src={avatarSrc} alt={fullName} />
+            {realAvatar && <AvatarImage src={realAvatar} alt={fullName} />}
             <AvatarFallback className={cn('text-[11px] font-medium', meta.iconBg, meta.iconColor)}>
               {initials}
             </AvatarFallback>
@@ -111,7 +108,6 @@ const DisciplineTile: React.FC<{ assurance: DisciplineAssurance; profileAvatars:
 const InterdisciplinaryHero: React.FC<{ assurance: DisciplineAssurance; profileAvatars: Map<string, string> }> = ({ assurance, profileAvatars }) => {
   const fullName = assurance.reviewer?.full_name || 'Interdisciplinary Lead';
   const realAvatar = resolveAvatarUrl(assurance.reviewer?.avatar_url) || profileAvatars.get(fullName.toLowerCase()) || null;
-  const avatarSrc = realAvatar || avatarUrlFor(fullName);
   const initials = fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
   return (
@@ -137,7 +133,7 @@ const InterdisciplinaryHero: React.FC<{ assurance: DisciplineAssurance; profileA
         <div className="flex items-center justify-between pt-3 border-t border-border/40 text-xs text-muted-foreground">
           <div className="flex items-center gap-2 min-w-0">
             <Avatar className="h-6 w-6">
-              <AvatarImage src={avatarSrc} />
+              {realAvatar && <AvatarImage src={realAvatar} />}
               <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
             </Avatar>
             <span className="truncate font-medium">{assurance.discipline_role_name} · {fullName}</span>
@@ -240,7 +236,7 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
       submitted_at: '2026-05-30T08:42:00Z',
       created_at: '2026-05-30T08:42:00Z',
       updated_at: '2026-05-30T08:42:00Z',
-      reviewer: { full_name: 'Tim Brown', avatar_url: avatarUrlFor('Tim Brown') },
+      reviewer: { full_name: 'Tim Brown', avatar_url: null },
     },
     {
       id: 'mock-vcr04-disc-2',
@@ -254,7 +250,7 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
       submitted_at: '2026-05-31T13:05:00Z',
       created_at: '2026-05-31T13:05:00Z',
       updated_at: '2026-05-31T13:05:00Z',
-      reviewer: { full_name: 'Antoine Segret', avatar_url: avatarUrlFor('Antoine Segret') },
+      reviewer: { full_name: 'Antoine Segret', avatar_url: null },
     },
     {
       id: 'mock-vcr04-disc-3',
@@ -268,7 +264,7 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
       submitted_at: '2026-06-01T10:20:00Z',
       created_at: '2026-06-01T10:20:00Z',
       updated_at: '2026-06-01T10:20:00Z',
-      reviewer: { full_name: 'Daniel Memuletiwon', avatar_url: avatarUrlFor('Daniel Memuletiwon') },
+      reviewer: { full_name: 'Daniel Memuletiwon', avatar_url: null },
     },
   ];
 
@@ -284,7 +280,7 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
     submitted_at: '2026-06-02T15:30:00Z',
     created_at: '2026-06-02T15:30:00Z',
     updated_at: '2026-06-02T15:30:00Z',
-    reviewer: { full_name: 'Daniel Memuletiwon', avatar_url: avatarUrlFor('Daniel Memuletiwon') },
+    reviewer: { full_name: 'Daniel Memuletiwon', avatar_url: null },
   };
 
   const mockInterdisciplinary: DisciplineAssurance | null =
@@ -303,7 +299,7 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
             submitted_at: '2026-06-03T09:15:00Z',
             created_at: '2026-06-03T09:15:00Z',
             updated_at: '2026-06-03T09:15:00Z',
-            reviewer: { full_name: 'Daniel Memuletiwon', avatar_url: avatarUrlFor('Daniel Memuletiwon') },
+            reviewer: { full_name: 'Daniel Memuletiwon', avatar_url: null },
           }
       : null;
 
