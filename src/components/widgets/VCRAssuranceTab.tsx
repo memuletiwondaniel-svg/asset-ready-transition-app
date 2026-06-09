@@ -334,7 +334,7 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
 
       {/* Interdisciplinary Hero */}
       {effectiveInterdisciplinary ? (
-        <InterdisciplinaryHero assurance={effectiveInterdisciplinary} />
+        <InterdisciplinaryHero assurance={effectiveInterdisciplinary} profileAvatars={profileAvatars} />
       ) : (
         <Card className="border-dashed border-primary/30 bg-primary/5">
           <CardContent className="p-5">
