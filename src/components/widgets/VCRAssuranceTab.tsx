@@ -397,7 +397,7 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {submittedDisciplines.map(disc => (
-              <DisciplineTile key={disc.role_id} assurance={disc.assurance!} />
+              <DisciplineTile key={disc.role_id} assurance={disc.assurance!} profileAvatars={profileAvatars} />
             ))}
           </div>
         )}
