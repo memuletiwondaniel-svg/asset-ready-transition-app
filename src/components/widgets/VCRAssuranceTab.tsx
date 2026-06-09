@@ -236,7 +236,7 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
       submitted_at: '2026-05-30T08:42:00Z',
       created_at: '2026-05-30T08:42:00Z',
       updated_at: '2026-05-30T08:42:00Z',
-      reviewer: { full_name: 'Tim Brown', avatar_url: avatarUrlFor('Tim Brown') },
+      reviewer: { full_name: 'Tim Brown', avatar_url: null },
     },
     {
       id: 'mock-vcr04-disc-2',
@@ -250,7 +250,7 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
       submitted_at: '2026-05-31T13:05:00Z',
       created_at: '2026-05-31T13:05:00Z',
       updated_at: '2026-05-31T13:05:00Z',
-      reviewer: { full_name: 'Antoine Segret', avatar_url: avatarUrlFor('Antoine Segret') },
+      reviewer: { full_name: 'Antoine Segret', avatar_url: null },
     },
     {
       id: 'mock-vcr04-disc-3',
@@ -264,7 +264,7 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
       submitted_at: '2026-06-01T10:20:00Z',
       created_at: '2026-06-01T10:20:00Z',
       updated_at: '2026-06-01T10:20:00Z',
-      reviewer: { full_name: 'Daniel Memuletiwon', avatar_url: avatarUrlFor('Daniel Memuletiwon') },
+      reviewer: { full_name: 'Daniel Memuletiwon', avatar_url: null },
     },
   ];
 
