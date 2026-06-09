@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -39,6 +41,12 @@ interface VCRAssuranceTabProps {
 const avatarUrlFor = (name: string) =>
   `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name || 'user')}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
 
+const resolveAvatarUrl = (avatarUrl: string | null | undefined): string | null => {
+  if (!avatarUrl) return null;
+  if (avatarUrl.startsWith('http')) return avatarUrl;
+  return supabase.storage.from('user-avatars').getPublicUrl(avatarUrl).data.publicUrl;
+};
+
 // Map a discipline role name (e.g. "Elect TA2 - Project", "Tech Safety TA2", "Civil TA2")
 // to a short display label + icon + tinted color tokens.
 interface DisciplineMeta {
@@ -64,10 +72,11 @@ const disciplineMeta = (roleName: string): DisciplineMeta => {
 };
 
 // Tiled discipline summary card (mirrors SOF Discipline Comments Summary layout)
-const DisciplineTile: React.FC<{ assurance: DisciplineAssurance }> = ({ assurance }) => {
+const DisciplineTile: React.FC<{ assurance: DisciplineAssurance; profileAvatars: Map<string, string> }> = ({ assurance, profileAvatars }) => {
   const meta = disciplineMeta(assurance.discipline_role_name);
   const fullName = assurance.reviewer?.full_name || 'Unknown reviewer';
-  const avatarSrc = assurance.reviewer?.avatar_url || avatarUrlFor(fullName);
+  const realAvatar = resolveAvatarUrl(assurance.reviewer?.avatar_url) || profileAvatars.get(fullName.toLowerCase()) || null;
+  const avatarSrc = realAvatar || avatarUrlFor(fullName);
   const initials = fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
   return (
     <div className="group rounded-xl border border-border/60 bg-card p-4 flex flex-col gap-3 shadow-sm transition-all duration-200 hover:shadow-lg hover:border-primary/40 hover:-translate-y-0.5 cursor-default">
@@ -99,9 +108,10 @@ const DisciplineTile: React.FC<{ assurance: DisciplineAssurance }> = ({ assuranc
 };
 
 // Hero interdisciplinary summary card (mirrors SOF Interdisciplinary Summary layout)
-const InterdisciplinaryHero: React.FC<{ assurance: DisciplineAssurance }> = ({ assurance }) => {
+const InterdisciplinaryHero: React.FC<{ assurance: DisciplineAssurance; profileAvatars: Map<string, string> }> = ({ assurance, profileAvatars }) => {
   const fullName = assurance.reviewer?.full_name || 'Interdisciplinary Lead';
-  const avatarSrc = assurance.reviewer?.avatar_url || avatarUrlFor(fullName);
+  const realAvatar = resolveAvatarUrl(assurance.reviewer?.avatar_url) || profileAvatars.get(fullName.toLowerCase()) || null;
+  const avatarSrc = realAvatar || avatarUrlFor(fullName);
   const initials = fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
   return (
@@ -152,6 +162,36 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
 
   const [interStatement, setInterStatement] = useState('');
   const [showInterForm, setShowInterForm] = useState(false);
+
+  // Collect all reviewer names currently rendered so we can look up real profile avatars.
+  const reviewerNames = useMemo(() => {
+    const names = new Set<string>();
+    disciplineStatements.forEach(s => s.reviewer?.full_name && names.add(s.reviewer.full_name));
+    if (interdisciplinaryStatement?.reviewer?.full_name) names.add(interdisciplinaryStatement.reviewer.full_name);
+    // Include known mock names so VCR-04 mock data also resolves real avatars
+    ['Tim Brown', 'Antoine Segret', 'Daniel Memuletiwon', 'Chan Chew Ping', 'Kersha Andrews', 'Stuart Lugo', 'Ghassan Maidalani', 'Satva Borra']
+      .forEach(n => names.add(n));
+    return Array.from(names);
+  }, [disciplineStatements, interdisciplinaryStatement]);
+
+  const { data: profileAvatars = new Map<string, string>() } = useQuery({
+    queryKey: ['vcr-reviewer-avatars', reviewerNames.sort().join('|')],
+    enabled: reviewerNames.length > 0,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('full_name, avatar_url')
+        .in('full_name', reviewerNames)
+        .not('avatar_url', 'is', null);
+      const map = new Map<string, string>();
+      (data || []).forEach((p: any) => {
+        const url = resolveAvatarUrl(p.avatar_url);
+        if (p.full_name && url) map.set(p.full_name.toLowerCase(), url);
+      });
+      return map;
+    },
+  });
 
   const handleSubmitInterdisciplinary = async () => {
     if (!interStatement.trim()) return;
@@ -294,7 +334,7 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
 
       {/* Interdisciplinary Hero */}
       {effectiveInterdisciplinary ? (
-        <InterdisciplinaryHero assurance={effectiveInterdisciplinary} />
+        <InterdisciplinaryHero assurance={effectiveInterdisciplinary} profileAvatars={profileAvatars} />
       ) : (
         <Card className="border-dashed border-primary/30 bg-primary/5">
           <CardContent className="p-5">
@@ -357,7 +397,7 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {submittedDisciplines.map(disc => (
-              <DisciplineTile key={disc.role_id} assurance={disc.assurance!} />
+              <DisciplineTile key={disc.role_id} assurance={disc.assurance!} profileAvatars={profileAvatars} />
             ))}
           </div>
         )}
