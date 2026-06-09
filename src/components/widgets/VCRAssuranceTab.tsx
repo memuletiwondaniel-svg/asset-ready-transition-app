@@ -163,6 +163,36 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
   const [interStatement, setInterStatement] = useState('');
   const [showInterForm, setShowInterForm] = useState(false);
 
+  // Collect all reviewer names currently rendered so we can look up real profile avatars.
+  const reviewerNames = useMemo(() => {
+    const names = new Set<string>();
+    disciplineStatements.forEach(s => s.reviewer?.full_name && names.add(s.reviewer.full_name));
+    if (interdisciplinaryStatement?.reviewer?.full_name) names.add(interdisciplinaryStatement.reviewer.full_name);
+    // Include known mock names so VCR-04 mock data also resolves real avatars
+    ['Tim Brown', 'Antoine Segret', 'Daniel Memuletiwon', 'Chan Chew Ping', 'Kersha Andrews', 'Stuart Lugo', 'Ghassan Maidalani', 'Satva Borra']
+      .forEach(n => names.add(n));
+    return Array.from(names);
+  }, [disciplineStatements, interdisciplinaryStatement]);
+
+  const { data: profileAvatars = new Map<string, string>() } = useQuery({
+    queryKey: ['vcr-reviewer-avatars', reviewerNames.sort().join('|')],
+    enabled: reviewerNames.length > 0,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('full_name, avatar_url')
+        .in('full_name', reviewerNames)
+        .not('avatar_url', 'is', null);
+      const map = new Map<string, string>();
+      (data || []).forEach((p: any) => {
+        const url = resolveAvatarUrl(p.avatar_url);
+        if (p.full_name && url) map.set(p.full_name.toLowerCase(), url);
+      });
+      return map;
+    },
+  });
+
   const handleSubmitInterdisciplinary = async () => {
     if (!interStatement.trim()) return;
     try {
