@@ -280,7 +280,7 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
     submitted_at: '2026-06-02T15:30:00Z',
     created_at: '2026-06-02T15:30:00Z',
     updated_at: '2026-06-02T15:30:00Z',
-    reviewer: { full_name: 'Daniel Memuletiwon', avatar_url: avatarUrlFor('Daniel Memuletiwon') },
+    reviewer: { full_name: 'Daniel Memuletiwon', avatar_url: null },
   };
 
   const mockInterdisciplinary: DisciplineAssurance | null =
