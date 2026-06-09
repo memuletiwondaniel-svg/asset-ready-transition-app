@@ -72,10 +72,11 @@ const disciplineMeta = (roleName: string): DisciplineMeta => {
 };
 
 // Tiled discipline summary card (mirrors SOF Discipline Comments Summary layout)
-const DisciplineTile: React.FC<{ assurance: DisciplineAssurance }> = ({ assurance }) => {
+const DisciplineTile: React.FC<{ assurance: DisciplineAssurance; profileAvatars: Map<string, string> }> = ({ assurance, profileAvatars }) => {
   const meta = disciplineMeta(assurance.discipline_role_name);
   const fullName = assurance.reviewer?.full_name || 'Unknown reviewer';
-  const avatarSrc = assurance.reviewer?.avatar_url || avatarUrlFor(fullName);
+  const realAvatar = resolveAvatarUrl(assurance.reviewer?.avatar_url) || profileAvatars.get(fullName.toLowerCase()) || null;
+  const avatarSrc = realAvatar || avatarUrlFor(fullName);
   const initials = fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
   return (
     <div className="group rounded-xl border border-border/60 bg-card p-4 flex flex-col gap-3 shadow-sm transition-all duration-200 hover:shadow-lg hover:border-primary/40 hover:-translate-y-0.5 cursor-default">
@@ -107,9 +108,10 @@ const DisciplineTile: React.FC<{ assurance: DisciplineAssurance }> = ({ assuranc
 };
 
 // Hero interdisciplinary summary card (mirrors SOF Interdisciplinary Summary layout)
-const InterdisciplinaryHero: React.FC<{ assurance: DisciplineAssurance }> = ({ assurance }) => {
+const InterdisciplinaryHero: React.FC<{ assurance: DisciplineAssurance; profileAvatars: Map<string, string> }> = ({ assurance, profileAvatars }) => {
   const fullName = assurance.reviewer?.full_name || 'Interdisciplinary Lead';
-  const avatarSrc = assurance.reviewer?.avatar_url || avatarUrlFor(fullName);
+  const realAvatar = resolveAvatarUrl(assurance.reviewer?.avatar_url) || profileAvatars.get(fullName.toLowerCase()) || null;
+  const avatarSrc = realAvatar || avatarUrlFor(fullName);
   const initials = fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
   return (
