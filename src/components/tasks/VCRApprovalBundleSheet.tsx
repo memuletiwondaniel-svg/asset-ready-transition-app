@@ -42,7 +42,7 @@ export const VCRApprovalBundleSheet: React.FC<Props> = ({ bundle, open, onOpenCh
   // N-of-M accepted counts per prereq (all approvers, not just current user).
   const { data: counts } = useQuery({
     enabled: open && prereqIds.length > 0,
-    queryKey: ['vcr-bundle-approval-counts', bundle.id, prereqIds],
+    queryKey: ['vcr-bundle-approval-counts', bundle?.id, prereqIds],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from('vcr_prerequisite_approvals')
