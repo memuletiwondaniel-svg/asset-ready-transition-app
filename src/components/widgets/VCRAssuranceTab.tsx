@@ -41,6 +41,12 @@ interface VCRAssuranceTabProps {
 const avatarUrlFor = (name: string) =>
   `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name || 'user')}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
 
+const resolveAvatarUrl = (avatarUrl: string | null | undefined): string | null => {
+  if (!avatarUrl) return null;
+  if (avatarUrl.startsWith('http')) return avatarUrl;
+  return supabase.storage.from('user-avatars').getPublicUrl(avatarUrl).data.publicUrl;
+};
+
 // Map a discipline role name (e.g. "Elect TA2 - Project", "Tech Safety TA2", "Civil TA2")
 // to a short display label + icon + tinted color tokens.
 interface DisciplineMeta {
