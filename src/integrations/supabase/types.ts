@@ -3014,6 +3014,45 @@ export type Database = {
         }
         Relationships: []
       }
+      hub_role_holders: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          hub_id: string
+          role_id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          hub_id: string
+          role_id: string
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          hub_id?: string
+          role_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hub_role_holders_hub_id_fkey"
+            columns: ["hub_id"]
+            isOneToOne: false
+            referencedRelation: "hubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hub_role_holders_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hubs: {
         Row: {
           created_at: string
@@ -8909,6 +8948,45 @@ export type Database = {
         }
         Relationships: []
       }
+      plant_role_holders: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          plant_id: string
+          role_id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          plant_id: string
+          role_id: string
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          plant_id?: string
+          role_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plant_role_holders_plant_id_fkey"
+            columns: ["plant_id"]
+            isOneToOne: false
+            referencedRelation: "plant"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plant_role_holders_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plip_document_types: {
         Row: {
           category: string
@@ -11386,6 +11464,45 @@ export type Database = {
           },
         ]
       }
+      region_role_holders: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          region_id: string
+          role_id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          region_id: string
+          role_id: string
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          region_id?: string
+          role_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "region_role_holders_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "project_region"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "region_role_holders_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rlmu_reviews: {
         Row: {
           created_at: string | null
@@ -11499,6 +11616,7 @@ export type Database = {
           is_retired: boolean
           name: string
           parent_role_id: string | null
+          scope: Database["public"]["Enums"]["role_scope"]
           updated_at: string
         }
         Insert: {
@@ -11515,6 +11633,7 @@ export type Database = {
           is_retired?: boolean
           name: string
           parent_role_id?: string | null
+          scope?: Database["public"]["Enums"]["role_scope"]
           updated_at?: string
         }
         Update: {
@@ -11531,6 +11650,7 @@ export type Database = {
           is_retired?: boolean
           name?: string
           parent_role_id?: string | null
+          scope?: Database["public"]["Enums"]["role_scope"]
           updated_at?: string
         }
         Relationships: [
@@ -14940,6 +15060,7 @@ export type Database = {
         | "training_item"
         | "certificate"
         | "custom"
+      role_scope: "project" | "hub" | "plant" | "portfolio" | "org"
       ta2_commission: "Asset" | "Project and Engineering"
       ta2_discipline:
         | "Civil"
@@ -15304,6 +15425,7 @@ export const Constants = {
         "certificate",
         "custom",
       ],
+      role_scope: ["project", "hub", "plant", "portfolio", "org"],
       ta2_commission: ["Asset", "Project and Engineering"],
       ta2_discipline: [
         "Civil",
