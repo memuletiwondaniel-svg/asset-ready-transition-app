@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.resolve_project_role_user(uuid, text) TO authenticated, anon, service_role;
