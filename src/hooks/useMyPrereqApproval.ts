@@ -67,6 +67,9 @@ export function useMyPrereqApproval(prerequisiteId: string | undefined) {
       qc.invalidateQueries({ queryKey: ['my-prereq-approval', prerequisiteId] });
       qc.invalidateQueries({ queryKey: ['vcr-prerequisites'] });
       qc.invalidateQueries({ queryKey: ['user-vcr-bundle-tasks'] });
+      // E-1c BUG 1: refresh the per-item "N of M accepted" counter in
+      // VCRApprovalBundleSheet, which reads vcr_prerequisite_approvals directly.
+      qc.invalidateQueries({ queryKey: ['vcr-bundle-approval-counts'] });
       const label =
         vars.status === 'ACCEPTED' ? 'Accepted' :
         vars.status === 'REJECTED' ? 'Rejected' :
