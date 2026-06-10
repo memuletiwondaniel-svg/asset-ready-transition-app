@@ -88,6 +88,11 @@ const P2AApprovalContext = createContext<Map<string, P2AApprovalSummary>>(new Ma
 interface ORAApprovalSummary { total: number; approved: number; rejected: number; }
 const ORAApprovalContext = createContext<Map<string, ORAApprovalSummary>>(new Map());
 
+function isClickableVcrApprovalBundle(task: UnifiedTask): boolean {
+  const bundleType = task.bundleTask?.type ?? task.userTask?.type;
+  return bundleType === 'vcr_approval_bundle';
+}
+
 
 const getColumns = (t: any) => [
   { key: 'todo' as const, label: t.kanbanToDo || 'To Do', icon: Circle, accent: 'border-l-slate-400', headerBg: 'bg-gradient-to-r from-slate-200/90 to-slate-100/60 dark:from-slate-800/50 dark:to-slate-900/20', iconColor: 'text-slate-500', headerText: 'text-foreground', emptyIcon: Inbox, emptyMsg: t.kanbanEmptyToDo || 'Nothing to do — nice!' },
@@ -287,6 +292,7 @@ const KanbanCardContent: React.FC<{
   const navigate = useNavigate();
   const dateAnnotation = getDateAnnotation(task);
   const sp = task.smartPriority;
+  const isWaitingVcrApprovalBundle = task.isWaiting && isClickableVcrApprovalBundle(task);
   
   // Detect ORA activity tasks that can link to a Gantt chart
   const meta = task.userTask?.metadata as Record<string, any> | undefined;
@@ -308,7 +314,7 @@ const KanbanCardContent: React.FC<{
           : "border border-border/60 bg-card shadow-[0_1px_3px_0_rgb(0,0,0,0.04)] hover:-translate-y-0.5 hover:shadow-md hover:border-border",
         !isChild && (accentClass || 'border-l-border'),
         isChild && 'border-l-border/50',
-        task.isWaiting && 'opacity-50',
+        task.isWaiting && !isWaitingVcrApprovalBundle && 'opacity-50',
         task.isNew && !isChild && 'ring-1 ring-primary/15',
         isOverlay && 'shadow-xl ring-2 ring-primary/20 rotate-[2deg] scale-[1.03]',
       )}
@@ -852,7 +858,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       isWaiting: task.isWaiting,
       kanbanColumn: task.kanbanColumn,
     });
-    if (task.isWaiting) return;
+    if (task.isWaiting && !isClickableVcrApprovalBundle(task)) return;
 
     // VCR approval bundle: open the per-prereq approver action sheet (E-1c).
     // Do NOT route to TaskDetailSheet — it has no branch for this type.
