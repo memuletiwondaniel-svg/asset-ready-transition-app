@@ -843,6 +843,15 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   );
 
   const handleTaskClick = useCallback((task: UnifiedTask) => {
+    console.log('[TaskKanbanBoard] handleTaskClick:start', {
+      task,
+      type: (task as { type?: string }).type,
+      bundleTask: task.bundleTask,
+      userTask: task.userTask,
+      status: task.status,
+      isWaiting: task.isWaiting,
+      kanbanColumn: task.kanbanColumn,
+    });
     if (task.isWaiting) return;
 
     // VCR approval bundle: open the per-prereq approver action sheet (E-1c).
@@ -850,6 +859,11 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     const bundle = task.bundleTask as VCRBundleTask | undefined;
     const bundleType = bundle?.type ?? (task as { type?: string }).type ?? task.userTask?.type;
     if (bundle && bundleType === 'vcr_approval_bundle') {
+      console.log('[TaskKanbanBoard] handleTaskClick:branch', {
+        branch: 'vcr_approval_bundle',
+        bundleType,
+        bundle,
+      });
       setSelectedTask(null);
       setDetailOpen(false);
       setApprovalBundle(bundle);
@@ -861,9 +875,16 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       const meta = task.userTask.metadata as Record<string, any> | undefined;
       const isReviewTask = meta?.source === 'task_review';
       const isOraActivity = !isReviewTask && (task.userTask.type === 'ora_activity' || meta?.action === 'complete_ora_activity' || meta?.action === 'create_p2a_plan' || meta?.action === 'create_vcr_delivery_plan' || meta?.ora_plan_activity_id);
+      console.log('[TaskKanbanBoard] handleTaskClick:userTaskBranchCheck', {
+        isReviewTask,
+        isOraActivity,
+        userTaskType: task.userTask.type,
+        metadata: meta,
+      });
 
       // Review tasks always open TaskDetailSheet (never ORA overlay)
       if (isReviewTask) {
+        console.log('[TaskKanbanBoard] handleTaskClick:branch', { branch: 'review_task_detail' });
         setSelectedTask(task.userTask);
         setDetailOpen(true);
         return;
@@ -871,16 +892,21 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
 
       // ORA activity tasks skip the intermediate detail sheet and go straight to the activity overlay
       if (isOraActivity && !task.navigateTo) {
+        console.log('[TaskKanbanBoard] handleTaskClick:branch', { branch: 'ora_activity_sheet' });
         setOraActivityTask(task.userTask);
         setOraActivityDragComplete(false);
         setOraActivityOpen(true);
         return;
       }
 
+      console.log('[TaskKanbanBoard] handleTaskClick:branch', { branch: 'default_task_detail' });
       setSelectedTask(task.userTask);
       setDetailOpen(true);
     } else if (task.navigateTo) {
+      console.log('[TaskKanbanBoard] handleTaskClick:branch', { branch: 'navigate', navigateTo: task.navigateTo });
       navigate(task.navigateTo);
+    } else {
+      console.log('[TaskKanbanBoard] handleTaskClick:branch', { branch: 'no_action' });
     }
   }, [navigate]);
 
