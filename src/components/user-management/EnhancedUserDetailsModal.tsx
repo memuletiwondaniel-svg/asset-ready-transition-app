@@ -1002,14 +1002,48 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       // propagates to every project in the chosen portfolio(s) immediately.
       if (selectedRoleIsPortfolio && selectedRoleMeta?.id) {
         try {
+          let replaceUserId: string | null = null;
+          // B2B cap-2 preflight: when assigning into a region that
+          // already holds the pair, ask which holder is being replaced.
+          if (
+            portfolioRegionId &&
+            (selectedRoleMeta as any).is_b2b
+          ) {
+            const holders = await fetchRegionRoleHoldersPreflight(
+              selectedRoleMeta.id,
+              portfolioRegionId,
+            );
+            const alreadyHolder = holders.some((h) => h.user_id === user.user_id);
+            if (!alreadyHolder && holders.length >= 2) {
+              const regionName =
+                availableRegions?.find((r) => r.id === portfolioRegionId)?.name ?? 'This portfolio';
+              const choice = await new Promise<string | null>((resolve) => {
+                setB2bDialog({
+                  open: true,
+                  holders,
+                  regionName,
+                  roleName: selectedRoleMeta.name,
+                  regionId: portfolioRegionId,
+                  resolve,
+                });
+              });
+              if (!choice) {
+                toast.info('Portfolio assignment cancelled — no replacement chosen.');
+                return;
+              }
+              replaceUserId = choice;
+            }
+          }
           await savePortfolioAssignments({
             userId: user.user_id,
             roleId: selectedRoleMeta.id,
             regionIds: portfolioRegionId ? [portfolioRegionId] : [],
+            replaceUserId,
+            replaceRegionId: replaceUserId ? portfolioRegionId : null,
           });
         } catch (e: any) {
           console.error('Portfolio assignment write failed:', e);
-          toast.error(`Failed to save portfolio assignments: ${e.message ?? e}`);
+          toast.error(e.message ?? String(e));
           return;
         }
       }
