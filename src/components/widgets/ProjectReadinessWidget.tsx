@@ -242,36 +242,32 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
         </div>
       )}
 
-      {/* Team Members - Required Roles Only */}
+      {/* Team Members - Required Roles (live roster, PTM override wins) */}
       {(() => {
-        const CANONICAL_REQUIRED_ROLES = [
-          'Project Hub Lead',
-          'Construction Lead',
-          'Commissioning Lead',
-          'Snr. ORA Engr.',
-          'Deputy Plant Director',
-        ];
-        
-        const ROLE_VARIATIONS: Record<string, string[]> = {
-          'Project Hub Lead': ['Project Hub Lead'],
-          'Construction Lead': ['Construction Lead'],
-          'Commissioning Lead': ['Commissioning Lead'],
-          'Snr. ORA Engr.': ['Snr ORA Engr', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr. ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'],
-          'Deputy Plant Director': ['Deputy Plant Director', 'Dep. Plant Director', 'Dep Plant Director'],
-        };
-        
-        const roleDisplayData = CANONICAL_REQUIRED_ROLES.map(role => {
-          const variations = ROLE_VARIATIONS[role];
-          const assignedMember = teamMembers.find(member => variations.includes(member.role));
-          return {
-            role,
-            member: assignedMember || null,
-            profile: assignedMember?.profiles || null,
-          };
-        });
-        
-        const assignedCount = roleDisplayData.filter(r => r.member).length;
-        
+        // Build per-role rows. Each holder gets its OWN row so a 2-holder
+        // back-to-back (e.g. Snr ORA Engr in North = Azamat + Beibit) renders
+        // both avatars rather than silently dropping one. 0 holders → dashed
+        // "Unassigned" row.
+        type Row =
+          | { kind: 'holder'; role: string; holder: RoleHolder; partners: RoleHolder[] }
+          | { kind: 'empty'; role: string };
+        const rows: Row[] = [];
+        for (const role of REQUIRED_ROLES) {
+          const holders = (roleHolders as Record<string, RoleHolder[]>)[role] || [];
+          if (holders.length === 0) {
+            rows.push({ kind: 'empty', role });
+            continue;
+          }
+          for (const h of holders) {
+            rows.push({
+              kind: 'holder',
+              role,
+              holder: h,
+              partners: holders.filter(p => p.user_id !== h.user_id),
+            });
+          }
+        }
+
         return (
           <div className="space-y-3">
             <button
@@ -287,83 +283,67 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
             </button>
             {teamExpanded && (
               <div className="space-y-1.5 pl-1">
-                {roleDisplayData.map((data) => {
+                {rows.map((row, idx) => {
+                  if (row.kind === 'empty') {
+                    return (
+                      <div
+                        key={`${row.role}-empty`}
+                        className="flex items-center gap-2.5 p-2 rounded-lg border bg-muted/10 border-dashed border-border/30"
+                      >
+                        <Avatar className="h-8 w-8 ring-2 ring-background shadow-sm">
+                          <AvatarFallback className="text-[11px] font-medium bg-muted text-muted-foreground">
+                            <UserCircle className="h-4 w-4" />
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[13px] font-medium truncate leading-tight text-muted-foreground/60 italic">
+                            Unassigned
+                          </p>
+                          <p className="text-[10px] text-muted-foreground truncate leading-tight">{row.role}</p>
+                        </div>
+                      </div>
+                    );
+                  }
+                  const { holder, partners } = row;
+                  const partnerNames = partners.map(p => p.full_name).join(', ');
                   return (
                     <div
-                      key={data.role}
-                      className={cn(
-                        "flex items-center gap-2.5 p-2 rounded-lg border transition-all duration-200",
-                        data.member
-                          ? "bg-muted/30 border-border/40 hover:bg-muted/50 hover:border-primary/20"
-                          : "bg-muted/10 border-dashed border-border/30"
-                      )}
+                      key={`${row.role}-${holder.user_id}`}
+                      className="flex items-center gap-2.5 p-2 rounded-lg border bg-muted/30 border-border/40 hover:bg-muted/50 hover:border-primary/20 transition-all duration-200"
                     >
-                      <Avatar className={cn(
-                        "h-8 w-8 ring-2 ring-background shadow-sm",
-                        data.member?.is_lead && "ring-primary/30"
-                      )}>
-                        {data.profile?.avatar_url ? (
-                          <AvatarImage src={getAvatarUrl(data.profile.avatar_url)} alt={data.profile?.full_name} />
+                      <Avatar className="h-8 w-8 ring-2 ring-background shadow-sm">
+                        {holder.avatar_url ? (
+                          <AvatarImage src={getAvatarUrl(holder.avatar_url)} alt={holder.full_name} />
                         ) : (
-                          <AvatarFallback className={cn(
-                            "text-[11px] font-medium",
-                            data.member ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
-                          )}>
-                            {data.profile?.full_name
-                              ? data.profile.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)
-                              : <UserCircle className="h-4 w-4" />
-                            }
+                          <AvatarFallback className="text-[11px] font-medium bg-primary/10 text-primary">
+                            {holder.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                           </AvatarFallback>
                         )}
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <p className={cn(
-                            "text-[13px] font-medium truncate leading-tight",
-                            !data.member && "text-muted-foreground/60 italic"
-                          )}>
-                            {data.profile?.full_name || 'Unassigned'}
+                          <p className="text-[13px] font-medium truncate leading-tight">
+                            {holder.full_name}
                           </p>
-                          {(() => {
-                            if (!data.member) return null;
-                            const memberPos = ((data.member as any).position || '').toLowerCase().replace(/\s+/g, ' ').trim();
-                            if (!memberPos) return null;
-                            const sharing = (allUsers || []).filter((u: any) => ((u.position || '').toLowerCase().replace(/\s+/g, ' ').trim()) === memberPos);
-                            const others = sharing.filter((u: any) => u.user_id !== data.member!.user_id);
-                            const partner = sharing.length === 2 && others.length === 1 ? others[0] : null;
-                            if (!partner) return null;
-                            const partnerName = (partner as any).full_name || (partner as any).email;
-                            return (
-                              <TooltipProvider delayDuration={150}>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        removeTeamMember((data.member as any).id);
-                                        addTeamMember({
-                                          project_id: projectId,
-                                          user_id: (partner as any).user_id,
-                                          role: (data.member as any).role,
-                                          is_lead: !!(data.member as any).is_lead,
-                                        });
-                                      }}
-                                      className="text-[8px] font-semibold tracking-wider px-1 py-px rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0 hover:bg-amber-200 dark:hover:bg-amber-900/60 cursor-pointer transition-colors leading-none"
-                                      title={`Switch to B2B: ${partnerName}`}
-                                    >
-                                      B2B
-                                    </button>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="bottom" align="start" sideOffset={4} className="text-xs">
-                                    Click to switch to B2B: {partnerName}
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            );
-                          })()}
+                          {partners.length > 0 && (
+                            <TooltipProvider delayDuration={150}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span
+                                    className="text-[8px] font-semibold tracking-wider px-1 py-px rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0 leading-none cursor-help"
+                                    title={`Back-to-back with ${partnerNames}`}
+                                  >
+                                    B2B
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent side="bottom" align="start" sideOffset={4} className="text-xs">
+                                  Back-to-back with {partnerNames}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
                         </div>
-                        <p className="text-[10px] text-muted-foreground truncate leading-tight">{data.role}</p>
+                        <p className="text-[10px] text-muted-foreground truncate leading-tight">{row.role}</p>
                       </div>
                     </div>
                   );
