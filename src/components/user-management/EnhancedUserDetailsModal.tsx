@@ -425,7 +425,9 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       case 'Site Engr':
         return !!station;
       case 'Ops Coach':
-        return !!plant && !!field; // Ops Coach requires plant and field (station optional)
+        // KAZ / BNGL: plant alone is enough. CS / UQ: plant + field required.
+        // Cascading selector spec — Part E2.
+        return !!plant && (opsCoachNeedsField(plant) ? !!field : true);
       case 'Ops Team Lead':
       case 'Section Head':
         return !!field;
