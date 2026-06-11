@@ -14677,6 +14677,7 @@ export type Database = {
           role_id: string
           role_is_b2b: boolean
           role_name: string
+          role_scope: string
         }[]
       }
       get_safe_profile_data: {
@@ -14730,6 +14731,15 @@ export type Database = {
         }[]
       }
       get_user_permissions: { Args: { _user_id: string }; Returns: string[] }
+      get_user_region_role_holders: {
+        Args: { p_user_id: string }
+        Returns: {
+          region_id: string
+          region_name: string
+          role_id: string
+          role_name: string
+        }[]
+      }
       get_user_tenant_id: { Args: never; Returns: string }
       gohub_catalog_freshness: {
         Args: never
@@ -14822,6 +14832,10 @@ export type Database = {
           user_id: string
           user_position: string
         }[]
+      }
+      set_user_region_role_holders: {
+        Args: { p_region_ids: string[]; p_role_id: string; p_user_id: string }
+        Returns: undefined
       }
       soft_delete_checklist_item: {
         Args: { p_unique_id: string }
