@@ -65,16 +65,17 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
   const [confirmRemoveBound, setConfirmRemoveBound] = useState<{ typeId: string; reqId: string } | null>(null);
   const [confirmClearAll, setConfirmClearAll] = useState(false);
   const [browseCatalog, setBrowseCatalog] = useState(false);
-  // Per-row in-flight markers (typeId) — to disable repeated toggles while a save is pending.
+  // Whether the Available section (filters + 986-row list) is expanded. When the
+  // user returns to step 5 with selections, default to collapsed so the page
+  // reads as "what did I pick?" first.
+  const [availableOpen, setAvailableOpen] = useState(false);
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
 
-  // Debounce search
   React.useEffect(() => {
     const id = setTimeout(() => setSearch(searchInput), 200);
     return () => clearTimeout(id);
   }, [searchInput]);
 
-  // Resolve plan context if needed
   const { data: planContext } = useQuery({
     queryKey: ['vcr-handover-plan-context', vcrId],
     queryFn: async () => {
@@ -97,7 +98,6 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
   const effectiveProjectCode = projectCode || planContext?.project_code || null;
   const effectivePlantCode = plantCode || planContext?.plant_code || null;
 
-  // Fetch all active document types (paginated to avoid 1000-row cap).
   const { data: docTypes = [], isLoading: typesLoading } = useQuery<DocType[]>({
     queryKey: ['dms-document-types-catalog'],
     staleTime: 5 * 60 * 1000,
@@ -121,7 +121,6 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
     },
   });
 
-  // Fetch existing requirements for this VCR
   const { data: requirements = [], isLoading: requirementsLoading } = useQuery<RequirementRow[]>({
     queryKey: ['vcr-doc-requirements', vcrId],
     queryFn: async () => {
@@ -134,7 +133,6 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
     },
   });
 
-  // Currently-saved type ids
   const savedTypeIds = useMemo(() => {
     const m = new Map<string, RequirementRow>();
     requirements.forEach((r) => { if (r.document_type_id) m.set(r.document_type_id, r); });
@@ -143,22 +141,15 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
 
   const isSelected = (typeId: string): boolean => savedTypeIds.has(typeId);
 
-  // ── Auto-save toggle: writes directly to vcr_document_requirements ──
-  // This is intentional — the previous "queue then click Save" model lost selections
-  // when the user clicked Next without first clicking Save. Now every toggle persists
-  // immediately, so navigating away (or refreshing) preserves state, and the wizard's
-  // step-counts query reflects truth.
   const persistToggle = async (typeId: string) => {
     if (savingIds.has(typeId)) return;
     setSavingIds((s) => new Set(s).add(typeId));
     try {
       const existing = savedTypeIds.get(typeId);
       if (existing) {
-        // Removing — check for bound binding first (handled by caller via confirm dialog).
         const { error } = await (supabase as any)
           .from('vcr_document_requirements').delete().eq('id', existing.id);
         if (error) throw error;
-        // Shadow clear on legacy table (best-effort)
         const { error: cErr } = await (supabase as any)
           .from('p2a_vcr_critical_docs')
           .delete()
@@ -182,11 +173,9 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
             status: 'required',
             identified_by: userId || null,
             identified_at: new Date().toISOString(),
-            // tenant_id set by BEFORE INSERT trigger
           });
         if (error) throw error;
 
-        // Shadow write (best-effort)
         const { error: cErr } = await (supabase as any)
           .from('p2a_vcr_critical_docs').insert({
             handover_point_id: vcrId,
@@ -215,7 +204,6 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
     persistToggle(typeId);
   };
 
-  // Distinct disciplines from the catalog
   const disciplineOptions = useMemo(() => {
     const m = new Map<string, string>();
     docTypes.forEach((d) => {
@@ -224,10 +212,23 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
     return Array.from(m.entries()).map(([code, name]) => ({ code, name })).sort((a, b) => a.name.localeCompare(b.name));
   }, [docTypes]);
 
-  // Apply filters
-  const filtered = useMemo(() => {
+  const disciplineNameByCode = useMemo(() => {
+    const m = new Map<string, string>();
+    disciplineOptions.forEach((d) => m.set(d.code, d.name));
+    return m;
+  }, [disciplineOptions]);
+
+  // Selected list — unfiltered (the user's picks never disappear because of a filter).
+  const selectedItems = useMemo(
+    () => docTypes.filter((d) => savedTypeIds.has(d.id)),
+    [docTypes, savedTypeIds],
+  );
+
+  // Available items — exclude selected, then apply tier+discipline+search.
+  const availableItems = useMemo(() => {
     const q = search.trim().toLowerCase();
     return docTypes.filter((d) => {
+      if (savedTypeIds.has(d.id)) return false;
       if (tier === 'Tier 1' && d.tier !== 'Tier 1') return false;
       if (tier === 'Tier 2' && d.tier !== 'Tier 2') return false;
       if (tier === 'RLMU' && d.rlmu !== 'RLMU') return false;
@@ -235,19 +236,26 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
       if (q && !d.document_name.toLowerCase().includes(q) && !d.code.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [docTypes, tier, disciplines, search]);
+  }, [docTypes, savedTypeIds, tier, disciplines, search]);
 
-  // Split filtered list into Selected (top) + Available (bottom), preserving order.
-  const { selectedItems, availableItems } = useMemo(() => {
-    const sel: DocType[] = [];
-    const avail: DocType[] = [];
-    for (const d of filtered) {
-      if (savedTypeIds.has(d.id)) sel.push(d); else avail.push(d);
-    }
-    return { selectedItems: sel, availableItems: avail };
-  }, [filtered, savedTypeIds]);
+  // Tier counts — over available pool (selected excluded) with discipline+search applied,
+  // so each tab shows how many would match if the user switched to it.
+  const tierCounts = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const base = docTypes.filter((d) => {
+      if (savedTypeIds.has(d.id)) return false;
+      if (disciplines.length > 0 && !disciplines.includes(d.discipline_code || '')) return false;
+      if (q && !d.document_name.toLowerCase().includes(q) && !d.code.toLowerCase().includes(q)) return false;
+      return true;
+    });
+    return {
+      all: base.length,
+      t1: base.filter((d) => d.tier === 'Tier 1').length,
+      t2: base.filter((d) => d.tier === 'Tier 2').length,
+      rlmu: base.filter((d) => d.rlmu === 'RLMU').length,
+    };
+  }, [docTypes, savedTypeIds, disciplines, search]);
 
-  // Counts
   const typeCount = requirements.filter((r) => r.document_type_id && !r.assigned_document_number).length;
   const boundCount = requirements.filter((r) => r.assigned_document_number).length;
   const totalCount = requirements.length;
@@ -257,6 +265,16 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
       setBrowseCatalog(true);
     }
   }, [requirements.length]);
+
+  // Default availableOpen: collapsed when selections exist, expanded when none.
+  // Only initializes once per mount of catalog view.
+  const initRef = React.useRef(false);
+  React.useEffect(() => {
+    if (initRef.current) return;
+    if (typesLoading || requirementsLoading) return;
+    initRef.current = true;
+    setAvailableOpen(selectedItems.length === 0);
+  }, [typesLoading, requirementsLoading, selectedItems.length]);
 
   const showCatalog = browseCatalog || totalCount > 0 || typesLoading || requirementsLoading;
 
@@ -296,6 +314,8 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
       setSearchInput('');
       setSearch('');
       setBrowseCatalog(false);
+      setAvailableOpen(true);
+      initRef.current = false;
       queryClient.setQueryData(['vcr-doc-requirements', vcrId], []);
       queryClient.invalidateQueries({ queryKey: ['vcr-doc-requirements', vcrId] });
       queryClient.invalidateQueries({ queryKey: ['vcr-critical-docs', vcrId] });
@@ -308,12 +328,15 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
     },
   });
 
+  const clearSearch = () => { setSearchInput(''); setSearch(''); };
+  const hasActiveFilters = tier !== 'all' || disciplines.length > 0 || search.length > 0;
+
   return (
     <TooltipProvider>
       <div className="flex flex-col h-full min-h-0 space-y-3">
         {showCatalog ? (
           <>
-            {/* Header row */}
+            {/* Header */}
             <div className="flex items-start justify-between gap-3 flex-wrap">
               <div className="space-y-0.5">
                 <h2 className="text-base font-semibold">Critical Documents</h2>
@@ -369,108 +392,174 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
               </div>
             </div>
 
-            {/* List body — scroll surface contains a sticky filter row at the top so it
-                stays visible while the list scrolls beneath it. */}
+            {/* Scroll surface */}
             <div className="border border-border/60 rounded-md flex-1 min-h-0 overflow-y-auto relative">
-              {/* Sticky filter row */}
-              <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border/60 px-3 py-2">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Tabs value={tier} onValueChange={(v) => setTier(v as TierFilter)}>
-                    <TabsList className="h-8">
-                      <TabsTrigger value="all" className="text-xs px-3 h-7">All</TabsTrigger>
-                      <TabsTrigger value="Tier 1" className="text-xs px-3 h-7">Tier 1</TabsTrigger>
-                      <TabsTrigger value="Tier 2" className="text-xs px-3 h-7">Tier 2</TabsTrigger>
-                      <TabsTrigger value="RLMU" className="text-xs px-3 h-7">RLMU</TabsTrigger>
-                    </TabsList>
-                  </Tabs>
-
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5">
-                        Discipline
-                        {disciplines.length > 0 && (
-                          <Badge variant="secondary" className="text-[10px] h-4 px-1.5">{disciplines.length}</Badge>
-                        )}
-                        <ChevronDown className="w-3 h-3" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-72 p-2 max-h-80 overflow-auto" align="start">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-medium">Discipline</span>
-                        {disciplines.length > 0 && (
-                          <button onClick={() => setDisciplines([])} className="text-[11px] text-muted-foreground hover:text-foreground">Clear</button>
-                        )}
-                      </div>
-                      <div className="space-y-1">
-                        {disciplineOptions.map((d) => (
-                          <label key={d.code} className="flex items-center gap-2 px-1.5 py-1 rounded hover:bg-muted cursor-pointer">
-                            <Checkbox
-                              checked={disciplines.includes(d.code)}
-                              onCheckedChange={() => setDisciplines((arr) => arr.includes(d.code) ? arr.filter((c) => c !== d.code) : [...arr, d.code])}
-                            />
-                            <span className="text-xs">{d.name}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-
-                  <div className="relative ml-auto w-64">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                    <Input
-                      value={searchInput}
-                      onChange={(e) => setSearchInput(e.target.value)}
-                      placeholder="Search by code or name…"
-                      className="pl-9 pr-8 h-8 text-xs"
-                    />
-                    {searchInput && (
-                      <button onClick={() => setSearchInput('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-
               {typesLoading || requirementsLoading ? (
                 <div className="flex items-center justify-center py-12 text-muted-foreground gap-2">
                   <Loader2 className="w-4 h-4 animate-spin" /> <span className="text-sm">Loading catalog…</span>
                 </div>
-              ) : filtered.length === 0 ? (
-                <div className="py-12 text-center text-sm text-muted-foreground">
-                  No document types match these filters.
-                </div>
               ) : (
                 <div>
+                  {/* Selected group — always visible regardless of filters */}
                   {selectedItems.length > 0 && (
                     <>
-                      <GroupHeader label={`Selected (${selectedItems.length})`} />
-                      <DocTypeList
+                      <GroupHeader label={`Selected (${selectedItems.length})`} sticky />
+                      <SelectedList
                         items={selectedItems}
-                        isSelected={isSelected}
-                        onToggle={toggleType}
                         savedTypeIds={savedTypeIds}
                         savingIds={savingIds}
+                        onRemove={toggleType}
                       />
                     </>
                   )}
-                  {availableItems.length > 0 && (
+
+                  {/* Add documents toggle / Available section */}
+                  {!availableOpen ? (
+                    <div className="px-3 py-3 border-t border-border/40 bg-background">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setAvailableOpen(true)}
+                        className="gap-1.5"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        Add documents
+                      </Button>
+                    </div>
+                  ) : (
                     <>
-                      <GroupHeader label={`Available (${availableItems.length})`} />
-                      <DocTypeList
-                        items={availableItems}
-                        isSelected={isSelected}
-                        onToggle={toggleType}
-                        savedTypeIds={savedTypeIds}
-                        savingIds={savingIds}
-                      />
+                      {/* Sticky filter row — top of Available section */}
+                      <div className={cn(
+                        "sticky z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border/60 px-3 py-2",
+                        selectedItems.length > 0 ? "top-0 border-t" : "top-0",
+                      )}>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Tabs value={tier} onValueChange={(v) => setTier(v as TierFilter)}>
+                            <TabsList className="h-8">
+                              <TierTab value="all" label="All" count={tierCounts.all} />
+                              <TierTab value="Tier 1" label="Tier 1" count={tierCounts.t1} />
+                              <TierTab value="Tier 2" label="Tier 2" count={tierCounts.t2} />
+                              <TierTab value="RLMU" label="RLMU" count={tierCounts.rlmu} />
+                            </TabsList>
+                          </Tabs>
+
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant={disciplines.length > 0 ? 'secondary' : 'outline'}
+                                className="h-8 text-xs gap-1.5"
+                              >
+                                Discipline
+                                {disciplines.length > 0 && (
+                                  <Badge variant="outline" className="text-[10px] h-4 px-1.5 bg-background">
+                                    {disciplines.length}
+                                  </Badge>
+                                )}
+                                <ChevronDown className="w-3 h-3" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-72 p-2 max-h-80 overflow-auto" align="start">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-xs font-medium">Discipline</span>
+                                {disciplines.length > 0 && (
+                                  <button onClick={() => setDisciplines([])} className="text-[11px] text-muted-foreground hover:text-foreground">Clear</button>
+                                )}
+                              </div>
+                              <div className="space-y-1">
+                                {disciplineOptions.map((d) => (
+                                  <label key={d.code} className="flex items-center gap-2 px-1.5 py-1 rounded hover:bg-muted cursor-pointer">
+                                    <Checkbox
+                                      checked={disciplines.includes(d.code)}
+                                      onCheckedChange={() => setDisciplines((arr) => arr.includes(d.code) ? arr.filter((c) => c !== d.code) : [...arr, d.code])}
+                                    />
+                                    <span className="text-xs">{d.name}</span>
+                                  </label>
+                                ))}
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+
+                          <div className="relative ml-auto w-64">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                            <Input
+                              value={searchInput}
+                              onChange={(e) => setSearchInput(e.target.value)}
+                              placeholder="Search by code or name…"
+                              className="pl-9 pr-8 h-8 text-xs"
+                            />
+                            {searchInput && (
+                              <button onClick={clearSearch} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Active discipline pills */}
+                        {disciplines.length > 0 && (
+                          <div className="flex items-center gap-1.5 flex-wrap mt-2">
+                            <span className="text-[11px] text-muted-foreground">Filtering by:</span>
+                            {disciplines.map((code) => (
+                              <button
+                                key={code}
+                                onClick={() => setDisciplines((arr) => arr.filter((c) => c !== code))}
+                                className="inline-flex items-center gap-1 h-6 px-2 rounded-full bg-secondary text-secondary-foreground text-[11px] hover:bg-secondary/80 transition-colors"
+                              >
+                                {disciplineNameByCode.get(code) || code}
+                                <X className="w-3 h-3 opacity-70" />
+                              </button>
+                            ))}
+                            <button
+                              onClick={() => setDisciplines([])}
+                              className="text-[11px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+                            >
+                              Clear
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Available list / empty states */}
+                      {availableItems.length === 0 ? (
+                        search ? (
+                          <div className="py-10 text-center text-sm text-muted-foreground space-y-3">
+                            <div>No documents match "<span className="font-medium text-foreground">{search}</span>"</div>
+                            <Button variant="outline" size="sm" onClick={clearSearch} className="gap-1.5">
+                              <X className="w-3.5 h-3.5" /> Clear search
+                            </Button>
+                          </div>
+                        ) : hasActiveFilters ? (
+                          <div className="py-10 text-center text-sm text-muted-foreground space-y-3">
+                            <div>No documents match these filters.</div>
+                            <Button variant="outline" size="sm" onClick={() => { setTier('all'); setDisciplines([]); clearSearch(); }}>
+                              Reset filters
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="py-10 text-center text-sm text-muted-foreground">
+                            All available documents are already selected.
+                          </div>
+                        )
+                      ) : (
+                        <>
+                          <GroupHeader label={`Available (${availableItems.length})`} sticky={false} />
+                          <DocTypeList
+                            items={availableItems}
+                            isSelected={isSelected}
+                            onToggle={toggleType}
+                            savedTypeIds={savedTypeIds}
+                            savingIds={savingIds}
+                          />
+                        </>
+                      )}
                     </>
                   )}
                 </div>
               )}
             </div>
 
-            {/* Footer — selections auto-save, so no Save button is needed. */}
+            {/* Footer */}
             <div className="flex items-center justify-between gap-3 pt-2 border-t border-border/60">
               <span className="text-xs text-muted-foreground">
                 {totalCount} document type{totalCount === 1 ? '' : 's'} selected
@@ -493,7 +582,7 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
               Start by selecting the Tier 1 and Tier 2 document types required for this VCR, or check Assai to review mapped source documents first.
             </p>
             <div className="mt-6 flex items-center gap-3">
-              <Button size="lg" className="gap-2 shadow-sm" onClick={() => setBrowseCatalog(true)}>
+              <Button size="lg" className="gap-2 shadow-sm" onClick={() => { setBrowseCatalog(true); setAvailableOpen(true); }}>
                 <Plus className="h-4 w-4" /> Click to start
               </Button>
               <Button variant="outline" size="lg" onClick={() => setAssaiOpen(true)} className="gap-2">
@@ -553,15 +642,98 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
   );
 };
 
+// ─── Tier tab with count chip ────────────────────────────────────────────────
+
+const TierTab: React.FC<{ value: string; label: string; count: number }> = ({ value, label, count }) => (
+  <TabsTrigger
+    value={value}
+    className="text-xs px-3 h-7 gap-1.5 data-[state=active]:bg-foreground data-[state=active]:text-background"
+  >
+    {label}
+    <span className="text-[10px] opacity-70 tabular-nums">· {count}</span>
+  </TabsTrigger>
+);
+
 // ─── Group sub-heading ───────────────────────────────────────────────────────
 
-const GroupHeader: React.FC<{ label: string }> = ({ label }) => (
-  <div className="sticky top-[52px] z-[5] bg-muted/60 backdrop-blur px-3 py-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground border-b border-border/40">
+const GroupHeader: React.FC<{ label: string; sticky?: boolean }> = ({ label, sticky }) => (
+  <div
+    className={cn(
+      "bg-muted/60 backdrop-blur px-3 py-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground border-b border-border/40",
+      sticky && "sticky top-0 z-[5]",
+    )}
+  >
     {label}
   </div>
 );
 
-// ─── List row ────────────────────────────────────────────────────────────────
+// ─── Selected row (no checkbox, hover ×) ─────────────────────────────────────
+
+const SelectedList: React.FC<{
+  items: DocType[];
+  savedTypeIds: Map<string, RequirementRow>;
+  savingIds: Set<string>;
+  onRemove: (id: string) => void;
+}> = ({ items, savedTypeIds, savingIds, onRemove }) => {
+  // Grid: code | name | tier | discipline | bound | remove-×
+  const gridCols =
+    'grid grid-cols-[76px_minmax(0,1fr)_56px_140px_72px_28px] gap-x-3 items-center';
+  return (
+    <ul className="divide-y divide-border/40">
+      {items.map((d) => {
+        const saved = savedTypeIds.get(d.id);
+        const bound = saved?.status === 'bound' && !!saved.assigned_document_number;
+        const saving = savingIds.has(d.id);
+        return (
+          <li
+            key={d.id}
+            className={cn(
+              gridCols,
+              'group/sel px-3 py-2 bg-muted/30 hover:bg-muted/50 transition-colors text-sm relative',
+              saving && 'opacity-60 pointer-events-none',
+            )}
+          >
+            <span className="font-mono text-[11px] text-muted-foreground truncate">{d.code}</span>
+            <span className="truncate text-xs text-foreground">{d.document_name}</span>
+            <div className="flex justify-center">
+              <TierBadge tier={d.tier} />
+            </div>
+            <div className="min-w-0">
+              <DisciplineTag name={d.discipline_name} />
+            </div>
+            <div className="flex justify-end">
+              {bound && (
+                <Badge variant="outline" className="text-[10px] border-emerald-500/40 text-emerald-700 dark:text-emerald-400">Bound</Badge>
+              )}
+            </div>
+            <div className="flex justify-end">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label={`Remove ${d.code}`}
+                    disabled={saving}
+                    onClick={(e) => { e.stopPropagation(); onRemove(d.id); }}
+                    className={cn(
+                      "h-6 w-6 inline-flex items-center justify-center rounded-md text-muted-foreground transition-opacity",
+                      "opacity-30 sm:opacity-0 group-hover/sel:opacity-100 focus-visible:opacity-100",
+                      "hover:bg-destructive/10 hover:text-destructive",
+                    )}
+                  >
+                    {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <X className="w-3.5 h-3.5" />}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="left">Remove</TooltipContent>
+              </Tooltip>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  );
+};
+
+// ─── Available list row (with outline checkbox) ──────────────────────────────
 
 const DocTypeList: React.FC<{
   items: DocType[];
@@ -570,7 +742,6 @@ const DocTypeList: React.FC<{
   savedTypeIds: Map<string, RequirementRow>;
   savingIds: Set<string>;
 }> = ({ items, isSelected, onToggle, savedTypeIds, savingIds }) => {
-  // Grid: checkbox | code | name | tier | discipline | bound
   const gridCols =
     'grid grid-cols-[28px_76px_minmax(0,1fr)_56px_140px_72px] gap-x-3 items-center';
   return (
@@ -587,7 +758,6 @@ const DocTypeList: React.FC<{
             className={cn(
               gridCols,
               'px-3 py-2 cursor-pointer hover:bg-muted/40 transition-colors text-sm',
-              sel && 'bg-primary/5',
               saving && 'opacity-60 pointer-events-none',
             )}
           >
@@ -595,25 +765,42 @@ const DocTypeList: React.FC<{
             <span className="font-mono text-[11px] text-muted-foreground truncate">{d.code}</span>
             <span className="truncate text-xs">{d.document_name}</span>
             <div className="flex justify-center">
-              {d.tier ? (
-                <Badge variant="outline" className="text-[10px]">
-                  {d.tier === 'Tier 1' ? 'T1' : d.tier === 'Tier 2' ? 'T2' : d.tier}
-                </Badge>
-              ) : null}
+              <TierBadge tier={d.tier} />
             </div>
             <div className="min-w-0">
-              {d.discipline_name && (
-                <Badge variant="secondary" className="text-[10px] max-w-full truncate">{d.discipline_name}</Badge>
-              )}
+              <DisciplineTag name={d.discipline_name} />
             </div>
             <div className="flex justify-end">
               {bound && (
-                <Badge className="text-[10px] bg-emerald-500/20 text-emerald-700 hover:bg-emerald-500/30 border-transparent">Bound</Badge>
+                <Badge variant="outline" className="text-[10px] border-emerald-500/40 text-emerald-700 dark:text-emerald-400">Bound</Badge>
               )}
             </div>
           </li>
         );
       })}
     </ul>
+  );
+};
+
+// ─── Tier badge (outline ring, compact) — visually distinct from discipline tag ──
+
+const TierBadge: React.FC<{ tier: string | null }> = ({ tier }) => {
+  if (!tier) return null;
+  const short = tier === 'Tier 1' ? 'T1' : tier === 'Tier 2' ? 'T2' : tier;
+  return (
+    <span className="inline-flex items-center justify-center min-w-[28px] h-5 px-1.5 rounded border border-border text-[10px] font-semibold tabular-nums text-muted-foreground">
+      {short}
+    </span>
+  );
+};
+
+// ─── Discipline tag (ghost text, no fill) — distinct from tier badge ─────────
+
+const DisciplineTag: React.FC<{ name: string | null }> = ({ name }) => {
+  if (!name) return null;
+  return (
+    <span className="inline-block max-w-full truncate text-[11px] text-muted-foreground">
+      {name}
+    </span>
   );
 };
