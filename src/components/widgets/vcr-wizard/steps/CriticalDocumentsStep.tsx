@@ -61,12 +61,12 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
   const [disciplines, setDisciplines] = useState<string[]>([]);
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
-  const [pendingSelections, setPendingSelections] = useState<Set<string>>(new Set());
-  const [pendingRemovals, setPendingRemovals] = useState<Set<string>>(new Set());
   const [assaiOpen, setAssaiOpen] = useState(false);
   const [confirmRemoveBound, setConfirmRemoveBound] = useState<{ typeId: string; reqId: string } | null>(null);
   const [confirmClearAll, setConfirmClearAll] = useState(false);
   const [browseCatalog, setBrowseCatalog] = useState(false);
+  // Per-row in-flight markers (typeId) — to disable repeated toggles while a save is pending.
+  const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
 
   // Debounce search
   React.useEffect(() => {
@@ -97,13 +97,11 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
   const effectiveProjectCode = projectCode || planContext?.project_code || null;
   const effectivePlantCode = plantCode || planContext?.plant_code || null;
 
-  // Fetch all active document types (one shot — 991 rows, indexed; we filter client-side
-  // for instant tier/discipline/search response).
+  // Fetch all active document types (paginated to avoid 1000-row cap).
   const { data: docTypes = [], isLoading: typesLoading } = useQuery<DocType[]>({
     queryKey: ['dms-document-types-catalog'],
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
-      // Page through to avoid the 1000-row default cap.
       const all: DocType[] = [];
       let from = 0;
       const pageSize = 1000;
@@ -143,35 +141,78 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
     return m;
   }, [requirements]);
 
-  // Effective selection state for the catalog
-  const isSelected = (typeId: string): boolean => {
-    if (pendingRemovals.has(typeId)) return false;
-    if (pendingSelections.has(typeId)) return true;
-    return savedTypeIds.has(typeId);
+  const isSelected = (typeId: string): boolean => savedTypeIds.has(typeId);
+
+  // ── Auto-save toggle: writes directly to vcr_document_requirements ──
+  // This is intentional — the previous "queue then click Save" model lost selections
+  // when the user clicked Next without first clicking Save. Now every toggle persists
+  // immediately, so navigating away (or refreshing) preserves state, and the wizard's
+  // step-counts query reflects truth.
+  const persistToggle = async (typeId: string) => {
+    if (savingIds.has(typeId)) return;
+    setSavingIds((s) => new Set(s).add(typeId));
+    try {
+      const existing = savedTypeIds.get(typeId);
+      if (existing) {
+        // Removing — check for bound binding first (handled by caller via confirm dialog).
+        const { error } = await (supabase as any)
+          .from('vcr_document_requirements').delete().eq('id', existing.id);
+        if (error) throw error;
+        // Shadow clear on legacy table (best-effort)
+        const { error: cErr } = await (supabase as any)
+          .from('p2a_vcr_critical_docs')
+          .delete()
+          .eq('handover_point_id', vcrId)
+          .eq('dms_document_type_id', typeId);
+        if (cErr) console.warn('shadow p2a_vcr_critical_docs delete warning:', cErr.message);
+      } else {
+        const doc = docTypes.find((d) => d.id === typeId);
+        if (!doc) return;
+        const { data: { user } } = await supabase.auth.getUser();
+        const userId = user?.id;
+        const { error } = await (supabase as any)
+          .from('vcr_document_requirements')
+          .insert({
+            vcr_id: vcrId,
+            document_type_id: doc.id,
+            document_scope: doc.document_scope || 'discipline',
+            package_tag: doc.package_tag || null,
+            discipline_code: doc.discipline_code || null,
+            is_mdr: doc.is_mdr || false,
+            status: 'required',
+            identified_by: userId || null,
+            identified_at: new Date().toISOString(),
+            // tenant_id set by BEFORE INSERT trigger
+          });
+        if (error) throw error;
+
+        // Shadow write (best-effort)
+        const { error: cErr } = await (supabase as any)
+          .from('p2a_vcr_critical_docs').insert({
+            handover_point_id: vcrId,
+            dms_document_type_id: doc.id,
+            status: 'not_started',
+            rlmu_status: 'not_required',
+          });
+        if (cErr) console.warn('shadow p2a_vcr_critical_docs insert warning:', cErr.message);
+      }
+      await queryClient.invalidateQueries({ queryKey: ['vcr-doc-requirements', vcrId] });
+      queryClient.invalidateQueries({ queryKey: ['vcr-critical-docs', vcrId] });
+      queryClient.invalidateQueries({ queryKey: ['vcr-wizard-step-counts', vcrId] });
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to save selection');
+    } finally {
+      setSavingIds((s) => { const n = new Set(s); n.delete(typeId); return n; });
+    }
   };
 
   const toggleType = (typeId: string) => {
-    const currentlySaved = savedTypeIds.has(typeId);
     const req = savedTypeIds.get(typeId);
-    if (isSelected(typeId)) {
-      // Uncheck — if saved row is 'bound' (has assigned_document_number), confirm
-      if (currentlySaved && req?.status === 'bound' && req.assigned_document_number) {
-        setConfirmRemoveBound({ typeId, reqId: req.id });
-        return;
-      }
-      if (currentlySaved) {
-        setPendingRemovals((s) => new Set(s).add(typeId));
-        setPendingSelections((s) => { const n = new Set(s); n.delete(typeId); return n; });
-      } else {
-        setPendingSelections((s) => { const n = new Set(s); n.delete(typeId); return n; });
-      }
-    } else {
-      if (currentlySaved) {
-        setPendingRemovals((s) => { const n = new Set(s); n.delete(typeId); return n; });
-      } else {
-        setPendingSelections((s) => new Set(s).add(typeId));
-      }
+    if (req?.status === 'bound' && req.assigned_document_number) {
+      setConfirmRemoveBound({ typeId, reqId: req.id });
+      return;
     }
+    persistToggle(typeId);
   };
 
   // Distinct disciplines from the catalog
@@ -196,17 +237,20 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
     });
   }, [docTypes, tier, disciplines, search]);
 
-  // Counts
-  const typeCount = requirements.filter((r) => r.document_type_id && !r.assigned_document_number).length
-    + pendingSelections.size
-    - Array.from(pendingRemovals).filter((id) => {
-      const r = savedTypeIds.get(id);
-      return r && !r.assigned_document_number;
-    }).length;
-  const boundCount = requirements.filter((r) => r.assigned_document_number).length;
-  const totalCount = requirements.length + pendingSelections.size - pendingRemovals.size;
+  // Split filtered list into Selected (top) + Available (bottom), preserving order.
+  const { selectedItems, availableItems } = useMemo(() => {
+    const sel: DocType[] = [];
+    const avail: DocType[] = [];
+    for (const d of filtered) {
+      if (savedTypeIds.has(d.id)) sel.push(d); else avail.push(d);
+    }
+    return { selectedItems: sel, availableItems: avail };
+  }, [filtered, savedTypeIds]);
 
-  const pendingChanges = pendingSelections.size + pendingRemovals.size;
+  // Counts
+  const typeCount = requirements.filter((r) => r.document_type_id && !r.assigned_document_number).length;
+  const boundCount = requirements.filter((r) => r.assigned_document_number).length;
+  const totalCount = requirements.length;
 
   React.useEffect(() => {
     if (requirements.length > 0) {
@@ -214,75 +258,7 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
     }
   }, [requirements.length]);
 
-  const showCatalog = browseCatalog || totalCount > 0 || pendingChanges > 0 || typesLoading || requirementsLoading;
-
-  // Save mutation
-  const saveMutation = useMutation({
-    mutationFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      const userId = user?.id;
-
-      // 1. Inserts
-      if (pendingSelections.size > 0) {
-        const toInsert = Array.from(pendingSelections)
-          .map((id) => docTypes.find((d) => d.id === id))
-          .filter((d): d is DocType => !!d)
-          .map((doc) => ({
-            vcr_id: vcrId,
-            document_type_id: doc.id,
-            document_scope: doc.document_scope || 'discipline',
-            package_tag: doc.package_tag || null,
-            discipline_code: doc.discipline_code || null,
-            is_mdr: doc.is_mdr || false,
-            status: 'required',
-            identified_by: userId || null,
-            identified_at: new Date().toISOString(),
-            // tenant_id set by BEFORE INSERT trigger (set_tenant_id_from_user)
-          }));
-
-        const { error } = await (supabase as any)
-          .from('vcr_document_requirements')
-          .insert(toInsert);
-        if (error) throw error;
-
-        // Shadow write to p2a_vcr_critical_docs (kept for backward compatibility — see prompt Part 0 decision #3)
-        const critInserts = toInsert.map((r) => ({
-          handover_point_id: vcrId,
-          dms_document_type_id: r.document_type_id,
-          status: 'not_started',
-          rlmu_status: 'not_required',
-        }));
-        if (critInserts.length > 0) {
-          const { error: cErr } = await (supabase as any)
-            .from('p2a_vcr_critical_docs').insert(critInserts);
-          if (cErr) console.warn('shadow p2a_vcr_critical_docs insert warning:', cErr.message);
-        }
-      }
-
-      // 2. Removals
-      if (pendingRemovals.size > 0) {
-        const reqIds = Array.from(pendingRemovals)
-          .map((tid) => savedTypeIds.get(tid)?.id)
-          .filter((x): x is string => !!x);
-        if (reqIds.length > 0) {
-          const { error } = await (supabase as any)
-            .from('vcr_document_requirements').delete().in('id', reqIds);
-          if (error) throw error;
-        }
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vcr-doc-requirements', vcrId] });
-      queryClient.invalidateQueries({ queryKey: ['vcr-critical-docs', vcrId] });
-      queryClient.invalidateQueries({ queryKey: ['vcr-wizard-step-counts', vcrId] });
-      setPendingSelections(new Set());
-      setPendingRemovals(new Set());
-      toast.success('Critical documents saved');
-    },
-    onError: (e: any) => {
-      toast.error(e?.message || 'Failed to save');
-    },
-  });
+  const showCatalog = browseCatalog || totalCount > 0 || typesLoading || requirementsLoading;
 
   const handleConfirmRemoveBound = async () => {
     if (!confirmRemoveBound) return;
@@ -292,6 +268,7 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
         .delete().eq('id', confirmRemoveBound.reqId);
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ['vcr-doc-requirements', vcrId] });
+      queryClient.invalidateQueries({ queryKey: ['vcr-wizard-step-counts', vcrId] });
       toast.success('Binding removed');
     } catch (e: any) {
       toast.error(e?.message || 'Failed to remove');
@@ -307,7 +284,6 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
         .delete()
         .eq('vcr_id', vcrId);
       if (error) throw error;
-      // Shadow clear of legacy table (best-effort)
       const { error: cErr } = await (supabase as any)
         .from('p2a_vcr_critical_docs')
         .delete()
@@ -315,8 +291,6 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
       if (cErr) console.warn('shadow p2a_vcr_critical_docs clear warning:', cErr.message);
     },
     onSuccess: () => {
-      setPendingSelections(new Set());
-      setPendingRemovals(new Set());
       setTier('all');
       setDisciplines([]);
       setSearchInput('');
@@ -360,7 +334,7 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
                     </TooltipContent>
                   </Tooltip>
                 )}
-                {(totalCount > 0 || pendingChanges > 0) ? (
+                {totalCount > 0 ? (
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
@@ -395,66 +369,69 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
               </div>
             </div>
 
-            {/* Filter row */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <Tabs value={tier} onValueChange={(v) => setTier(v as TierFilter)}>
-                <TabsList className="h-8">
-                  <TabsTrigger value="all" className="text-xs px-3 h-7">All</TabsTrigger>
-                  <TabsTrigger value="Tier 1" className="text-xs px-3 h-7">Tier 1</TabsTrigger>
-                  <TabsTrigger value="Tier 2" className="text-xs px-3 h-7">Tier 2</TabsTrigger>
-                  <TabsTrigger value="RLMU" className="text-xs px-3 h-7">RLMU</TabsTrigger>
-                </TabsList>
-              </Tabs>
+            {/* List body — scroll surface contains a sticky filter row at the top so it
+                stays visible while the list scrolls beneath it. */}
+            <div className="border border-border/60 rounded-md flex-1 min-h-0 overflow-y-auto relative">
+              {/* Sticky filter row */}
+              <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border/60 px-3 py-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Tabs value={tier} onValueChange={(v) => setTier(v as TierFilter)}>
+                    <TabsList className="h-8">
+                      <TabsTrigger value="all" className="text-xs px-3 h-7">All</TabsTrigger>
+                      <TabsTrigger value="Tier 1" className="text-xs px-3 h-7">Tier 1</TabsTrigger>
+                      <TabsTrigger value="Tier 2" className="text-xs px-3 h-7">Tier 2</TabsTrigger>
+                      <TabsTrigger value="RLMU" className="text-xs px-3 h-7">RLMU</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
 
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5">
-                    Discipline
-                    {disciplines.length > 0 && (
-                      <Badge variant="secondary" className="text-[10px] h-4 px-1.5">{disciplines.length}</Badge>
-                    )}
-                    <ChevronDown className="w-3 h-3" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-72 p-2 max-h-80 overflow-auto" align="start">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-medium">Discipline</span>
-                    {disciplines.length > 0 && (
-                      <button onClick={() => setDisciplines([])} className="text-[11px] text-muted-foreground hover:text-foreground">Clear</button>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5">
+                        Discipline
+                        {disciplines.length > 0 && (
+                          <Badge variant="secondary" className="text-[10px] h-4 px-1.5">{disciplines.length}</Badge>
+                        )}
+                        <ChevronDown className="w-3 h-3" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-72 p-2 max-h-80 overflow-auto" align="start">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-medium">Discipline</span>
+                        {disciplines.length > 0 && (
+                          <button onClick={() => setDisciplines([])} className="text-[11px] text-muted-foreground hover:text-foreground">Clear</button>
+                        )}
+                      </div>
+                      <div className="space-y-1">
+                        {disciplineOptions.map((d) => (
+                          <label key={d.code} className="flex items-center gap-2 px-1.5 py-1 rounded hover:bg-muted cursor-pointer">
+                            <Checkbox
+                              checked={disciplines.includes(d.code)}
+                              onCheckedChange={() => setDisciplines((arr) => arr.includes(d.code) ? arr.filter((c) => c !== d.code) : [...arr, d.code])}
+                            />
+                            <span className="text-xs">{d.name}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+
+                  <div className="relative ml-auto w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                    <Input
+                      value={searchInput}
+                      onChange={(e) => setSearchInput(e.target.value)}
+                      placeholder="Search by code or name…"
+                      className="pl-9 pr-8 h-8 text-xs"
+                    />
+                    {searchInput && (
+                      <button onClick={() => setSearchInput('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
                     )}
                   </div>
-                  <div className="space-y-1">
-                    {disciplineOptions.map((d) => (
-                      <label key={d.code} className="flex items-center gap-2 px-1.5 py-1 rounded hover:bg-muted cursor-pointer">
-                        <Checkbox
-                          checked={disciplines.includes(d.code)}
-                          onCheckedChange={() => setDisciplines((arr) => arr.includes(d.code) ? arr.filter((c) => c !== d.code) : [...arr, d.code])}
-                        />
-                        <span className="text-xs">{d.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
-
-              <div className="relative ml-auto w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                <Input
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  placeholder="Search by code or name…"
-                  className="pl-9 pr-8 h-8 text-xs"
-                />
-                {searchInput && (
-                  <button onClick={() => setSearchInput('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
+                </div>
               </div>
-            </div>
 
-            {/* List body — the only scroll surface */}
-            <div className="border border-border/60 rounded-md flex-1 min-h-0 overflow-y-auto">
               {typesLoading || requirementsLoading ? (
                 <div className="flex items-center justify-center py-12 text-muted-foreground gap-2">
                   <Loader2 className="w-4 h-4 animate-spin" /> <span className="text-sm">Loading catalog…</span>
@@ -464,25 +441,46 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
                   No document types match these filters.
                 </div>
               ) : (
-                <DocTypeList items={filtered} isSelected={isSelected} onToggle={toggleType} savedTypeIds={savedTypeIds} />
+                <div>
+                  {selectedItems.length > 0 && (
+                    <>
+                      <GroupHeader label={`Selected (${selectedItems.length})`} />
+                      <DocTypeList
+                        items={selectedItems}
+                        isSelected={isSelected}
+                        onToggle={toggleType}
+                        savedTypeIds={savedTypeIds}
+                        savingIds={savingIds}
+                      />
+                    </>
+                  )}
+                  {availableItems.length > 0 && (
+                    <>
+                      <GroupHeader label={`Available (${availableItems.length})`} />
+                      <DocTypeList
+                        items={availableItems}
+                        isSelected={isSelected}
+                        onToggle={toggleType}
+                        savedTypeIds={savedTypeIds}
+                        savingIds={savingIds}
+                      />
+                    </>
+                  )}
+                </div>
               )}
             </div>
 
-            {/* Sticky footer */}
+            {/* Footer — selections auto-save, so no Save button is needed. */}
             <div className="flex items-center justify-between gap-3 pt-2 border-t border-border/60">
               <span className="text-xs text-muted-foreground">
                 {totalCount} document type{totalCount === 1 ? '' : 's'} selected
-                {pendingChanges > 0 && (
-                  <span className="ml-2 text-amber-600">· {pendingChanges} unsaved change{pendingChanges === 1 ? '' : 's'}</span>
+                {savingIds.size > 0 && (
+                  <span className="ml-2 inline-flex items-center gap-1 text-muted-foreground">
+                    <Loader2 className="w-3 h-3 animate-spin" /> saving…
+                  </span>
                 )}
               </span>
-              <Button
-                size="sm"
-                disabled={pendingChanges === 0 || saveMutation.isPending}
-                onClick={() => saveMutation.mutate()}
-              >
-                {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
-              </Button>
+              <span className="text-[11px] text-muted-foreground">Changes save automatically</span>
             </div>
           </>
         ) : (
@@ -555,6 +553,14 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
   );
 };
 
+// ─── Group sub-heading ───────────────────────────────────────────────────────
+
+const GroupHeader: React.FC<{ label: string }> = ({ label }) => (
+  <div className="sticky top-[52px] z-[5] bg-muted/60 backdrop-blur px-3 py-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground border-b border-border/40">
+    {label}
+  </div>
+);
+
 // ─── List row ────────────────────────────────────────────────────────────────
 
 const DocTypeList: React.FC<{
@@ -562,7 +568,8 @@ const DocTypeList: React.FC<{
   isSelected: (id: string) => boolean;
   onToggle: (id: string) => void;
   savedTypeIds: Map<string, RequirementRow>;
-}> = ({ items, isSelected, onToggle, savedTypeIds }) => {
+  savingIds: Set<string>;
+}> = ({ items, isSelected, onToggle, savedTypeIds, savingIds }) => {
   // Grid: checkbox | code | name | tier | discipline | bound
   const gridCols =
     'grid grid-cols-[28px_76px_minmax(0,1fr)_56px_140px_72px] gap-x-3 items-center';
@@ -572,17 +579,19 @@ const DocTypeList: React.FC<{
         const sel = isSelected(d.id);
         const saved = savedTypeIds.get(d.id);
         const bound = saved?.status === 'bound' && !!saved.assigned_document_number;
+        const saving = savingIds.has(d.id);
         return (
           <li
             key={d.id}
-            onClick={() => onToggle(d.id)}
+            onClick={() => !saving && onToggle(d.id)}
             className={cn(
               gridCols,
               'px-3 py-2 cursor-pointer hover:bg-muted/40 transition-colors text-sm',
               sel && 'bg-primary/5',
+              saving && 'opacity-60 pointer-events-none',
             )}
           >
-            <Checkbox checked={sel} onCheckedChange={() => onToggle(d.id)} onClick={(e) => e.stopPropagation()} />
+            <Checkbox checked={sel} onCheckedChange={() => onToggle(d.id)} onClick={(e) => e.stopPropagation()} disabled={saving} />
             <span className="font-mono text-[11px] text-muted-foreground truncate">{d.code}</span>
             <span className="truncate text-xs">{d.document_name}</span>
             <div className="flex justify-center">
