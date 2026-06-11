@@ -1870,31 +1870,36 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                                 </SelectContent>
                               </Select>
                             </div>
-                            <div>
-                              <Label>Field *</Label>
-                              <Select
-                                value={formData.field}
-                                onValueChange={handleFieldChange}
-                                disabled={!editMode || !formData.plant}
-                              >
-                                <SelectTrigger className={!editMode || !formData.plant ? 'bg-muted' : ''}>
-                                  <SelectValue placeholder={formData.plant ? "Select field" : "Select plant first"} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {fields
-                                    .filter(field => {
-                                      // Filter fields by the selected plant
-                                      // We need to match by plant name since we're using names not IDs
-                                      return true; // Show all fields for now since hierarchy filtering requires additional data
-                                    })
-                                    .map(field => (
-                                      <SelectItem key={field.value} value={field.value}>
-                                        {field.label}
-                                      </SelectItem>
-                                    ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
+                            {/* Field — only shown for Ops Coach when plant requires
+                                a field (CS / UQ). KAZ / BNGL stop at plant per E2 spec. */}
+                            {(formData.role !== 'Ops Coach' || opsCoachNeedsField(formData.plant)) && (
+                              <div>
+                                <Label>Field *</Label>
+                                <Select
+                                  value={formData.field}
+                                  onValueChange={handleFieldChange}
+                                  disabled={!editMode || !formData.plant}
+                                >
+                                  <SelectTrigger className={!editMode || !formData.plant ? 'bg-muted' : ''}>
+                                    <SelectValue placeholder={formData.plant ? "Select field" : "Select plant first"} />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {fields
+                                      .filter(field => {
+                                        // E2: filter Field list by selected Plant via plant_id.
+                                        const selectedPlantId = plantIdByName[formData.plant];
+                                        if (!selectedPlantId) return true;
+                                        return field.plant_id === selectedPlantId;
+                                      })
+                                      .map(field => (
+                                        <SelectItem key={field.value} value={field.value}>
+                                          {field.label}
+                                        </SelectItem>
+                                      ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
                             {/* Station - hidden for Ops Coach with CS plant */}
                             {!(formData.role === 'Ops Coach' && formData.plant === 'CS') && (
                               <div>
