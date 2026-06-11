@@ -91,6 +91,7 @@ export const useCategorizedRoles = () => {
             description: item.role_description,
             category_id: item.category_id,
             is_b2b: !!item.role_is_b2b,
+            scope: item.role_scope ?? null,
           });
         }
       });
