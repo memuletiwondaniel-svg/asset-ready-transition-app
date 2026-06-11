@@ -398,7 +398,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         onSubmit: undefined,
       }}
     >
-      <div className="p-3 sm:p-6">
+      <div className="p-3 sm:p-6 h-full min-h-0">
         {renderStep()}
       </div>
     </WizardShell>
