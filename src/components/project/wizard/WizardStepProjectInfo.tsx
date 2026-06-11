@@ -227,6 +227,13 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
               className="w-full"
             />
           </div>
+
+          {/* Live roster preview — portfolio-scoped roles resolved from
+              region_role_holders by region_id (no per-project stamping). */}
+          <OwnershipAssignmentPreview
+            regionId={formData.region_id || null}
+            regionName={regionName}
+          />
         </div>
       </div>
 
