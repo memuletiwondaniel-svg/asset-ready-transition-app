@@ -77,7 +77,7 @@ async function ensureOrpPlan(svc: SupabaseClient, ctx: any): Promise<string> {
     .eq("is_active", true)
     .maybeSingle();
   if (existing.data?.id) return existing.data.id as string;
-  const sr = ctx.users["Sr ORA Engr"];
+  const sr = ctx.users["Snr ORA Engr"];
   const { data, error } = await svc
     .from("orp_plans")
     .insert({
@@ -142,7 +142,7 @@ const runR2: Scenario["run"] = async (ctx) => {
   const spec = SPEC.R2;
   const e = spec.expects[0];
   const planId = await ensureOrpPlan(svc, ctx);
-  const sr = ctx.users["Sr ORA Engr"];
+  const sr = ctx.users["Snr ORA Engr"];
   const srClient = clientAs(ctx.anonUrl, ctx.anonKey, sr.jwt);
   const { error: upErr, count: upCount } = await srClient
     .from("orp_plans")
@@ -320,7 +320,7 @@ async function assertP2AApproverSeed(svc: SupabaseClient, planId: string, role: 
 }
 
 async function ensureP2APlan(svc: SupabaseClient, ctx: any): Promise<string> {
-  const sr = ctx.users["Sr ORA Engr"];
+  const sr = ctx.users["Snr ORA Engr"];
   const existing = await svc.from("p2a_handover_plans").select("id").eq("project_id", ctx.project.id).eq("created_by", sr.id).maybeSingle();
   if (existing.data?.id) return existing.data.id as string;
   const { data, error } = await svc.from("p2a_handover_plans").insert({
@@ -336,7 +336,7 @@ async function ensureP2APoints(svc: SupabaseClient, ctx: any, planId: string) {
   const { data: existing } = await svc.from("p2a_handover_points")
     .select("id,vcr_code").eq("handover_plan_id", planId).order("vcr_code", { ascending: true });
   if ((existing?.length ?? 0) >= 2) return existing as Array<{id:string;vcr_code:string}>;
-  const sr = ctx.users["Sr ORA Engr"];
+  const sr = ctx.users["Snr ORA Engr"];
   const { error } = await svc.from("p2a_handover_points").insert([
     { handover_plan_id: planId, name: "VCR-01 — System A", vcr_code: "VCR-01", position_x: 100, position_y: 100, created_by: sr.id },
     { handover_plan_id: planId, name: "VCR-02 — System B", vcr_code: "VCR-02", position_x: 200, position_y: 200, created_by: sr.id },
@@ -349,11 +349,11 @@ async function ensureP2APoints(svc: SupabaseClient, ctx: any, planId: string) {
 
 const runR6: Scenario["run"] = async (ctx) => {
   const svc = svcOf(ctx);
-  const sr = ctx.users["Sr ORA Engr"];
+  const sr = ctx.users["Snr ORA Engr"];
   const rows = await findP2ATask(svc, ctx.project.id, "develop_p2a_plan", sr.id);
   if (rows.length === 0) return {
     status: "fail",
-    expected: { title: `${ctx.project.code}: Develop P2A Plan`, assignee: "Sr ORA Engr" },
+    expected: { title: `${ctx.project.code}: Develop P2A Plan`, assignee: "Snr ORA Engr" },
     observed: { count: 0, note: "create_p2a_entry_task did not fire after orp_plan_is_approved=true" },
   };
   const expected = `${ctx.project.code}: Develop P2A Plan`;
@@ -433,11 +433,11 @@ const runR12: Scenario["run"] = async (ctx) => {
     if (error) return { status: "fail", expected: `${role} UPDATE`, observed: error.message };
     if ((count ?? 0) === 0) return { status: "fail", expected: `${role} affects 1 row`, observed: "0 rows — RLS denied" };
   }
-  const sr = ctx.users["Sr ORA Engr"];
+  const sr = ctx.users["Snr ORA Engr"];
   const rows = await findP2ATask(svc, ctx.project.id, "develop_vcr_plan", sr.id);
   if (rows.length < points.length) return {
     status: "fail",
-    expected: { count: points.length, per: "p2a_handover_points row", assignee: "Sr ORA Engr" },
+    expected: { count: points.length, per: "p2a_handover_points row", assignee: "Snr ORA Engr" },
     observed: { count: rows.length, vcrs: points.map(p => p.vcr_code), got: rows.map((r:any)=>r.title) },
   };
   const titles = new Set(rows.map((r: any) => r.title));
@@ -469,7 +469,7 @@ async function assertVCRApproverSeed(svc: SupabaseClient, pointId: string, role:
 // Counts seeded per role on first VCR point. Sr ORA Engr deliberately > 1
 // to prove cross-cutting C: counts are role-specific, not a generic 1-per.
 const VCR_FIXTURE_COUNTS: Record<string, number> = {
-  "Sr ORA Engr": 2,
+  "Snr ORA Engr": 2,
   "Construction Lead": 1,
   "Commissioning Lead": 1,
 };
@@ -655,7 +655,7 @@ const runR13: Scenario["run"] = async (ctx) => {
   const { error: upErr } = await svc.from("p2a_handover_points")
     .update({ execution_plan_status: "PENDING_APPROVAL",
               execution_plan_submitted_at: new Date().toISOString(),
-              execution_plan_submitted_by: ctx.users["Sr ORA Engr"].id })
+              execution_plan_submitted_by: ctx.users["Snr ORA Engr"].id })
     .eq("id", pt.id);
   if (upErr) return { status: "fail", expected: "submit VCR allowed", observed: upErr.message };
 
@@ -742,7 +742,7 @@ const runR18: Scenario["run"] = async (ctx) => {
     if (err) return { status: "fail", expected: `${role} UPDATE`, observed: err };
   }
 
-  const sr = ctx.users["Sr ORA Engr"];
+  const sr = ctx.users["Snr ORA Engr"];
   const missing: string[] = [];
   const childCounts: Record<string, number> = {};
   const progress: Record<string, number | null> = {};
@@ -761,7 +761,7 @@ const runR18: Scenario["run"] = async (ctx) => {
   }
   if (missing.length > 0) return {
     status: "fail",
-    expected: { parents: DELIVERABLE_SPEC.map(d=>d.action), assignee: "Sr ORA Engr" },
+    expected: { parents: DELIVERABLE_SPEC.map(d=>d.action), assignee: "Snr ORA Engr" },
     observed: { missing },
   };
   const badChild = Object.entries(childCounts).filter(([action,n]) => n !== DELIVERABLE_DETAIL_COUNTS[action]);
@@ -811,7 +811,7 @@ const ruleList: Scenario[] = [
 // role-specific, not a generic one-per. Asserts exact count match.
 // ══════════════════════════════════════════════════════════════════════════
 function buildChecklistRule(rule: "R19" | "R21" | "R22a"): Scenario["run"] {
-  const roleMap = { R19: "Sr ORA Engr", R21: "Construction Lead", R22a: "Commissioning Lead" } as const;
+  const roleMap = { R19: "Snr ORA Engr", R21: "Construction Lead", R22a: "Commissioning Lead" } as const;
   return async (ctx) => {
     const svc = svcOf(ctx);
     const pt = await getFirstPoint(svc, ctx);
@@ -883,7 +883,7 @@ const runR22: Scenario["run"] = async (ctx) => {
   const svc = svcOf(ctx);
   const pt = await getFirstPoint(svc, ctx);
   const comm = ctx.users["Commissioning Lead"];
-  const sr = ctx.users["Sr ORA Engr"];
+  const sr = ctx.users["Snr ORA Engr"];
 
   // R22a
   const checklistResult = await buildChecklistRule("R22a")(ctx);

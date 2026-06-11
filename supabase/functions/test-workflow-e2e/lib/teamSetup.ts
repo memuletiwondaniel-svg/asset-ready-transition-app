@@ -29,7 +29,7 @@ export async function assignTeamRoles(
   if (error) throw new Error(`assignTeamRoles: ${error.message}`);
 
   // Resolve roles.id for each canonical name. Some harness labels (e.g.
-  // 'Sr ORA Engr') are the literal the production triggers compare against
+  // 'Snr ORA Engr') are the literal the production triggers compare against
   // on project_team_members.role, but the catalog stores a slightly
   // different display name (e.g. 'Snr. ORA Engr.'). That's a real
   // production drift (4th-role-matching class) and is NOT something the

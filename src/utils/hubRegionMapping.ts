@@ -62,17 +62,17 @@ export const posMatchesRegion = (pos: string, regionKeywords: string[]): boolean
 
 /**
  * Role families: selecting one role should also include related roles.
- * e.g., selecting "ORA Engr." should also show "Snr. ORA Engr." candidates.
+ * e.g., selecting "ORA Engr" should also show "Snr. ORA Engr." candidates.
  */
 export const ROLE_FAMILIES: Record<string, string[]> = {
-  'ORA Engr.': ['ORA Engr.', 'ORA Engr', 'ORA Engineer', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'],
-  'ORA Engr': ['ORA Engr.', 'ORA Engr', 'ORA Engineer', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'],
-  'ORA Engineer': ['ORA Engr.', 'ORA Engr', 'ORA Engineer', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'],
-  'Snr ORA Engr.': ['ORA Engr.', 'ORA Engr', 'ORA Engineer', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'],
-  'Snr. ORA Engr.': ['ORA Engr.', 'ORA Engr', 'ORA Engineer', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'],
-  'Snr ORA Engr': ['ORA Engr.', 'ORA Engr', 'ORA Engineer', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'],
-  'Senior ORA Engr.': ['ORA Engr.', 'ORA Engr', 'ORA Engineer', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'],
-  'Senior ORA Engineer': ['ORA Engr.', 'ORA Engr', 'ORA Engineer', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'],
+  'ORA Engr': ['ORA Engr', 'ORA Engr', 'ORA Engineer', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'],
+  'ORA Engr': ['ORA Engr', 'ORA Engr', 'ORA Engineer', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'],
+  'ORA Engineer': ['ORA Engr', 'ORA Engr', 'ORA Engineer', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'],
+  'Snr ORA Engr.': ['ORA Engr', 'ORA Engr', 'ORA Engineer', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'],
+  'Snr. ORA Engr.': ['ORA Engr', 'ORA Engr', 'ORA Engineer', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'],
+  'Snr ORA Engr': ['ORA Engr', 'ORA Engr', 'ORA Engineer', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'],
+  'Senior ORA Engr.': ['ORA Engr', 'ORA Engr', 'ORA Engineer', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'],
+  'Senior ORA Engineer': ['ORA Engr', 'ORA Engr', 'ORA Engineer', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'],
   'Project Engr': ['Project Engr', 'Project Engr.', 'Proj Engr'],
   'Project Engr.': ['Project Engr', 'Project Engr.', 'Proj Engr'],
   'Proj Engr': ['Project Engr', 'Project Engr.', 'Proj Engr'],

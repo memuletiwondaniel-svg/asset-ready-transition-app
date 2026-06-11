@@ -282,7 +282,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     }
     
     // Site Engineer requires station directly
-    if (role === 'Site Engineer' || role === 'Site Engr.') {
+    if (role === 'Site Engineer' || role === 'Site Engr') {
       if (station) {
         return `Site Engr. - ${station}`;
       }
@@ -363,7 +363,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       case 'Mtce Mgr. Rotating':
         return isMtceManagerTitleReady(formData.mtce_manager_plant);
       case 'Site Engineer':
-      case 'Site Engr.':
+      case 'Site Engr':
         return !!station;
       case 'Ops Coach':
         return !!plant && !!field; // Ops Coach requires plant and field (station optional)
@@ -389,7 +389,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
 
   // Check if role requires direct station selection (Site Engr.)
   const roleRequiresStation = (role: string) => {
-    return role === 'Site Engr.' || role === 'Site Engineer';
+    return role === 'Site Engr' || role === 'Site Engineer';
   };
 
   // Check if role requires plant selection (Plant Director, Dep. Plant Director only - they stop at plant)

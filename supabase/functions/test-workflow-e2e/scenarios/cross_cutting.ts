@@ -46,7 +46,7 @@ const runC: Scenario["run"] = async (ctx) => {
     .select("id,vcr_code").order("vcr_code", { ascending: true }).limit(1);
   const pt = pts?.[0];
   if (!pt) return { status: "fail", expected: "first VCR point", observed: "none" };
-  const rolesToCheck = ["Sr ORA Engr", "Construction Lead", "Commissioning Lead"] as const;
+  const rolesToCheck = ["Snr ORA Engr", "Construction Lead", "Commissioning Lead"] as const;
   const counts: Record<string, number> = {};
   const dpIds: Record<string, string[]> = {};
   for (const role of rolesToCheck) {
@@ -60,7 +60,7 @@ const runC: Scenario["run"] = async (ctx) => {
   }
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
   if (total === 0) return { status: "fail", expected: "complete_checklist tasks scoped per role", observed: { counts } };
-  if (counts["Sr ORA Engr"] === counts["Construction Lead"]) {
+  if (counts["Snr ORA Engr"] === counts["Construction Lead"]) {
     return { status: "fail", expected: "Sr ORA Engr count != Construction Lead count (role-specific cardinality, not generic)", observed: { counts } };
   }
   const allIds = Object.values(dpIds).flat();
@@ -107,7 +107,7 @@ const runD: Scenario["run"] = async (ctx) => {
 // design — caller fixes at root, scenario is unchanged.
 const runE: Scenario["run"] = async (ctx) => {
   const svc = svcOf(ctx);
-  const sr = ctx.users["Sr ORA Engr"];
+  const sr = ctx.users["Snr ORA Engr"];
   const oraLead = ctx.users["ORA Lead"];
   const phl = ctx.users["Project Hub Lead"];
   const constr = ctx.users["Construction Lead"];
@@ -278,7 +278,7 @@ const runF: Scenario["run"] = async (ctx) => {
 // correctly exclude superseded.
 const runG: Scenario["run"] = async (ctx) => {
   const svc = svcOf(ctx);
-  const sr = ctx.users["Sr ORA Engr"];
+  const sr = ctx.users["Snr ORA Engr"];
   const oraLead = ctx.users["ORA Lead"];
   const phl = ctx.users["Project Hub Lead"];
   const dpd = ctx.users["Dep. Plant Director"];
@@ -415,7 +415,7 @@ const runG: Scenario["run"] = async (ctx) => {
 // ── H: RLS — wrong-role write deny, DELETE deny, legacy gate auto-true ──────
 const runH: Scenario["run"] = async (ctx) => {
   const svc = svcOf(ctx);
-  const sr = ctx.users["Sr ORA Engr"];
+  const sr = ctx.users["Snr ORA Engr"];
   const fails: string[] = [];
 
   // (1) wrong-role write deny: Sr ORA Engr tries to UPDATE ORA Lead's approval row

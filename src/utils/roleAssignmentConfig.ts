@@ -12,7 +12,7 @@ export const ROLES_REQUIRING_PORTFOLIO_ONLY = [
   'Proj Manager',
   'Commissioning Lead',
   'Construction Lead',
-  'ORA Engr.',
+  'ORA Engr',
   'ORA Engineer',
   'ORA Engr',
   'Snr ORA Engr.',

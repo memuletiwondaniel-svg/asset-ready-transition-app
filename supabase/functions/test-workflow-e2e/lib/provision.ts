@@ -12,7 +12,7 @@ export const CANONICAL_ROLES = [
   "Construction Lead",
   "Commissioning Lead",
   "ORA Lead",
-  "Sr ORA Engr",
+  "Snr ORA Engr",
   "CMMS Lead",
 ] as const;
 export type CanonicalRole = (typeof CANONICAL_ROLES)[number];

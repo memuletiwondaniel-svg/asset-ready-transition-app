@@ -46,7 +46,7 @@ const DELIVERY_METHODS = [
 // Order is the canonical render order for the audience chip row.
 const SUGGESTED_AUDIENCES = [
   'Shift Supv.',
-  'Site Engr.',
+  'Site Engr',
   'Control Room Operator',
   'Field Operator',
   'Instrumentation',

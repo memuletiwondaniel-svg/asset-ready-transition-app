@@ -69,7 +69,7 @@ export const SPEC: Record<string, RuleSpec> = {
     trigger: "INSERT project_team_members (Sr ORA Engr assigned)",
     gate: "none",
     status: "pending",
-    expects: [{ title: "{projCode}: Develop ORA Plan", assigneeRole: "Sr ORA Engr", action: "create_ora_plan", cardinality: "one" }],
+    expects: [{ title: "{projCode}: Develop ORA Plan", assigneeRole: "Snr ORA Engr", action: "create_ora_plan", cardinality: "one" }],
   },
   R2: {
     id: "R2",
@@ -97,7 +97,7 @@ export const SPEC: Record<string, RuleSpec> = {
     trigger: "PHL+DPD APPROVED via orp_plan_is_approved()",
     gate: "phl_dpd_approved",
     status: "pending",
-    expects: [{ title: "{projCode}: {activity}", assigneeRole: "Sr ORA Engr", action: "complete_ora_activity", cardinality: "one" }],
+    expects: [{ title: "{projCode}: {activity}", assigneeRole: "Snr ORA Engr", action: "complete_ora_activity", cardinality: "one" }],
   },
 
   // ── P2A PLAN WORKFLOW (R6–R12) ───────────────────────────────────────────
@@ -106,7 +106,7 @@ export const SPEC: Record<string, RuleSpec> = {
     trigger: "ORA plan APPROVED (orp_plan_is_approved=true) → seed P2A entry task",
     gate: "ora_workflow_complete",
     status: "pending",
-    expects: [{ title: "{projCode}: Develop P2A Plan", assigneeRole: "Sr ORA Engr", action: "develop_p2a_plan", cardinality: "one" }],
+    expects: [{ title: "{projCode}: Develop P2A Plan", assigneeRole: "Snr ORA Engr", action: "develop_p2a_plan", cardinality: "one" }],
   },
   R7: {
     id: "R7",
@@ -148,7 +148,7 @@ export const SPEC: Record<string, RuleSpec> = {
     trigger: "4-of-4 lead approvers APPROVED via p2a_plan_is_approved() — one task per p2a_handover_points row",
     gate: "p2a_plan_is_approved",
     status: "pending",
-    expects: [{ title: "{projCode}: Develop {vcrCode} Plan", assigneeRole: "Sr ORA Engr", action: "develop_vcr_plan", cardinality: "per_vcr" }],
+    expects: [{ title: "{projCode}: Develop {vcrCode} Plan", assigneeRole: "Snr ORA Engr", action: "develop_vcr_plan", cardinality: "per_vcr" }],
   },
 
   // ── VCR PLAN WORKFLOW (R13–R17) ──────────────────────────────────────────
@@ -195,11 +195,11 @@ export const SPEC: Record<string, RuleSpec> = {
     gate: "vcr_plan_is_approved",
     status: "pending",
     expects: [
-      { title: "{projCode}: Deliver Training for {vcrCode}",                assigneeRole: "Sr ORA Engr", action: "deliver_training",            cardinality: "per_vcr", hasSubTasks: true, excludesCancelledSuperseded: true },
-      { title: "{projCode}: Deliver Procedures for {vcrCode}",              assigneeRole: "Sr ORA Engr", action: "deliver_procedures",          cardinality: "per_vcr", hasSubTasks: true, excludesCancelledSuperseded: true },
-      { title: "{projCode}: Deliver Critical Documents for {vcrCode}",      assigneeRole: "Sr ORA Engr", action: "deliver_critical_docs",       cardinality: "per_vcr", hasSubTasks: true, excludesCancelledSuperseded: true },
-      { title: "{projCode}: Deliver Procedures & Registers for {vcrCode}",  assigneeRole: "Sr ORA Engr", action: "deliver_procedures_registers",cardinality: "per_vcr", hasSubTasks: true, excludesCancelledSuperseded: true },
-      { title: "{projCode}: Complete Witness and Hold Points for {vcrCode}",assigneeRole: "Sr ORA Engr", action: "complete_witness_hold",       cardinality: "per_vcr", hasSubTasks: true, excludesCancelledSuperseded: true },
+      { title: "{projCode}: Deliver Training for {vcrCode}",                assigneeRole: "Snr ORA Engr", action: "deliver_training",            cardinality: "per_vcr", hasSubTasks: true, excludesCancelledSuperseded: true },
+      { title: "{projCode}: Deliver Procedures for {vcrCode}",              assigneeRole: "Snr ORA Engr", action: "deliver_procedures",          cardinality: "per_vcr", hasSubTasks: true, excludesCancelledSuperseded: true },
+      { title: "{projCode}: Deliver Critical Documents for {vcrCode}",      assigneeRole: "Snr ORA Engr", action: "deliver_critical_docs",       cardinality: "per_vcr", hasSubTasks: true, excludesCancelledSuperseded: true },
+      { title: "{projCode}: Deliver Procedures & Registers for {vcrCode}",  assigneeRole: "Snr ORA Engr", action: "deliver_procedures_registers",cardinality: "per_vcr", hasSubTasks: true, excludesCancelledSuperseded: true },
+      { title: "{projCode}: Complete Witness and Hold Points for {vcrCode}",assigneeRole: "Snr ORA Engr", action: "complete_witness_hold",       cardinality: "per_vcr", hasSubTasks: true, excludesCancelledSuperseded: true },
     ],
   },
   R19: {
@@ -207,7 +207,7 @@ export const SPEC: Record<string, RuleSpec> = {
     trigger: "vcr_plan_is_approved — checklist task scoped to vcr_item_delivering_parties(role=Sr ORA Engr)",
     gate: "vcr_plan_is_approved",
     status: "pending",
-    expects: [{ title: "{projCode}: Complete {vcrCode} Checklist Items", assigneeRole: "Sr ORA Engr", action: "complete_checklist", cardinality: "per_delivering" }],
+    expects: [{ title: "{projCode}: Complete {vcrCode} Checklist Items", assigneeRole: "Snr ORA Engr", action: "complete_checklist", cardinality: "per_delivering" }],
   },
   R20: {
     id: "R20",

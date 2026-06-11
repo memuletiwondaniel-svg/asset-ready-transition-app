@@ -217,7 +217,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
   // Role requirement helper functions (matching Edit modal)
   const requiresHub = (role: string) => roleRequiresHubAssignment(role);
   const requiresPortfolioSelection = (role: string) => roleRequiresPortfolio(role);
-  const roleRequiresStation = (role: string) => role === 'Site Engr.' || role === 'Site Engineer';
+  const roleRequiresStation = (role: string) => role === 'Site Engr' || role === 'Site Engineer';
   const requiresPlant = (role: string) => ['Plant Director', 'Dep. Plant Director'].includes(role);
   const requiresField = (role: string) => ['Ops Team Lead'].includes(role);
   const requiresPlantAndField = (role: string) => role === 'Section Head';
@@ -361,7 +361,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
       case 'Mtce Mgr. Static':
       case 'Mtce Mgr. Rotating':
         return isMtceManagerTitleReady(formData.mtce_manager_plant);
-      case 'Site Engr.':
+      case 'Site Engr':
       case 'Site Engineer':
         return !!station;
       case 'Ops Coach':
