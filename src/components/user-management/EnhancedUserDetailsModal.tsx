@@ -255,6 +255,9 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     setPortfolioRegionIds(mine);
   }, [selectedRoleMeta?.id, portfolioAssignments]);
 
+  const { data: hubs } = useHubs();
+
+
   // Function to generate dynamic title/position based on role and conditional fields
   const generateTitle = () => {
     const { role, commission, plant, station, field, hub, portfolio, discipline } = formData;
