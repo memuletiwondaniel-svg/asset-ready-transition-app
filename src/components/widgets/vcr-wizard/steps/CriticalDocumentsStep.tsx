@@ -190,6 +190,9 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
       await queryClient.invalidateQueries({ queryKey: ['vcr-doc-requirements', vcrId] });
       queryClient.invalidateQueries({ queryKey: ['vcr-critical-docs', vcrId] });
       queryClient.invalidateQueries({ queryKey: ['vcr-wizard-step-counts', vcrId] });
+      setJustSaved(true);
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+      savedTimerRef.current = setTimeout(() => setJustSaved(false), 1500);
     } catch (e: any) {
       toast.error(e?.message || 'Failed to save selection');
     } finally {
@@ -340,40 +343,19 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
           <>
             {/* Header */}
             <div className="flex items-start justify-between gap-3 flex-wrap">
-              <div className="space-y-0.5">
-                <h2 className="text-base font-semibold">Critical Documents</h2>
-                <p className="text-xs text-muted-foreground">
-                  Select the Tier 1 and Tier 2 document types required for this VCR.
-                </p>
-              </div>
+              <h2 className="text-base font-semibold">Critical Documents</h2>
               <div className="flex items-center gap-2">
                 {totalCount > 0 && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Badge variant="outline" className="cursor-default">
-                        {totalCount} required
-                      </Badge>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      {totalCount - boundCount} type{totalCount - boundCount === 1 ? '' : 's'}, {boundCount} specific document{boundCount === 1 ? '' : 's'}
-                    </TooltipContent>
-                  </Tooltip>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 text-muted-foreground hover:text-destructive"
+                    onClick={() => setConfirmClearAll(true)}
+                  >
+                    Clear all
+                  </Button>
                 )}
-                {totalCount > 0 ? (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-                        onClick={() => setConfirmClearAll(true)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">Clear all selections</TooltipContent>
-                  </Tooltip>
-                ) : browseCatalog ? (
+                {browseCatalog && totalCount === 0 && (
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
@@ -387,7 +369,7 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
                     </TooltipTrigger>
                     <TooltipContent side="bottom">Back to empty state</TooltipContent>
                   </Tooltip>
-                ) : null}
+                )}
                 <Button variant="outline" size="sm" onClick={() => setAssaiOpen(true)} className="gap-1.5">
                   <img src={assaiIcon} alt="" className="w-4 h-4 object-contain" /> Check Assai
                 </Button>
@@ -405,7 +387,16 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
                   {/* Selected group — always visible regardless of filters */}
                   {selectedItems.length > 0 && (
                     <>
-                      <GroupHeader label={`Selected (${selectedItems.length})`} sticky />
+                      <div className="sticky top-0 z-[5] flex items-center justify-between bg-muted/60 backdrop-blur px-3 py-1.5 border-b border-border/40">
+                        <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                          Selected ({selectedItems.length})
+                        </span>
+                        {justSaved && (
+                          <span className="text-[11px] text-muted-foreground inline-flex items-center gap-1 animate-in fade-in">
+                            <Check className="w-3 h-3" /> Saved
+                          </span>
+                        )}
+                      </div>
                       <SelectedList
                         items={selectedItems}
                         savedTypeIds={savedTypeIds}
@@ -498,18 +489,18 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
                           </div>
                         </div>
 
-                        {/* Active discipline pills */}
                         {disciplines.length > 0 && (
-                          <div className="flex items-center gap-1.5 flex-wrap mt-2">
-                            <span className="text-[11px] text-muted-foreground">Filtering by:</span>
+                          <>
                             {disciplines.map((code) => (
                               <button
                                 key={code}
                                 onClick={() => setDisciplines((arr) => arr.filter((c) => c !== code))}
-                                className="inline-flex items-center gap-1 h-6 px-2 rounded-full bg-secondary text-secondary-foreground text-[11px] hover:bg-secondary/80 transition-colors"
+                                className="inline-flex items-center gap-1 h-7 pl-2.5 pr-1 rounded-full bg-secondary text-secondary-foreground text-[11px] hover:bg-secondary/80 transition-colors"
                               >
                                 {disciplineNameByCode.get(code) || code}
-                                <X className="w-3 h-3 opacity-70" />
+                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full hover:bg-secondary-foreground/10 transition-colors">
+                                  <X className="w-3 h-3 opacity-70" />
+                                </span>
                               </button>
                             ))}
                             <button
@@ -518,7 +509,7 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
                             >
                               Clear
                             </button>
-                          </div>
+                          </>
                         )}
                       </div>
 
@@ -561,18 +552,6 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
               )}
             </div>
 
-            {/* Footer */}
-            <div className="flex items-center justify-between gap-3 pt-2 border-t border-border/60">
-              <span className="text-xs text-muted-foreground">
-                {totalCount} document type{totalCount === 1 ? '' : 's'} selected
-                {savingIds.size > 0 && (
-                  <span className="ml-2 inline-flex items-center gap-1 text-muted-foreground">
-                    <Loader2 className="w-3 h-3 animate-spin" /> saving…
-                  </span>
-                )}
-              </span>
-              <span className="text-[11px] text-muted-foreground">Changes save automatically</span>
-            </div>
           </>
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center py-16 text-center">
@@ -581,7 +560,7 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
             </div>
             <h2 className="text-lg font-semibold">No critical documents yet</h2>
             <p className="mt-2 max-w-[460px] text-sm leading-relaxed text-muted-foreground">
-              Start by selecting the Tier 1 and Tier 2 document types required for this VCR, or check Assai to review mapped source documents first.
+              Select the Tier 1 and Tier 2 document types required for this VCR.
             </p>
             <div className="mt-6 flex items-center gap-3">
               <Button size="lg" className="gap-2 shadow-sm" onClick={() => { setBrowseCatalog(true); setAvailableOpen(true); }}>
