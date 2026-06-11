@@ -39,6 +39,11 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useLogActivity } from '@/hooks/useActivityLogs';
 import { AvatarCropDialog } from '@/components/user-management/AvatarCropDialog';
+import { PortfolioAssignmentField } from './PortfolioAssignmentField';
+import {
+  useSetPortfolioAssignments,
+  useAvailableRegions,
+} from '@/hooks/usePortfolioRoleHolders';
 
 // Generate a random password
 const generatePassword = () => {
