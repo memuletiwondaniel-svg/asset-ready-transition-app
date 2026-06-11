@@ -554,11 +554,12 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       // Fetch plants
       const { data: plantsData } = await supabase
         .from('plant')
-        .select('name')
+        .select('id, name')
         .eq('is_active', true)
         .order('name');
-      
+
       setPlants(plantsData?.map(p => ({ value: p.name, label: p.name })) || []);
+      setPlantIdByName(Object.fromEntries((plantsData ?? []).map(p => [p.name, p.id])));
 
       // Fetch stations
       const { data: stationsData } = await supabase
@@ -569,14 +570,15 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       
       setStations(stationsData?.map(s => ({ value: s.name, label: s.name })) || []);
 
-      // Fetch fields
+      // Fetch fields (carry plant_id so the Ops Coach cascade can filter
+      // the Field list to the currently-selected Plant — Part E2).
       const { data: fieldsData } = await supabase
         .from('field')
-        .select('name')
+        .select('name, plant_id')
         .eq('is_active', true)
         .order('name');
       
-      setFields(fieldsData?.map(f => ({ value: f.name, label: f.name })) || []);
+      setFields(fieldsData?.map(f => ({ value: f.name, label: f.name, plant_id: f.plant_id })) || []);
     } catch (error) {
       console.error('Error fetching database options:', error);
     }
