@@ -40,9 +40,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { useLogActivity } from '@/hooks/useActivityLogs';
 import { AvatarCropDialog } from '@/components/user-management/AvatarCropDialog';
 import { PortfolioAssignmentField } from './PortfolioAssignmentField';
+import { B2BReplacementDialog } from './B2BReplacementDialog';
 import {
   useSetPortfolioAssignments,
   useAvailableRegions,
+  fetchRegionRoleHoldersPreflight,
+  type RegionRoleHolder,
 } from '@/hooks/usePortfolioRoleHolders';
 
 // Generate a random password
