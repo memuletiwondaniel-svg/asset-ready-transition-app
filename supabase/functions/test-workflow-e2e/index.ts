@@ -17,7 +17,7 @@
 // recorder mediates so the dependency graph is honored.
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.52.0";
-import { CANONICAL_ROLES, createTestPlant, createTestProject, createUsersForRoles, setDeputyPlantDirectorPosition } from "./lib/provision.ts";
+import { CANONICAL_ROLES, createTestPlant, createTestProject, createUsersForRoles, seedDeputyPlantDirectorHolder } from "./lib/provision.ts";
 import { assignTeamRoles } from "./lib/teamSetup.ts";
 import { sweepByRunId } from "./lib/teardown.ts";
 import { runScenario } from "./lib/recorder.ts";
@@ -116,12 +116,14 @@ serve(async (req) => {
     // Provision
     users = await createUsersForRoles(svc, SUPABASE_URL, ANON_KEY, runId, CANONICAL_ROLES);
     const phl = users["Project Hub Lead"];
-    // Throwaway plant + DPD position stamp: required so the P2A trigger's
+    // Throwaway plant + DPD roster row: required so the P2A trigger's
     // plant-scoped DPD resolver (find_deputy_plant_director) finds the
-    // harness user. ORA path uses project_team_members and is unaffected.
+    // harness user via plant_role_holders (structured path — the legacy
+    // profiles.position ILIKE fallback was removed in GATE C closeout).
+    // ORA path uses project_team_members and is unaffected.
     const plant = await createTestPlant(svc, runId);
     plantIds.push(plant.id);
-    await setDeputyPlantDirectorPosition(svc, users["Dep. Plant Director"].id, plant.name);
+    await seedDeputyPlantDirectorHolder(svc, users["Dep. Plant Director"].id, plant.id);
     const project = await createTestProject(svc, runId, phl.id, plant.id);
     projectIds.push(project.id);
     // Assign canonical roles to project_team_members BEFORE running scenarios
