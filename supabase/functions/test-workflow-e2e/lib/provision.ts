@@ -72,21 +72,36 @@ export async function createTestProject(
 }
 
 /**
- * Stamp the DPD user's profile.position so `find_deputy_plant_director`
- * resolves them on the harness plant. The resolver matches
- * `position ILIKE '%Dep. Plant Director - <plantName>%'`.
+ * Seed a `plant_role_holders` row so `find_deputy_plant_director`
+ * resolves the harness DPD via the structured roster path.
+ *
+ * Replaces the legacy `profiles.position` stamp — the position-ILIKE
+ * fallback was removed from `find_deputy_plant_director` in the GATE C
+ * closeout migration, so the structured row is now the only path.
+ *
+ * Cleanup: `plant_role_holders.plant_id` is `ON DELETE CASCADE` from
+ * `plant`, so the row goes with the throwaway plant during teardown —
+ * no explicit sweep needed.
  */
-export async function setDeputyPlantDirectorPosition(
+export async function seedDeputyPlantDirectorHolder(
   svc: SupabaseClient,
   dpdUserId: string,
-  plantName: string,
+  plantId: string,
 ): Promise<void> {
-  const position = `Dep. Plant Director - ${plantName}`;
+  const { data: roleRow, error: roleErr } = await svc
+    .from("roles")
+    .select("id")
+    .eq("name", "Dep. Plant Director")
+    .eq("is_active", true)
+    .eq("is_retired", false)
+    .maybeSingle();
+  if (roleErr) throw new Error(`seedDeputyPlantDirectorHolder roles lookup: ${roleErr.message}`);
+  if (!roleRow?.id) throw new Error(`seedDeputyPlantDirectorHolder: role 'Dep. Plant Director' not found in catalog`);
+
   const { error } = await svc
-    .from("profiles")
-    .update({ position, is_active: true })
-    .eq("user_id", dpdUserId);
-  if (error) throw new Error(`setDeputyPlantDirectorPosition: ${error.message}`);
+    .from("plant_role_holders")
+    .insert({ plant_id: plantId, role_id: roleRow.id, user_id: dpdUserId, field_id: null });
+  if (error) throw new Error(`seedDeputyPlantDirectorHolder: ${error.message}`);
 }
 
 
