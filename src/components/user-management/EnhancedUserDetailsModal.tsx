@@ -64,6 +64,7 @@ import { PortfolioAssignmentField } from './PortfolioAssignmentField';
 import {
   useUserPortfolioAssignments,
   useSetPortfolioAssignments,
+  useAvailableRegions,
 } from '@/hooks/usePortfolioRoleHolders';
 
 // Type definitions matching the database schema exactly
@@ -216,7 +217,9 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
   // Portfolio role-holder I/O — only matters when selected role has scope='portfolio'.
   const { data: portfolioAssignments } = useUserPortfolioAssignments(user?.user_id);
   const { mutateAsync: savePortfolioAssignments } = useSetPortfolioAssignments();
-  const [portfolioRegionIds, setPortfolioRegionIds] = useState<string[]>([]);
+  // Single-select: a portfolio role is held for EXACTLY ONE region at a time.
+  const [portfolioRegionId, setPortfolioRegionId] = useState<string | null>(null);
+  const { data: availableRegions } = useAvailableRegions();
 
   // Get roles for the selected function
   const getRolesForFunction = () => {
@@ -242,18 +245,33 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     ['Snr ORA Engr', 'ORA Engr', 'Construction Lead', 'Commissioning Lead', 'Project Manager']
       .includes(formData.role);
 
-  // Pre-fill the multi-select with the regions this user already holds for
-  // the currently-selected role. Re-runs when role or assignments change.
+  // Pre-fill the single-select with the region this user currently holds
+  // for the selected role. Re-runs when role or assignments change.
   useEffect(() => {
     if (!selectedRoleMeta?.id || !portfolioAssignments) {
-      setPortfolioRegionIds([]);
+      setPortfolioRegionId(null);
       return;
     }
-    const mine = portfolioAssignments
-      .filter((a) => a.role_id === selectedRoleMeta.id)
-      .map((a) => a.region_id);
-    setPortfolioRegionIds(mine);
+    const mine = portfolioAssignments.find((a) => a.role_id === selectedRoleMeta.id);
+    setPortfolioRegionId(mine?.region_id ?? null);
+    // Mirror the region name into formData.portfolio so generateTitle()
+    // produces "<Role> – <Portfolio>" with no extra plumbing.
+    if (mine) {
+      setFormData((prev) => prev.portfolio === mine.region_name
+        ? prev
+        : { ...prev, portfolio: mine.region_name });
+    }
   }, [selectedRoleMeta?.id, portfolioAssignments]);
+
+  // Keep formData.portfolio in lock-step with the radio selection so
+  // Position auto-updates live as the user clicks a different region.
+  const handlePortfolioRegionChange = (regionId: string | null) => {
+    setPortfolioRegionId(regionId);
+    const regionName = regionId
+      ? (availableRegions?.find((r) => r.id === regionId)?.name ?? '')
+      : '';
+    setFormData((prev) => ({ ...prev, portfolio: regionName }));
+  };
 
   const { data: hubs } = useHubs();
 
@@ -947,7 +965,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
           await savePortfolioAssignments({
             userId: user.user_id,
             roleId: selectedRoleMeta.id,
-            regionIds: portfolioRegionIds,
+            regionIds: portfolioRegionId ? [portfolioRegionId] : [],
           });
         } catch (e: any) {
           console.error('Portfolio assignment write failed:', e);
@@ -1969,8 +1987,11 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                           </div>
                         )}
 
-                        {/* Portfolio Selection */}
-                        {requiresPortfolioSelection(formData.role) && (
+                        {/* Portfolio Selection — legacy combobox kept ONLY for
+                            roles that pair portfolio with a Hub (Project Hub
+                            Lead, Project Engr). Portfolio-scoped roles use
+                            the single canonical control below instead. */}
+                        {requiresPortfolioSelection(formData.role) && !selectedRoleIsPortfolio && (
                           <div>
                             <Label>Portfolio *</Label>
                             <Combobox
@@ -2003,12 +2024,14 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                         )}
                       </div>
 
-                      {/* Portfolio role-holder multi-select — canonical resolution source. */}
+                      {/* Portfolio role-holder SINGLE-select — the one canonical
+                          control for portfolio-scoped roles. Drives both
+                          region_role_holders AND the display Position. */}
                       {selectedRoleIsPortfolio && selectedRoleMeta?.id && (
                         <PortfolioAssignmentField
                           roleName={formData.role}
-                          selectedRegionIds={portfolioRegionIds}
-                          onChange={setPortfolioRegionIds}
+                          selectedRegionId={portfolioRegionId}
+                          onChange={handlePortfolioRegionChange}
                           disabled={!editMode}
                         />
                       )}
