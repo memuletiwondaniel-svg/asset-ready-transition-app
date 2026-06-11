@@ -237,11 +237,41 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
   const requiresField = (role: string) => ['Ops Team Lead'].includes(role);
   const requiresPlantAndField = (role: string) => role === 'Section Head';
   const requiresAssetHierarchy = (role: string) => role === 'Ops Coach';
-  
+  // Ops Coach field rule — Part E2: CS/UQ require field, KAZ/BNGL stop at plant.
+  const opsCoachNeedsField = (plant: string) => ['CS', 'UQ'].includes(plant);
+
   const shouldShowTA2Commission = (role: string) => {
     const ta2RolesWithCommission = ['Elect TA2', 'Rotating TA2', 'PACO TA2', 'Static TA2', 'Process TA2'];
     return ta2RolesWithCommission.includes(role);
   };
+
+  // Look up the catalog row for the currently-selected role (mirrors Edit modal).
+  const selectedRoleMeta = React.useMemo(() => {
+    if (!formData.role || !categorizedRoles) return null;
+    for (const group of categorizedRoles) {
+      const hit = group.roles.find((r) => r.name === formData.role);
+      if (hit) return hit;
+    }
+    return null;
+  }, [formData.role, categorizedRoles]);
+
+  const selectedRoleIsPortfolio =
+    (selectedRoleMeta as any)?.scope === 'portfolio' ||
+    ['Snr ORA Engr', 'ORA Engr', 'Construction Lead', 'Commissioning Lead', 'Project Manager']
+      .includes(formData.role);
+
+  const selectedRoleIsPlant = (selectedRoleMeta as any)?.scope === 'plant';
+
+  // Keep formData.portfolio in lock-step with the portfolio radio so the
+  // auto-generated position (e.g. "Snr ORA Engr – Central") stays live.
+  const handlePortfolioRegionChange = (regionId: string | null) => {
+    setPortfolioRegionId(regionId);
+    const regionName = regionId
+      ? (availableRegions?.find((r) => r.id === regionId)?.name ?? '')
+      : '';
+    setFormData(prev => ({ ...prev, portfolio: regionName }));
+  };
+
 
   // Get filtered commissions for specific roles
   const getCommissionOptions = () => {
