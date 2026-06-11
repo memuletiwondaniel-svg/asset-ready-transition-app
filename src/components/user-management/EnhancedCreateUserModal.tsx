@@ -126,6 +126,8 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
 
   const { data: hubs } = useHubs();
   const { data: categorizedRoles, isLoading: rolesLoading } = useCategorizedRoles();
+  const { data: availableRegions } = useAvailableRegions();
+  const { mutateAsync: savePortfolioAssignments } = useSetPortfolioAssignments();
 
   // Profile picture upload state
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -138,9 +140,15 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
 
   // Database options state (name-based, matching Edit modal)
   const [plants, setPlants] = useState<Array<{value: string, label: string}>>([]);
-  const [fields, setFields] = useState<Array<{value: string, label: string}>>([]);
+  const [fields, setFields] = useState<Array<{value: string, label: string, plant_id: string | null}>>([]);
   const [stations, setStations] = useState<Array<{value: string, label: string}>>([]);
   const [commissions, setCommissions] = useState<Array<{value: string, label: string}>>([]);
+  // Plant/field name → id lookups for plant_role_holders writes and the
+  // Ops Coach Plant → Field cascade.
+  const [plantIdByName, setPlantIdByName] = useState<Record<string, string>>({});
+  const [fieldIdByName, setFieldIdByName] = useState<Record<string, string>>({});
+  // Portfolio role-holder single-select state — mirrors Edit modal.
+  const [portfolioRegionId, setPortfolioRegionId] = useState<string | null>(null);
 
   // Fetch database options on mount
   useEffect(() => {
