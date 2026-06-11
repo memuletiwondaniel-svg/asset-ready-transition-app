@@ -70,6 +70,11 @@ export function useMyPrereqApproval(prerequisiteId: string | undefined) {
       // E-1c BUG 1: refresh the per-item "N of M accepted" counter in
       // VCRApprovalBundleSheet, which reads vcr_prerequisite_approvals directly.
       qc.invalidateQueries({ queryKey: ['vcr-bundle-approval-counts'] });
+      // E-1c BUG 2: My Tasks Kanban reads from ['user-tasks'] (useUserTasks).
+      // The DB-side recompute trigger updates the bundle user_tasks row's
+      // progress/status; without this invalidate the card stays at 0/N and
+      // never leaves the To Do column until a hard refresh.
+      qc.invalidateQueries({ queryKey: ['user-tasks'] });
       const label =
         vars.status === 'ACCEPTED' ? 'Accepted' :
         vars.status === 'REJECTED' ? 'Rejected' :

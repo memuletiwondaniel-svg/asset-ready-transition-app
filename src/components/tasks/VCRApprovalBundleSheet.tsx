@@ -40,23 +40,27 @@ export const VCRApprovalBundleSheet: React.FC<Props> = ({ bundle, open, onOpenCh
     .filter((x): x is string => !!x);
 
   // N-of-M accepted counts per prereq (all approvers, not just current user).
+  // NOTE: returns a plain Record (not a Map) so React Query's structural
+  // sharing can diff it correctly — Map values were being treated as
+  // unchanged by RQ on refetch, leaving the in-sheet counter stale.
   const { data: counts } = useQuery({
     enabled: open && prereqIds.length > 0,
     queryKey: ['vcr-bundle-approval-counts', bundle?.id, prereqIds],
+    staleTime: 0,
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from('vcr_prerequisite_approvals')
         .select('prerequisite_id,status')
         .in('prerequisite_id', prereqIds);
       if (error) throw error;
-      const map = new Map<string, { total: number; accepted: number }>();
+      const rec: Record<string, { total: number; accepted: number }> = {};
       (data || []).forEach((row: any) => {
-        const cur = map.get(row.prerequisite_id) ?? { total: 0, accepted: 0 };
+        const cur = rec[row.prerequisite_id] ?? { total: 0, accepted: 0 };
         cur.total += 1;
         if (row.status === 'ACCEPTED') cur.accepted += 1;
-        map.set(row.prerequisite_id, cur);
+        rec[row.prerequisite_id] = cur;
       });
-      return map;
+      return rec;
     },
   });
 
@@ -77,7 +81,7 @@ export const VCRApprovalBundleSheet: React.FC<Props> = ({ bundle, open, onOpenCh
               <PrereqRow
                 key={item.prerequisite_id ?? idx}
                 item={item}
-                counts={item.prerequisite_id ? counts?.get(item.prerequisite_id) : undefined}
+                counts={item.prerequisite_id ? counts?.[item.prerequisite_id] : undefined}
               />
             ))}
           </div>
