@@ -16,6 +16,8 @@ export interface Role {
   description: string | null;
   category_id: string | null;
   is_b2b?: boolean;
+  /** roles.scope enum — 'project' | 'hub' | 'portfolio' | 'plant' | 'org'. */
+  scope?: string | null;
 }
 
 export interface CategorizedRole {
