@@ -113,7 +113,7 @@ const runR1: Scenario["run"] = async (ctx) => {
     return {
       status: "fail",
       expected: { count: ">=1", action: e.action, assignee: e.assigneeRole },
-      observed: { count: 0, note: "no create_ora_plan task created for Sr ORA Engr after team assignment" },
+      observed: { count: 0, note: "no create_ora_plan task created for Snr ORA Engr after team assignment" },
     };
   }
   const task = rows[0];
@@ -149,10 +149,10 @@ const runR2: Scenario["run"] = async (ctx) => {
     .update({ status: "PENDING_APPROVAL" }, { count: "exact" })
     .eq("id", planId);
   if (upErr) {
-    return { status: "fail", expected: "submit allowed for Sr ORA Engr", observed: upErr.message };
+    return { status: "fail", expected: "submit allowed for Snr ORA Engr", observed: upErr.message };
   }
   if ((upCount ?? 0) === 0) {
-    return { status: "fail", expected: "Sr ORA Engr submit affects 1 row", observed: "0 rows updated — RLS denied silently" };
+    return { status: "fail", expected: "Snr ORA Engr submit affects 1 row", observed: "0 rows updated — RLS denied silently" };
   }
   const oraLead = ctx.users[e.assigneeRole];
   const seedErr = await assertSeed(svc, planId, "ORA Lead", oraLead.id);
@@ -224,7 +224,7 @@ function buildReviewRule(rule: "R3" | "R4"): Scenario["run"] {
   };
 }
 
-// ── R5: join across PHL+DPD approvals → leaf tasks for Sr ORA Engr ────────
+// ── R5: join across PHL+DPD approvals → leaf tasks for Snr ORA Engr ────────
 // After R3/R4 pass, 10c trigger create_phl_dpd_review_tasks has seeded the
 // PHL + DPD PENDING orp_approvals rows. R5 UPDATEs them via per-role JWT;
 // the derived-status trigger (10b) flips orp_plans.status='APPROVED' THROUGH
@@ -466,7 +466,7 @@ async function assertVCRApproverSeed(svc: SupabaseClient, pointId: string, role:
   return null;
 }
 
-// Counts seeded per role on first VCR point. Sr ORA Engr deliberately > 1
+// Counts seeded per role on first VCR point. Snr ORA Engr deliberately > 1
 // to prove cross-cutting C: counts are role-specific, not a generic 1-per.
 const VCR_FIXTURE_COUNTS: Record<string, number> = {
   "Snr ORA Engr": 2,
@@ -781,26 +781,26 @@ const runR18: Scenario["run"] = async (ctx) => {
 
 // ──────────────────────────────────────────────────────────────────────────
 const ruleList: Scenario[] = [
-  { id: "R1",  name: "Project created → Develop ORA Plan → Sr ORA Engr",                 run: runR1 },
-  { id: "R2",  name: "Sr ORA Engr submits → Review/Approve ORA Plan → ORA Lead",         dependsOn: ["R1"], run: runR2 },
+  { id: "R1",  name: "Project created → Develop ORA Plan → Snr ORA Engr",                 run: runR1 },
+  { id: "R2",  name: "Snr ORA Engr submits → Review/Approve ORA Plan → ORA Lead",         dependsOn: ["R1"], run: runR2 },
   { id: "R3",  name: "ORA Lead approves → review task → Project Hub Lead",               dependsOn: ["R2"], run: buildReviewRule("R3") },
   { id: "R4",  name: "ORA Lead approves → review task → Dep. Plant Director",            dependsOn: ["R2"], run: buildReviewRule("R4") },
-  { id: "R5",  name: "Both PHL+DPD approve → leaf-activity tasks → Sr ORA Engr",         dependsOn: ["R3", "R4"], run: runR5 },
+  { id: "R5",  name: "Both PHL+DPD approve → leaf-activity tasks → Snr ORA Engr",         dependsOn: ["R3", "R4"], run: runR5 },
 
-  { id: "R6",  name: "ORA approved → Develop P2A Plan → Sr ORA Engr",                    dependsOn: ["R5"], run: runR6 },
-  { id: "R7",  name: "Sr ORA Engr submits P2A → Review P2A Plan → ORA Lead",             dependsOn: ["R6"], run: runR7 },
+  { id: "R6",  name: "ORA approved → Develop P2A Plan → Snr ORA Engr",                    dependsOn: ["R5"], run: runR6 },
+  { id: "R7",  name: "Snr ORA Engr submits P2A → Review P2A Plan → ORA Lead",             dependsOn: ["R6"], run: runR7 },
   { id: "R8",  name: "ORA Lead approves P2A → review → Construction Lead",               dependsOn: ["R7"], run: buildP2ALeadRule("R8") },
   { id: "R9",  name: "ORA Lead approves P2A → review → Commissioning Lead",              dependsOn: ["R7"], run: buildP2ALeadRule("R9") },
   { id: "R10", name: "ORA Lead approves P2A → review → Project Hub Lead",                dependsOn: ["R7"], run: buildP2ALeadRule("R10") },
   { id: "R11", name: "ORA Lead approves P2A → review → Dep. Plant Director",             dependsOn: ["R7"], run: buildP2ALeadRule("R11") },
-  { id: "R12", name: "4-of-4 leads approve P2A → Develop VCR-XX Plan per VCR → Sr ORA Engr", dependsOn: ["R8","R9","R10","R11"], run: runR12 },
+  { id: "R12", name: "4-of-4 leads approve P2A → Develop VCR-XX Plan per VCR → Snr ORA Engr", dependsOn: ["R8","R9","R10","R11"], run: runR12 },
 
-  { id: "R13", name: "Sr ORA Engr submits VCR → review → ORA Lead",                       dependsOn: ["R12"], run: runR13 },
+  { id: "R13", name: "Snr ORA Engr submits VCR → review → ORA Lead",                       dependsOn: ["R12"], run: runR13 },
   { id: "R14", name: "ORA Lead approves VCR → review → Construction Lead",                dependsOn: ["R13"], run: buildVCRLeadRule("R14") },
   { id: "R15", name: "ORA Lead approves VCR → review → Commissioning Lead",               dependsOn: ["R13"], run: buildVCRLeadRule("R15") },
   { id: "R16", name: "ORA Lead approves VCR → review → Project Hub Lead",                 dependsOn: ["R13"], run: buildVCRLeadRule("R16") },
   { id: "R17", name: "ORA Lead approves VCR → review → Dep. Plant Director",              dependsOn: ["R13"], run: buildVCRLeadRule("R17") },
-  { id: "R18", name: "4-of-4 leads approve VCR → 5 deliverable parents (+2 sub-tasks) → Sr ORA Engr",
+  { id: "R18", name: "4-of-4 leads approve VCR → 5 deliverable parents (+2 sub-tasks) → Snr ORA Engr",
                dependsOn: ["R14","R15","R16","R17"], run: runR18 },
 ];
 
@@ -875,8 +875,8 @@ const runR20: Scenario["run"] = async (ctx) => {
 //      requires_sr_ora_confirmation='true'
 //   2. Commissioning Lead marks all sub-tasks completed → progress STILL 0
 //      (confirmed_by_sr_ora_engr still false) AND confirmation tasks created
-//      for Sr ORA Engr
-//   3. Sr ORA Engr sets confirmed_by_sr_ora_engr=true on all sub-tasks →
+//      for Snr ORA Engr
+//   3. Snr ORA Engr sets confirmed_by_sr_ora_engr=true on all sub-tasks →
 //      parent rollup recomputes to 100%
 // ══════════════════════════════════════════════════════════════════════════
 const runR22: Scenario["run"] = async (ctx) => {
@@ -925,33 +925,33 @@ const runR22: Scenario["run"] = async (ctx) => {
   if ((midParent?.progress_percentage ?? -1) !== 0) {
     return {
       status: "fail",
-      expected: "parent progress=0 BEFORE Sr ORA Engr confirmation (sub-tasks don't count without confirmation)",
+      expected: "parent progress=0 BEFORE Snr ORA Engr confirmation (sub-tasks don't count without confirmation)",
       observed: { progress: midParent?.progress_percentage },
     };
   }
-  // Confirmation tasks for Sr ORA Engr should now exist (one per sub-task)
+  // Confirmation tasks for Snr ORA Engr should now exist (one per sub-task)
   const confirmTasks = await findP2ATask(svc, ctx.project.id, "confirm_itp_activity", sr.id);
   const pointConfirms = confirmTasks.filter((t: any) => t.metadata?.point_id === pt.id);
   if (pointConfirms.length !== ITP_ALL) {
     return {
       status: "fail",
-      expected: `${ITP_ALL} confirm_itp_activity tasks for Sr ORA Engr`,
+      expected: `${ITP_ALL} confirm_itp_activity tasks for Snr ORA Engr`,
       observed: { count: pointConfirms.length },
     };
   }
 
-  // Step 2: Sr ORA Engr confirms every sub-task.
+  // Step 2: Snr ORA Engr confirms every sub-task.
   for (const c of children) {
     const { error } = await svc.from("user_tasks")
       .update({ confirmed_by_sr_ora_engr: true, confirmed_at: new Date().toISOString() })
       .eq("id", c.id);
-    if (error) return { status: "fail", expected: "Sr ORA Engr confirm sub-task", observed: error.message };
+    if (error) return { status: "fail", expected: "Snr ORA Engr confirm sub-task", observed: error.message };
   }
   const { data: finalParent } = await svc.from("user_tasks").select("progress_percentage").eq("id", itpParent.id).maybeSingle();
   if ((finalParent?.progress_percentage ?? -1) !== 100) {
     return {
       status: "fail",
-      expected: "parent progress=100 AFTER Sr ORA Engr confirmation",
+      expected: "parent progress=100 AFTER Snr ORA Engr confirmation",
       observed: { progress: finalParent?.progress_percentage },
     };
   }
@@ -1092,7 +1092,7 @@ const runR23: Scenario["run"] = async (ctx) => {
 
 export const ruleScenarios: Scenario[] = [
   ...ruleList,
-  { id: "R19", name: "VCR approved → checklist scoped to Sr ORA Engr (count=2)",          dependsOn: ["R18"], run: buildChecklistRule("R19") },
+  { id: "R19", name: "VCR approved → checklist scoped to Snr ORA Engr (count=2)",          dependsOn: ["R18"], run: buildChecklistRule("R19") },
   { id: "R20", name: "VCR approved → 2 CMMS deliverables (+2 sub-tasks each) → CMMS Lead", dependsOn: ["R18"], run: runR20 },
   { id: "R21", name: "VCR approved → checklist scoped to Construction Lead (count=1)",    dependsOn: ["R18"], run: buildChecklistRule("R21") },
   { id: "R22", name: "VCR approved → Comm Lead checklist + ITP handshake (pre/post confirm)", dependsOn: ["R18"], run: runR22 },
