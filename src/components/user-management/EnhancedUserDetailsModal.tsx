@@ -935,7 +935,6 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
           user_email: formData.email,
           user_name: `${formData.first_name} ${formData.last_name}`.trim(),
           updated_fields: Object.keys(updatePayload)
-      }
         }
       });
 
