@@ -1001,6 +1001,46 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         }
       }
 
+      // Plant role-holder write — Part E2. When the selected role is
+      // scope='plant' (e.g. Ops Coach, Dep. Plant Director, Plant Director),
+      // mirror the selection into plant_role_holders so the structured
+      // resolver (Part D) can find this user at the right scope key:
+      //   pair key = (role_id, plant_id, COALESCE(field_id, sentinel))
+      // For CS / UQ Ops Coach the form requires field; KAZ / BNGL leave it
+      // NULL so the row pairs at plant level. Other plant-scoped roles
+      // (DPD, Plant Director) never carry a field — field_id stays NULL.
+      const selectedRoleIsPlant = (selectedRoleMeta as any)?.scope === 'plant';
+      if (selectedRoleIsPlant && selectedRoleMeta?.id && plantId) {
+        try {
+          // Replace any prior holdings of THIS role for THIS user (a user
+          // typically holds a given plant role at one (plant, field) at a
+          // time; this avoids stale rows when they're moved).
+          await supabase
+            .from('plant_role_holders')
+            .delete()
+            .eq('user_id', user.user_id)
+            .eq('role_id', selectedRoleMeta.id);
+
+          const { error: phErr } = await supabase
+            .from('plant_role_holders')
+            .insert({
+              user_id: user.user_id,
+              role_id: selectedRoleMeta.id,
+              plant_id: plantId,
+              // Only Ops Coach uses field-scope today; other plant roles stay
+              // plant-level (field_id NULL).
+              field_id: (formData.role === 'Ops Coach' && opsCoachNeedsField(formData.plant))
+                ? (fieldId ?? null)
+                : null,
+            });
+          if (phErr) throw phErr;
+        } catch (e: any) {
+          console.error('Plant role-holder write failed:', e);
+          toast.error(`Failed to save plant role-holder: ${e.message ?? e}`);
+          return;
+        }
+      }
+
       // Update system role if it changed
       if (systemRole !== (user.roles?.[0] || 'user')) {
         console.log('Updating system role from', user.roles?.[0], 'to', systemRole);
