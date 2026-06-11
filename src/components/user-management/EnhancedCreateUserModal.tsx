@@ -154,21 +154,23 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
   useEffect(() => {
     const fetchDatabaseOptions = async () => {
       try {
-        // Fetch plants
+        // Fetch plants (with ids — needed for plant_role_holders write + cascade)
         const { data: plantsData } = await supabase
           .from('plant')
-          .select('name')
+          .select('id, name')
           .eq('is_active', true)
           .order('name');
         setPlants(plantsData?.map(p => ({ value: p.name, label: p.name })) || []);
+        setPlantIdByName(Object.fromEntries((plantsData ?? []).map(p => [p.name, p.id])));
 
-        // Fetch fields
+        // Fetch fields (with plant_id — Ops Coach cascade filter)
         const { data: fieldsData } = await supabase
           .from('field')
-          .select('name')
+          .select('id, name, plant_id')
           .eq('is_active', true)
           .order('name');
-        setFields(fieldsData?.map(f => ({ value: f.name, label: f.name })) || []);
+        setFields(fieldsData?.map(f => ({ value: f.name, label: f.name, plant_id: f.plant_id })) || []);
+        setFieldIdByName(Object.fromEntries((fieldsData ?? []).map(f => [f.name, f.id])));
 
         // Fetch stations
         const { data: stationsData } = await supabase
