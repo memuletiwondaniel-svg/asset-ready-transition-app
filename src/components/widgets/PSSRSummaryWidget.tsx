@@ -207,7 +207,6 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
     const stillEditable =
       lifecycle === 'not_started' ||
       lifecycle === 'draft' ||
-      lifecycle === 'in_progress' ||
       (!lifecycle && (found.status || '').toUpperCase() !== 'SIGNED');
     if (stillEditable) {
       setWizardVCR(found);
