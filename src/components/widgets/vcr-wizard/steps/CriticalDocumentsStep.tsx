@@ -17,7 +17,7 @@ import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from '@/components/ui/tooltip';
 import {
-  Search, X, Loader2, ChevronDown, FileStack, Plus, Check,
+  Search, X, Loader2, ChevronDown, Trash2, FileStack, Plus, Check,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -70,6 +70,8 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
   // reads as "what did I pick?" first.
   const [availableOpen, setAvailableOpen] = useState(false);
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
+  const [justSaved, setJustSaved] = useState(false);
+  const savedTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   React.useEffect(() => {
     const id = setTimeout(() => setSearch(searchInput), 200);
