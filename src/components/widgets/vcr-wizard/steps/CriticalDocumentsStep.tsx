@@ -17,7 +17,7 @@ import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from '@/components/ui/tooltip';
 import {
-  Search, X, Loader2, ChevronDown, Trash2, FileStack, Plus, Check,
+  Search, X, Loader2, ChevronDown, FileStack, Plus, Check,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
