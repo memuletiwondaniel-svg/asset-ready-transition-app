@@ -1255,25 +1255,36 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
-                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Field *</Label>
-                  <Select
-                    value={formData.field}
-                    onValueChange={handleFieldChange}
-                    disabled={!formData.plant}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={formData.plant ? "Select field" : "Select plant first"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {fields.map(field => (
-                        <SelectItem key={field.value} value={field.value}>
-                          {field.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {/* Field — only shown for Ops Coach when plant requires
+                    a field (CS / UQ). KAZ / BNGL stop at plant per E2 spec. */}
+                {(formData.role !== 'Ops Coach' || opsCoachNeedsField(formData.plant)) && (
+                  <div>
+                    <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Field *</Label>
+                    <Select
+                      value={formData.field}
+                      onValueChange={handleFieldChange}
+                      disabled={!formData.plant}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={formData.plant ? "Select field" : "Select plant first"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {fields
+                          .filter(field => {
+                            // E2: filter Field list by selected Plant via plant_id.
+                            const selectedPlantId = plantIdByName[formData.plant];
+                            if (!selectedPlantId) return true;
+                            return field.plant_id === selectedPlantId;
+                          })
+                          .map(field => (
+                            <SelectItem key={field.value} value={field.value}>
+                              {field.label}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 {/* Station - hidden for Ops Coach with CS plant */}
                 {!(formData.role === 'Ops Coach' && formData.plant === 'CS') && (
                   <div>
