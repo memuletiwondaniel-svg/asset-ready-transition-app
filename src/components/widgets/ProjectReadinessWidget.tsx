@@ -29,6 +29,66 @@ interface ProjectReadinessWidgetProps {
   onEdit?: () => void;
 }
 
+/**
+ * PairedRoleRow — single-row renderer for a required role.
+ * - holders is pre-sorted alphabetically (deterministic primary on first load).
+ * - Clicking the B2B chip cycles the displayed holder (display-only, no write).
+ */
+const PairedRoleRow: React.FC<{
+  role: string;
+  holders: RoleHolder[];
+  getAvatarUrl: (u: string | null | undefined) => string | null;
+}> = ({ role, holders, getAvatarUrl }) => {
+  const [idx, setIdx] = useState(0);
+  const safeIdx = idx % holders.length;
+  const shown = holders[safeIdx];
+  const partners = holders.filter((_, i) => i !== safeIdx);
+  const partnerNames = partners.map(p => p.full_name).join(', ');
+  const isPaired = holders.length > 1;
+
+  return (
+    <div className="flex items-center gap-2.5 p-2 rounded-lg border bg-muted/30 border-border/40 hover:bg-muted/50 hover:border-primary/20 transition-all duration-200">
+      <Avatar className="h-8 w-8 ring-2 ring-background shadow-sm">
+        {shown.avatar_url ? (
+          <AvatarImage src={getAvatarUrl(shown.avatar_url) || undefined} alt={shown.full_name} />
+        ) : (
+          <AvatarFallback className="text-[11px] font-medium bg-primary/10 text-primary">
+            {shown.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+          </AvatarFallback>
+        )}
+      </Avatar>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5">
+          <p className="text-[13px] font-medium truncate leading-tight">{shown.full_name}</p>
+          {isPaired && (
+            <TooltipProvider delayDuration={150}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIdx(i => (i + 1) % holders.length);
+                    }}
+                    className="text-[8px] font-semibold tracking-wider px-1 py-px rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0 leading-none cursor-pointer hover:bg-amber-200 dark:hover:bg-amber-900/60 transition-colors"
+                    aria-label={`Back-to-back with ${partnerNames}. Click to view partner.`}
+                  >
+                    B2B
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" align="start" sideOffset={4} className="text-xs">
+                  Back-to-back with {partnerNames} — click to swap
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
+        <p className="text-[10px] text-muted-foreground truncate leading-tight">{role}</p>
+      </div>
+    </div>
+  );
+};
+
 export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ projectId, onViewDetails, onEdit }) => {
   const [teamExpanded, setTeamExpanded] = useState(false);
   const [milestonesExpanded, setMilestonesExpanded] = useState(false);
