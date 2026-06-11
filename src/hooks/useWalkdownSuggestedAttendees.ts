@@ -25,7 +25,7 @@ const ROLE_CATEGORIES: Record<string, string[]> = {
     'Rotating TA2', 'Civil TA2', 'Tech Safety TA2'
   ],
   'Operations': [
-    'Ops Coach', 'ORA Lead', 'ORA Engr.', 'Site Engr.', 'Ops Team Lead'
+    'Ops Coach', 'ORA Lead', 'ORA Engr', 'Site Engr', 'Ops Team Lead'
   ],
   'Projects': [
     'Project Engr', 'Commissioning Lead', 'Construction Lead', 
@@ -42,7 +42,7 @@ const ROLE_CATEGORIES: Record<string, string[]> = {
     'PSSR Lead', 'ORA Lead', 'Site Engineer'
   ],
   'Other': [
-    'CMMS Engr.', 'CMMS Lead'
+    'CMMS Engr', 'CMMS Lead'
   ]
 };
 
@@ -94,9 +94,9 @@ const DEFAULT_PSSR_ROLES: { role: string; source: 'approver' | 'responsible' }[]
   { role: 'Civil TA2', source: 'approver' },
   { role: 'Tech Safety TA2', source: 'approver' },
   { role: 'ORA Lead', source: 'responsible' },
-  { role: 'ORA Engr.', source: 'responsible' },
+  { role: 'ORA Engr', source: 'responsible' },
   { role: 'Ops Coach', source: 'responsible' },
-  { role: 'Site Engr.', source: 'responsible' },
+  { role: 'Site Engr', source: 'responsible' },
   { role: 'Project Engr', source: 'responsible' },
   { role: 'Commissioning Lead', source: 'responsible' },
 ];

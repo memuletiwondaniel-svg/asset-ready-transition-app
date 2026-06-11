@@ -56,7 +56,7 @@ const FIELD_BASED_ROLES = [
 
 // Roles that use Station level
 const STATION_BASED_ROLES = [
-  'Site Engr.',
+  'Site Engr',
   'Ops Team Lead',
 ];
 
@@ -66,11 +66,11 @@ const PROJECT_HUB_ROLES = [
   'Project Hub Lead',
   'Commissioning Lead',
   'Construction Lead',
-  'ORA Engr.',
+  'ORA Engr',
   'ORA Lead',
   'Project Controls Lead',
   'Completions Engr',
-  'CMMS Engr.',
+  'CMMS Engr',
   'CMMS Lead',
   'Commissioning Engr. ELECT',
   'Commissioning Engr. MECH',
@@ -224,10 +224,10 @@ export const BASE_ROLES_FOR_CHECKLIST = [
   'Civil TA2',
   'Tech Safety TA2',
   // Operations
-  'ORA Engr.',
+  'ORA Engr',
   'ORA Lead',
   'Ops Coach',
-  'Site Engr.',
+  'Site Engr',
   'Ops Team Lead',
   // Projects
   'Project Engr',
@@ -242,6 +242,6 @@ export const BASE_ROLES_FOR_CHECKLIST = [
   'Environment Engr',
   'ER Adviser',
   // Other
-  'CMMS Engr.',
+  'CMMS Engr',
   'CMMS Lead',
 ];

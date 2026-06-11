@@ -56,10 +56,10 @@ const ROLE_GROUPS = {
     'MCI TA2',
   ],
   'Operations': [
-    'ORA Engr.',
+    'ORA Engr',
     'ORA Lead',
     'Ops Coach',
-    'Site Engr.',
+    'Site Engr',
     'Ops Team Lead',
     'Ops HSE Adviser',
   ],
@@ -80,14 +80,14 @@ const ROLE_GROUPS = {
     'Construction Lead',
     'Completions Engr',
     'Project Controls Lead',
-    'Pipeline Engr.',
+    'Pipeline Engr',
   ],
   'HSE': [
     'ER Adviser',
     'Environment Engr',
   ],
   'Other': [
-    'CMMS Engr.',
+    'CMMS Engr',
     'CMMS Lead',
   ],
 };

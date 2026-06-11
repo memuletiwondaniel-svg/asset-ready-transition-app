@@ -50,7 +50,7 @@ const mockDeviations: QualificationDetail[] = [
     riskDescription: 'Improper maintenance procedures could lead to engine failure or safety incidents',
     riskRating: 'Low',
     actionOwner: 'ORA Engineer',
-    actionOwnerRole: 'ORA Engr.',
+    actionOwnerRole: 'ORA Engr',
     attachments: [
       { name: 'Waukesha_Training_Schedule.pdf', type: 'PDF' },
       { name: 'Vendor_Confirmation_Letter.pdf', type: 'PDF' },

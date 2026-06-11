@@ -32,7 +32,7 @@ const ROLE_MATCHING_CONFIG: Record<string, { patterns: string[]; matchType: 'reg
   // Additional team member roles (auto-populated but not required)
   'Project Manager': { patterns: ['project manager', 'proj manager'], matchType: 'region', isRequired: false },
   'Project Engr': { patterns: ['proj eng', 'project eng', 'project engr'], matchType: 'hub', allowMultiple: true, isRequired: false },
-  'ORA Engr.': { patterns: ['ora engr', 'ora engineer', 'ora eng'], matchType: 'hub', allowMultiple: true, isRequired: false },
+  'ORA Engr': { patterns: ['ora engr', 'ora engineer', 'ora eng'], matchType: 'hub', allowMultiple: true, isRequired: false },
 };
 
 export const useAutoPopulateTeam = (

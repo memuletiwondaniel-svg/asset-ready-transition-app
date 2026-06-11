@@ -12,7 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
  *
  * Role labels MUST be byte-identical to `roles.name` in the canonical
  * roles catalog (validated by the Mig 5c trigger). Examples:
- *   'ORA Lead', 'Sr ORA Engr', 'Construction Lead',
+ *   'ORA Lead', 'Snr ORA Engr', 'Construction Lead',
  *   'Commissioning Lead', 'Project Hub Lead', 'CMMS Lead'
  *
  * If a project has no team member assigned to that role, the entry is
