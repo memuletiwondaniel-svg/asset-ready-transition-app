@@ -66,14 +66,14 @@ export const SPEC: Record<string, RuleSpec> = {
   // ── ORA WORKFLOW (R1–R5) ─────────────────────────────────────────────────
   R1: {
     id: "R1",
-    trigger: "INSERT project_team_members (Sr ORA Engr assigned)",
+    trigger: "INSERT project_team_members (Snr ORA Engr assigned)",
     gate: "none",
     status: "pending",
     expects: [{ title: "{projCode}: Develop ORA Plan", assigneeRole: "Snr ORA Engr", action: "create_ora_plan", cardinality: "one" }],
   },
   R2: {
     id: "R2",
-    trigger: "UPDATE orp_plans SET status='PENDING_APPROVAL' (Sr ORA Engr submit)",
+    trigger: "UPDATE orp_plans SET status='PENDING_APPROVAL' (Snr ORA Engr submit)",
     gate: "none",
     status: "pending",
     expects: [{ title: "{projCode}: Review and Approve ORA Plan", assigneeRole: "ORA Lead", action: "review_ora_plan", cardinality: "one" }],
@@ -110,7 +110,7 @@ export const SPEC: Record<string, RuleSpec> = {
   },
   R7: {
     id: "R7",
-    trigger: "UPDATE p2a_handover_plans SET status='PENDING_APPROVAL' (Sr ORA Engr submit)",
+    trigger: "UPDATE p2a_handover_plans SET status='PENDING_APPROVAL' (Snr ORA Engr submit)",
     gate: "sr_ora_engr_submit_p2a",
     status: "pending",
     expects: [{ title: "{projCode}: Review and Approve P2A Plan", assigneeRole: "ORA Lead", action: "review_p2a_plan", cardinality: "one" }],
@@ -154,7 +154,7 @@ export const SPEC: Record<string, RuleSpec> = {
   // ── VCR PLAN WORKFLOW (R13–R17) ──────────────────────────────────────────
   R13: {
     id: "R13",
-    trigger: "UPDATE p2a_handover_points SET execution_plan_status='PENDING_APPROVAL' (Sr ORA Engr submit)",
+    trigger: "UPDATE p2a_handover_points SET execution_plan_status='PENDING_APPROVAL' (Snr ORA Engr submit)",
     gate: "sr_ora_engr_submit_vcr",
     status: "pending",
     expects: [{ title: "{projCode}: Review and Approve {vcrCode} Plan", assigneeRole: "ORA Lead", action: "review_vcr_plan", cardinality: "per_vcr" }],
@@ -191,7 +191,7 @@ export const SPEC: Record<string, RuleSpec> = {
   // ── VCR EXECUTION FAN-OUT (R18–R22) ──────────────────────────────────────
   R18: {
     id: "R18",
-    trigger: "4-of-4 VCR lead approvers APPROVED via vcr_plan_is_approved() — 5 deliverable parents per VCR to Sr ORA Engr",
+    trigger: "4-of-4 VCR lead approvers APPROVED via vcr_plan_is_approved() — 5 deliverable parents per VCR to Snr ORA Engr",
     gate: "vcr_plan_is_approved",
     status: "pending",
     expects: [
@@ -204,7 +204,7 @@ export const SPEC: Record<string, RuleSpec> = {
   },
   R19: {
     id: "R19",
-    trigger: "vcr_plan_is_approved — checklist task scoped to vcr_item_delivering_parties(role=Sr ORA Engr)",
+    trigger: "vcr_plan_is_approved — checklist task scoped to vcr_item_delivering_parties(role=Snr ORA Engr)",
     gate: "vcr_plan_is_approved",
     status: "pending",
     expects: [{ title: "{projCode}: Complete {vcrCode} Checklist Items", assigneeRole: "Snr ORA Engr", action: "complete_checklist", cardinality: "per_delivering" }],
@@ -228,7 +228,7 @@ export const SPEC: Record<string, RuleSpec> = {
   },
   R22: {
     id: "R22",
-    trigger: "vcr_plan_is_approved — Commissioning Lead: (a) scoped checklist + (b) ITP rollup gated on Sr ORA Engr confirmation",
+    trigger: "vcr_plan_is_approved — Commissioning Lead: (a) scoped checklist + (b) ITP rollup gated on Snr ORA Engr confirmation",
     gate: "vcr_plan_is_approved",
     status: "pending",
     expects: [
@@ -262,7 +262,7 @@ export const CROSS_CUTTING = {
   B: "P2A/VCR gates: 1-of-4 approvers → false, 4-of-4 → true",
   C: "R19/R21/R22a each yield exactly the vcr_item_delivering_parties row count for their role on this handover_point",
   D: "Rollup = completed/total; status='cancelled_superseded' excluded from denominator",
-  E: "Reject at P2A or VCR level → 'Revise [plan]' task to Sr ORA Engr + sibling pending approvals cancelled atomically",
+  E: "Reject at P2A or VCR level → 'Revise [plan]' task to Snr ORA Engr + sibling pending approvals cancelled atomically",
   F: "Double-fire approval → no duplicate user_tasks (dedupe_key idempotent)",
   G: "Revise approved P2A/VCR: ORA-Lead-only re-approval; diff on (source_plan_id, source_business_key): unchanged kept, new created, removed → cancelled_superseded",
   H: "Wrong-role JWT write denied on all 3 approval tables; DELETE denied; legacy plan (gate_model='legacy') → gate returns true",

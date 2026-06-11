@@ -61,7 +61,7 @@ const runC: Scenario["run"] = async (ctx) => {
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
   if (total === 0) return { status: "fail", expected: "complete_checklist tasks scoped per role", observed: { counts } };
   if (counts["Snr ORA Engr"] === counts["Construction Lead"]) {
-    return { status: "fail", expected: "Sr ORA Engr count != Construction Lead count (role-specific cardinality, not generic)", observed: { counts } };
+    return { status: "fail", expected: "Snr ORA Engr count != Construction Lead count (role-specific cardinality, not generic)", observed: { counts } };
   }
   const allIds = Object.values(dpIds).flat();
   if (new Set(allIds).size !== allIds.length) {
@@ -103,7 +103,7 @@ const runD: Scenario["run"] = async (ctx) => {
 // plans/points so the R6–R22 chain (plan #1 / point VCR-01) is untouched.
 // Spec cross_cutting.E: REJECT must (1) cancel sibling PENDING approver
 // rows of the same cycle and (2) create a "Revise <Plan>" user_task for
-// Sr ORA Engr. If the product cascade doesn't fire, this RED-fails by
+// Snr ORA Engr. If the product cascade doesn't fire, this RED-fails by
 // design — caller fixes at root, scenario is unchanged.
 const runE: Scenario["run"] = async (ctx) => {
   const svc = svcOf(ctx);
@@ -239,7 +239,7 @@ const runE: Scenario["run"] = async (ctx) => {
   const failed = ["ORA", "P2A", "VCR"].filter((k) => !levelOk(results[k]));
   if (failed.length > 0) return {
     status: "fail",
-    expected: "all 3 levels: sibling pendings cancelled + Revise task for Sr ORA Engr",
+    expected: "all 3 levels: sibling pendings cancelled + Revise task for Snr ORA Engr",
     observed: { passed, failed, details: results },
   };
   return { status: "pass", observed: results };
@@ -418,7 +418,7 @@ const runH: Scenario["run"] = async (ctx) => {
   const sr = ctx.users["Snr ORA Engr"];
   const fails: string[] = [];
 
-  // (1) wrong-role write deny: Sr ORA Engr tries to UPDATE ORA Lead's approval row
+  // (1) wrong-role write deny: Snr ORA Engr tries to UPDATE ORA Lead's approval row
   const { data: pts } = await svc.from("p2a_handover_points")
     .select("id,handover_plan_id").order("vcr_code", { ascending: true }).limit(1);
   const pt = pts?.[0];
@@ -430,7 +430,7 @@ const runH: Scenario["run"] = async (ctx) => {
     if (!wrErr && (wrCount ?? 0) > 0) fails.push(`wrong-role UPDATE succeeded (${wrCount} rows)`);
   }
 
-  // (2) DELETE deny: Sr ORA Engr tries to DELETE an approval row
+  // (2) DELETE deny: Snr ORA Engr tries to DELETE an approval row
   const cSr2 = clientAs(ctx.anonUrl, ctx.anonKey, sr.jwt);
   const { error: delErr, count: delCount } = await cSr2.from("p2a_handover_approvers")
     .delete({ count: "exact" })
