@@ -512,28 +512,6 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
                           )}
                         </div>
 
-                        {disciplines.length > 0 && (
-                          <>
-                            {disciplines.map((code) => (
-                              <button
-                                key={code}
-                                onClick={() => setDisciplines((arr) => arr.filter((c) => c !== code))}
-                                className="inline-flex items-center gap-1 h-7 pl-2.5 pr-1 rounded-full bg-secondary text-secondary-foreground text-[11px] hover:bg-secondary/80 transition-colors"
-                              >
-                                {disciplineNameByCode.get(code) || code}
-                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full hover:bg-secondary-foreground/10 transition-colors">
-                                  <X className="w-3 h-3 opacity-70" />
-                                </span>
-                              </button>
-                            ))}
-                            <button
-                              onClick={() => setDisciplines([])}
-                              className="text-[11px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
-                            >
-                              Clear
-                            </button>
-                          </>
-                        )}
                       </div>
 
                       {/* Available list / empty states */}
