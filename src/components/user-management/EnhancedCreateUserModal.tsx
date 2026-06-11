@@ -722,10 +722,41 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
         // resolution propagates to every project in the chosen portfolio.
         if (newUserId && selectedRoleIsPortfolio && selectedRoleMeta?.id && portfolioRegionId) {
           try {
+            let replaceUserId: string | null = null;
+            if ((selectedRoleMeta as any).is_b2b) {
+              const holders = await fetchRegionRoleHoldersPreflight(
+                selectedRoleMeta.id,
+                portfolioRegionId,
+              );
+              if (holders.length >= 2) {
+                const regionName =
+                  availableRegions?.find((r) => r.id === portfolioRegionId)?.name ?? 'This portfolio';
+                const choice = await new Promise<string | null>((resolve) => {
+                  setB2bDialog({
+                    open: true,
+                    holders,
+                    regionName,
+                    roleName: selectedRoleMeta.name,
+                    resolve,
+                  });
+                });
+                if (!choice) {
+                  toast({
+                    title: 'Portfolio assignment cancelled',
+                    description: 'No replacement chosen — the new user was created but not added to the roster.',
+                  });
+                  // fall through; user is created. Skip roster write.
+                  return;
+                }
+                replaceUserId = choice;
+              }
+            }
             await savePortfolioAssignments({
               userId: newUserId,
               roleId: selectedRoleMeta.id,
               regionIds: [portfolioRegionId],
+              replaceUserId,
+              replaceRegionId: replaceUserId ? portfolioRegionId : null,
             });
           } catch (e: any) {
             console.error('Portfolio assignment write failed:', e);
