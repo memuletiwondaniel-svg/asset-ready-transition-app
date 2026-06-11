@@ -1697,6 +1697,22 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
           onCancel={handleCropCancel}
         />
       )}
+
+      <B2BReplacementDialog
+        open={b2bDialog.open}
+        onOpenChange={(o) => {
+          if (!o && b2bDialog.resolve) b2bDialog.resolve(null);
+          setB2bDialog((s) => ({ ...s, open: o }));
+        }}
+        roleName={b2bDialog.roleName}
+        regionName={b2bDialog.regionName}
+        newUserName={`${formData.firstName} ${formData.lastName}`.trim() || 'this user'}
+        holders={b2bDialog.holders}
+        onConfirm={(replaceUserId) => {
+          b2bDialog.resolve?.(replaceUserId);
+          setB2bDialog((s) => ({ ...s, open: false }));
+        }}
+      />
     </Dialog>
   );
 };
