@@ -213,6 +213,11 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
   // Use categorized roles hook for function -> role hierarchy
   const { data: categorizedRoles, isLoading: rolesLoading } = useCategorizedRoles();
 
+  // Portfolio role-holder I/O — only matters when selected role has scope='portfolio'.
+  const { data: portfolioAssignments } = useUserPortfolioAssignments(user?.user_id);
+  const { mutateAsync: savePortfolioAssignments } = useSetPortfolioAssignments();
+  const [portfolioRegionIds, setPortfolioRegionIds] = useState<string[]>([]);
+
   // Get roles for the selected function
   const getRolesForFunction = () => {
     if (!formData.function || !categorizedRoles) return [];
@@ -220,7 +225,35 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     return functionGroup?.roles || [];
   };
 
-  const { data: hubs } = useHubs();
+  // Look up the catalog row for the currently-selected role so we can read
+  // its scope and id without an extra query.
+  const selectedRoleMeta = React.useMemo(() => {
+    if (!formData.role || !categorizedRoles) return null;
+    for (const group of categorizedRoles) {
+      const hit = group.roles.find((r) => r.name === formData.role);
+      if (hit) return hit;
+    }
+    return null;
+  }, [formData.role, categorizedRoles]);
+
+  const selectedRoleIsPortfolio =
+    (selectedRoleMeta as any)?.scope === 'portfolio' ||
+    // Fallback while RPC typing catches up — match by canonical name.
+    ['Snr ORA Engr', 'ORA Engr', 'Construction Lead', 'Commissioning Lead', 'Project Manager']
+      .includes(formData.role);
+
+  // Pre-fill the multi-select with the regions this user already holds for
+  // the currently-selected role. Re-runs when role or assignments change.
+  useEffect(() => {
+    if (!selectedRoleMeta?.id || !portfolioAssignments) {
+      setPortfolioRegionIds([]);
+      return;
+    }
+    const mine = portfolioAssignments
+      .filter((a) => a.role_id === selectedRoleMeta.id)
+      .map((a) => a.region_id);
+    setPortfolioRegionIds(mine);
+  }, [selectedRoleMeta?.id, portfolioAssignments]);
 
   // Function to generate dynamic title/position based on role and conditional fields
   const generateTitle = () => {
