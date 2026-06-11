@@ -64,18 +64,27 @@ export const posMatchesRegion = (pos: string, regionKeywords: string[]): boolean
  * Role families: selecting one role should also include related roles.
  * e.g., selecting "ORA Engr" should also show "Snr. ORA Engr." candidates.
  */
+// Family tolerance: legacy/aliased forms (with dots, "Senior", etc.) are
+// kept here so position-string matching against historical profiles.position
+// values still works. The canonical roles.name values post-rename are
+// 'ORA Engr' and 'Snr ORA Engr' (no trailing dot, Snr not Sr/Senior).
+const ORA_ENGR_FAMILY = [
+  'ORA Engr', 'ORA Engr.', 'ORA Engineer',
+  'Snr ORA Engr', 'Snr ORA Engr.', 'Snr. ORA Engr.',
+  'Senior ORA Engr.', 'Senior ORA Engineer',
+];
 export const ROLE_FAMILIES: Record<string, string[]> = {
-  'ORA Engr': ['ORA Engr', 'ORA Engr', 'ORA Engineer', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'],
-  'ORA Engr': ['ORA Engr', 'ORA Engr', 'ORA Engineer', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'],
-  'ORA Engineer': ['ORA Engr', 'ORA Engr', 'ORA Engineer', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'],
-  'Snr ORA Engr.': ['ORA Engr', 'ORA Engr', 'ORA Engineer', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'],
-  'Snr. ORA Engr.': ['ORA Engr', 'ORA Engr', 'ORA Engineer', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'],
-  'Snr ORA Engr': ['ORA Engr', 'ORA Engr', 'ORA Engineer', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'],
-  'Senior ORA Engr.': ['ORA Engr', 'ORA Engr', 'ORA Engineer', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'],
-  'Senior ORA Engineer': ['ORA Engr', 'ORA Engr', 'ORA Engineer', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'],
-  'Project Engr': ['Project Engr', 'Project Engr.', 'Proj Engr'],
-  'Project Engr.': ['Project Engr', 'Project Engr.', 'Proj Engr'],
-  'Proj Engr': ['Project Engr', 'Project Engr.', 'Proj Engr'],
+  'ORA Engr':            ORA_ENGR_FAMILY,
+  'ORA Engr.':           ORA_ENGR_FAMILY,
+  'ORA Engineer':        ORA_ENGR_FAMILY,
+  'Snr ORA Engr':        ORA_ENGR_FAMILY,
+  'Snr ORA Engr.':       ORA_ENGR_FAMILY,
+  'Snr. ORA Engr.':      ORA_ENGR_FAMILY,
+  'Senior ORA Engr.':    ORA_ENGR_FAMILY,
+  'Senior ORA Engineer': ORA_ENGR_FAMILY,
+  'Project Engr':        ['Project Engr', 'Project Engr.', 'Proj Engr'],
+  'Project Engr.':       ['Project Engr', 'Project Engr.', 'Proj Engr'],
+  'Proj Engr':           ['Project Engr', 'Project Engr.', 'Proj Engr'],
 };
 
 /**

@@ -60,6 +60,11 @@ import {
   isMtceManagerTitleReady,
 } from '@/utils/mtceManagerConfig';
 import { AvatarCropDialog } from './AvatarCropDialog';
+import { PortfolioAssignmentField } from './PortfolioAssignmentField';
+import {
+  useUserPortfolioAssignments,
+  useSetPortfolioAssignments,
+} from '@/hooks/usePortfolioRoleHolders';
 
 // Type definitions matching the database schema exactly
 interface DatabaseUser {
@@ -208,6 +213,11 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
   // Use categorized roles hook for function -> role hierarchy
   const { data: categorizedRoles, isLoading: rolesLoading } = useCategorizedRoles();
 
+  // Portfolio role-holder I/O — only matters when selected role has scope='portfolio'.
+  const { data: portfolioAssignments } = useUserPortfolioAssignments(user?.user_id);
+  const { mutateAsync: savePortfolioAssignments } = useSetPortfolioAssignments();
+  const [portfolioRegionIds, setPortfolioRegionIds] = useState<string[]>([]);
+
   // Get roles for the selected function
   const getRolesForFunction = () => {
     if (!formData.function || !categorizedRoles) return [];
@@ -215,7 +225,38 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     return functionGroup?.roles || [];
   };
 
+  // Look up the catalog row for the currently-selected role so we can read
+  // its scope and id without an extra query.
+  const selectedRoleMeta = React.useMemo(() => {
+    if (!formData.role || !categorizedRoles) return null;
+    for (const group of categorizedRoles) {
+      const hit = group.roles.find((r) => r.name === formData.role);
+      if (hit) return hit;
+    }
+    return null;
+  }, [formData.role, categorizedRoles]);
+
+  const selectedRoleIsPortfolio =
+    (selectedRoleMeta as any)?.scope === 'portfolio' ||
+    // Fallback while RPC typing catches up — match by canonical name.
+    ['Snr ORA Engr', 'ORA Engr', 'Construction Lead', 'Commissioning Lead', 'Project Manager']
+      .includes(formData.role);
+
+  // Pre-fill the multi-select with the regions this user already holds for
+  // the currently-selected role. Re-runs when role or assignments change.
+  useEffect(() => {
+    if (!selectedRoleMeta?.id || !portfolioAssignments) {
+      setPortfolioRegionIds([]);
+      return;
+    }
+    const mine = portfolioAssignments
+      .filter((a) => a.role_id === selectedRoleMeta.id)
+      .map((a) => a.region_id);
+    setPortfolioRegionIds(mine);
+  }, [selectedRoleMeta?.id, portfolioAssignments]);
+
   const { data: hubs } = useHubs();
+
 
   // Function to generate dynamic title/position based on role and conditional fields
   const generateTitle = () => {
@@ -896,6 +937,24 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
           updated_fields: Object.keys(updatePayload)
         }
       });
+
+      // Portfolio role-holder write — only when the selected role is
+      // scope='portfolio'. Writes to region_role_holders (NOT profiles.position
+      // and NOT project_team_members). Resolution is live-read so this
+      // propagates to every project in the chosen portfolio(s) immediately.
+      if (selectedRoleIsPortfolio && selectedRoleMeta?.id) {
+        try {
+          await savePortfolioAssignments({
+            userId: user.user_id,
+            roleId: selectedRoleMeta.id,
+            regionIds: portfolioRegionIds,
+          });
+        } catch (e: any) {
+          console.error('Portfolio assignment write failed:', e);
+          toast.error(`Failed to save portfolio assignments: ${e.message ?? e}`);
+          return;
+        }
+      }
 
       // Update system role if it changed
       if (systemRole !== (user.roles?.[0] || 'user')) {
@@ -1943,6 +2002,16 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                           </div>
                         )}
                       </div>
+
+                      {/* Portfolio role-holder multi-select — canonical resolution source. */}
+                      {selectedRoleIsPortfolio && selectedRoleMeta?.id && (
+                        <PortfolioAssignmentField
+                          roleName={formData.role}
+                          selectedRegionIds={portfolioRegionIds}
+                          onChange={setPortfolioRegionIds}
+                          disabled={!editMode}
+                        />
+                      )}
 
                       {/* Position Display - Separate row in Edit Mode */}
                       <div>

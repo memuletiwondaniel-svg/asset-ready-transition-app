@@ -16,6 +16,8 @@ export interface Role {
   description: string | null;
   category_id: string | null;
   is_b2b?: boolean;
+  /** roles.scope enum — 'project' | 'hub' | 'portfolio' | 'plant' | 'org'. */
+  scope?: string | null;
 }
 
 export interface CategorizedRole {
@@ -26,6 +28,7 @@ export interface CategorizedRole {
   role_name: string | null;
   role_description: string | null;
   role_is_b2b?: boolean;
+  role_scope?: string | null;
 }
 
 export interface GroupedRoles {
@@ -88,6 +91,7 @@ export const useCategorizedRoles = () => {
             description: item.role_description,
             category_id: item.category_id,
             is_b2b: !!item.role_is_b2b,
+            scope: item.role_scope ?? null,
           });
         }
       });
