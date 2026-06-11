@@ -1351,8 +1351,20 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
               </div>
             )}
 
-            {/* Portfolio Selection */}
-            {requiresPortfolioSelection(formData.role) && (
+            {/* Portfolio role-holder SINGLE-select — canonical control for
+                portfolio-scoped roles. Writes region_role_holders AFTER user
+                creation. For hub-requiring roles (Project Hub Lead, Project
+                Engr) keep the legacy Combobox so they can pick region+hub. */}
+            {selectedRoleIsPortfolio && (
+              <PortfolioAssignmentField
+                roleName={formData.role}
+                selectedRegionId={portfolioRegionId}
+                onChange={handlePortfolioRegionChange}
+              />
+            )}
+
+            {/* Portfolio Selection — only for hub-requiring roles (region+hub pair) */}
+            {requiresPortfolioSelection(formData.role) && !selectedRoleIsPortfolio && (
               <div>
                 <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Portfolio *</Label>
                 <Combobox
