@@ -61,10 +61,13 @@ import {
 } from '@/utils/mtceManagerConfig';
 import { AvatarCropDialog } from './AvatarCropDialog';
 import { PortfolioAssignmentField } from './PortfolioAssignmentField';
+import { B2BReplacementDialog } from './B2BReplacementDialog';
 import {
   useUserPortfolioAssignments,
   useSetPortfolioAssignments,
   useAvailableRegions,
+  fetchRegionRoleHoldersPreflight,
+  type RegionRoleHolder,
 } from '@/hooks/usePortfolioRoleHolders';
 
 // Type definitions matching the database schema exactly
@@ -220,6 +223,16 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
   // Single-select: a portfolio role is held for EXACTLY ONE region at a time.
   const [portfolioRegionId, setPortfolioRegionId] = useState<string | null>(null);
   const { data: availableRegions } = useAvailableRegions();
+
+  // B2B cap-2 replacement dialog state
+  const [b2bDialog, setB2bDialog] = useState<{
+    open: boolean;
+    holders: RegionRoleHolder[];
+    regionName: string;
+    roleName: string;
+    regionId: string;
+    resolve?: (replaceUserId: string | null) => void;
+  }>({ open: false, holders: [], regionName: '', roleName: '', regionId: '' });
 
   // Get roles for the selected function
   const getRolesForFunction = () => {
@@ -989,14 +1002,48 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       // propagates to every project in the chosen portfolio(s) immediately.
       if (selectedRoleIsPortfolio && selectedRoleMeta?.id) {
         try {
+          let replaceUserId: string | null = null;
+          // B2B cap-2 preflight: when assigning into a region that
+          // already holds the pair, ask which holder is being replaced.
+          if (
+            portfolioRegionId &&
+            (selectedRoleMeta as any).is_b2b
+          ) {
+            const holders = await fetchRegionRoleHoldersPreflight(
+              selectedRoleMeta.id,
+              portfolioRegionId,
+            );
+            const alreadyHolder = holders.some((h) => h.user_id === user.user_id);
+            if (!alreadyHolder && holders.length >= 2) {
+              const regionName =
+                availableRegions?.find((r) => r.id === portfolioRegionId)?.name ?? 'This portfolio';
+              const choice = await new Promise<string | null>((resolve) => {
+                setB2bDialog({
+                  open: true,
+                  holders,
+                  regionName,
+                  roleName: selectedRoleMeta.name,
+                  regionId: portfolioRegionId,
+                  resolve,
+                });
+              });
+              if (!choice) {
+                toast.info('Portfolio assignment cancelled — no replacement chosen.');
+                return;
+              }
+              replaceUserId = choice;
+            }
+          }
           await savePortfolioAssignments({
             userId: user.user_id,
             roleId: selectedRoleMeta.id,
             regionIds: portfolioRegionId ? [portfolioRegionId] : [],
+            replaceUserId,
+            replaceRegionId: replaceUserId ? portfolioRegionId : null,
           });
         } catch (e: any) {
           console.error('Portfolio assignment write failed:', e);
-          toast.error(`Failed to save portfolio assignments: ${e.message ?? e}`);
+          toast.error(e.message ?? String(e));
           return;
         }
       }
@@ -2393,6 +2440,22 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
           onCancel={handleCropCancel}
         />
       )}
+
+      <B2BReplacementDialog
+        open={b2bDialog.open}
+        onOpenChange={(o) => {
+          if (!o && b2bDialog.resolve) b2bDialog.resolve(null);
+          setB2bDialog((s) => ({ ...s, open: o }));
+        }}
+        roleName={b2bDialog.roleName}
+        regionName={b2bDialog.regionName}
+        newUserName={`${formData.first_name} ${formData.last_name}`.trim() || 'this user'}
+        holders={b2bDialog.holders}
+        onConfirm={(replaceUserId) => {
+          b2bDialog.resolve?.(replaceUserId);
+          setB2bDialog((s) => ({ ...s, open: false }));
+        }}
+      />
     </Dialog>
   );
 };

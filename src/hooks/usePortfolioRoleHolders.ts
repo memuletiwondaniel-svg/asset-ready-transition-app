@@ -63,8 +63,36 @@ export function useUserPortfolioAssignments(userId: string | undefined) {
 }
 
 /**
+ * Preflight read of current holders for (role, region) — used by the
+ * UI to detect the B2B cap-2 before submission and to populate the
+ * "choose who they replace" picker.
+ */
+export interface RegionRoleHolder {
+  user_id: string;
+  full_name: string;
+}
+
+export async function fetchRegionRoleHoldersPreflight(
+  roleId: string,
+  regionId: string,
+): Promise<RegionRoleHolder[]> {
+  const { data, error } = await (supabase.rpc as any)(
+    'get_region_role_holders_preflight',
+    { p_role_id: roleId, p_region_id: regionId },
+  );
+  if (error) throw error;
+  return (data ?? []) as RegionRoleHolder[];
+}
+
+/**
  * Atomically overwrite the set of regions a user holds for ONE
  * portfolio-scoped role. Admin-only (enforced server-side).
+ *
+ * When the target region already has a complete B2B pair, pass
+ * `replaceUserId` + `replaceRegionId` to atomically swap an existing
+ * holder in the same transaction (the cap-2 trigger sees a consistent
+ * state). The trigger raises a human-readable `B2B_CAP_REACHED: ...`
+ * message if the cap would be exceeded without a replacement.
  */
 export function useSetPortfolioAssignments() {
   const qc = useQueryClient();
@@ -73,23 +101,29 @@ export function useSetPortfolioAssignments() {
       userId: string;
       roleId: string;
       regionIds: string[];
+      replaceUserId?: string | null;
+      replaceRegionId?: string | null;
     }) => {
       const { error } = await (supabase.rpc as any)(
-        'set_user_region_role_holders',
+        'set_user_region_role_holders_v2',
         {
           p_user_id: vars.userId,
           p_role_id: vars.roleId,
           p_region_ids: vars.regionIds,
+          p_replace_user_id: vars.replaceUserId ?? null,
+          p_replace_region_id: vars.replaceRegionId ?? null,
         },
       );
-      if (error) throw error;
+      if (error) {
+        const msg = (error.message || '').replace(/^B2B_CAP_REACHED:\s*/, '');
+        throw new Error(msg || 'Failed to save portfolio assignment');
+      }
     },
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ['user-portfolio-assignments', vars.userId] });
-      // Invalidate every project's role-resolver cache — any project in
-      // the affected portfolio could now resolve to a different user.
       qc.invalidateQueries({ queryKey: ['project-role-user'] });
       qc.invalidateQueries({ queryKey: ['project-role-users'] });
+      qc.invalidateQueries({ queryKey: ['project-role-holders'] });
     },
   });
 }
