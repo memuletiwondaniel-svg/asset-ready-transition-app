@@ -14677,6 +14677,13 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_region_role_holders_preflight: {
+        Args: { p_region_id: string; p_role_id: string }
+        Returns: {
+          full_name: string
+          user_id: string
+        }[]
+      }
       get_roles_by_category: {
         Args: never
         Returns: {
@@ -14845,6 +14852,16 @@ export type Database = {
       }
       set_user_region_role_holders: {
         Args: { p_region_ids: string[]; p_role_id: string; p_user_id: string }
+        Returns: undefined
+      }
+      set_user_region_role_holders_v2: {
+        Args: {
+          p_region_ids: string[]
+          p_replace_region_id?: string
+          p_replace_user_id?: string
+          p_role_id: string
+          p_user_id: string
+        }
         Returns: undefined
       }
       soft_delete_checklist_item: {
