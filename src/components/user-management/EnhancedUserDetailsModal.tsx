@@ -483,7 +483,10 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
   const [disciplines, setDisciplines] = useState<Array<{value: string, label: string}>>([]);
   const [plants, setPlants] = useState<Array<{value: string, label: string}>>([]);
   const [stations, setStations] = useState<Array<{value: string, label: string}>>([]);
-  const [fields, setFields] = useState<Array<{value: string, label: string}>>([]);
+  const [fields, setFields] = useState<Array<{value: string, label: string, plant_id: string | null}>>([]);
+  // Plant name → id lookup, used for plant_role_holders writes and to filter
+  // the Field selector by the currently-selected plant.
+  const [plantIdByName, setPlantIdByName] = useState<Record<string, string>>({});
 
   const systemRoles = [
     { value: "user", label: "User" },
