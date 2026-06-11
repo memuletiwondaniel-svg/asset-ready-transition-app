@@ -348,8 +348,21 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       return '';
     }
     
-    // Ops Coach and Ops Team Lead with field
-    if (['Ops Coach', 'Ops Team Lead'].includes(role) && field) {
+    // Ops Coach — Part E2: KAZ/BNGL stop at plant; CS/UQ go to field.
+    // Field labels carry a "CS - " / "UQ - " prefix in the catalog — strip
+    // it for the display string so we get "Ops Coach – Zubair", not
+    // "Ops Coach – CS - Zubair".
+    if (role === 'Ops Coach' && plant) {
+      if (opsCoachNeedsField(plant)) {
+        if (!field) return '';
+        const shortField = field.replace(/^(CS|UQ)\s*-\s*/, '');
+        return `Ops Coach – ${shortField}`;
+      }
+      return `Ops Coach – ${plant}`;
+    }
+
+    // Ops Team Lead with field
+    if (role === 'Ops Team Lead' && field) {
       return `${role} - ${field}`;
     }
     
@@ -425,7 +438,9 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       case 'Site Engr':
         return !!station;
       case 'Ops Coach':
-        return !!plant && !!field; // Ops Coach requires plant and field (station optional)
+        // KAZ / BNGL: plant alone is enough. CS / UQ: plant + field required.
+        // Cascading selector spec — Part E2.
+        return !!plant && (opsCoachNeedsField(plant) ? !!field : true);
       case 'Ops Team Lead':
       case 'Section Head':
         return !!field;
@@ -471,6 +486,13 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     return role === 'Ops Coach';
   };
 
+  // Ops Coach field rule — Part E2:
+  // CS and UQ require a field (CS fields, UQ "locations" modeled as fields).
+  // KAZ and BNGL stop at plant; field stays NULL → plant-level pairing.
+  const opsCoachNeedsField = (plant: string) => {
+    return ['CS', 'UQ'].includes(plant);
+  };
+
   // Check if TA2 role should show commission field (exclude Civil TA2 and Tech Safety TA2)
   const shouldShowTA2Commission = (role: string) => {
     const ta2RolesWithCommission = ['Elect TA2', 'Rotating TA2', 'PACO TA2', 'Static TA2', 'Process TA2'];
@@ -483,7 +505,10 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
   const [disciplines, setDisciplines] = useState<Array<{value: string, label: string}>>([]);
   const [plants, setPlants] = useState<Array<{value: string, label: string}>>([]);
   const [stations, setStations] = useState<Array<{value: string, label: string}>>([]);
-  const [fields, setFields] = useState<Array<{value: string, label: string}>>([]);
+  const [fields, setFields] = useState<Array<{value: string, label: string, plant_id: string | null}>>([]);
+  // Plant name → id lookup, used for plant_role_holders writes and to filter
+  // the Field selector by the currently-selected plant.
+  const [plantIdByName, setPlantIdByName] = useState<Record<string, string>>({});
 
   const systemRoles = [
     { value: "user", label: "User" },
@@ -551,11 +576,12 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       // Fetch plants
       const { data: plantsData } = await supabase
         .from('plant')
-        .select('name')
+        .select('id, name')
         .eq('is_active', true)
         .order('name');
-      
+
       setPlants(plantsData?.map(p => ({ value: p.name, label: p.name })) || []);
+      setPlantIdByName(Object.fromEntries((plantsData ?? []).map(p => [p.name, p.id])));
 
       // Fetch stations
       const { data: stationsData } = await supabase
@@ -566,14 +592,15 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       
       setStations(stationsData?.map(s => ({ value: s.name, label: s.name })) || []);
 
-      // Fetch fields
+      // Fetch fields (carry plant_id so the Ops Coach cascade can filter
+      // the Field list to the currently-selected Plant — Part E2).
       const { data: fieldsData } = await supabase
         .from('field')
-        .select('name')
+        .select('name, plant_id')
         .eq('is_active', true)
         .order('name');
       
-      setFields(fieldsData?.map(f => ({ value: f.name, label: f.name })) || []);
+      setFields(fieldsData?.map(f => ({ value: f.name, label: f.name, plant_id: f.plant_id })) || []);
     } catch (error) {
       console.error('Error fetching database options:', error);
     }
@@ -974,6 +1001,46 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
         }
       }
 
+      // Plant role-holder write — Part E2. When the selected role is
+      // scope='plant' (e.g. Ops Coach, Dep. Plant Director, Plant Director),
+      // mirror the selection into plant_role_holders so the structured
+      // resolver (Part D) can find this user at the right scope key:
+      //   pair key = (role_id, plant_id, COALESCE(field_id, sentinel))
+      // For CS / UQ Ops Coach the form requires field; KAZ / BNGL leave it
+      // NULL so the row pairs at plant level. Other plant-scoped roles
+      // (DPD, Plant Director) never carry a field — field_id stays NULL.
+      const selectedRoleIsPlant = (selectedRoleMeta as any)?.scope === 'plant';
+      if (selectedRoleIsPlant && selectedRoleMeta?.id && plantId) {
+        try {
+          // Replace any prior holdings of THIS role for THIS user (a user
+          // typically holds a given plant role at one (plant, field) at a
+          // time; this avoids stale rows when they're moved).
+          await supabase
+            .from('plant_role_holders')
+            .delete()
+            .eq('user_id', user.user_id)
+            .eq('role_id', selectedRoleMeta.id);
+
+          const { error: phErr } = await supabase
+            .from('plant_role_holders')
+            .insert({
+              user_id: user.user_id,
+              role_id: selectedRoleMeta.id,
+              plant_id: plantId,
+              // Only Ops Coach uses field-scope today; other plant roles stay
+              // plant-level (field_id NULL).
+              field_id: (formData.role === 'Ops Coach' && opsCoachNeedsField(formData.plant))
+                ? (fieldId ?? null)
+                : null,
+            });
+          if (phErr) throw phErr;
+        } catch (e: any) {
+          console.error('Plant role-holder write failed:', e);
+          toast.error(`Failed to save plant role-holder: ${e.message ?? e}`);
+          return;
+        }
+      }
+
       // Update system role if it changed
       if (systemRole !== (user.roles?.[0] || 'user')) {
         console.log('Updating system role from', user.roles?.[0], 'to', systemRole);
@@ -1290,7 +1357,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     if (value && !fields.find(f => f.value === value)) {
       const newField = await addNewEntry('field', value);
       if (newField) {
-        setFields(prev => [...prev, { value: newField.name, label: newField.name }]);
+        setFields(prev => [...prev, { value: newField.name, label: newField.name, plant_id: (newField as any).plant_id ?? null }]);
       }
     }
     // For Ops Coach, reset station when field changes (hierarchy)
@@ -1843,31 +1910,36 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                                 </SelectContent>
                               </Select>
                             </div>
-                            <div>
-                              <Label>Field *</Label>
-                              <Select
-                                value={formData.field}
-                                onValueChange={handleFieldChange}
-                                disabled={!editMode || !formData.plant}
-                              >
-                                <SelectTrigger className={!editMode || !formData.plant ? 'bg-muted' : ''}>
-                                  <SelectValue placeholder={formData.plant ? "Select field" : "Select plant first"} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {fields
-                                    .filter(field => {
-                                      // Filter fields by the selected plant
-                                      // We need to match by plant name since we're using names not IDs
-                                      return true; // Show all fields for now since hierarchy filtering requires additional data
-                                    })
-                                    .map(field => (
-                                      <SelectItem key={field.value} value={field.value}>
-                                        {field.label}
-                                      </SelectItem>
-                                    ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
+                            {/* Field — only shown for Ops Coach when plant requires
+                                a field (CS / UQ). KAZ / BNGL stop at plant per E2 spec. */}
+                            {(formData.role !== 'Ops Coach' || opsCoachNeedsField(formData.plant)) && (
+                              <div>
+                                <Label>Field *</Label>
+                                <Select
+                                  value={formData.field}
+                                  onValueChange={handleFieldChange}
+                                  disabled={!editMode || !formData.plant}
+                                >
+                                  <SelectTrigger className={!editMode || !formData.plant ? 'bg-muted' : ''}>
+                                    <SelectValue placeholder={formData.plant ? "Select field" : "Select plant first"} />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {fields
+                                      .filter(field => {
+                                        // E2: filter Field list by selected Plant via plant_id.
+                                        const selectedPlantId = plantIdByName[formData.plant];
+                                        if (!selectedPlantId) return true;
+                                        return field.plant_id === selectedPlantId;
+                                      })
+                                      .map(field => (
+                                        <SelectItem key={field.value} value={field.value}>
+                                          {field.label}
+                                        </SelectItem>
+                                      ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
                             {/* Station - hidden for Ops Coach with CS plant */}
                             {!(formData.role === 'Ops Coach' && formData.plant === 'CS') && (
                               <div>
