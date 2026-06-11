@@ -28,6 +28,7 @@ export interface CategorizedRole {
   role_name: string | null;
   role_description: string | null;
   role_is_b2b?: boolean;
+  role_scope?: string | null;
 }
 
 export interface GroupedRoles {
