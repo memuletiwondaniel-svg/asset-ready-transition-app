@@ -965,7 +965,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
           await savePortfolioAssignments({
             userId: user.user_id,
             roleId: selectedRoleMeta.id,
-            regionIds: portfolioRegionIds,
+            regionIds: portfolioRegionId ? [portfolioRegionId] : [],
           });
         } catch (e: any) {
           console.error('Portfolio assignment write failed:', e);
