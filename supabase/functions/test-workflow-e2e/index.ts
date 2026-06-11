@@ -17,7 +17,7 @@
 // recorder mediates so the dependency graph is honored.
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.52.0";
-import { CANONICAL_ROLES, createTestPlant, createTestProject, createUsersForRoles, setDeputyPlantDirectorPosition } from "./lib/provision.ts";
+import { CANONICAL_ROLES, createTestPlant, createTestProject, createUsersForRoles, seedDeputyPlantDirectorHolder } from "./lib/provision.ts";
 import { assignTeamRoles } from "./lib/teamSetup.ts";
 import { sweepByRunId } from "./lib/teardown.ts";
 import { runScenario } from "./lib/recorder.ts";
