@@ -8952,6 +8952,7 @@ export type Database = {
         Row: {
           assigned_at: string
           assigned_by: string | null
+          field_id: string | null
           plant_id: string
           role_id: string
           user_id: string
@@ -8959,6 +8960,7 @@ export type Database = {
         Insert: {
           assigned_at?: string
           assigned_by?: string | null
+          field_id?: string | null
           plant_id: string
           role_id: string
           user_id: string
@@ -8966,11 +8968,19 @@ export type Database = {
         Update: {
           assigned_at?: string
           assigned_by?: string | null
+          field_id?: string | null
           plant_id?: string
           role_id?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "plant_role_holders_field_id_fkey"
+            columns: ["field_id"]
+            isOneToOne: false
+            referencedRelation: "field"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "plant_role_holders_plant_id_fkey"
             columns: ["plant_id"]
