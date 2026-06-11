@@ -1295,7 +1295,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     if (value && !fields.find(f => f.value === value)) {
       const newField = await addNewEntry('field', value);
       if (newField) {
-        setFields(prev => [...prev, { value: newField.name, label: newField.name }]);
+        setFields(prev => [...prev, { value: newField.name, label: newField.name, plant_id: (newField as any).plant_id ?? null }]);
       }
     }
     // For Ops Coach, reset station when field changes (hierarchy)
