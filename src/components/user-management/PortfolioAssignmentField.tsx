@@ -1,17 +1,16 @@
 /**
- * Multi-select portfolio (region) assignment field.
+ * Single-select portfolio (region) assignment field.
  *
- * Renders when the user's selected role has scope='portfolio'. Writes
- * directly to `region_role_holders` (NOT to profiles.position and NOT
- * to project_team_members). Resolution is live-read, so changes here
- * propagate to every project in the chosen portfolio(s) with no
- * per-project edits.
+ * A portfolio role (Snr ORA Engr, Construction Lead, Commissioning Lead,
+ * ORA Engr, Project Manager) is held for EXACTLY ONE portfolio at a time
+ * — North OR Central OR South. Selecting a different portfolio moves
+ * (reassigns) the user; it never leaves them in two.
  *
- * Controlled by parent — selection state lives in the parent form so the
- * Save button can commit it together with the rest of the profile.
+ * Writes to `region_role_holders` (NOT profiles.position, NOT
+ * project_team_members). Resolution is live-read so the change
+ * propagates to every project in the chosen portfolio immediately.
  */
 import React from 'react';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Info } from 'lucide-react';
@@ -20,31 +19,27 @@ import { useAvailableRegions } from '@/hooks/usePortfolioRoleHolders';
 export interface PortfolioAssignmentFieldProps {
   /** Display label for the role (e.g. "Snr ORA Engr"). */
   roleName: string;
-  /** Currently-selected region IDs (controlled). */
-  selectedRegionIds: string[];
-  /** Called with the new array of region IDs. */
-  onChange: (regionIds: string[]) => void;
+  /** Currently-selected region ID (controlled). null = unassigned. */
+  selectedRegionId: string | null;
+  /** Called with the new region ID (or null to clear). */
+  onChange: (regionId: string | null) => void;
   /** Disable interaction (e.g. when not in edit mode). */
   disabled?: boolean;
 }
 
 export const PortfolioAssignmentField: React.FC<PortfolioAssignmentFieldProps> = ({
   roleName,
-  selectedRegionIds,
+  selectedRegionId,
   onChange,
   disabled = false,
 }) => {
   const { data: regions, isLoading } = useAvailableRegions();
 
-  const toggle = (regionId: string, checked: boolean) => {
+  const select = (regionId: string) => {
     if (disabled) return;
-    if (checked) {
-      if (!selectedRegionIds.includes(regionId)) {
-        onChange([...selectedRegionIds, regionId]);
-      }
-    } else {
-      onChange(selectedRegionIds.filter((id) => id !== regionId));
-    }
+    // Re-clicking the active option clears it (reassign elsewhere by
+    // picking another — never leaves the user in two portfolios).
+    onChange(selectedRegionId === regionId ? null : regionId);
   };
 
   return (
@@ -53,16 +48,17 @@ export const PortfolioAssignmentField: React.FC<PortfolioAssignmentFieldProps> =
         <Info className="h-4 w-4 mt-0.5 text-primary shrink-0" />
         <div className="flex-1">
           <Label className="text-sm font-semibold">
-            Portfolio Assignments
+            Portfolio Assignment
             <Badge variant="outline" className="ml-2 font-normal">
               {roleName}
             </Badge>
           </Label>
           <p className="text-xs text-muted-foreground mt-1">
-            Select one or more portfolios. This user will be the canonical
-            <span className="font-medium"> {roleName} </span>
-            for every project in the chosen portfolio(s) — live-read, no
-            per-project assignment needed.
+            Select <span className="font-medium">one</span> portfolio. This
+            user will be the canonical <span className="font-medium">{roleName}</span>
+            {' '}for every project in the chosen portfolio — live-read, no
+            per-project assignment needed. Switching portfolios reassigns
+            the user.
           </p>
         </div>
       </div>
@@ -70,36 +66,45 @@ export const PortfolioAssignmentField: React.FC<PortfolioAssignmentFieldProps> =
       {isLoading ? (
         <div className="text-sm text-muted-foreground">Loading portfolios…</div>
       ) : (
-        <div className="grid grid-cols-3 gap-3 pt-1">
+        <div
+          role="radiogroup"
+          aria-label={`Portfolio for ${roleName}`}
+          className="grid grid-cols-3 gap-3 pt-1"
+        >
           {(regions ?? []).map((r) => {
-            const checked = selectedRegionIds.includes(r.id);
+            const checked = selectedRegionId === r.id;
             const id = `portfolio-${r.id}`;
             return (
-              <label
+              <button
+                type="button"
+                role="radio"
+                aria-checked={checked}
                 key={r.id}
-                htmlFor={id}
-                className={`flex items-center gap-2 rounded-md border p-3 transition-colors ${
+                id={id}
+                disabled={disabled}
+                onClick={() => select(r.id)}
+                className={`flex items-center gap-2 rounded-md border p-3 text-left transition-colors ${
                   disabled
                     ? 'opacity-60 cursor-not-allowed'
                     : 'cursor-pointer hover:bg-accent'
-                } ${checked ? 'border-primary bg-primary/10' : 'border-border'}`}
+                } ${checked ? 'border-primary bg-primary/10 ring-1 ring-primary' : 'border-border'}`}
               >
-                <Checkbox
-                  id={id}
-                  checked={checked}
-                  disabled={disabled}
-                  onCheckedChange={(c) => toggle(r.id, c === true)}
+                <span
+                  aria-hidden
+                  className={`h-4 w-4 rounded-full border ${
+                    checked ? 'border-primary bg-primary' : 'border-muted-foreground'
+                  }`}
                 />
                 <span className="text-sm font-medium">{r.name}</span>
-              </label>
+              </button>
             );
           })}
         </div>
       )}
 
-      {selectedRegionIds.length === 0 && !isLoading && (
+      {!selectedRegionId && !isLoading && (
         <p className="text-xs text-amber-600 dark:text-amber-400">
-          No portfolios selected — this user will not be resolved as
+          No portfolio selected — this user will not be resolved as
           {' '}{roleName} on any project.
         </p>
       )}
