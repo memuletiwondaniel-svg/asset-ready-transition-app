@@ -936,6 +936,8 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
           user_name: `${formData.first_name} ${formData.last_name}`.trim(),
           updated_fields: Object.keys(updatePayload)
       }
+        }
+      });
 
       // Portfolio role-holder write — only when the selected role is
       // scope='portfolio'. Writes to region_role_holders (NOT profiles.position
@@ -954,7 +956,6 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
           return;
         }
       }
-      });
 
       // Update system role if it changed
       if (systemRole !== (user.roles?.[0] || 'user')) {
