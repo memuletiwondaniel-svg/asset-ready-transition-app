@@ -1985,6 +1985,16 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                         )}
                       </div>
 
+                      {/* Portfolio role-holder multi-select — canonical resolution source. */}
+                      {selectedRoleIsPortfolio && selectedRoleMeta?.id && (
+                        <PortfolioAssignmentField
+                          roleName={formData.role}
+                          selectedRegionIds={portfolioRegionIds}
+                          onChange={setPortfolioRegionIds}
+                          disabled={!editMode}
+                        />
+                      )}
+
                       {/* Position Display - Separate row in Edit Mode */}
                       <div>
                         <Label>Position</Label>
