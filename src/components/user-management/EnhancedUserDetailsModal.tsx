@@ -60,6 +60,11 @@ import {
   isMtceManagerTitleReady,
 } from '@/utils/mtceManagerConfig';
 import { AvatarCropDialog } from './AvatarCropDialog';
+import { PortfolioAssignmentField } from './PortfolioAssignmentField';
+import {
+  useUserPortfolioAssignments,
+  useSetPortfolioAssignments,
+} from '@/hooks/usePortfolioRoleHolders';
 
 // Type definitions matching the database schema exactly
 interface DatabaseUser {
