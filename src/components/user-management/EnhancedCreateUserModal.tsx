@@ -843,6 +843,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
       mtce_manager_plant: '',
     });
     setEmailError('');
+    setPortfolioRegionId(null);
     clearImage();
     onClose();
   };
