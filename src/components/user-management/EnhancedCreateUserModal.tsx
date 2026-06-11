@@ -705,10 +705,62 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
           throw createErr;
         }
 
-        // Upload profile image if provided
-        if (profileImage && createResp?.user_id) {
-          await uploadProfileImage(createResp.user_id);
+        const newUserId: string | undefined = createResp?.user_id;
+
+        // Portfolio role-holder write — mirrors Edit modal. Live-read
+        // resolution propagates to every project in the chosen portfolio.
+        if (newUserId && selectedRoleIsPortfolio && selectedRoleMeta?.id && portfolioRegionId) {
+          try {
+            await savePortfolioAssignments({
+              userId: newUserId,
+              roleId: selectedRoleMeta.id,
+              regionIds: [portfolioRegionId],
+            });
+          } catch (e: any) {
+            console.error('Portfolio assignment write failed:', e);
+            toast({
+              title: "Portfolio Assignment Failed",
+              description: e.message || String(e),
+              variant: "destructive",
+            });
+          }
         }
+
+        // Plant role-holder write — Ops Coach (with optional field), DPD,
+        // Plant Director. Pair key = (role_id, plant_id, COALESCE(field_id)).
+        if (newUserId && selectedRoleIsPlant && selectedRoleMeta?.id && formData.plant) {
+          const plantId = plantIdByName[formData.plant];
+          if (plantId) {
+            try {
+              const fieldId =
+                formData.role === 'Ops Coach' && opsCoachNeedsField(formData.plant) && formData.field
+                  ? (fieldIdByName[formData.field] ?? null)
+                  : null;
+              const { error: phErr } = await supabase
+                .from('plant_role_holders')
+                .insert({
+                  user_id: newUserId,
+                  role_id: selectedRoleMeta.id,
+                  plant_id: plantId,
+                  field_id: fieldId,
+                });
+              if (phErr) throw phErr;
+            } catch (e: any) {
+              console.error('Plant role-holder write failed:', e);
+              toast({
+                title: "Plant Role Assignment Failed",
+                description: e.message || String(e),
+                variant: "destructive",
+              });
+            }
+          }
+        }
+
+        // Upload profile image if provided
+        if (profileImage && newUserId) {
+          await uploadProfileImage(newUserId);
+        }
+
 
         // Log activity
         logActivityMutation.mutate({
