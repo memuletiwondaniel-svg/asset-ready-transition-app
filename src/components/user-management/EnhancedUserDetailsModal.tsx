@@ -224,6 +224,16 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
   const [portfolioRegionId, setPortfolioRegionId] = useState<string | null>(null);
   const { data: availableRegions } = useAvailableRegions();
 
+  // B2B cap-2 replacement dialog state
+  const [b2bDialog, setB2bDialog] = useState<{
+    open: boolean;
+    holders: RegionRoleHolder[];
+    regionName: string;
+    roleName: string;
+    regionId: string;
+    resolve?: (replaceUserId: string | null) => void;
+  }>({ open: false, holders: [], regionName: '', roleName: '', regionId: '' });
+
   // Get roles for the selected function
   const getRolesForFunction = () => {
     if (!formData.function || !categorizedRoles) return [];
