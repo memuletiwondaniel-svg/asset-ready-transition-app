@@ -227,6 +227,13 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
               className="w-full"
             />
           </div>
+
+          {/* Live roster preview — portfolio-scoped roles resolved from
+              region_role_holders by region_id (no per-project stamping). */}
+          <OwnershipAssignmentPreview
+            regionId={formData.region_id || null}
+            regionName={regionName}
+          />
         </div>
       </div>
 
@@ -306,8 +313,15 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
               className="w-full"
             />
           </div>
+
+          {/* DPD preview — resolves live from plant_role_holders (no
+              profiles.position fallback after GATE C). */}
+          <PlantAssignmentPreview
+            plantId={formData.plant_id || null}
+            plantName={plantName}
+          />
         </div>
-        
+
       </div>
 
     </div>

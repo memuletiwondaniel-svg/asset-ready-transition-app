@@ -39,6 +39,11 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useLogActivity } from '@/hooks/useActivityLogs';
 import { AvatarCropDialog } from '@/components/user-management/AvatarCropDialog';
+import { PortfolioAssignmentField } from './PortfolioAssignmentField';
+import {
+  useSetPortfolioAssignments,
+  useAvailableRegions,
+} from '@/hooks/usePortfolioRoleHolders';
 
 // Generate a random password
 const generatePassword = () => {
@@ -121,6 +126,8 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
 
   const { data: hubs } = useHubs();
   const { data: categorizedRoles, isLoading: rolesLoading } = useCategorizedRoles();
+  const { data: availableRegions } = useAvailableRegions();
+  const { mutateAsync: savePortfolioAssignments } = useSetPortfolioAssignments();
 
   // Profile picture upload state
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -133,29 +140,37 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
 
   // Database options state (name-based, matching Edit modal)
   const [plants, setPlants] = useState<Array<{value: string, label: string}>>([]);
-  const [fields, setFields] = useState<Array<{value: string, label: string}>>([]);
+  const [fields, setFields] = useState<Array<{value: string, label: string, plant_id: string | null}>>([]);
   const [stations, setStations] = useState<Array<{value: string, label: string}>>([]);
   const [commissions, setCommissions] = useState<Array<{value: string, label: string}>>([]);
+  // Plant/field name → id lookups for plant_role_holders writes and the
+  // Ops Coach Plant → Field cascade.
+  const [plantIdByName, setPlantIdByName] = useState<Record<string, string>>({});
+  const [fieldIdByName, setFieldIdByName] = useState<Record<string, string>>({});
+  // Portfolio role-holder single-select state — mirrors Edit modal.
+  const [portfolioRegionId, setPortfolioRegionId] = useState<string | null>(null);
 
   // Fetch database options on mount
   useEffect(() => {
     const fetchDatabaseOptions = async () => {
       try {
-        // Fetch plants
+        // Fetch plants (with ids — needed for plant_role_holders write + cascade)
         const { data: plantsData } = await supabase
           .from('plant')
-          .select('name')
+          .select('id, name')
           .eq('is_active', true)
           .order('name');
         setPlants(plantsData?.map(p => ({ value: p.name, label: p.name })) || []);
+        setPlantIdByName(Object.fromEntries((plantsData ?? []).map(p => [p.name, p.id])));
 
-        // Fetch fields
+        // Fetch fields (with plant_id — Ops Coach cascade filter)
         const { data: fieldsData } = await supabase
           .from('field')
-          .select('name')
+          .select('id, name, plant_id')
           .eq('is_active', true)
           .order('name');
-        setFields(fieldsData?.map(f => ({ value: f.name, label: f.name })) || []);
+        setFields(fieldsData?.map(f => ({ value: f.name, label: f.name, plant_id: f.plant_id })) || []);
+        setFieldIdByName(Object.fromEntries((fieldsData ?? []).map(f => [f.name, f.id])));
 
         // Fetch stations
         const { data: stationsData } = await supabase
@@ -222,11 +237,41 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
   const requiresField = (role: string) => ['Ops Team Lead'].includes(role);
   const requiresPlantAndField = (role: string) => role === 'Section Head';
   const requiresAssetHierarchy = (role: string) => role === 'Ops Coach';
-  
+  // Ops Coach field rule — Part E2: CS/UQ require field, KAZ/BNGL stop at plant.
+  const opsCoachNeedsField = (plant: string) => ['CS', 'UQ'].includes(plant);
+
   const shouldShowTA2Commission = (role: string) => {
     const ta2RolesWithCommission = ['Elect TA2', 'Rotating TA2', 'PACO TA2', 'Static TA2', 'Process TA2'];
     return ta2RolesWithCommission.includes(role);
   };
+
+  // Look up the catalog row for the currently-selected role (mirrors Edit modal).
+  const selectedRoleMeta = React.useMemo(() => {
+    if (!formData.role || !categorizedRoles) return null;
+    for (const group of categorizedRoles) {
+      const hit = group.roles.find((r) => r.name === formData.role);
+      if (hit) return hit;
+    }
+    return null;
+  }, [formData.role, categorizedRoles]);
+
+  const selectedRoleIsPortfolio =
+    (selectedRoleMeta as any)?.scope === 'portfolio' ||
+    ['Snr ORA Engr', 'ORA Engr', 'Construction Lead', 'Commissioning Lead', 'Project Manager']
+      .includes(formData.role);
+
+  const selectedRoleIsPlant = (selectedRoleMeta as any)?.scope === 'plant';
+
+  // Keep formData.portfolio in lock-step with the portfolio radio so the
+  // auto-generated position (e.g. "Snr ORA Engr – Central") stays live.
+  const handlePortfolioRegionChange = (regionId: string | null) => {
+    setPortfolioRegionId(regionId);
+    const regionName = regionId
+      ? (availableRegions?.find((r) => r.id === regionId)?.name ?? '')
+      : '';
+    setFormData(prev => ({ ...prev, portfolio: regionName }));
+  };
+
 
   // Get filtered commissions for specific roles
   const getCommissionOptions = () => {
@@ -435,6 +480,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
       ops_manager_plant: '',
       ops_manager_sub_area: ''
     }));
+    setPortfolioRegionId(null);
   };
 
   const handlePlantChange = (value: string) => {
@@ -660,10 +706,62 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
           throw createErr;
         }
 
-        // Upload profile image if provided
-        if (profileImage && createResp?.user_id) {
-          await uploadProfileImage(createResp.user_id);
+        const newUserId: string | undefined = createResp?.user_id;
+
+        // Portfolio role-holder write — mirrors Edit modal. Live-read
+        // resolution propagates to every project in the chosen portfolio.
+        if (newUserId && selectedRoleIsPortfolio && selectedRoleMeta?.id && portfolioRegionId) {
+          try {
+            await savePortfolioAssignments({
+              userId: newUserId,
+              roleId: selectedRoleMeta.id,
+              regionIds: [portfolioRegionId],
+            });
+          } catch (e: any) {
+            console.error('Portfolio assignment write failed:', e);
+            toast({
+              title: "Portfolio Assignment Failed",
+              description: e.message || String(e),
+              variant: "destructive",
+            });
+          }
         }
+
+        // Plant role-holder write — Ops Coach (with optional field), DPD,
+        // Plant Director. Pair key = (role_id, plant_id, COALESCE(field_id)).
+        if (newUserId && selectedRoleIsPlant && selectedRoleMeta?.id && formData.plant) {
+          const plantId = plantIdByName[formData.plant];
+          if (plantId) {
+            try {
+              const fieldId =
+                formData.role === 'Ops Coach' && opsCoachNeedsField(formData.plant) && formData.field
+                  ? (fieldIdByName[formData.field] ?? null)
+                  : null;
+              const { error: phErr } = await supabase
+                .from('plant_role_holders')
+                .insert({
+                  user_id: newUserId,
+                  role_id: selectedRoleMeta.id,
+                  plant_id: plantId,
+                  field_id: fieldId,
+                });
+              if (phErr) throw phErr;
+            } catch (e: any) {
+              console.error('Plant role-holder write failed:', e);
+              toast({
+                title: "Plant Role Assignment Failed",
+                description: e.message || String(e),
+                variant: "destructive",
+              });
+            }
+          }
+        }
+
+        // Upload profile image if provided
+        if (profileImage && newUserId) {
+          await uploadProfileImage(newUserId);
+        }
+
 
         // Log activity
         logActivityMutation.mutate({
@@ -745,6 +843,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
       mtce_manager_plant: '',
     });
     setEmailError('');
+    setPortfolioRegionId(null);
     clearImage();
     onClose();
   };
@@ -1210,25 +1309,36 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
-                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Field *</Label>
-                  <Select
-                    value={formData.field}
-                    onValueChange={handleFieldChange}
-                    disabled={!formData.plant}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={formData.plant ? "Select field" : "Select plant first"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {fields.map(field => (
-                        <SelectItem key={field.value} value={field.value}>
-                          {field.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {/* Field — only shown for Ops Coach when plant requires
+                    a field (CS / UQ). KAZ / BNGL stop at plant per E2 spec. */}
+                {(formData.role !== 'Ops Coach' || opsCoachNeedsField(formData.plant)) && (
+                  <div>
+                    <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Field *</Label>
+                    <Select
+                      value={formData.field}
+                      onValueChange={handleFieldChange}
+                      disabled={!formData.plant}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={formData.plant ? "Select field" : "Select plant first"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {fields
+                          .filter(field => {
+                            // E2: filter Field list by selected Plant via plant_id.
+                            const selectedPlantId = plantIdByName[formData.plant];
+                            if (!selectedPlantId) return true;
+                            return field.plant_id === selectedPlantId;
+                          })
+                          .map(field => (
+                            <SelectItem key={field.value} value={field.value}>
+                              {field.label}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 {/* Station - hidden for Ops Coach with CS plant */}
                 {!(formData.role === 'Ops Coach' && formData.plant === 'CS') && (
                   <div>
@@ -1295,8 +1405,20 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
               </div>
             )}
 
-            {/* Portfolio Selection */}
-            {requiresPortfolioSelection(formData.role) && (
+            {/* Portfolio role-holder SINGLE-select — canonical control for
+                portfolio-scoped roles. Writes region_role_holders AFTER user
+                creation. For hub-requiring roles (Project Hub Lead, Project
+                Engr) keep the legacy Combobox so they can pick region+hub. */}
+            {selectedRoleIsPortfolio && (
+              <PortfolioAssignmentField
+                roleName={formData.role}
+                selectedRegionId={portfolioRegionId}
+                onChange={handlePortfolioRegionChange}
+              />
+            )}
+
+            {/* Portfolio Selection — only for hub-requiring roles (region+hub pair) */}
+            {requiresPortfolioSelection(formData.role) && !selectedRoleIsPortfolio && (
               <div>
                 <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Portfolio *</Label>
                 <Combobox
