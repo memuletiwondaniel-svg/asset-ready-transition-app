@@ -1987,8 +1987,11 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                           </div>
                         )}
 
-                        {/* Portfolio Selection */}
-                        {requiresPortfolioSelection(formData.role) && (
+                        {/* Portfolio Selection — legacy combobox kept ONLY for
+                            roles that pair portfolio with a Hub (Project Hub
+                            Lead, Project Engr). Portfolio-scoped roles use
+                            the single canonical control below instead. */}
+                        {requiresPortfolioSelection(formData.role) && !selectedRoleIsPortfolio && (
                           <div>
                             <Label>Portfolio *</Label>
                             <Combobox
@@ -2021,12 +2024,14 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                         )}
                       </div>
 
-                      {/* Portfolio role-holder multi-select — canonical resolution source. */}
+                      {/* Portfolio role-holder SINGLE-select — the one canonical
+                          control for portfolio-scoped roles. Drives both
+                          region_role_holders AND the display Position. */}
                       {selectedRoleIsPortfolio && selectedRoleMeta?.id && (
                         <PortfolioAssignmentField
                           roleName={formData.role}
-                          selectedRegionIds={portfolioRegionIds}
-                          onChange={setPortfolioRegionIds}
+                          selectedRegionId={portfolioRegionId}
+                          onChange={handlePortfolioRegionChange}
                           disabled={!editMode}
                         />
                       )}
