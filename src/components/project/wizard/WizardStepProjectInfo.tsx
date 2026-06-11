@@ -313,8 +313,15 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
               className="w-full"
             />
           </div>
+
+          {/* DPD preview — resolves live from plant_role_holders (no
+              profiles.position fallback after GATE C). */}
+          <PlantAssignmentPreview
+            plantId={formData.plant_id || null}
+            plantName={plantName}
+          />
         </div>
-        
+
       </div>
 
     </div>
