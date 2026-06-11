@@ -64,6 +64,7 @@ import { PortfolioAssignmentField } from './PortfolioAssignmentField';
 import {
   useUserPortfolioAssignments,
   useSetPortfolioAssignments,
+  useAvailableRegions,
 } from '@/hooks/usePortfolioRoleHolders';
 
 // Type definitions matching the database schema exactly
