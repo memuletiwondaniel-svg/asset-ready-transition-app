@@ -29,6 +29,66 @@ interface ProjectReadinessWidgetProps {
   onEdit?: () => void;
 }
 
+/**
+ * PairedRoleRow — single-row renderer for a required role.
+ * - holders is pre-sorted alphabetically (deterministic primary on first load).
+ * - Clicking the B2B chip cycles the displayed holder (display-only, no write).
+ */
+const PairedRoleRow: React.FC<{
+  role: string;
+  holders: RoleHolder[];
+  getAvatarUrl: (u: string | null | undefined) => string | null;
+}> = ({ role, holders, getAvatarUrl }) => {
+  const [idx, setIdx] = useState(0);
+  const safeIdx = idx % holders.length;
+  const shown = holders[safeIdx];
+  const partners = holders.filter((_, i) => i !== safeIdx);
+  const partnerNames = partners.map(p => p.full_name).join(', ');
+  const isPaired = holders.length > 1;
+
+  return (
+    <div className="flex items-center gap-2.5 p-2 rounded-lg border bg-muted/30 border-border/40 hover:bg-muted/50 hover:border-primary/20 transition-all duration-200">
+      <Avatar className="h-8 w-8 ring-2 ring-background shadow-sm">
+        {shown.avatar_url ? (
+          <AvatarImage src={getAvatarUrl(shown.avatar_url) || undefined} alt={shown.full_name} />
+        ) : (
+          <AvatarFallback className="text-[11px] font-medium bg-primary/10 text-primary">
+            {shown.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+          </AvatarFallback>
+        )}
+      </Avatar>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5">
+          <p className="text-[13px] font-medium truncate leading-tight">{shown.full_name}</p>
+          {isPaired && (
+            <TooltipProvider delayDuration={150}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIdx(i => (i + 1) % holders.length);
+                    }}
+                    className="text-[8px] font-semibold tracking-wider px-1 py-px rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0 leading-none cursor-pointer hover:bg-amber-200 dark:hover:bg-amber-900/60 transition-colors"
+                    aria-label={`Back-to-back with ${partnerNames}. Click to view partner.`}
+                  >
+                    B2B
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" align="start" sideOffset={4} className="text-xs">
+                  Back-to-back with {partnerNames} — click to swap
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
+        <p className="text-[10px] text-muted-foreground truncate leading-tight">{role}</p>
+      </div>
+    </div>
+  );
+};
+
 export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ projectId, onViewDetails, onEdit }) => {
   const [teamExpanded, setTeamExpanded] = useState(false);
   const [milestonesExpanded, setMilestonesExpanded] = useState(false);
@@ -243,30 +303,27 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
       )}
 
       {/* Team Members - Required Roles (live roster, PTM override wins) */}
+      {/*
+        PAIR RENDERING: one row per role. When a role resolves to multiple
+        holders (B2B pair), render the PRIMARY (deterministic: alphabetical
+        by full_name, case-insensitive — same on every load) with a B2B chip.
+        Clicking the chip cycles the displayed holder to the next partner
+        in alphabetical order (display-only, no write, no assignment change).
+        Solo holders render with no chip. Project Manager is intentionally
+        excluded from this panel; PM still resolves normally elsewhere.
+      */}
       {(() => {
-        // Build per-role rows. Each holder gets its OWN row so a 2-holder
-        // back-to-back (e.g. Snr ORA Engr in North = Azamat + Beibit) renders
-        // both avatars rather than silently dropping one. 0 holders → dashed
-        // "Unassigned" row.
         type Row =
-          | { kind: 'holder'; role: string; holder: RoleHolder; partners: RoleHolder[] }
+          | { kind: 'holders'; role: string; holders: RoleHolder[] }
           | { kind: 'empty'; role: string };
-        const rows: Row[] = [];
-        for (const role of REQUIRED_ROLES) {
-          const holders = (roleHolders as Record<string, RoleHolder[]>)[role] || [];
-          if (holders.length === 0) {
-            rows.push({ kind: 'empty', role });
-            continue;
-          }
-          for (const h of holders) {
-            rows.push({
-              kind: 'holder',
-              role,
-              holder: h,
-              partners: holders.filter(p => p.user_id !== h.user_id),
-            });
-          }
-        }
+        const rows: Row[] = REQUIRED_ROLES.map(role => {
+          const holders = ((roleHolders as Record<string, RoleHolder[]>)[role] || [])
+            .slice()
+            .sort((a, b) => a.full_name.localeCompare(b.full_name, undefined, { sensitivity: 'base' }));
+          return holders.length === 0
+            ? { kind: 'empty' as const, role }
+            : { kind: 'holders' as const, role, holders };
+        });
 
         return (
           <div className="space-y-3">
@@ -283,7 +340,7 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
             </button>
             {teamExpanded && (
               <div className="space-y-1.5 pl-1">
-                {rows.map((row, idx) => {
+                {rows.map((row) => {
                   if (row.kind === 'empty') {
                     return (
                       <div
@@ -304,48 +361,13 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
                       </div>
                     );
                   }
-                  const { holder, partners } = row;
-                  const partnerNames = partners.map(p => p.full_name).join(', ');
                   return (
-                    <div
-                      key={`${row.role}-${holder.user_id}`}
-                      className="flex items-center gap-2.5 p-2 rounded-lg border bg-muted/30 border-border/40 hover:bg-muted/50 hover:border-primary/20 transition-all duration-200"
-                    >
-                      <Avatar className="h-8 w-8 ring-2 ring-background shadow-sm">
-                        {holder.avatar_url ? (
-                          <AvatarImage src={getAvatarUrl(holder.avatar_url)} alt={holder.full_name} />
-                        ) : (
-                          <AvatarFallback className="text-[11px] font-medium bg-primary/10 text-primary">
-                            {holder.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                          </AvatarFallback>
-                        )}
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <p className="text-[13px] font-medium truncate leading-tight">
-                            {holder.full_name}
-                          </p>
-                          {partners.length > 0 && (
-                            <TooltipProvider delayDuration={150}>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <span
-                                    className="text-[8px] font-semibold tracking-wider px-1 py-px rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0 leading-none cursor-help"
-                                    title={`Back-to-back with ${partnerNames}`}
-                                  >
-                                    B2B
-                                  </span>
-                                </TooltipTrigger>
-                                <TooltipContent side="bottom" align="start" sideOffset={4} className="text-xs">
-                                  Back-to-back with {partnerNames}
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                        </div>
-                        <p className="text-[10px] text-muted-foreground truncate leading-tight">{row.role}</p>
-                      </div>
-                    </div>
+                    <PairedRoleRow
+                      key={row.role}
+                      role={row.role}
+                      holders={row.holders}
+                      getAvatarUrl={getAvatarUrl}
+                    />
                   );
                 })}
               </div>
