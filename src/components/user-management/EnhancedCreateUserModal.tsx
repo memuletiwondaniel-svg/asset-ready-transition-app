@@ -480,6 +480,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
       ops_manager_plant: '',
       ops_manager_sub_area: ''
     }));
+    setPortfolioRegionId(null);
   };
 
   const handlePlantChange = (value: string) => {
