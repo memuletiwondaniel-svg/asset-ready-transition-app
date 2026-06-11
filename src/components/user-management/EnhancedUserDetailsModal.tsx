@@ -473,6 +473,13 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
     return role === 'Ops Coach';
   };
 
+  // Ops Coach field rule — Part E2:
+  // CS and UQ require a field (CS fields, UQ "locations" modeled as fields).
+  // KAZ and BNGL stop at plant; field stays NULL → plant-level pairing.
+  const opsCoachNeedsField = (plant: string) => {
+    return ['CS', 'UQ'].includes(plant);
+  };
+
   // Check if TA2 role should show commission field (exclude Civil TA2 and Tech Safety TA2)
   const shouldShowTA2Commission = (role: string) => {
     const ta2RolesWithCommission = ['Elect TA2', 'Rotating TA2', 'PACO TA2', 'Static TA2', 'Process TA2'];
