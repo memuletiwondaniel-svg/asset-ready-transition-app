@@ -935,7 +935,25 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
           user_email: formData.email,
           user_name: `${formData.first_name} ${formData.last_name}`.trim(),
           updated_fields: Object.keys(updatePayload)
+      }
+
+      // Portfolio role-holder write — only when the selected role is
+      // scope='portfolio'. Writes to region_role_holders (NOT profiles.position
+      // and NOT project_team_members). Resolution is live-read so this
+      // propagates to every project in the chosen portfolio(s) immediately.
+      if (selectedRoleIsPortfolio && selectedRoleMeta?.id) {
+        try {
+          await savePortfolioAssignments({
+            userId: user.user_id,
+            roleId: selectedRoleMeta.id,
+            regionIds: portfolioRegionIds,
+          });
+        } catch (e: any) {
+          console.error('Portfolio assignment write failed:', e);
+          toast.error(`Failed to save portfolio assignments: ${e.message ?? e}`);
+          return;
         }
+      }
       });
 
       // Update system role if it changed
