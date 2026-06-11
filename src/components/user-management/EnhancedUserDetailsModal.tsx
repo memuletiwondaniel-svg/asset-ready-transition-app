@@ -348,8 +348,21 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       return '';
     }
     
-    // Ops Coach and Ops Team Lead with field
-    if (['Ops Coach', 'Ops Team Lead'].includes(role) && field) {
+    // Ops Coach — Part E2: KAZ/BNGL stop at plant; CS/UQ go to field.
+    // Field labels carry a "CS - " / "UQ - " prefix in the catalog — strip
+    // it for the display string so we get "Ops Coach – Zubair", not
+    // "Ops Coach – CS - Zubair".
+    if (role === 'Ops Coach' && plant) {
+      if (opsCoachNeedsField(plant)) {
+        if (!field) return '';
+        const shortField = field.replace(/^(CS|UQ)\s*-\s*/, '');
+        return `Ops Coach – ${shortField}`;
+      }
+      return `Ops Coach – ${plant}`;
+    }
+
+    // Ops Team Lead with field
+    if (role === 'Ops Team Lead' && field) {
       return `${role} - ${field}`;
     }
     
