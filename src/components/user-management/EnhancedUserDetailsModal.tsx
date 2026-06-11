@@ -61,10 +61,13 @@ import {
 } from '@/utils/mtceManagerConfig';
 import { AvatarCropDialog } from './AvatarCropDialog';
 import { PortfolioAssignmentField } from './PortfolioAssignmentField';
+import { B2BReplacementDialog } from './B2BReplacementDialog';
 import {
   useUserPortfolioAssignments,
   useSetPortfolioAssignments,
   useAvailableRegions,
+  fetchRegionRoleHoldersPreflight,
+  type RegionRoleHolder,
 } from '@/hooks/usePortfolioRoleHolders';
 
 // Type definitions matching the database schema exactly
