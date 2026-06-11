@@ -152,6 +152,13 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
   const [fieldIdByName, setFieldIdByName] = useState<Record<string, string>>({});
   // Portfolio role-holder single-select state — mirrors Edit modal.
   const [portfolioRegionId, setPortfolioRegionId] = useState<string | null>(null);
+  const [b2bDialog, setB2bDialog] = useState<{
+    open: boolean;
+    holders: RegionRoleHolder[];
+    regionName: string;
+    roleName: string;
+    resolve?: (replaceUserId: string | null) => void;
+  }>({ open: false, holders: [], regionName: '', roleName: '' });
 
   // Fetch database options on mount
   useEffect(() => {
