@@ -246,20 +246,29 @@ export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId }) => {
         {approvers.map((approver) => {
           const hasUser = !!approver.user_id;
 
-          // B2B partner detection (mirrors P2A)
+          // B2B partner detection — structured (roles.is_b2b + shared scope key).
+          // Falls back to position-string match for users with no structured holdings.
           let partner: { user_id: string; full_name: string; avatar_url?: string; position?: string } | null = null;
           if (hasUser && allProfileUsers) {
-            const normalize = (p?: string | null) => (p || '').toLowerCase().replace(/\s+/g, ' ').trim();
-            const me = allProfileUsers.find((u: any) => u.user_id === approver.user_id);
-            const myPos = normalize(me?.position);
-            if (myPos) {
-              const sharing = allProfileUsers.filter((u: any) => normalize(u.position) === myPos);
-              const others = sharing.filter((u: any) => u.user_id !== approver.user_id);
-              if (sharing.length === 2 && others.length === 1) {
-                partner = others[0];
+            const structuredId = structuredPartnerByUser.get(approver.user_id!);
+            if (structuredId) {
+              const p = allProfileUsers.find((u: any) => u.user_id === structuredId);
+              if (p) partner = p as any;
+            }
+            if (!partner) {
+              const normalize = (p?: string | null) => (p || '').toLowerCase().replace(/\s+/g, ' ').trim();
+              const me = allProfileUsers.find((u: any) => u.user_id === approver.user_id);
+              const myPos = normalize(me?.position);
+              if (myPos) {
+                const sharing = allProfileUsers.filter((u: any) => normalize(u.position) === myPos);
+                const others = sharing.filter((u: any) => u.user_id !== approver.user_id);
+                if (sharing.length === 2 && others.length === 1) {
+                  partner = others[0];
+                }
               }
             }
           }
+
 
           return (
             <div
