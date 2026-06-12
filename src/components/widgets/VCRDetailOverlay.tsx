@@ -1760,10 +1760,8 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         const existing = deliveringMap.get(roleName) || { itemCount: 0, acceptedCount: 0 };
         existing.itemCount++;
 
-        const matchedPrereq = prereqs?.find((p: any) =>
-          p.summary?.toLowerCase().trim() === item.vcr_item?.toLowerCase?.().trim?.()
-        );
-        if (matchedPrereq && acceptedStatuses.includes(matchedPrereq.status)) {
+        const itemStatusD = prereqStatusByItemId.get(item.id);
+        if (itemStatusD && acceptedStatuses.includes(itemStatusD)) {
           existing.acceptedCount++;
         }
 
