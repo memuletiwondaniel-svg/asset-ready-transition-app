@@ -100,6 +100,7 @@ export const VCRApprovalBundleSheet: React.FC<Props> = ({ bundle, open, onOpenCh
               <PrereqRow
                 key={item.prerequisite_id ?? idx}
                 item={item}
+                liveTitle={item.prerequisite_id ? liveTitles?.[item.prerequisite_id] : undefined}
                 counts={item.prerequisite_id ? counts?.[item.prerequisite_id] : undefined}
               />
             ))}
