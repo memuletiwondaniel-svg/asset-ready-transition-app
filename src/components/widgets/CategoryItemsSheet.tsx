@@ -65,10 +65,11 @@ export const CategoryItemsSheet: React.FC<CategoryItemsSheetProps> = ({
   const { data: items, isLoading } = useQuery({
     queryKey: ['vcr-category-items', vcrId, categoryLabel, forceCompleted],
     queryFn: async () => {
-      // Get prerequisites for this VCR
+      // Get prerequisites for this VCR — join via live vcr_item_id link
+      // (pac_prerequisite_id is deprecated / NULL on every row post E-1a).
       const { data: prereqs } = await supabase
         .from('p2a_vcr_prerequisites')
-        .select('id, summary, status, pac_prerequisite_id')
+        .select('id, vcr_item_id, status')
         .eq('handover_point_id', vcrId);
 
       // Get VCR items with their categories
