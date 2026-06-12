@@ -175,12 +175,15 @@ const ProgressPanel: React.FC<{ vcr: ProjectVCR; liveTargetDate?: Date }> = ({ v
           const prereqStatus = prereqByItemId.get(item.id);
           // Not-instantiated → pending. Instantiated rows must hit a known bucket;
           // if an unknown enum value ever appears, surface it loudly instead of hiding it.
-          const bucket: 'pending' | 'in_review' | 'completed' = !prereqStatus
-            ? 'pending'
-            : (STATUS_BUCKET[prereqStatus] ?? (() => {
-                console.warn('[VCRDetailOverlay] Unknown prereq status, defaulting to pending:', prereqStatus);
-                return 'pending';
-              })());
+          let bucket: 'pending' | 'in_review' | 'completed';
+          if (!prereqStatus) {
+            bucket = 'pending';
+          } else if (STATUS_BUCKET[prereqStatus]) {
+            bucket = STATUS_BUCKET[prereqStatus];
+          } else {
+            console.warn('[VCRDetailOverlay] Unknown prereq status, defaulting to pending:', prereqStatus);
+            bucket = 'pending';
+          }
 
           statusCounts[bucket]++;
           if (bucket === 'completed') existing.done++;
