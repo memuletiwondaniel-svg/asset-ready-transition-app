@@ -125,8 +125,9 @@ const statusLabel: Record<LedgerStatus, string> = {
 
 const PrereqRow: React.FC<{
   item: VCRSubItem;
+  liveTitle?: string;
   counts?: { total: number; accepted: number };
-}> = ({ item, counts }) => {
+}> = ({ item, liveTitle, counts }) => {
   const [comment, setComment] = useState('');
   const [showComment, setShowComment] = useState(false);
   const { ledger, canDecide, accept, reject, qualify, isDeciding } =
