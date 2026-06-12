@@ -142,12 +142,21 @@ const PrereqRow: React.FC<{
         </p>
       )}
 
-      {ledger && !canDecide && (
-        <p className="text-xs text-muted-foreground italic">
-          Your decision: <span className="font-medium">{statusLabel[ledger.status]}</span>
-          {ledger.status !== 'PENDING' && ' — awaiting other approvers.'}
-        </p>
-      )}
+      {ledger && !canDecide && (() => {
+        const isComplete = !!counts && counts.total > 0 && counts.accepted >= counts.total;
+        const suffix =
+          ledger.status === 'PENDING'
+            ? ''
+            : isComplete
+              ? ' — all approvers complete.'
+              : ' — awaiting other approvers.';
+        return (
+          <p className="text-xs text-muted-foreground italic">
+            Your decision: <span className="font-medium">{statusLabel[ledger.status]}</span>
+            {suffix}
+          </p>
+        );
+      })()}
 
       {ledger && canDecide && (
         <div className="space-y-2">
