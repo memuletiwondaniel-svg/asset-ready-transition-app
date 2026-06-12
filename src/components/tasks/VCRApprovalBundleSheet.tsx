@@ -64,6 +64,25 @@ export const VCRApprovalBundleSheet: React.FC<Props> = ({ bundle, open, onOpenCh
     },
   });
 
+  // Live titles: sub_items metadata is stamped at fan-out and goes stale after
+  // catalog conformance. Read p2a_vcr_prerequisites.summary by id; fall back to
+  // the stamped title only when the prereq row is missing. Read-only.
+  const { data: liveTitles } = useQuery({
+    enabled: open && prereqIds.length > 0,
+    queryKey: ['vcr-bundle-live-titles', prereqIds],
+    staleTime: 0,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from('p2a_vcr_prerequisites')
+        .select('id, summary')
+        .in('id', prereqIds);
+      if (error) throw error;
+      const rec: Record<string, string> = {};
+      (data || []).forEach((row: any) => { if (row.summary) rec[row.id] = row.summary; });
+      return rec;
+    },
+  });
+
   return (
     <Sheet open={open && !!bundle} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
