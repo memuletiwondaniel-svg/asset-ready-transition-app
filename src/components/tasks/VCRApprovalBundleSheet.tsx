@@ -64,6 +64,25 @@ export const VCRApprovalBundleSheet: React.FC<Props> = ({ bundle, open, onOpenCh
     },
   });
 
+  // Live titles: sub_items metadata is stamped at fan-out and goes stale after
+  // catalog conformance. Read p2a_vcr_prerequisites.summary by id; fall back to
+  // the stamped title only when the prereq row is missing. Read-only.
+  const { data: liveTitles } = useQuery({
+    enabled: open && prereqIds.length > 0,
+    queryKey: ['vcr-bundle-live-titles', prereqIds],
+    staleTime: 0,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from('p2a_vcr_prerequisites')
+        .select('id, summary')
+        .in('id', prereqIds);
+      if (error) throw error;
+      const rec: Record<string, string> = {};
+      (data || []).forEach((row: any) => { if (row.summary) rec[row.id] = row.summary; });
+      return rec;
+    },
+  });
+
   return (
     <Sheet open={open && !!bundle} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
@@ -81,6 +100,7 @@ export const VCRApprovalBundleSheet: React.FC<Props> = ({ bundle, open, onOpenCh
               <PrereqRow
                 key={item.prerequisite_id ?? idx}
                 item={item}
+                liveTitle={item.prerequisite_id ? liveTitles?.[item.prerequisite_id] : undefined}
                 counts={item.prerequisite_id ? counts?.[item.prerequisite_id] : undefined}
               />
             ))}
@@ -105,8 +125,9 @@ const statusLabel: Record<LedgerStatus, string> = {
 
 const PrereqRow: React.FC<{
   item: VCRSubItem;
+  liveTitle?: string;
   counts?: { total: number; accepted: number };
-}> = ({ item, counts }) => {
+}> = ({ item, liveTitle, counts }) => {
   const [comment, setComment] = useState('');
   const [showComment, setShowComment] = useState(false);
   const { ledger, canDecide, accept, reject, qualify, isDeciding } =
@@ -127,7 +148,7 @@ const PrereqRow: React.FC<{
   return (
     <div className="rounded-md border p-3 space-y-2">
       <div className="flex items-start justify-between gap-3">
-        <div className="text-sm font-medium leading-snug">{item.summary}</div>
+        <div className="text-sm font-medium leading-snug">{liveTitle || item.summary}</div>
         {counts && counts.total > 0 && (
           <Badge variant="secondary" className="shrink-0">
             <CheckCircle2 className="h-3 w-3 mr-1" />

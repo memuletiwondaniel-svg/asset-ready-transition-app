@@ -134,23 +134,35 @@ const ProgressPanel: React.FC<{ vcr: ProjectVCR; liveTargetDate?: Date }> = ({ v
         .select('id, category_id, vcr_item, vcr_item_categories!vcr_items_category_id_fkey (name)')
         .eq('is_active', true);
 
-      // Get prerequisites for this VCR (tracks close-out status)
+      // Get prerequisites for this VCR (tracks close-out status).
+      // Rejoin via vcr_item_id (E-1a live link). pac_prerequisite_id is deprecated
+      // and is NULL on every row, so the old summary-text join silently dropped status.
       const { data: prereqs } = await client
         .from('p2a_vcr_prerequisites')
-        .select('id, summary, status')
+        .select('id, vcr_item_id, status')
         .eq('handover_point_id', vcr.id);
 
       const statusCounts = { pending: 0, in_review: 0, completed: 0 };
       const categoryMap = new Map<string, { total: number; done: number }>();
 
-      const acceptedStatuses = ['ACCEPTED', 'QUALIFICATION_APPROVED'];
-      const reviewStatuses = ['SUBMITTED', 'IN_REVIEW', 'UNDER_REVIEW'];
+      // Explicit bucket per p2a_vcr_prerequisite_status enum value.
+      // No default/fallthrough — that fallthrough was the original bug.
+      const STATUS_BUCKET: Record<string, 'pending' | 'in_review' | 'completed'> = {
+        NOT_STARTED: 'pending',
+        IN_PROGRESS: 'pending',
+        REJECTED: 'pending',
+        NA: 'pending',
+        READY_FOR_REVIEW: 'in_review',
+        QUALIFICATION_REQUESTED: 'in_review',
+        ACCEPTED: 'completed',
+        QUALIFICATION_APPROVED: 'completed',
+      };
 
-      // Build prereq lookup
-      const prereqMap = new Map<string, string>();
+      // Build prereq lookup keyed by live vcr_item_id link.
+      const prereqByItemId = new Map<string, string>();
       if (prereqs) {
-        for (const p of prereqs) {
-          prereqMap.set(p.summary?.toLowerCase().trim(), p.status);
+        for (const p of prereqs as Array<{ vcr_item_id: string | null; status: string }>) {
+          if (p.vcr_item_id) prereqByItemId.set(p.vcr_item_id, p.status);
         }
       }
 
@@ -160,22 +172,21 @@ const ProgressPanel: React.FC<{ vcr: ProjectVCR; liveTargetDate?: Date }> = ({ v
           const existing = categoryMap.get(catName) || { total: 0, done: 0 };
           existing.total++;
 
-          // Check if this item has a matching prereq with close-out status
-          const itemKey = item.vcr_item?.toLowerCase().trim();
-          const prereqStatus = prereqMap.get(itemKey);
-
-          if (prereqStatus) {
-            if (acceptedStatuses.includes(prereqStatus)) {
-              existing.done++;
-              statusCounts.completed++;
-            } else if (reviewStatuses.includes(prereqStatus)) {
-              statusCounts.in_review++;
-            } else {
-              statusCounts.pending++;
-            }
+          const prereqStatus = prereqByItemId.get(item.id);
+          // Not-instantiated → pending. Instantiated rows must hit a known bucket;
+          // if an unknown enum value ever appears, surface it loudly instead of hiding it.
+          let bucket: 'pending' | 'in_review' | 'completed';
+          if (!prereqStatus) {
+            bucket = 'pending';
+          } else if (STATUS_BUCKET[prereqStatus]) {
+            bucket = STATUS_BUCKET[prereqStatus];
           } else {
-            statusCounts.pending++;
+            console.warn('[VCRDetailOverlay] Unknown prereq status, defaulting to pending:', prereqStatus);
+            bucket = 'pending';
           }
+
+          statusCounts[bucket]++;
+          if (bucket === 'completed') existing.done++;
 
           categoryMap.set(catName, existing);
         }
@@ -1553,13 +1564,18 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         for (const r of roles) roleMap.set(r.id, r.name);
       }
 
-      // Get prerequisites for status matching
+      // Get prerequisites for status matching — rejoin via live vcr_item_id link
+      // (pac_prerequisite_id is deprecated / NULL; summary-text match was unreliable).
       const { data: prereqs } = await client
         .from('p2a_vcr_prerequisites')
-        .select('id, summary, status')
+        .select('id, vcr_item_id, status')
         .eq('handover_point_id', vcr.id);
 
       const acceptedStatuses = ['ACCEPTED', 'QUALIFICATION_APPROVED'];
+      const prereqStatusByItemId = new Map<string, string>();
+      for (const p of (prereqs || []) as Array<{ vcr_item_id: string | null; status: string }>) {
+        if (p.vcr_item_id) prereqStatusByItemId.set(p.vcr_item_id, p.status);
+      }
 
       // Fetch profiles matched to approving roles, filtered by project team members
       let profilesByRole: any[] = [];
@@ -1709,10 +1725,8 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
 
       for (const item of vcrItems) {
         if (!item.approving_party_role_ids) continue;
-        const matchedPrereq = prereqs?.find((p: any) =>
-          p.summary?.toLowerCase().trim() === item.vcr_item?.toLowerCase?.().trim?.()
-        );
-        const isAccepted = matchedPrereq ? acceptedStatuses.includes(matchedPrereq.status) : false;
+        const itemStatus = prereqStatusByItemId.get(item.id);
+        const isAccepted = itemStatus ? acceptedStatuses.includes(itemStatus) : false;
 
         for (const roleId of item.approving_party_role_ids) {
           if (excludedRoleIds.has(roleId)) continue;
@@ -1746,10 +1760,8 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         const existing = deliveringMap.get(roleName) || { itemCount: 0, acceptedCount: 0 };
         existing.itemCount++;
 
-        const matchedPrereq = prereqs?.find((p: any) =>
-          p.summary?.toLowerCase().trim() === item.vcr_item?.toLowerCase?.().trim?.()
-        );
-        if (matchedPrereq && acceptedStatuses.includes(matchedPrereq.status)) {
+        const itemStatusD = prereqStatusByItemId.get(item.id);
+        if (itemStatusD && acceptedStatuses.includes(itemStatusD)) {
           existing.acceptedCount++;
         }
 

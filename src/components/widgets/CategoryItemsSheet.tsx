@@ -65,10 +65,11 @@ export const CategoryItemsSheet: React.FC<CategoryItemsSheetProps> = ({
   const { data: items, isLoading } = useQuery({
     queryKey: ['vcr-category-items', vcrId, categoryLabel, forceCompleted],
     queryFn: async () => {
-      // Get prerequisites for this VCR
+      // Get prerequisites for this VCR — join via live vcr_item_id link
+      // (pac_prerequisite_id is deprecated / NULL on every row post E-1a).
       const { data: prereqs } = await supabase
         .from('p2a_vcr_prerequisites')
-        .select('id, summary, status, pac_prerequisite_id')
+        .select('id, vcr_item_id, status')
         .eq('handover_point_id', vcrId);
 
       // Get VCR items with their categories
@@ -104,9 +105,7 @@ export const CategoryItemsSheet: React.FC<CategoryItemsSheetProps> = ({
 
       // Map items with their prerequisite status
       return filtered.map((item, idx) => {
-        const matchedPrereq = prereqs?.find(p =>
-          p.summary?.toLowerCase().trim() === item.vcr_item?.toLowerCase().trim()
-        );
+        const matchedPrereq = prereqs?.find(p => p.vcr_item_id === item.id);
 
         const baseStatus = matchedPrereq?.status || 'NOT_STARTED';
         const forcedStatus = forceCompleted
