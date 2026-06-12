@@ -1140,8 +1140,14 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       return;
     }
 
-    if (newPassword.length < 6) {
-      toast.error('Password must be at least 6 characters');
+    const policyErrors: string[] = [];
+    if (newPassword.length < 12) policyErrors.push('be at least 12 characters');
+    if (!/[a-z]/.test(newPassword)) policyErrors.push('include a lowercase letter');
+    if (!/[A-Z]/.test(newPassword)) policyErrors.push('include an uppercase letter');
+    if (!/\d/.test(newPassword)) policyErrors.push('include a number');
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"|<>?,./`~]/.test(newPassword)) policyErrors.push('include a symbol');
+    if (policyErrors.length > 0) {
+      toast.error('Password must ' + policyErrors.join(', ') + '.');
       return;
     }
 
