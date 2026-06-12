@@ -375,10 +375,29 @@ export function useUnifiedTasks(userId: string) {
       const isApproval = task.type === 'vcr_approval_bundle' || task.type === 'pssr_approval_bundle';
       const isWaiting = task.status === 'waiting';
       const subItems = (task.sub_items || []) as any[];
-      const completed = subItems.filter((i: any) => i.completed).length;
-      const total = subItems.length;
-      const pct = task.progress_percentage || 0;
       const meta = (task.metadata || {}) as Record<string, any>;
+      const pct = task.progress_percentage || 0;
+
+      // Display consistency (VCR approval bundles): the Kanban column/status
+      // and progress bar are maintained by the DB recompute trigger
+      // (recompute_vcr_approval_bundle_progress) from THIS approver's ledger
+      // rows. The n/M label must come from that SAME source — not a parallel
+      // sub_items.completed count, which reflects the per-item "fully
+      // accepted by all roles" state and disagrees with progress/status as
+      // soon as one approver finishes ahead of the others.
+      const isVcrApproval = task.type === 'vcr_approval_bundle';
+      const metaDecided = typeof meta?.approver_decided_items === 'number'
+        ? meta.approver_decided_items as number
+        : undefined;
+      const metaTotal = typeof meta?.approver_total_items === 'number'
+        ? meta.approver_total_items as number
+        : undefined;
+      const completed = isVcrApproval && metaDecided !== undefined
+        ? metaDecided
+        : subItems.filter((i: any) => i.completed).length;
+      const total = isVcrApproval && metaTotal !== undefined
+        ? metaTotal
+        : subItems.length;
 
       const bundleCat: CategoryFilter = isPSSR ? 'pssr' : 'vcr';
       const bundleLabel = isPSSR
