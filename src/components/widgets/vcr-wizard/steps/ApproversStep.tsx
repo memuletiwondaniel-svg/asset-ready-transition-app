@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueries } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/tooltip';
 import { useProfileUsers } from '@/hooks/useProfileUsers';
 import { useProjectRoleUsers } from '@/hooks/useProjectRoleUsers';
+import { fetchB2BPartnerIds } from '@/hooks/useB2BPartner';
 import {
   P2A_AND_VCR_APPROVER_ROLES,
   DEPUTY_DIRECTOR_KEY,
