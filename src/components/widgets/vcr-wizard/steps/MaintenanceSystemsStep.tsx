@@ -89,12 +89,41 @@ export const MaintenanceSystemsStep: React.FC<MaintenanceSystemsStepProps> = ({ 
         if (error) throw error;
       }
     },
+    onMutate: async (payload) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<DeliverableRow[]>(queryKey);
+      queryClient.setQueryData<DeliverableRow[]>(queryKey, (old) => {
+        const list = old ? [...old] : [];
+        const idx = list.findIndex((r) => r.deliverable_type === payload.deliverable_type);
+        if (idx >= 0) {
+          list[idx] = {
+            ...list[idx],
+            ...(payload.is_applicable !== undefined ? { is_applicable: payload.is_applicable } : {}),
+            ...(payload.comments !== undefined ? { comments: payload.comments } : {}),
+          };
+        } else {
+          list.push({
+            id: `optimistic-${payload.deliverable_type}`,
+            deliverable_type: payload.deliverable_type,
+            is_applicable: payload.is_applicable ?? false,
+            comments: payload.comments ?? null,
+          });
+        }
+        return list;
+      });
+      return { previous };
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey });
       queryClient.invalidateQueries({ queryKey: ['vcr-wizard-step-counts', vcrId] });
       queryClient.invalidateQueries({ queryKey: ['vcr-confirmation-stats', vcrId] });
     },
-    onError: (e: any) => toast.error(e?.message || 'Failed to save'),
+    onError: (e: any, _vars, ctx) => {
+      if (ctx?.previous) queryClient.setQueryData(queryKey, ctx.previous);
+      toast.error(e?.message || 'Failed to save');
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey });
+    },
   });
 
   const handleToggle = (type: MaintenanceDeliverableType, next: boolean) => {
