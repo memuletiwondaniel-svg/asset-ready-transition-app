@@ -205,6 +205,31 @@ export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId }) => {
     setShowAddRow(false);
   };
 
+  // Structured B2B partner lookup per approver — uses roles.is_b2b + shared scope
+  // (region/plant/hub/org/project) via fetchB2BPartnerIds. Position-string fallback
+  // handled inline in render.
+  const approverUserIds = useMemo(
+    () => Array.from(new Set(approvers.map(a => a.user_id).filter(Boolean) as string[])),
+    [approvers]
+  );
+  const partnerQueries = useQueries({
+    queries: approverUserIds.map((uid) => ({
+      queryKey: ['b2b-partner-structured', uid],
+      queryFn: () => fetchB2BPartnerIds(uid),
+      staleTime: 10 * 60 * 1000,
+      refetchOnWindowFocus: false,
+    })),
+  });
+  const structuredPartnerByUser = useMemo(() => {
+    const m = new Map<string, string>();
+    approverUserIds.forEach((uid, i) => {
+      const ids = (partnerQueries[i]?.data as string[] | undefined) || [];
+      if (ids.length === 1) m.set(uid, ids[0]);
+    });
+    return m;
+  }, [approverUserIds, partnerQueries]);
+
+
   if (isLoading) {
     return (
       <div className="space-y-3 p-4">
