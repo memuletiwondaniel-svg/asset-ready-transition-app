@@ -1564,13 +1564,18 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         for (const r of roles) roleMap.set(r.id, r.name);
       }
 
-      // Get prerequisites for status matching
+      // Get prerequisites for status matching — rejoin via live vcr_item_id link
+      // (pac_prerequisite_id is deprecated / NULL; summary-text match was unreliable).
       const { data: prereqs } = await client
         .from('p2a_vcr_prerequisites')
-        .select('id, summary, status')
+        .select('id, vcr_item_id, status')
         .eq('handover_point_id', vcr.id);
 
       const acceptedStatuses = ['ACCEPTED', 'QUALIFICATION_APPROVED'];
+      const prereqStatusByItemId = new Map<string, string>();
+      for (const p of (prereqs || []) as Array<{ vcr_item_id: string | null; status: string }>) {
+        if (p.vcr_item_id) prereqStatusByItemId.set(p.vcr_item_id, p.status);
+      }
 
       // Fetch profiles matched to approving roles, filtered by project team members
       let profilesByRole: any[] = [];
