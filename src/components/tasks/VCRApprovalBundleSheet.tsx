@@ -148,7 +148,7 @@ const PrereqRow: React.FC<{
   return (
     <div className="rounded-md border p-3 space-y-2">
       <div className="flex items-start justify-between gap-3">
-        <div className="text-sm font-medium leading-snug">{item.summary}</div>
+        <div className="text-sm font-medium leading-snug">{liveTitle || item.summary}</div>
         {counts && counts.total > 0 && (
           <Badge variant="secondary" className="shrink-0">
             <CheckCircle2 className="h-3 w-3 mr-1" />
