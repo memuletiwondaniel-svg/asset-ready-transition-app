@@ -105,9 +105,7 @@ export const CategoryItemsSheet: React.FC<CategoryItemsSheetProps> = ({
 
       // Map items with their prerequisite status
       return filtered.map((item, idx) => {
-        const matchedPrereq = prereqs?.find(p =>
-          p.summary?.toLowerCase().trim() === item.vcr_item?.toLowerCase().trim()
-        );
+        const matchedPrereq = prereqs?.find(p => p.vcr_item_id === item.id);
 
         const baseStatus = matchedPrereq?.status || 'NOT_STARTED';
         const forcedStatus = forceCompleted
