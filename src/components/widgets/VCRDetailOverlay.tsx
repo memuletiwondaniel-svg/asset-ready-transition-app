@@ -1725,10 +1725,8 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
 
       for (const item of vcrItems) {
         if (!item.approving_party_role_ids) continue;
-        const matchedPrereq = prereqs?.find((p: any) =>
-          p.summary?.toLowerCase().trim() === item.vcr_item?.toLowerCase?.().trim?.()
-        );
-        const isAccepted = matchedPrereq ? acceptedStatuses.includes(matchedPrereq.status) : false;
+        const itemStatus = prereqStatusByItemId.get(item.id);
+        const isAccepted = itemStatus ? acceptedStatuses.includes(itemStatus) : false;
 
         for (const roleId of item.approving_party_role_ids) {
           if (excludedRoleIds.has(roleId)) continue;
