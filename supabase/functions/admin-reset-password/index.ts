@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
     // Validate against this project's Supabase Auth password policy:
     // min 12 chars, lower+upper+digit+symbol, not in HIBP pwned set.
     const policyErrors: string[] = [];
-    if (newPassword.length < 12) policyErrors.push('be at least 12 characters');
+    if (newPassword.length < 8) policyErrors.push('be at least 8 characters');
     if (!/[a-z]/.test(newPassword)) policyErrors.push('include a lowercase letter');
     if (!/[A-Z]/.test(newPassword)) policyErrors.push('include an uppercase letter');
     if (!/\d/.test(newPassword)) policyErrors.push('include a number');

@@ -12,8 +12,8 @@ export interface PasswordStrength {
 export const validatePassword = (password: string): PasswordRequirement[] => {
   return [
     {
-      label: 'At least 12 characters',
-      met: password.length >= 12
+      label: 'At least 8 characters',
+      met: password.length >= 8
     },
     {
       label: 'Contains uppercase letter',
