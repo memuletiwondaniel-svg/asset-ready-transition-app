@@ -76,11 +76,18 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Validate password length
-    if (newPassword.length < 6) {
+    // Validate against this project's Supabase Auth password policy:
+    // min 12 chars, lower+upper+digit+symbol, not in HIBP pwned set.
+    const policyErrors: string[] = [];
+    if (newPassword.length < 12) policyErrors.push('be at least 12 characters');
+    if (!/[a-z]/.test(newPassword)) policyErrors.push('include a lowercase letter');
+    if (!/[A-Z]/.test(newPassword)) policyErrors.push('include an uppercase letter');
+    if (!/\d/.test(newPassword)) policyErrors.push('include a number');
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"|<>?,./`~]/.test(newPassword)) policyErrors.push('include a symbol');
+    if (policyErrors.length > 0) {
       return new Response(
-        JSON.stringify({ error: 'Password must be at least 6 characters' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Password must ' + policyErrors.join(', ') + '.' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -92,9 +99,19 @@ Deno.serve(async (req) => {
 
     if (updateError) {
       console.error('Error updating password:', updateError);
+      const reasons = (updateError as any)?.reasons as string[] | undefined;
+      let friendly = updateError.message || 'Failed to update password';
+      if ((updateError as any)?.code === 'weak_password') {
+        const parts: string[] = [];
+        if (reasons?.includes('length')) parts.push('be at least 12 characters');
+        if (reasons?.includes('characters')) parts.push('include uppercase, lowercase, number, and symbol');
+        if (reasons?.includes('pwned')) parts.push('not be a commonly-used or breached password');
+        friendly = 'Password must ' + (parts.length ? parts.join(', ') : 'meet the project password policy') + '.';
+      }
+      // Return 200 so the client surfaces `data.error` cleanly instead of a generic non-2xx error.
       return new Response(
-        JSON.stringify({ error: 'Failed to update password: ' + updateError.message }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: friendly }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
