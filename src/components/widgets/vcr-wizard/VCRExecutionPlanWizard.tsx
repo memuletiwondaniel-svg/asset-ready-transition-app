@@ -83,6 +83,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   reviewPayload,
 }) => {
   const isReview = !!reviewPayload;
+  const { data: rollup } = useVCRPlanRollup(vcr.id);
   const [currentStep, setCurrentStep] = useState(0);
   const [visitedSteps, setVisitedSteps] = useState<Set<number>>(new Set([0]));
   const [step9Ready, setStep9Ready] = useState(false);
