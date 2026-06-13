@@ -1,4 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
+
+// Auto-growing textarea: height tracks content so long descriptions render
+// in full with no inner scrollbar. Mirrors base Textarea styling.
+const AutoGrowTextarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement>> = (props) => {
+  const ref = useRef<HTMLTextAreaElement | null>(null);
+  const resize = () => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  };
+  useLayoutEffect(() => { resize(); }, [props.value]);
+  return (
+    <textarea
+      {...props}
+      ref={ref}
+      onInput={(e) => { resize(); props.onInput?.(e); }}
+      className={`flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none overflow-hidden ${props.className ?? ''}`}
+    />
+  );
+};
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
@@ -1133,16 +1154,15 @@ const EditItemForm: React.FC<{
     <div className="flex flex-col h-[calc(100vh-80px)]">
       <ScrollArea className="flex-1 min-h-0">
         <div className="space-y-5 mt-4 pr-4 pb-6">
-          {/* VCR Item Description */}
+          {/* Description */}
           <div className="space-y-1.5">
             <Label className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
-              VCR Item Description *
+              Description *
             </Label>
-            <Textarea
+            <AutoGrowTextarea
               value={vcrItem}
               onChange={(e) => setVcrItem(e.target.value)}
-              className="text-sm"
-              rows={3}
+              rows={1}
             />
           </div>
 
@@ -1253,7 +1273,11 @@ const EditItemForm: React.FC<{
                           {availableDeliveringCandidates.map(user => (
                             <button
                               key={user.user_id}
-                              onClick={() => { void handleAddDeliveringUser(user.user_id); }}
+                              onClick={() => {
+                                void handleAddDeliveringUser(user.user_id);
+                                setAddDeliveringOpen(false);
+                                setDeliveringSearch('');
+                              }}
                               className="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-muted/60 transition-colors"
                             >
                               <div className="font-medium truncate">{user.full_name}</div>
@@ -1354,6 +1378,7 @@ const EditItemForm: React.FC<{
                         onClick={() => {
                           setApprovingParties(prev => [...prev, r.id]);
                           setApproverSearch('');
+                          setAddApproverOpen(false);
                         }}
                         className="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-muted/60 transition-colors"
                       >
