@@ -50,8 +50,6 @@ const RPC_LABELS = rpcResolvedLabels(FIXED_ROLES);
 
 export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId }) => {
   const [approvers, setApprovers] = useState<VCRApprover[]>([]);
-  const [showAddRow, setShowAddRow] = useState(false);
-  const [newRoleName, setNewRoleName] = useState('');
 
   const { data: allProfileUsers } = useProfileUsers();
 
