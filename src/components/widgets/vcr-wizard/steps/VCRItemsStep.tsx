@@ -1009,6 +1009,7 @@ const EditItemForm: React.FC<{
   const [editingTopic, setEditingTopic] = useState(false);
   const [guidanceOpen, setGuidanceOpen] = useState(false);
   const [approversOpen, setApproversOpen] = useState(true);
+  const [deliveringOpen, setDeliveringOpen] = useState(true);
   const [deleteApproverTarget, setDeleteApproverTarget] = useState<{ roleId: string; name: string } | null>(null);
   const [memberPopoverRoleId, setMemberPopoverRoleId] = useState<string | null>(null);
   const [deliveringPopoverOpen, setDeliveringPopoverOpen] = useState(false);
@@ -1226,12 +1227,24 @@ const EditItemForm: React.FC<{
           </div>
 
 
-          {/* Delivering Party — header + single row, no standalone dropdown */}
+          {/* Delivering Party — collapsible, matches Guidance Notes / Approving Parties pattern */}
           <div className="border-t border-border/40 pt-4 group/sect">
-            <div className="flex items-center justify-between mb-1">
-              <Label className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
-                Delivering Party ({displayDeliveringUsers.length})
-              </Label>
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setDeliveringOpen(o => !o)}
+                className="flex items-center gap-2 group rounded px-1 -mx-1 py-0.5 hover:bg-muted/50 transition-colors"
+                aria-expanded={deliveringOpen}
+              >
+                {deliveringOpen ? (
+                  <ChevronDown className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                ) : (
+                  <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                )}
+                <span className="text-[11px] uppercase tracking-wide text-muted-foreground group-hover:text-foreground font-medium transition-colors">
+                  Delivering Party ({displayDeliveringUsers.length})
+                </span>
+              </button>
               <Popover open={addDeliveringOpen} onOpenChange={setAddDeliveringOpen}>
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="sm" className={`${addBtnClass} opacity-0 group-hover/sect:opacity-100 focus:opacity-100 data-[state=open]:opacity-100 transition-opacity`}>
@@ -1297,46 +1310,50 @@ const EditItemForm: React.FC<{
               </Popover>
             </div>
 
-            {displayDeliveringUsers.length > 0 ? (
-              <div className="mt-1">
-                {renderPartyRow({
-                  key: 'delivering-row',
-                  title: getRoleName(deliveringParty) || 'Delivering Party',
-                  isB2B: isB2BPairUsers(displayDeliveringUsers as any),
-                  users: deliveringUsersForRow,
-                  popoverOpen: deliveringPopoverOpen,
-                  onPopoverChange: setDeliveringPopoverOpen,
-                  popoverContent: (
-                    <div className="space-y-1">
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground px-1 pb-1">
-                        Assigned ({displayDeliveringUsers.length})
-                      </p>
-                      {displayDeliveringUsers.map(u => (
-                        <div key={u.id} className="flex items-center justify-between gap-2 px-1.5 py-1 rounded hover:bg-muted/60 group/holder">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <Avatar className="w-5 h-5">
-                              <AvatarImage src={getAvatarUrl(u.avatar_url)} />
-                              <AvatarFallback className="text-[9px]">{getInitials(u.full_name)}</AvatarFallback>
-                            </Avatar>
-                            <span className="text-xs truncate">{u.full_name}</span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => { void handleRemoveDeliveringUser(u); }}
-                            className="opacity-0 group-hover/holder:opacity-100 p-0.5 rounded text-muted-foreground hover:text-destructive transition"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
+            {deliveringOpen && (
+              <>
+                {displayDeliveringUsers.length > 0 ? (
+                  <div className="mt-1">
+                    {renderPartyRow({
+                      key: 'delivering-row',
+                      title: getRoleName(deliveringParty) || 'Delivering Party',
+                      isB2B: isB2BPairUsers(displayDeliveringUsers as any),
+                      users: deliveringUsersForRow,
+                      popoverOpen: deliveringPopoverOpen,
+                      onPopoverChange: setDeliveringPopoverOpen,
+                      popoverContent: (
+                        <div className="space-y-1">
+                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground px-1 pb-1">
+                            Assigned ({displayDeliveringUsers.length})
+                          </p>
+                          {displayDeliveringUsers.map(u => (
+                            <div key={u.id} className="flex items-center justify-between gap-2 px-1.5 py-1 rounded hover:bg-muted/60 group/holder">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <Avatar className="w-5 h-5">
+                                  <AvatarImage src={getAvatarUrl(u.avatar_url)} />
+                                  <AvatarFallback className="text-[9px]">{getInitials(u.full_name)}</AvatarFallback>
+                                </Avatar>
+                                <span className="text-xs truncate">{u.full_name}</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => { void handleRemoveDeliveringUser(u); }}
+                                className="opacity-0 group-hover/holder:opacity-100 p-0.5 rounded text-muted-foreground hover:text-destructive transition"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  ),
-                })}
-              </div>
-            ) : deliveringParty ? (
-              <p className="text-[11px] italic text-muted-foreground mt-1.5">No users assigned to this role</p>
-            ) : (
-              <p className="text-[11px] italic text-muted-foreground mt-1.5">No delivering party assigned</p>
+                      ),
+                    })}
+                  </div>
+                ) : deliveringParty ? (
+                  <p className="text-[11px] italic text-muted-foreground mt-1.5">No users assigned to this role</p>
+                ) : (
+                  <p className="text-[11px] italic text-muted-foreground mt-1.5">No delivering party assigned</p>
+                )}
+              </>
             )}
           </div>
 
