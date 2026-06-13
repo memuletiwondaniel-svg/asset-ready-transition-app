@@ -70,6 +70,9 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ['vcr-review-readiness', vcrId],
+    // Always refetch when Step 10 mounts so N/A toggles from Step 9 are reflected.
+    refetchOnMount: 'always',
+    staleTime: 0,
     queryFn: async () => {
       const client = supabase as any;
 
@@ -302,23 +305,10 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
     const client = supabase as any;
 
     try {
-      // 1. Resolve active VCR checklist items via the SHARED helper —
-      //    identical to what Step 10 readiness uses. One source of truth.
-      const { activeItems: activeCatalog, templateItemCount } = await computeActiveVcrItems(vcrId);
-
-      if (templateItemCount === 0) {
-        toast.error('No VCR checklist items found for this template.');
-        setIsSubmitting(false);
-        return;
-      }
-
-      const activeItems = activeCatalog.map((it) => ({
-        vcr_item_id: it.id,
-        summary: it.vcr_item,
-        display_order: it.display_order,
-      }));
-
-      // 2. Build approver payload from the roster lifted from Step 8.
+      // Build approver payload from the roster lifted from Step 8.
+      // NOTE: We no longer send the active checklist set to the RPC. The RPC
+      // derives it server-side from p2a_vcr_item_overrides at execution time,
+      // so the materialized rows are authoritative regardless of any stale UI.
       const approverPayload = (approversRoster || [])
         .filter(a => !!a.user_id)
         .map(a => ({
@@ -334,17 +324,21 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
         return;
       }
 
-      // 3. Atomic RPC: prereq upsert + approver reconcile + status → READY.
+      // Atomic RPC: server computes active set, upserts prereqs, reconciles
+      // approvers, flips status → READY. Returns counts for the toast.
       const { data: result, error: rpcErr } = await client.rpc('submit_vcr_plan', {
         p_handover_point_id: vcrId,
-        p_items: activeItems,
         p_approvers: approverPayload,
       });
       if (rpcErr) throw rpcErr;
 
       setConfirmOpen(false);
+      const upserted = result?.items_upserted ?? 0;
+      const deleted = result?.items_deleted ?? 0;
       toast.success(
-        `Submitted for approval — ${result?.items_upserted ?? activeItems.length} checklist items, ${result?.approvers_upserted ?? approverPayload.length} approvers.`,
+        `Submitted for approval — ${upserted} checklist item${upserted === 1 ? '' : 's'}` +
+        (deleted > 0 ? `, ${deleted} removed (newly N/A)` : '') +
+        `, ${result?.approvers_upserted ?? approverPayload.length} approvers.`,
       );
 
       // Refresh readiness + parent caches.
@@ -357,9 +351,12 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
     } catch (err: any) {
       console.error('[submit_vcr_plan] failed:', err);
       const msg = err?.message || String(err);
-      // Surface the decided-approver-removal guard cleanly.
       if (msg.includes('Cannot remove approvers with recorded decisions')) {
         toast.error('Cannot remove an approver who has already approved or rejected. Restore them in Step 8 to continue.');
+      } else if (msg.includes('Cannot remove checklist items with recorded approval decisions')) {
+        toast.error('Cannot mark an item N/A after it has a recorded approval decision. Restore it in Step 9 to continue.');
+      } else if (msg.includes('No active checklist items')) {
+        toast.error('Every checklist item is marked N/A. Restore at least one item in Step 9 before submitting.');
       } else {
         toast.error(`Submission failed: ${msg}`);
       }
@@ -367,6 +364,7 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
       setIsSubmitting(false);
     }
   };
+
 
   return (
     <div className="space-y-5">
