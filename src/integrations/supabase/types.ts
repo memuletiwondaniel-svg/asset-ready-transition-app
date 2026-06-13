@@ -14923,7 +14923,7 @@ export type Database = {
         Returns: undefined
       }
       submit_vcr_plan: {
-        Args: { p_approvers: Json; p_handover_point_id: string; p_items: Json }
+        Args: { p_approvers: Json; p_handover_point_id: string }
         Returns: Json
       }
       sync_readiness_nodes: { Args: { p_project_id: string }; Returns: number }
