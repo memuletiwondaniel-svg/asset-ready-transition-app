@@ -1157,7 +1157,8 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
       const { data, error } = await supabase.functions.invoke('admin-reset-password', {
         body: {
           userId: user.user_id,
-          newPassword: newPassword
+          newPassword: newPassword,
+          requireChange: !!formData.password_change_required,
         }
       });
 
