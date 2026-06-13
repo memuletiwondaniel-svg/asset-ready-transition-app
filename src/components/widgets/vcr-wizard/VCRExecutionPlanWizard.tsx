@@ -54,6 +54,10 @@ import { VCRConfirmationStep } from './steps/VCRConfirmationStep';
 import { Layers, CheckCircle2, Eye } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useVCRHydrocarbonStatus } from '@/hooks/useVCRHydrocarbonStatus';
+import { useVCRPlanRollup, vcrPlanPillLabel } from '@/hooks/useVCRPlanApprovalTasks';
+import { VCRWizardModeContext, type VCRReviewPayload } from './wizardModeContext';
+import { VCRReviewDecisionStep } from './VCRReviewDecisionStep';
+import { Button } from '@/components/ui/button';
 
 interface VCRExecutionPlanWizardProps {
   open: boolean;
@@ -61,6 +65,8 @@ interface VCRExecutionPlanWizardProps {
   vcr: ProjectVCR;
   projectCode?: string;
   projectName?: string;
+  /** When set, the wizard runs in read-only review mode for an approver. */
+  reviewPayload?: VCRReviewPayload | null;
 }
 
 // Step order — Witness & Hold Points (formerly Inspection Test Plan)
@@ -89,7 +95,9 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   vcr,
   projectCode,
   projectName,
+  reviewPayload,
 }) => {
+  const isReview = !!reviewPayload;
   const [currentStep, setCurrentStep] = useState(0);
   const [visitedSteps, setVisitedSteps] = useState<Set<number>>(new Set([0]));
   const [step9Ready, setStep9Ready] = useState(false);
