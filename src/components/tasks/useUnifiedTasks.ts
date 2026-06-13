@@ -342,7 +342,36 @@ export function useUnifiedTasks(userId: string) {
       });
     });
 
-    const openOWL = (owlItems || []).filter(i => i.status === 'OPEN' || i.status === 'IN_PROGRESS');
+    // VCR Plan approval tasks — actionable rows from v_vcr_plan_approver_tasks.
+    // Two-phase gate: Phase 1 = ORA Lead pending; Phase 2 = remaining approvers.
+    // Non-actionable Phase-2 rows are NOT surfaced as waiting stubs (per spec).
+    (vcrPlanApprovals || []).forEach(item => {
+      const created = new Date().toISOString();
+      const sp = computeSmartPriority({
+        category: 'vcr', categoryLabel: 'VCR Plan Approval',
+        createdAt: created,
+      });
+      const phaseLabel = item.phase === 1
+        ? 'Phase 1 — ORA Lead review'
+        : `Phase 2 — ${item.approved_count} of ${item.total_count} approved`;
+      tasks.push({
+        id: `vcr-plan-${item.approver_row_id}`,
+        category: 'vcr',
+        categoryLabel: 'VCR Plan Approval',
+        categoryColor: 'bg-teal-500/10 text-teal-600 border-teal-500/20',
+        icon: ClipboardCheck,
+        title: `${item.vcr_code} — Approve VCR Plan`,
+        subtitle: phaseLabel,
+        project: undefined,
+        projectId: item.project_id || undefined,
+        status: 'Pending',
+        createdAt: created,
+        priority: smartPriorityToLegacy(sp.level),
+        smartPriority: sp,
+        isNew: false,
+        kanbanColumn: 'todo',
+      });
+    });
     openOWL.forEach(item => {
       const projectName = typeof item.project === 'object' && item.project !== null
         ? (item.project as any).project_title || (item.project as any).name || undefined
