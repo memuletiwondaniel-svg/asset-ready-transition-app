@@ -2344,6 +2344,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                       )}
                     </Button>
                   </div>
+                  <PasswordStrengthIndicator password={newPassword} />
                 </div>
 
                 <div className="space-y-2">
