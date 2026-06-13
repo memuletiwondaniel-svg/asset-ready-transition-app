@@ -6566,7 +6566,7 @@ export type Database = {
           description: string | null
           execution_plan_approved_at: string | null
           execution_plan_approved_by: string | null
-          execution_plan_status: string
+          execution_plan_status: Database["public"]["Enums"]["vcr_plan_status"]
           execution_plan_submitted_at: string | null
           execution_plan_submitted_by: string | null
           gate_model: string
@@ -6595,7 +6595,7 @@ export type Database = {
           description?: string | null
           execution_plan_approved_at?: string | null
           execution_plan_approved_by?: string | null
-          execution_plan_status?: string
+          execution_plan_status?: Database["public"]["Enums"]["vcr_plan_status"]
           execution_plan_submitted_at?: string | null
           execution_plan_submitted_by?: string | null
           gate_model?: string
@@ -6624,7 +6624,7 @@ export type Database = {
           description?: string | null
           execution_plan_approved_at?: string | null
           execution_plan_approved_by?: string | null
-          execution_plan_status?: string
+          execution_plan_status?: Database["public"]["Enums"]["vcr_plan_status"]
           execution_plan_submitted_at?: string | null
           execution_plan_submitted_by?: string | null
           gate_model?: string
@@ -14571,6 +14571,56 @@ export type Database = {
           },
         ]
       }
+      v_vcr_plan_approver_tasks: {
+        Row: {
+          any_rejected: boolean | null
+          approved_count: number | null
+          approver_order: number | null
+          approver_row_id: string | null
+          comments: string | null
+          decided_at: string | null
+          execution_plan_status:
+            | Database["public"]["Enums"]["vcr_plan_status"]
+            | null
+          handover_point_id: string | null
+          has_ora_lead: boolean | null
+          is_actionable: boolean | null
+          phase: number | null
+          project_id: string | null
+          rejectors: Json | null
+          role_key: string | null
+          role_label: string | null
+          row_status:
+            | Database["public"]["Enums"]["vcr_plan_approver_status"]
+            | null
+          total_count: number | null
+          user_id: string | null
+          vcr_code: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_handover_plans_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_handover_plans_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_enriched"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vcr_plan_approvers_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_points"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       admin_hard_delete_project: {
@@ -14636,6 +14686,14 @@ export type Database = {
       current_user_has_role_code: {
         Args: { _role_code: string }
         Returns: boolean
+      }
+      decide_vcr_plan_approval: {
+        Args: {
+          p_approver_row_id: string
+          p_comment?: string
+          p_decision: string
+        }
+        Returns: Json
       }
       delete_user_account: { Args: { target_user_id: string }; Returns: Json }
       ensure_reviewer_tasks_for_task: {
@@ -15189,6 +15247,7 @@ export type Database = {
         | "rejected"
         | "new"
       vcr_plan_approver_status: "PENDING" | "APPROVED" | "REJECTED"
+      vcr_plan_status: "DRAFT" | "SUBMITTED" | "CHANGES_REQUESTED" | "APPROVED"
       vcr_prereq_approval_status:
         | "PENDING"
         | "ACCEPTED"
@@ -15559,6 +15618,7 @@ export const Constants = {
         "new",
       ],
       vcr_plan_approver_status: ["PENDING", "APPROVED", "REJECTED"],
+      vcr_plan_status: ["DRAFT", "SUBMITTED", "CHANGES_REQUESTED", "APPROVED"],
       vcr_prereq_approval_status: [
         "PENDING",
         "ACCEPTED",
