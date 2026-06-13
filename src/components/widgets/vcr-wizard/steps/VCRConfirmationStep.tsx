@@ -296,77 +296,27 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
   }
 
 
-  const HC_TEMPLATE_ID = '363a831c-edb3-4224-a97f-2e8b11fac2dc';
-  const NON_HC_TEMPLATE_ID = '2ebe8392-e404-4655-b9eb-46e4e3cb39e8';
-
   const handleConfirmSubmit = async () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
     const client = supabase as any;
 
     try {
-      // 1. Resolve active VCR checklist items for this VCR.
-      //    Active = template items for the resolved (HC|non-HC) template ∩ NOT is_na overrides.
+      // 1. Resolve active VCR checklist items via the SHARED helper —
+      //    identical to what Step 10 readiness uses. One source of truth.
+      const { activeItems: activeCatalog, templateItemCount } = await computeActiveVcrItems(vcrId);
 
-      // 1a. Hydrocarbon status → template id (mirrors VCRItemsStep logic).
-      const { data: linkedSystems, error: lsErr } = await client
-        .from('p2a_handover_point_systems')
-        .select('system_id')
-        .eq('handover_point_id', vcrId);
-      if (lsErr) throw lsErr;
-
-      let hasHC = false;
-      const sysIds = (linkedSystems || []).map((r: any) => r.system_id).filter(Boolean);
-      if (sysIds.length > 0) {
-        const { data: sysRows, error: sErr } = await client
-          .from('p2a_systems')
-          .select('id, is_hydrocarbon')
-          .in('id', sysIds);
-        if (sErr) throw sErr;
-        hasHC = (sysRows || []).some((s: any) => s.is_hydrocarbon === true);
-      }
-      const activeTemplateId = hasHC ? HC_TEMPLATE_ID : NON_HC_TEMPLATE_ID;
-
-      // 1b. Template items for that template.
-      const { data: tplItems, error: tiErr } = await client
-        .from('vcr_template_items')
-        .select('vcr_item_id')
-        .eq('template_id', activeTemplateId);
-      if (tiErr) throw tiErr;
-      const tplItemIds = (tplItems || []).map((r: any) => r.vcr_item_id).filter(Boolean);
-
-      if (tplItemIds.length === 0) {
+      if (templateItemCount === 0) {
         toast.error('No VCR checklist items found for this template.');
         setIsSubmitting(false);
         return;
       }
 
-      // 1c. Fetch the catalog rows (summary + display_order) and the override is_na flags.
-      const [{ data: items, error: itemsErr }, { data: overrides, error: ovErr }] = await Promise.all([
-        client
-          .from('vcr_items')
-          .select('id, vcr_item, display_order')
-          .in('id', tplItemIds)
-          .eq('is_active', true),
-        client
-          .from('p2a_vcr_item_overrides')
-          .select('vcr_item_id, is_na')
-          .eq('handover_point_id', vcrId),
-      ]);
-      if (itemsErr) throw itemsErr;
-      if (ovErr) throw ovErr;
-
-      const naSet = new Set(
-        (overrides || []).filter((o: any) => o.is_na === true).map((o: any) => o.vcr_item_id),
-      );
-
-      const activeItems = (items || [])
-        .filter((it: any) => !naSet.has(it.id))
-        .map((it: any) => ({
-          vcr_item_id: it.id,
-          summary: it.vcr_item,
-          display_order: it.display_order ?? 0,
-        }));
+      const activeItems = activeCatalog.map((it) => ({
+        vcr_item_id: it.id,
+        summary: it.vcr_item,
+        display_order: it.display_order,
+      }));
 
       // 2. Build approver payload from the roster lifted from Step 8.
       const approverPayload = (approversRoster || [])
