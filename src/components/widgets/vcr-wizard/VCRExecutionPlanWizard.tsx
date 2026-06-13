@@ -37,7 +37,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useVCRHydrocarbonStatus } from '@/hooks/useVCRHydrocarbonStatus';
 import { useVCRPlanRollup, vcrPlanPillLabel } from '@/hooks/useVCRPlanApprovalTasks';
 import { VCRWizardModeContext, type VCRReviewPayload } from './wizardModeContext';
-import { VCRReviewDecisionStep } from './VCRReviewDecisionStep';
+import {
+  VCRReviewDecisionStep,
+  VCRReviewDecisionProvider,
+  VCRReviewDecisionFooterButtons,
+} from './VCRReviewDecisionStep';
 import { Button } from '@/components/ui/button';
 
 interface VCRExecutionPlanWizardProps {
