@@ -177,6 +177,10 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
         >
           No plan yet — click to begin
         </p>
+      ) : isHandedOver ? (
+        <p className="text-[12px] leading-[1.4] text-muted-foreground truncate">
+          {certLineText}
+        </p>
       ) : (
         <>
           {/* Row 3: bar + trailing value on one line */}
@@ -220,3 +224,4 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
     </button>
   );
 };
+
