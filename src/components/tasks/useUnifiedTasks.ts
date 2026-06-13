@@ -379,7 +379,7 @@ export function useUnifiedTasks(userId: string) {
         categoryLabel: 'VCR Plan Approval',
         categoryColor: 'bg-teal-500/10 text-teal-600 border-teal-500/20',
         icon: ClipboardCheck,
-        title: `Approve VCR Plan: ${vcrName}`,
+        title: `Review & Approve VCR Plan: ${vcrName}`,
         project: normalizeProjectCode(item.project_code) || undefined,
         projectId: item.project_id || undefined,
         extraPill: shortCode,
