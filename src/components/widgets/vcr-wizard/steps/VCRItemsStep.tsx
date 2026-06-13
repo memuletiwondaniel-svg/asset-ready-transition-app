@@ -513,6 +513,9 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
             return (
               <div key={cat}>
                 <button
+                  type="button"
+                  aria-expanded={!isCollapsed}
+                  data-rm-safe
                   onClick={() => toggleCategory(cat)}
                   className="flex items-center gap-2 w-full text-left py-2 px-1 hover:bg-muted/40 rounded transition-colors"
                 >
