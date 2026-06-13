@@ -12,6 +12,7 @@ import { useUserP2AApprovals } from '@/hooks/useUserP2AApprovals';
 import { useUserORPActivities } from '@/hooks/useUserORPActivities';
 import { useUserOWLItems } from '@/hooks/useUserOWLItems';
 import { useUserTasks, type UserTask } from '@/hooks/useUserTasks';
+import { useVCRPlanApprovalTasks } from '@/hooks/useVCRPlanApprovalTasks';
 import { useUserLastLogin } from '@/hooks/useUserLastLogin';
 import { computeSmartPriority, smartPriorityToLegacy, type SmartPriorityResult, type SmartPriorityLevel } from './smartPriority';
 import React from 'react';
@@ -106,6 +107,7 @@ export function useUnifiedTasks(userId: string) {
   const { items: owlItems, isLoading: owlLoading } = useUserOWLItems();
   // Bundle tasks and ORA activity dates now come from the same useUserTasks query (no extra network calls)
   const { tasks: userTasks, bundleTasks, oraActivityDates, p2aActivityProgress, loading: tasksLoading, updateTaskStatus } = useUserTasks();
+  const { data: vcrPlanApprovals } = useVCRPlanApprovalTasks();
 
   // Show cards incrementally: only block on the primary user_tasks hook for first load.
   // Other hooks (PSSR, P2A approvals, ORA, OWL) add cards as they resolve.
@@ -340,6 +342,36 @@ export function useUnifiedTasks(userId: string) {
       });
     });
 
+    // VCR Plan approval tasks — actionable rows from v_vcr_plan_approver_tasks.
+    // Two-phase gate: Phase 1 = ORA Lead pending; Phase 2 = remaining approvers.
+    // Non-actionable Phase-2 rows are NOT surfaced as waiting stubs (per spec).
+    (vcrPlanApprovals || []).forEach(item => {
+      const created = new Date().toISOString();
+      const sp = computeSmartPriority({
+        category: 'vcr', categoryLabel: 'VCR Plan Approval',
+        createdAt: created,
+      });
+      const phaseLabel = item.phase === 1
+        ? 'Phase 1 — ORA Lead review'
+        : `Phase 2 — ${item.approved_count} of ${item.total_count} approved`;
+      tasks.push({
+        id: `vcr-plan-${item.approver_row_id}`,
+        category: 'vcr',
+        categoryLabel: 'VCR Plan Approval',
+        categoryColor: 'bg-teal-500/10 text-teal-600 border-teal-500/20',
+        icon: ClipboardCheck,
+        title: `${item.vcr_code} — Approve VCR Plan`,
+        subtitle: phaseLabel,
+        project: undefined,
+        projectId: item.project_id || undefined,
+        status: 'Pending',
+        createdAt: created,
+        priority: smartPriorityToLegacy(sp.level),
+        smartPriority: sp,
+        isNew: false,
+        kanbanColumn: 'todo',
+      });
+    });
     const openOWL = (owlItems || []).filter(i => i.status === 'OPEN' || i.status === 'IN_PROGRESS');
     openOWL.forEach(item => {
       const projectName = typeof item.project === 'object' && item.project !== null
@@ -478,7 +510,7 @@ export function useUnifiedTasks(userId: string) {
       }
     }
     return topLevel;
-  }, [pssrs, approvals, activities, owlItems, bundleTasks, userTasks, oraActivityDates, p2aActivityProgress, isNewSinceLastLogin]);
+  }, [pssrs, approvals, activities, owlItems, bundleTasks, userTasks, oraActivityDates, p2aActivityProgress, vcrPlanApprovals, isNewSinceLastLogin]);
 
   // Stabilization: never return an empty array if we previously had data
   const stableTasksRef = useRef<UnifiedTask[]>([]);
