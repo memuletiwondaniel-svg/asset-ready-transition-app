@@ -588,11 +588,12 @@ const ApprovalsPanel: React.FC<ApprovalsPanelProps> = ({
   );
 };
 // ── Execution Plan Status Badge ─────────────────────────────────
-const ExecutionPlanStatus: React.FC<{ vcrId: string; status: string; projectId?: string; projectCode?: string }> = ({ vcrId, status, projectId, projectCode }) => {
+const ExecutionPlanStatus: React.FC<{ vcrId: string; status: string; projectId?: string; projectCode?: string }> = ({ vcrId, projectId, projectCode }) => {
   const queryClient = useQueryClient();
   const [updating, setUpdating] = useState(false);
+  const { data: rollup } = useVCRPlanRollup(vcrId);
 
-  // Fetch readiness: count training, procedures, documentation items
+  // Fetch readiness: count training, procedures, documentation items (DRAFT-only display)
   const { data: readiness } = useQuery({
     queryKey: ['vcr-execution-readiness', vcrId],
     queryFn: async () => {
@@ -623,44 +624,31 @@ const ExecutionPlanStatus: React.FC<{ vcrId: string; status: string; projectId?:
     },
   });
 
-  const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
-    DRAFT: { label: 'Draft', color: 'text-muted-foreground', bg: 'bg-muted' },
-    SUBMITTED: { label: 'Submitted for Review', color: 'text-amber-600', bg: 'bg-amber-500/10' },
-    APPROVED: { label: 'Approved', color: 'text-emerald-600', bg: 'bg-emerald-500/10' },
-    REJECTED: { label: 'Rejected', color: 'text-red-600', bg: 'bg-red-500/10' },
+  const pill = rollup ? vcrPlanPillLabel(rollup) : { label: 'Draft', tone: 'muted' as const };
+  const toneClass: Record<typeof pill.tone, string> = {
+    muted: 'bg-muted text-muted-foreground',
+    amber: 'bg-amber-500/10 text-amber-600',
+    red: 'bg-red-500/10 text-red-600',
+    green: 'bg-emerald-500/10 text-emerald-600',
+    destructive: 'bg-red-600 text-white',
   };
+  const status = rollup?.execution_plan_status || 'DRAFT';
 
-  const cfg = statusConfig[status] || statusConfig.DRAFT;
-
-  const handleSubmit = async () => {
-    if (!readiness?.systemsReady) {
-      const reason = (readiness?.systems || 0) === 0
-        ? 'Add at least one system to this VCR before submitting.'
-        : 'Systems must be finalized in the VCR Systems step before submitting for approval.';
-      toast.error(reason);
+  const decide = async (decision: 'APPROVED' | 'REJECTED') => {
+    if (!rollup?.my_actionable_row_id) return;
+    setUpdating(true);
+    const { error } = await (supabase as any).rpc('decide_vcr_plan_approval', {
+      p_approver_row_id: rollup.my_actionable_row_id,
+      p_decision: decision,
+      p_comment: null,
+    });
+    setUpdating(false);
+    if (error) {
+      toast.error(error.message || 'Decision failed');
       return;
     }
-    setUpdating(true);
-    const client = supabase as any;
-    await client.from('p2a_handover_points').update({
-      execution_plan_status: 'SUBMITTED',
-      execution_plan_submitted_at: new Date().toISOString(),
-    }).eq('id', vcrId);
-    queryClient.invalidateQueries({ queryKey: ['project-vcrs'] });
-    queryClient.invalidateQueries({ queryKey: ['vcr-execution-readiness', vcrId] });
-    setUpdating(false);
-  };
-
-  const handleApprove = async () => {
-    setUpdating(true);
-    const client = supabase as any;
-    await client.from('p2a_handover_points').update({
-      execution_plan_status: 'APPROVED',
-      execution_plan_approved_at: new Date().toISOString(),
-    }).eq('id', vcrId);
-
-    // Trigger building block activity generation
-    if (projectId) {
+    // On APPROVED to fully-approved plan, fan-out ORA activities (preserved hook).
+    if (decision === 'APPROVED' && projectId) {
       try {
         const { generateBuildingBlockActivities } = await import('@/hooks/useORAActivityPlanSync');
         await generateBuildingBlockActivities(vcrId, projectId, projectCode || '');
@@ -668,41 +656,27 @@ const ExecutionPlanStatus: React.FC<{ vcrId: string; status: string; projectId?:
         console.error('[VCR Approve] Failed to generate building blocks:', e);
       }
     }
-
     queryClient.invalidateQueries({ queryKey: ['project-vcrs'] });
+    queryClient.invalidateQueries({ queryKey: ['vcr-plan-rollup', vcrId] });
+    queryClient.invalidateQueries({ queryKey: ['vcr-plan-approval-tasks'] });
     queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
     queryClient.invalidateQueries({ queryKey: ['ora-plan-activities'] });
-    setUpdating(false);
-  };
-
-  const handleReject = async () => {
-    setUpdating(true);
-    const client = supabase as any;
-    await client.from('p2a_handover_points').update({
-      execution_plan_status: 'REJECTED',
-    }).eq('id', vcrId);
-    queryClient.invalidateQueries({ queryKey: ['project-vcrs'] });
-    setUpdating(false);
   };
 
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <Badge className={cn(cfg.bg, cfg.color, 'border-0 text-[10px] font-medium')}>
-          {cfg.label}
+        <Badge className={cn(toneClass[pill.tone], 'border-0 text-[10px] font-medium')}>
+          {pill.label}
         </Badge>
       </div>
 
-      {/* Mini readiness indicators */}
-      {readiness && status !== 'APPROVED' && (
+      {/* Mini readiness indicators — DRAFT only */}
+      {readiness && status === 'DRAFT' && (
         <div className="space-y-1">
           {[
-            {
-              label: 'Systems',
-              count: readiness.systems,
-              ok: readiness.systemsReady,
-              hint: !readiness.systemsFinalized && readiness.systems > 0 ? 'not finalized' : undefined,
-            },
+            { label: 'Systems', count: readiness.systems, ok: readiness.systemsReady,
+              hint: !readiness.systemsFinalized && readiness.systems > 0 ? 'not finalized' : undefined },
             { label: 'Training Plan', count: readiness.training, ok: readiness.training > 0 },
             { label: 'Procedures', count: readiness.procedures, ok: readiness.procedures > 0 },
             { label: 'Documentation', count: readiness.documentation, ok: readiness.documentation > 0 },
@@ -717,30 +691,21 @@ const ExecutionPlanStatus: React.FC<{ vcrId: string; status: string; projectId?:
         </div>
       )}
 
-      {/* Actions */}
-      {status === 'DRAFT' && readiness?.isReady && (
-        <Button size="sm" className="h-6 text-[10px] px-2 w-full" onClick={handleSubmit} disabled={updating}>
-          Submit for Review
-        </Button>
-      )}
-      {status === 'SUBMITTED' && (
+      {/* Approve / Reject — only when the current user has an actionable row */}
+      {rollup?.my_actionable_row_id && (
         <div className="flex gap-1">
-          <Button size="sm" variant="default" className="h-6 text-[10px] px-2 flex-1" onClick={handleApprove} disabled={updating}>
+          <Button size="sm" variant="default" className="h-6 text-[10px] px-2 flex-1" onClick={() => decide('APPROVED')} disabled={updating}>
             Approve
           </Button>
-          <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 flex-1" onClick={handleReject} disabled={updating}>
-            Reject
+          <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 flex-1" onClick={() => decide('REJECTED')} disabled={updating}>
+            Request Changes
           </Button>
         </div>
-      )}
-      {status === 'REJECTED' && (
-        <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 w-full" onClick={handleSubmit} disabled={updating}>
-          Re-submit
-        </Button>
       )}
     </div>
   );
 };
+
 
 // ── Overview Info Panel (Right) ─────────────────────────────────
 const OverviewInfoPanel: React.FC<{ vcr: ProjectVCR; projectName?: string; projectCode?: string; projectId?: string; liveTargetDate?: Date; onTargetDateChange?: (d: Date | undefined) => void }> = ({ vcr, projectName, projectCode, projectId, liveTargetDate, onTargetDateChange }) => {
