@@ -18,6 +18,8 @@ interface VCRConfirmationStepProps {
   vcrName?: string;
   vcrCode?: string;
   onNavigateToStep?: (stepIdx: number) => void;
+  onReadyChange?: (ready: boolean) => void;
+  submitRequestId?: number;
 }
 
 interface ResolvedApprover {
