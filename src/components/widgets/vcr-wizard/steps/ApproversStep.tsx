@@ -3,9 +3,9 @@ import { useQuery, useQueries } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Loader2, RefreshCw, Trash2, Plus } from 'lucide-react';
+import { Loader2, RefreshCw, Trash2 } from 'lucide-react';
+import { ApproverCombobox } from './ApproverCombobox';
 import {
   Tooltip,
   TooltipContent,
@@ -50,8 +50,6 @@ const RPC_LABELS = rpcResolvedLabels(FIXED_ROLES);
 
 export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId }) => {
   const [approvers, setApprovers] = useState<VCRApprover[]>([]);
-  const [showAddRow, setShowAddRow] = useState(false);
-  const [newRoleName, setNewRoleName] = useState('');
 
   const { data: allProfileUsers } = useProfileUsers();
 
@@ -191,19 +189,6 @@ export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId }) => {
     setApprovers(prev => prev.filter(a => a.id !== id));
   };
 
-  const handleAdd = () => {
-    const maxOrder = approvers.reduce((m, a) => Math.max(m, a.display_order), 0);
-    setApprovers(prev => [
-      ...prev,
-      {
-        id: `vcr-approver-custom-${Date.now()}`,
-        role_name: newRoleName.trim() || 'New Approver',
-        display_order: maxOrder + 1,
-      },
-    ]);
-    setNewRoleName('');
-    setShowAddRow(false);
-  };
 
   // Structured B2B partner lookup per approver — uses roles.is_b2b + shared scope
   // (region/plant/hub/org/project) via fetchB2BPartnerIds. Position-string fallback
@@ -365,35 +350,24 @@ export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId }) => {
           );
         })}
 
-        {showAddRow ? (
-          <div className="flex items-center gap-2 max-w-md">
-            <Input
-              value={newRoleName}
-              onChange={(e) => setNewRoleName(e.target.value)}
-              placeholder="Role name, e.g. Safety Lead"
-              className="h-9 text-sm"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && newRoleName.trim()) handleAdd();
-                if (e.key === 'Escape') { setShowAddRow(false); setNewRoleName(''); }
-              }}
-            />
-            <Button size="sm" onClick={handleAdd} disabled={!newRoleName.trim()}>Add</Button>
-            <Button size="sm" variant="ghost" onClick={() => { setShowAddRow(false); setNewRoleName(''); }}>
-              Cancel
-            </Button>
-          </div>
-        ) : (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1.5 text-xs mt-1 text-muted-foreground border border-dashed border-border/70 hover:text-primary-foreground hover:bg-primary hover:border-primary hover:shadow-sm transition-all"
-            onClick={() => setShowAddRow(true)}
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Add Approver
-          </Button>
-        )}
+        <ApproverCombobox
+          projectId={projectId}
+          excludeUserIds={approvers.map(a => a.user_id).filter(Boolean) as string[]}
+          onSelect={(u) => {
+            const maxOrder = approvers.reduce((m, a) => Math.max(m, a.display_order), 0);
+            setApprovers(prev => [
+              ...prev,
+              {
+                id: `vcr-approver-custom-${Date.now()}`,
+                role_name: u.position || 'Approver',
+                display_order: maxOrder + 1,
+                user_id: u.user_id,
+                user_name: u.full_name,
+                user_avatar: u.avatar_url ?? undefined,
+              },
+            ]);
+          }}
+        />
       </div>
     </div>
   );
