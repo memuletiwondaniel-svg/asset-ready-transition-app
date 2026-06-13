@@ -186,17 +186,7 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
     },
   });
 
-  if (isLoading || !stats) {
-    return (
-      <div className="space-y-3 p-1">
-        <Skeleton className="h-5 w-40" />
-        <Skeleton className="h-16 w-full" />
-        <Skeleton className="h-64 w-full" />
-      </div>
-    );
-  }
-
-  const rows: ReadinessRow[] = [
+  const rows: ReadinessRow[] = stats ? [
     {
       key: 'systems', stepIdx: 0, stepLabel: 'Step 1', name: 'Systems',
       required: true,
@@ -253,10 +243,10 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
       complete: stats.checklist > 0,
       summary: stats.checklist > 0 ? `${stats.checklist} items reviewed` : 'No checklist items',
     },
-  ];
+  ] : [];
 
   const requiredGaps = rows.filter(r => r.required && !r.complete);
-  const isReady = requiredGaps.length === 0;
+  const isReady = stats ? requiredGaps.length === 0 : false;
   const approverCount = approvers?.length || 0;
 
   const handleSubmitClick = () => {
@@ -277,6 +267,17 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [submitRequestId]);
+
+  if (isLoading || !stats) {
+    return (
+      <div className="space-y-3 p-1">
+        <Skeleton className="h-5 w-40" />
+        <Skeleton className="h-16 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
+
 
   const handleConfirmSubmit = async () => {
     // TODO Phase C — Submit for approval RPC
