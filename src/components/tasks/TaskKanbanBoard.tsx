@@ -1169,6 +1169,16 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         }}
       />
 
+      <VCRPlanApprovalSheet
+        payload={vcrPlanApproval}
+        open={vcrPlanApprovalOpen}
+        onOpenChange={(o) => {
+          setVcrPlanApprovalOpen(o);
+          if (!o) setVcrPlanApproval(null);
+        }}
+      />
+
+
       {/* ORA Activity sheet opened when dragging to Done - forces evidence/comments */}
       <ORAActivityTaskSheet
         task={oraActivityTask}
