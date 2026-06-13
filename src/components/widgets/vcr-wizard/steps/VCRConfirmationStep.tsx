@@ -72,22 +72,6 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
     queryFn: async () => {
       const client = supabase as any;
 
-      // Look up project context to count VCR Checklist template items.
-      const { data: hp } = await client
-        .from('p2a_handover_points')
-        .select('handover_plan_id')
-        .eq('id', vcrId)
-        .maybeSingle();
-      let projectId: string | null = null;
-      if (hp?.handover_plan_id) {
-        const { data: plan } = await client
-          .from('p2a_handover_plans')
-          .select('project_id')
-          .eq('id', hp.handover_plan_id)
-          .maybeSingle();
-        projectId = plan?.project_id || null;
-      }
-
       const [
         systems, itp, training, procedures, criticalDocs,
         registers, logsheets, maintenanceTotal, maintenanceApplicable,
@@ -102,19 +86,17 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
         client.from('p2a_vcr_logsheets').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
         client.from('p2a_vcr_maintenance_deliverables').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
         client.from('p2a_vcr_maintenance_deliverables').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId).eq('is_applicable', true),
-        projectId
-          ? client.from('vcr_template_items').select('id', { count: 'exact', head: true }).eq('project_id', projectId)
-          : Promise.resolve({ count: 0 }),
+        // VCR Checklist readiness = real materialized prerequisite rows for this VCR.
+        // Wizard-built plans get these rows from submit_vcr_plan RPC; legacy SQL-seeded VCRs already have them.
+        client.from('p2a_vcr_prerequisites').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
       ]);
 
-      // Systems count for W&HP summary
       const systemsCount = systems.count || 0;
-      const itpSystemsCount = systemsCount; // approximation: points span the mapped systems
 
       return {
         systems: systemsCount,
         itp: itp.count || 0,
-        itpSystems: itpSystemsCount,
+        itpSystems: systemsCount,
         training: training.count || 0,
         procedures: procedures.count || 0,
         criticalDocs: criticalDocs.count || 0,
