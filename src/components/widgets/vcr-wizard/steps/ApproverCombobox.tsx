@@ -157,7 +157,11 @@ export const ApproverCombobox: React.FC<Props> = ({ projectId, excludeUserIds, o
           Add Approver
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[22rem] p-0" align="start">
+      <PopoverContent
+        className="w-[22rem] p-0"
+        align="start"
+        onWheel={(e) => e.stopPropagation()}
+      >
         <Command shouldFilter={false}>
           <CommandInput
             placeholder="Search by name, role…"
