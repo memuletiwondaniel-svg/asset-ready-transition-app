@@ -59,15 +59,6 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
   const [submissionNote, setSubmissionNote] = useState('');
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  useEffect(() => {
-    onReadyChange?.(isReady);
-  }, [isReady, onReadyChange]);
-
-  useEffect(() => {
-    if (submitRequestId && submitRequestId > 0) {
-      handleSubmitClick();
-    }
-  }, [submitRequestId]);
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ['vcr-review-readiness', vcrId],
@@ -275,6 +266,17 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
     }
     setConfirmOpen(true);
   };
+
+  useEffect(() => {
+    onReadyChange?.(isReady);
+  }, [isReady, onReadyChange]);
+
+  useEffect(() => {
+    if (submitRequestId && submitRequestId > 0) {
+      handleSubmitClick();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [submitRequestId]);
 
   const handleConfirmSubmit = async () => {
     // TODO Phase C — Submit for approval RPC
