@@ -113,14 +113,24 @@ export function useVCRPlanRollup(handoverPointId: string | null | undefined) {
 
 /** Human label for the status pill, per spec. */
 export function vcrPlanPillLabel(r: VCRPlanRollup): { label: string; tone: 'muted' | 'amber' | 'red' | 'green' | 'destructive' } {
-  if (r.execution_plan_status === 'DRAFT') return { label: 'Draft', tone: 'muted' };
   if (r.execution_plan_status === 'APPROVED') return { label: 'Approved', tone: 'green' };
   if (r.execution_plan_status === 'CHANGES_REQUESTED') {
     const who = r.rejectors?.[0]?.role_label || 'approver';
     return { label: `Changes requested — ${who}`, tone: 'red' };
   }
-  if (!r.has_ora_lead) return { label: 'Plan misconfigured — contact admin', tone: 'destructive' };
-  if (r.phase === 1) return { label: 'Awaiting ORA Lead review', tone: 'amber' };
-  if (r.phase === 2) return { label: `${r.approved_count} of ${r.total_count} approved`, tone: 'amber' };
+  // When approvers exist with a calculated phase, prefer the phase-aware
+  // label even if the handover_point's execution_plan_status is still
+  // 'DRAFT' (status promotion can lag behind approver row creation).
+  if (r.total_count > 0) {
+    if (!r.has_ora_lead) return { label: 'Plan misconfigured — contact admin', tone: 'destructive' };
+    if (r.any_rejected) {
+      const who = r.rejectors?.[0]?.role_label || 'approver';
+      return { label: `Changes requested — ${who}`, tone: 'red' };
+    }
+    if (r.phase === 1) return { label: 'Awaiting ORA Lead review', tone: 'amber' };
+    if (r.phase === 2) return { label: `${r.approved_count} of ${r.total_count} approved`, tone: 'amber' };
+    return { label: 'Submitted', tone: 'amber' };
+  }
+  if (r.execution_plan_status === 'DRAFT') return { label: 'Draft', tone: 'muted' };
   return { label: 'Submitted', tone: 'amber' };
 }

@@ -42,7 +42,7 @@ export const VCRReviewDecisionStep: React.FC<Props> = ({ payload, onDecided }) =
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from('vcr_plan_approvers')
-        .select('id, status, decision, decided_at, comments, role_label, user_id, approver_order')
+        .select('id, status, decided_at, comments, role_label, user_id, approver_order')
         .eq('id', payload.approverRowId)
         .maybeSingle();
       if (error) throw error;
@@ -57,7 +57,7 @@ export const VCRReviewDecisionStep: React.FC<Props> = ({ payload, onDecided }) =
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from('vcr_plan_approvers')
-        .select('id, role_label, status, decision, decided_at, approver_order, user_id')
+        .select('id, role_label, status, decided_at, approver_order, user_id')
         .eq('handover_point_id', payload.handoverPointId)
         .order('approver_order', { ascending: true });
       if (error) throw error;
@@ -66,7 +66,7 @@ export const VCRReviewDecisionStep: React.FC<Props> = ({ payload, onDecided }) =
   });
 
   const isMine = myRow?.user_id === user?.id;
-  const alreadyDecided = !!myRow && myRow.status !== 'PENDING' && !!myRow.decision;
+  const alreadyDecided = !!myRow && myRow.status !== 'PENDING';
   const canDecide =
     !!rollup?.my_actionable_row_id &&
     rollup.my_actionable_row_id === payload.approverRowId &&
@@ -169,7 +169,7 @@ export const VCRReviewDecisionStep: React.FC<Props> = ({ payload, onDecided }) =
                   )}
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  {decisionChip(r.decision)}
+                  {decisionChip(r.status)}
                   {r.decided_at && (
                     <span className="text-[10px] text-muted-foreground">
                       {format(new Date(r.decided_at), 'd MMM, HH:mm')}
@@ -206,20 +206,20 @@ export const VCRReviewDecisionStep: React.FC<Props> = ({ payload, onDecided }) =
           <div
             className={cn(
               'rounded-lg border p-4 space-y-2',
-              myRow!.decision === 'APPROVED'
+              myRow!.status === 'APPROVED'
                 ? 'border-emerald-500/30 bg-emerald-500/5'
                 : 'border-red-500/30 bg-red-500/5',
             )}
             data-testid="vcr-review-already-decided"
           >
             <div className="flex items-center gap-2">
-              {myRow!.decision === 'APPROVED' ? (
+              {myRow!.status === 'APPROVED' ? (
                 <CheckCircle2 className="h-4 w-4 text-emerald-600" />
               ) : (
                 <XCircle className="h-4 w-4 text-red-600" />
               )}
               <span className="font-medium text-sm">
-                You {myRow!.decision === 'APPROVED' ? 'approved' : 'requested changes on'} this plan
+                You {myRow!.status === 'APPROVED' ? 'approved' : 'requested changes on'} this plan
               </span>
               {myRow!.decided_at && (
                 <span className="text-xs text-muted-foreground ml-auto">
