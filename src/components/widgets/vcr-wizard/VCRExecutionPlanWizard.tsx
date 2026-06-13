@@ -37,7 +37,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useVCRHydrocarbonStatus } from '@/hooks/useVCRHydrocarbonStatus';
 import { useVCRPlanRollup, vcrPlanPillLabel } from '@/hooks/useVCRPlanApprovalTasks';
 import { VCRWizardModeContext, type VCRReviewPayload } from './wizardModeContext';
-import { VCRReviewDecisionStep } from './VCRReviewDecisionStep';
+import {
+  VCRReviewDecisionStep,
+  VCRReviewDecisionProvider,
+  VCRReviewDecisionFooterButtons,
+} from './VCRReviewDecisionStep';
 import { Button } from '@/components/ui/button';
 
 interface VCRExecutionPlanWizardProps {
@@ -174,6 +178,15 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       hasPromotedRef.current = false;
     }
   }, [open]);
+
+  // Body-level review class so portal'd Sheets / Dialogs inherit the
+  // read-only CSS too (steps that open detail sheets render outside the
+  // wizard's DOM subtree). Cleans up on close / mode change.
+  useEffect(() => {
+    if (!open || !isReview) return;
+    document.body.classList.add('vcr-review-mode');
+    return () => document.body.classList.remove('vcr-review-mode');
+  }, [open, isReview]);
 
   // Auto-promote associated task from "pending" → "in_progress" (skip in review)
   useEffect(() => {
@@ -387,7 +400,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     </TooltipProvider>
   );
 
-  // Review-mode custom footer: Close + Prev/Next + Decide (jumps to step 10).
+  // Review-mode custom footer: Close + Prev + (Next | Approve / Request Changes on last step).
   const isLastStep = currentStep === STEPS.length - 1;
   const reviewFooter = isReview ? (
     <div className="border-t bg-background px-4 sm:px-5 py-3 flex items-center justify-between gap-2">
@@ -398,26 +411,29 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         <Button variant="outline" size="sm" onClick={handleBack} disabled={currentStep === 0} data-rm-safe data-rm-nav>
           ← Prev
         </Button>
-        <Button variant="outline" size="sm" onClick={handleNext} disabled={isLastStep} data-rm-safe data-rm-nav>
-          Next →
-        </Button>
-        {!isLastStep && (
-          <Button
-            size="sm"
-            onClick={() => goToStep(STEPS.length - 1)}
-            className="gap-1.5"
-            data-rm-safe
-            data-rm-nav
-          >
-            Go to decision ▸
-          </Button>
+        {!isLastStep ? (
+          <>
+            <Button variant="outline" size="sm" onClick={handleNext} data-rm-safe data-rm-nav>
+              Next →
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => goToStep(STEPS.length - 1)}
+              className="gap-1.5"
+              data-rm-safe
+              data-rm-nav
+            >
+              Go to decision ▸
+            </Button>
+          </>
+        ) : (
+          <VCRReviewDecisionFooterButtons />
         )}
       </div>
     </div>
   ) : undefined;
 
-  return (
-    <VCRWizardModeContext.Provider value={{ mode: isReview ? 'review' : 'create', reviewPayload: reviewPayload ?? null }}>
+  const wizard = (
     <WizardShell
       open={open}
       onOpenChange={onOpenChange}
@@ -446,6 +462,20 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         {renderStep()}
       </div>
     </WizardShell>
+  );
+
+  return (
+    <VCRWizardModeContext.Provider value={{ mode: isReview ? 'review' : 'create', reviewPayload: reviewPayload ?? null }}>
+      {isReview && reviewPayload ? (
+        <VCRReviewDecisionProvider
+          payload={reviewPayload}
+          onDecided={() => onOpenChange(false)}
+        >
+          {wizard}
+        </VCRReviewDecisionProvider>
+      ) : (
+        wizard
+      )}
     </VCRWizardModeContext.Provider>
   );
 };

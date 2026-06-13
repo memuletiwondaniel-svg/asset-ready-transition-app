@@ -1096,6 +1096,14 @@
 .vcr-review-mode button:not([data-rm-safe]):not([data-rm-nav]):has(svg.lucide-pencil),
 .vcr-review-mode button:not([data-rm-safe]):not([data-rm-nav]):has(svg.lucide-edit),
 .vcr-review-mode button:not([data-rm-safe]):not([data-rm-nav]):has(svg.lucide-edit-2),
-.vcr-review-mode button:not([data-rm-safe]):not([data-rm-nav]):has(svg.lucide-edit-3) {
+.vcr-review-mode button:not([data-rm-safe]):not([data-rm-nav]):has(svg.lucide-edit-3),
+.vcr-review-mode button:not([data-rm-safe]):not([data-rm-nav]):has(svg.lucide-save) {
+  display: none !important;
+}
+
+/* Hide entire dirty-state save footers in detail sheets — they only appear
+   when fields are edited, but in review mode fields are inert. Belt-and-
+   braces: also hide bare "Save Changes" / "Discard" / "Add" footer rows. */
+.vcr-review-mode [data-rm-save-footer] {
   display: none !important;
 }
