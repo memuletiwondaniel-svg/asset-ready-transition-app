@@ -169,7 +169,7 @@ export const VCRReviewDecisionStep: React.FC<Props> = ({ payload, onDecided }) =
                   )}
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  {decisionChip(r.decision)}
+                  {decisionChip(r.status)}
                   {r.decided_at && (
                     <span className="text-[10px] text-muted-foreground">
                       {format(new Date(r.decided_at), 'd MMM, HH:mm')}
