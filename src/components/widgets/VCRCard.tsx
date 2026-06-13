@@ -35,6 +35,7 @@ const LIFECYCLE_STYLE: Record<
 };
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTHS_LONG = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 const formatShortDate = (iso: string | null) => {
   if (!iso) return '';
@@ -42,6 +43,14 @@ const formatShortDate = (iso: string | null) => {
   if (isNaN(d.getTime())) return '';
   return `${MONTHS[d.getMonth()]} ${d.getDate()}`;
 };
+
+const formatLongDate = (iso: string | null) => {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  return `${MONTHS_LONG[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+};
+
 
 const formatRelative = (iso: string | null) => {
   if (!iso) return '';
