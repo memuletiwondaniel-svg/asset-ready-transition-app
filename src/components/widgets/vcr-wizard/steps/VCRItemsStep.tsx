@@ -615,6 +615,9 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
           {naItems.length > 0 && (
             <div>
               <button
+                type="button"
+                aria-expanded={!effectiveCollapsed.has('__NA__')}
+                data-rm-safe
                 onClick={() => setCollapsedCategories(prev => {
                   const next = new Set(prev ?? []);
                   next.has('__NA__') ? next.delete('__NA__') : next.add('__NA__');
