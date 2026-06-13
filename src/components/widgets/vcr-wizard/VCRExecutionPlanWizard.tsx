@@ -32,7 +32,8 @@ import { InspectionTestPlanStep } from './steps/InspectionTestPlanStep';
 import { ApproversStep, VCRApprover } from './steps/ApproversStep';
 import { MaintenanceSystemsStep } from './steps/MaintenanceSystemsStep';
 import { VCRConfirmationStep } from './steps/VCRConfirmationStep';
-import { Layers, CheckCircle2, Eye } from 'lucide-react';
+import { Step8ReviewModeWrapper } from './Step8ReviewModeWrapper';
+import { Layers, CheckCircle2, Eye, Loader2, Save } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useVCRHydrocarbonStatus } from '@/hooks/useVCRHydrocarbonStatus';
 import { useVCRPlanRollup, vcrPlanPillLabel } from '@/hooks/useVCRPlanApprovalTasks';
@@ -43,6 +44,8 @@ import {
   VCRReviewDecisionFooterButtons,
 } from './VCRReviewDecisionStep';
 import { Button } from '@/components/ui/button';
+import { buildVcrSubmitApproverPayload } from '@/lib/buildVcrSubmitPayload';
+import { toast } from 'sonner';
 
 interface VCRExecutionPlanWizardProps {
   open: boolean;
@@ -327,7 +330,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       case 4: return <CriticalDocumentsStep vcrId={vcr.id} projectCode={effectiveProjectCode} />;
       case 5: return <RegistersLogsheetsStep vcrId={vcr.id} />;
       case 6: return <MaintenanceSystemsStep vcrId={vcr.id} />;
-      case 7: return <ApproversStep vcrId={vcr.id} onApproversChange={setApproversRoster} />;
+      case 7: return <Step8ReviewModeWrapper vcrId={vcr.id} onApproversChange={setApproversRoster} />;
       case 8: return <VCRItemsStep vcrId={vcr.id} />;
       case 9:
         return isReview && reviewPayload ? (
