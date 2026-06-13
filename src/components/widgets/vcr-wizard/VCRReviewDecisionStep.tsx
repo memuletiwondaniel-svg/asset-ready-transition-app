@@ -1,8 +1,16 @@
-import React, { useState } from 'react';
+import React, { createContext, useContext, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Loader2, CheckCircle2, XCircle, AlertTriangle, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -13,30 +21,47 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import type { VCRReviewPayload } from './wizardModeContext';
 
-const toneClass: Record<string, string> = {
-  muted: 'bg-muted text-muted-foreground',
-  amber: 'bg-amber-500/10 text-amber-600',
-  red: 'bg-red-500/10 text-red-600',
-  green: 'bg-emerald-500/10 text-emerald-600',
-  destructive: 'bg-red-600 text-white',
-};
+type Decision = 'APPROVED' | 'REJECTED';
 
-interface Props {
+interface DecisionController {
   payload: VCRReviewPayload;
-  onDecided?: () => void;
+  rollup: any;
+  myRow: any;
+  roster: any[] | undefined;
+  isMine: boolean;
+  alreadyDecided: boolean;
+  canDecide: boolean;
+  comment: string;
+  setComment: (s: string) => void;
+  submitting: Decision | null;
+  pendingDecision: Decision | null;
+  requestDecision: (d: Decision) => void;
+  cancelConfirm: () => void;
+  confirmDecision: () => void;
+  rollupLoading: boolean;
+  myRowLoading: boolean;
 }
 
-export const VCRReviewDecisionStep: React.FC<Props> = ({ payload, onDecided }) => {
+const DecisionCtx = createContext<DecisionController | null>(null);
+const useDecision = () => {
+  const v = useContext(DecisionCtx);
+  if (!v) throw new Error('VCRReviewDecisionProvider missing');
+  return v;
+};
+
+export const VCRReviewDecisionProvider: React.FC<{
+  payload: VCRReviewPayload;
+  onDecided?: () => void;
+  children: React.ReactNode;
+}> = ({ payload, onDecided, children }) => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [comment, setComment] = useState('');
-  const [submitting, setSubmitting] = useState<null | 'APPROVED' | 'REJECTED'>(null);
+  const [submitting, setSubmitting] = useState<Decision | null>(null);
+  const [pendingDecision, setPendingDecision] = useState<Decision | null>(null);
 
   const { data: rollup, isLoading: rollupLoading } = useVCRPlanRollup(payload.handoverPointId);
-  const pill = rollup ? vcrPlanPillLabel(rollup) : null;
 
-  // Fetch my approver row (decision + comment + decided_at + status) — drives
-  // the "already decided" read-only chip.
   const { data: myRow, isLoading: myRowLoading } = useQuery({
     queryKey: ['vcr-plan-approver-row', payload.approverRowId],
     queryFn: async () => {
@@ -51,7 +76,6 @@ export const VCRReviewDecisionStep: React.FC<Props> = ({ payload, onDecided }) =
     refetchOnMount: 'always',
   });
 
-  // All approvers — for the roster panel.
   const { data: roster } = useQuery({
     queryKey: ['vcr-plan-approver-roster', payload.handoverPointId],
     queryFn: async () => {
@@ -72,11 +96,7 @@ export const VCRReviewDecisionStep: React.FC<Props> = ({ payload, onDecided }) =
     rollup.my_actionable_row_id === payload.approverRowId &&
     !alreadyDecided;
 
-  const submit = async (decision: 'APPROVED' | 'REJECTED') => {
-    if (decision === 'REJECTED' && !comment.trim()) {
-      toast.error('Please add a comment explaining the change request.');
-      return;
-    }
+  const submit = async (decision: Decision) => {
     setSubmitting(decision);
     const { error } = await (supabase as any).rpc('decide_vcr_plan_approval', {
       p_approver_row_id: payload.approverRowId,
@@ -84,12 +104,11 @@ export const VCRReviewDecisionStep: React.FC<Props> = ({ payload, onDecided }) =
       p_comment: comment.trim() || null,
     });
     setSubmitting(null);
+    setPendingDecision(null);
     if (error) {
       toast.error(error.message || 'Decision failed');
       return;
     }
-
-    // Phase-1 ORA Lead approval triggers building-block fan-out (mirrors prior sheet).
     if (decision === 'APPROVED' && payload.projectId) {
       try {
         const { generateBuildingBlockActivities } = await import('@/hooks/useORAActivityPlanSync');
@@ -98,7 +117,6 @@ export const VCRReviewDecisionStep: React.FC<Props> = ({ payload, onDecided }) =
         console.error('[VCR Plan Review] Fan-out failed:', e);
       }
     }
-
     toast.success(decision === 'APPROVED' ? 'Plan approved' : 'Changes requested');
     queryClient.invalidateQueries({ queryKey: ['vcr-plan-approval-tasks'] });
     queryClient.invalidateQueries({ queryKey: ['vcr-plan-rollup', payload.handoverPointId] });
@@ -110,43 +128,91 @@ export const VCRReviewDecisionStep: React.FC<Props> = ({ payload, onDecided }) =
     onDecided?.();
   };
 
-  const decisionChip = (d: string | null) => {
-    if (d === 'APPROVED')
-      return <Badge className="bg-emerald-500/10 text-emerald-600 border-0">Approved</Badge>;
-    if (d === 'REJECTED')
-      return <Badge className="bg-red-500/10 text-red-600 border-0">Changes requested</Badge>;
-    return <Badge variant="outline" className="text-muted-foreground">Pending</Badge>;
+  const requestDecision = (d: Decision) => {
+    if (d === 'REJECTED' && !comment.trim()) {
+      toast.error('Please add a comment explaining the change request.');
+      return;
+    }
+    setPendingDecision(d);
   };
+  const cancelConfirm = () => setPendingDecision(null);
+  const confirmDecision = () => {
+    if (pendingDecision) submit(pendingDecision);
+  };
+
+  const value = useMemo<DecisionController>(
+    () => ({
+      payload,
+      rollup,
+      myRow,
+      roster,
+      isMine,
+      alreadyDecided,
+      canDecide,
+      comment,
+      setComment,
+      submitting,
+      pendingDecision,
+      requestDecision,
+      cancelConfirm,
+      confirmDecision,
+      rollupLoading,
+      myRowLoading,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [payload, rollup, myRow, roster, isMine, alreadyDecided, canDecide, comment, submitting, pendingDecision, rollupLoading, myRowLoading],
+  );
+
+  return (
+    <DecisionCtx.Provider value={value}>
+      {children}
+      <DecisionConfirmModal />
+    </DecisionCtx.Provider>
+  );
+};
+
+const decisionChip = (d: string | null) => {
+  if (d === 'APPROVED')
+    return <Badge className="bg-emerald-500/10 text-emerald-600 border-0">Approved</Badge>;
+  if (d === 'REJECTED')
+    return <Badge className="bg-red-500/10 text-red-600 border-0">Changes requested</Badge>;
+  return <Badge variant="outline" className="text-muted-foreground">Pending</Badge>;
+};
+
+/* ─── Body content (rendered as wizard Step 10) ───────────────── */
+export const VCRReviewDecisionStep: React.FC<{
+  payload: VCRReviewPayload;
+  onDecided?: () => void;
+}> = () => {
+  const {
+    rollup,
+    roster,
+    isMine,
+    alreadyDecided,
+    canDecide,
+    comment,
+    setComment,
+    myRow,
+    myRowLoading,
+    payload,
+  } = useDecision();
+
+  const approvedCount = rollup?.approved_count ?? 0;
+  const totalCount = rollup?.total_count ?? 0;
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 p-1">
-      {/* ─── Plan status header ──────────────────────────────────── */}
-      <section className="space-y-2">
-        <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-          Plan status
-        </div>
-        {rollupLoading || !pill ? (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading…
-          </div>
-        ) : (
-          <div className="flex items-center gap-2 flex-wrap">
-            <Badge className={cn(toneClass[pill.tone], 'border-0')}>{pill.label}</Badge>
-            {rollup && rollup.total_count > 0 && (
-              <span className="text-xs text-muted-foreground">
-                Phase {rollup.phase ?? '—'} · {rollup.approved_count} of {rollup.total_count} approved
+      {/* ─── Approver roster (header includes count) ───────────── */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Approvers
+            {totalCount > 0 && (
+              <span className="ml-2 normal-case text-muted-foreground/80 font-medium">
+                · Phase {rollup?.phase ?? '—'} · {approvedCount} of {totalCount} approved
               </span>
             )}
           </div>
-        )}
-      </section>
-
-      <Separator />
-
-      {/* ─── Approver roster ─────────────────────────────────────── */}
-      <section className="space-y-3">
-        <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-          Approvers
         </div>
         <div className="rounded-lg border divide-y">
           {(roster || []).map((r) => {
@@ -187,7 +253,7 @@ export const VCRReviewDecisionStep: React.FC<Props> = ({ payload, onDecided }) =
 
       <Separator />
 
-      {/* ─── Decision surface ────────────────────────────────────── */}
+      {/* ─── Decision surface (state + comment textarea only) ──── */}
       <section className="space-y-3">
         <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
           Your decision
@@ -233,7 +299,7 @@ export const VCRReviewDecisionStep: React.FC<Props> = ({ payload, onDecided }) =
               </div>
             )}
             <p className="text-xs text-muted-foreground">
-              Your decision is recorded and cannot be changed here. Re-opening: read-only.
+              Your decision is recorded and cannot be changed here.
             </p>
           </div>
         ) : !canDecide ? (
@@ -249,47 +315,189 @@ export const VCRReviewDecisionStep: React.FC<Props> = ({ payload, onDecided }) =
             </span>
           </div>
         ) : (
-          <div className="space-y-3" data-testid="vcr-review-decision-active">
+          <div className="space-y-2" data-testid="vcr-review-decision-active">
+            <label className="text-xs font-medium text-muted-foreground">
+              Comment{' '}
+              <span className="text-muted-foreground/70">
+                (required for Request Changes)
+              </span>
+            </label>
             <Textarea
-              placeholder="Optional comment (required when requesting changes)…"
+              placeholder="Add a comment explaining your decision…"
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              className="min-h-[96px] text-sm"
+              className="min-h-[120px] text-sm"
               maxLength={1000}
               data-rm-safe
             />
-            <div className="flex gap-2">
-              <Button
-                className="flex-1"
-                onClick={() => submit('APPROVED')}
-                disabled={!!submitting}
-                data-rm-safe
-              >
-                {submitting === 'APPROVED' ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <CheckCircle2 className="h-4 w-4 mr-2" />
-                )}
-                Approve
-              </Button>
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={() => submit('REJECTED')}
-                disabled={!!submitting}
-                data-rm-safe
-              >
-                {submitting === 'REJECTED' ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <XCircle className="h-4 w-4 mr-2" />
-                )}
-                Request Changes
-              </Button>
-            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Use the Approve / Request Changes buttons in the footer to submit your decision.
+            </p>
           </div>
         )}
       </section>
     </div>
+  );
+};
+
+/* ─── Footer buttons (rendered into wizard's fixed footer) ────── */
+export const VCRReviewDecisionFooterButtons: React.FC = () => {
+  const { canDecide, submitting, requestDecision } = useDecision();
+  if (!canDecide) return null;
+  return (
+    <>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => requestDecision('REJECTED')}
+        disabled={!!submitting}
+        data-rm-safe
+        data-rm-nav
+      >
+        <XCircle className="h-4 w-4 mr-1.5" />
+        Request Changes
+      </Button>
+      <Button
+        size="sm"
+        onClick={() => requestDecision('APPROVED')}
+        disabled={!!submitting}
+        data-rm-safe
+        data-rm-nav
+      >
+        <CheckCircle2 className="h-4 w-4 mr-1.5" />
+        Approve
+      </Button>
+    </>
+  );
+};
+
+/* ─── Confirmation modal with role/phase/decision-aware impact ── */
+const DecisionConfirmModal: React.FC = () => {
+  const {
+    pendingDecision,
+    cancelConfirm,
+    confirmDecision,
+    submitting,
+    comment,
+    setComment,
+    rollup,
+    payload,
+  } = useDecision();
+
+  const open = !!pendingDecision;
+  const isApprove = pendingDecision === 'APPROVED';
+  const phase = rollup?.phase ?? payload.phase ?? null;
+  const isOraLead = phase === 1; // Phase-1 actionable approver = ORA Lead
+
+  const title = isApprove ? 'Approve VCR Plan?' : 'Request Changes to VCR Plan?';
+
+  const impact = (() => {
+    if (isOraLead && isApprove) {
+      return (
+        <>
+          You are <strong>approving the plan as ORA Lead</strong>. This will:
+          <ul className="list-disc pl-5 space-y-1 mt-2">
+            <li>Lock in your version as the <strong>baseline</strong> for Phase&nbsp;2.</li>
+            <li>Send the plan to the <strong>4 Phase-2 approvers</strong> for parallel review.</li>
+            <li>Notify the submitter that ORA review is complete.</li>
+          </ul>
+        </>
+      );
+    }
+    if (isOraLead && !isApprove) {
+      return (
+        <>
+          You are <strong>requesting changes as ORA Lead</strong>. This will:
+          <ul className="list-disc pl-5 space-y-1 mt-2">
+            <li>Return the plan to the submitter with your comments.</li>
+            <li>The other 4 approvers are <strong>not involved</strong> until the plan is resubmitted.</li>
+          </ul>
+        </>
+      );
+    }
+    if (!isOraLead && isApprove) {
+      return (
+        <>
+          You are <strong>recording your approval</strong>. This will:
+          <ul className="list-disc pl-5 space-y-1 mt-2">
+            <li>Mark your line on the approver roster as Approved.</li>
+            <li>The plan is <strong>fully approved only once all approvers have signed</strong>.</li>
+          </ul>
+        </>
+      );
+    }
+    return (
+      <>
+        You are <strong>requesting changes</strong>. This will:
+        <ul className="list-disc pl-5 space-y-1 mt-2">
+          <li>Return the plan to the submitter with your comments.</li>
+          <li>Approvals already given by other reviewers are <strong>preserved</strong>.</li>
+          <li>Your decision blocks the plan until it is resubmitted.</li>
+        </ul>
+      </>
+    );
+  })();
+
+  const commentRequired = !isApprove;
+  const commentMissing = commentRequired && !comment.trim();
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && cancelConfirm()}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            {isApprove ? (
+              <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+            ) : (
+              <AlertTriangle className="h-5 w-5 text-amber-600" />
+            )}
+            {title}
+          </DialogTitle>
+          <DialogDescription asChild>
+            <div className="text-sm text-muted-foreground pt-1">{impact}</div>
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-2">
+          <label className="text-xs font-medium text-muted-foreground">
+            Comment {commentRequired ? <span className="text-red-600">*</span> : <span className="text-muted-foreground/70">(optional)</span>}
+          </label>
+          <Textarea
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder={
+              commentRequired
+                ? 'Explain what needs to change…'
+                : 'Optional note for the audit trail…'
+            }
+            className="min-h-[96px] text-sm"
+            maxLength={1000}
+            data-rm-safe
+            autoFocus
+          />
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={cancelConfirm} disabled={!!submitting} data-rm-safe>
+            Cancel
+          </Button>
+          <Button
+            variant={isApprove ? 'default' : 'destructive'}
+            onClick={confirmDecision}
+            disabled={!!submitting || commentMissing}
+            data-rm-safe
+          >
+            {submitting ? (
+              <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+            ) : isApprove ? (
+              <CheckCircle2 className="h-4 w-4 mr-1.5" />
+            ) : (
+              <XCircle className="h-4 w-4 mr-1.5" />
+            )}
+            {isApprove ? 'Confirm Approval' : 'Confirm Request Changes'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
