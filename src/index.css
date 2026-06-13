@@ -1081,3 +1081,18 @@
 .vcr-review-mode [contenteditable]:not([data-rm-safe]) {
   pointer-events: none !important;
 }
+
+/* Bulk-hide common edit affordances in review mode without touching
+   every step file. Lucide icon class names (.lucide-plus, .lucide-trash-2,
+   .lucide-pencil, .lucide-edit) reliably mark add/edit/delete controls
+   across all VCR wizard steps. Buttons explicitly tagged data-rm-safe
+   (decision step Approve/Reject) and data-rm-nav (footer navigation)
+   are never hidden. */
+.vcr-review-mode button:not([data-rm-safe]):not([data-rm-nav]):has(> svg.lucide-plus),
+.vcr-review-mode button:not([data-rm-safe]):not([data-rm-nav]):has(> svg.lucide-trash-2),
+.vcr-review-mode button:not([data-rm-safe]):not([data-rm-nav]):has(> svg.lucide-pencil),
+.vcr-review-mode button:not([data-rm-safe]):not([data-rm-nav]):has(> svg.lucide-edit),
+.vcr-review-mode button:not([data-rm-safe]):not([data-rm-nav]):has(> svg.lucide-edit-2),
+.vcr-review-mode button:not([data-rm-safe]):not([data-rm-nav]):has(> svg.lucide-edit-3) {
+  display: none !important;
+}
