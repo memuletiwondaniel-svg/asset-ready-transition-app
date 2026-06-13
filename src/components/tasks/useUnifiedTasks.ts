@@ -65,6 +65,19 @@ export interface UnifiedTask {
   // Optional secondary muted reference pill (e.g. "VCR-05") rendered next
   // to the project pill for self-describing cards.
   extraPill?: string;
+  // VCR Plan Approval payload — drives the click → drawer route for cards
+  // sourced from v_vcr_plan_approver_tasks.
+  vcrPlanApproval?: {
+    approverRowId: string;
+    handoverPointId: string;
+    vcrCode: string;
+    vcrName: string;
+    projectCode?: string;
+    projectId?: string;
+    roleKey: string;
+    roleLabel: string;
+    phase: number | null;
+  };
 }
 
 export const FILTER_OPTIONS: { value: CategoryFilter; label: string }[] = [
