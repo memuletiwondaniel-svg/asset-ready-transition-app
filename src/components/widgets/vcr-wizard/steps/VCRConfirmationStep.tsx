@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { AlertCircle, CheckCircle2, Check, Minus, ArrowRight, Send } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { computeActiveVcrItems } from '@/lib/vcrActiveItems';
 
 interface VCRConfirmationStepProps {
   vcrId: string;
