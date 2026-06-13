@@ -341,6 +341,8 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
     },
     onSuccess: (_, { markNA }) => {
       queryClient.invalidateQueries({ queryKey: ['vcr-item-overrides', vcrId] });
+      // Step 10 readiness derives from these overrides — keep them in lockstep.
+      queryClient.invalidateQueries({ queryKey: ['vcr-review-readiness', vcrId] });
       toast.success(markNA ? 'Item marked as N/A' : 'Item restored');
       setNaItem(null);
     },
