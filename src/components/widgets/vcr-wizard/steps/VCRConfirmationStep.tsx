@@ -53,9 +53,21 @@ interface ReadinessRow {
 export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
   vcrId,
   onNavigateToStep,
+  onReadyChange,
+  submitRequestId,
 }) => {
   const [submissionNote, setSubmissionNote] = useState('');
   const [confirmOpen, setConfirmOpen] = useState(false);
+
+  useEffect(() => {
+    onReadyChange?.(isReady);
+  }, [isReady, onReadyChange]);
+
+  useEffect(() => {
+    if (submitRequestId && submitRequestId > 0) {
+      handleSubmitClick();
+    }
+  }, [submitRequestId]);
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ['vcr-review-readiness', vcrId],
@@ -379,9 +391,6 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
                   <div className="text-[13px] font-medium truncate">{a.user_name || a.role}</div>
                   <div className="text-[11px] text-muted-foreground truncate">{a.role}</div>
                 </div>
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground">
-                  Awaiting submission
-                </span>
               </div>
             ))}
           </div>
@@ -403,23 +412,6 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
         </div>
       )}
 
-      {/* Submit footer */}
-      <div className="border-t border-border pt-4 flex items-center justify-between gap-3">
-        <span className="text-[12px] text-muted-foreground">
-          {isReady
-            ? `${approverCount} approver${approverCount === 1 ? '' : 's'} will be notified.`
-            : `Resolve the ${requiredGaps.length} gap${requiredGaps.length === 1 ? '' : 's'} above to enable submission.`}
-        </span>
-        <Button
-          size="sm"
-          onClick={handleSubmitClick}
-          disabled={!isReady}
-          className="gap-1.5"
-        >
-          <Send className="w-3.5 h-3.5" />
-          Submit for approval
-        </Button>
-      </div>
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
