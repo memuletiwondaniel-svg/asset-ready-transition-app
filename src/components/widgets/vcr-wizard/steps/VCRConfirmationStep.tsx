@@ -378,7 +378,7 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
                   'grid items-center gap-3 px-3.5 py-2.5',
                   idx > 0 && 'border-t border-border',
                 )}
-                style={{ gridTemplateColumns: '32px 1fr auto' }}
+                style={{ gridTemplateColumns: '32px 1fr' }}
               >
                 <Avatar className="h-7 w-7">
                   <AvatarImage src={resolveAvatarUrl(a.user_avatar)} />
