@@ -13,7 +13,9 @@ export interface VCRPlanApprovalTask {
   approver_row_id: string;
   handover_point_id: string;
   vcr_code: string;
+  vcr_name: string | null;
   project_id: string | null;
+  project_code: string | null;
   role_key: string;
   role_label: string;
   phase: number | null;
@@ -31,7 +33,7 @@ export function useVCRPlanApprovalTasks() {
       if (!user?.id) return [] as VCRPlanApprovalTask[];
       const { data, error } = await (supabase as any)
         .from('v_vcr_plan_approver_tasks')
-        .select('approver_row_id, handover_point_id, vcr_code, project_id, role_key, role_label, phase, total_count, approved_count, execution_plan_status, is_actionable, user_id')
+        .select('approver_row_id, handover_point_id, vcr_code, vcr_name, project_id, project_code, role_key, role_label, phase, total_count, approved_count, execution_plan_status, is_actionable, user_id')
         .eq('user_id', user.id)
         .eq('is_actionable', true);
       if (error) throw error;

@@ -14586,6 +14586,7 @@ export type Database = {
           has_ora_lead: boolean | null
           is_actionable: boolean | null
           phase: number | null
+          project_code: string | null
           project_id: string | null
           rejectors: Json | null
           role_key: string | null
@@ -14596,6 +14597,7 @@ export type Database = {
           total_count: number | null
           user_id: string | null
           vcr_code: string | null
+          vcr_name: string | null
         }
         Relationships: [
           {
