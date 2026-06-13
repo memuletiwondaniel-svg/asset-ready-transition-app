@@ -1100,8 +1100,6 @@
 .vcr-review-mode button:not([data-rm-safe]):not([data-rm-nav]):has(svg.lucide-save) {
   display: none !important;
 }
-  display: none !important;
-}
 
 /* Hide entire dirty-state save footers in detail sheets — they only appear
    when fields are edited, but in review mode fields are inert. Belt-and-
