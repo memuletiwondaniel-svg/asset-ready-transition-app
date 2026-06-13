@@ -206,20 +206,20 @@ export const VCRReviewDecisionStep: React.FC<Props> = ({ payload, onDecided }) =
           <div
             className={cn(
               'rounded-lg border p-4 space-y-2',
-              myRow!.decision === 'APPROVED'
+              myRow!.status === 'APPROVED'
                 ? 'border-emerald-500/30 bg-emerald-500/5'
                 : 'border-red-500/30 bg-red-500/5',
             )}
             data-testid="vcr-review-already-decided"
           >
             <div className="flex items-center gap-2">
-              {myRow!.decision === 'APPROVED' ? (
+              {myRow!.status === 'APPROVED' ? (
                 <CheckCircle2 className="h-4 w-4 text-emerald-600" />
               ) : (
                 <XCircle className="h-4 w-4 text-red-600" />
               )}
               <span className="font-medium text-sm">
-                You {myRow!.decision === 'APPROVED' ? 'approved' : 'requested changes on'} this plan
+                You {myRow!.status === 'APPROVED' ? 'approved' : 'requested changes on'} this plan
               </span>
               {myRow!.decided_at && (
                 <span className="text-xs text-muted-foreground ml-auto">
