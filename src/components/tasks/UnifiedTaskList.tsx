@@ -288,6 +288,15 @@ export const UnifiedTaskList: React.FC<UnifiedTaskListProps> = ({
           projectCode={vcrWizardTarget.projectCode}
         />
       )}
+
+      <VCRPlanReviewLauncher
+        payload={vcrReviewPayload}
+        open={vcrReviewOpen}
+        onOpenChange={(o) => {
+          setVcrReviewOpen(o);
+          if (!o) setVcrReviewPayload(null);
+        }}
+      />
     </>
   );
 };
