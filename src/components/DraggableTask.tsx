@@ -134,7 +134,8 @@ export const DraggableTask: React.FC<DraggableTaskProps> = ({
               <div 
                 {...attributes} 
                 {...listeners} 
-                className="cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
+                tabIndex={0}
+                className="cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition-opacity"
               >
                 <GripVertical className="w-4 h-4 text-muted-foreground/60" />
               </div>

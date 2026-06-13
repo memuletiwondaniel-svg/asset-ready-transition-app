@@ -126,7 +126,8 @@ const PSSRKanbanCard: React.FC<PSSRKanbanCardProps> = ({
         <div 
           {...attributes}
           {...listeners}
-          className="opacity-0 group-hover:opacity-100 mt-1 pt-1 border-t border-border/30 cursor-grab active:cursor-grabbing transition-opacity"
+          tabIndex={0}
+          className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 mt-1 pt-1 border-t border-border/30 cursor-grab active:cursor-grabbing transition-opacity"
           onClick={(e) => e.stopPropagation()}
         >
           <GripVertical className="h-3 w-3 mx-auto text-muted-foreground/60" />
