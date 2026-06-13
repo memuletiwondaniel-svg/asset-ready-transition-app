@@ -348,25 +348,28 @@ export function useUnifiedTasks(userId: string) {
     // VCR Plan approval tasks — actionable rows from v_vcr_plan_approver_tasks.
     // Two-phase gate: Phase 1 = ORA Lead pending; Phase 2 = remaining approvers.
     // Non-actionable Phase-2 rows are NOT surfaced as waiting stubs (per spec).
-    (vcrPlanApprovals || []).forEach(item => {
+    (vcrPlanApprovals || []).forEach((item: any) => {
       const created = new Date().toISOString();
       const sp = computeSmartPriority({
         category: 'vcr', categoryLabel: 'VCR Plan Approval',
         createdAt: created,
       });
-      const phaseLabel = item.phase === 1
-        ? 'Phase 1 — ORA Lead review'
-        : `Phase 2 — ${item.approved_count} of ${item.total_count} approved`;
+      // Short VCR code: "VCR-DP300-05" → "VCR-05" (project context is in the project pill).
+      const codeParts = (item.vcr_code || '').split('-').filter(Boolean);
+      const shortCode = codeParts.length >= 2
+        ? `${codeParts[0]}-${codeParts[codeParts.length - 1]}`
+        : item.vcr_code;
+      const vcrName: string = item.vcr_name || item.vcr_code;
       tasks.push({
         id: `vcr-plan-${item.approver_row_id}`,
         category: 'vcr',
         categoryLabel: 'VCR Plan Approval',
         categoryColor: 'bg-teal-500/10 text-teal-600 border-teal-500/20',
         icon: ClipboardCheck,
-        title: `${item.vcr_code} — Approve VCR Plan`,
-        subtitle: phaseLabel,
-        project: undefined,
+        title: `Approve VCR Plan: ${vcrName}`,
+        project: normalizeProjectCode(item.project_code) || undefined,
         projectId: item.project_id || undefined,
+        extraPill: shortCode,
         status: 'Pending',
         createdAt: created,
         priority: smartPriorityToLegacy(sp.level),
@@ -375,6 +378,7 @@ export function useUnifiedTasks(userId: string) {
         kanbanColumn: 'todo',
       });
     });
+
     const openOWL = (owlItems || []).filter(i => i.status === 'OPEN' || i.status === 'IN_PROGRESS');
     openOWL.forEach(item => {
       const projectName = typeof item.project === 'object' && item.project !== null
