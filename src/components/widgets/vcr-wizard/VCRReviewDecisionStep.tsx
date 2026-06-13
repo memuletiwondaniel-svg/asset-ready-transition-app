@@ -11,7 +11,7 @@ import { useVCRPlanRollup, vcrPlanPillLabel } from '@/hooks/useVCRPlanApprovalTa
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import type { VCRReviewPayload } from '../wizardModeContext';
+import type { VCRReviewPayload } from './wizardModeContext';
 
 const toneClass: Record<string, string> = {
   muted: 'bg-muted text-muted-foreground',
