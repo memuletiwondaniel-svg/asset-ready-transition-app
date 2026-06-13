@@ -12,6 +12,7 @@ import { useUserP2AApprovals } from '@/hooks/useUserP2AApprovals';
 import { useUserORPActivities } from '@/hooks/useUserORPActivities';
 import { useUserOWLItems } from '@/hooks/useUserOWLItems';
 import { useUserTasks, type UserTask } from '@/hooks/useUserTasks';
+import { useVCRPlanApprovalTasks } from '@/hooks/useVCRPlanApprovalTasks';
 import { useUserLastLogin } from '@/hooks/useUserLastLogin';
 import { computeSmartPriority, smartPriorityToLegacy, type SmartPriorityResult, type SmartPriorityLevel } from './smartPriority';
 import React from 'react';
