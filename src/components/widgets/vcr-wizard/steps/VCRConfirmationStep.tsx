@@ -528,9 +528,9 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmSubmit}>
-              Confirm submission
+            <AlertDialogCancel disabled={isSubmitting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmSubmit} disabled={isSubmitting}>
+              {isSubmitting ? 'Submitting…' : 'Confirm submission'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
