@@ -124,7 +124,7 @@ export const VCRReviewDecisionProvider: React.FC<{
         return;
       }
     }
-    const { error } = await (supabase as any).rpc('decide_vcr_plan_approval', {
+    const { data, error } = await (supabase as any).rpc('decide_vcr_plan_approval', {
       p_approver_row_id: payload.approverRowId,
       p_decision: decision,
       p_comment: comment.trim() || null,
@@ -135,6 +135,30 @@ export const VCRReviewDecisionProvider: React.FC<{
       toast.error(error.message || 'Decision failed');
       return;
     }
+
+    const invalidateAll = () => {
+      queryClient.invalidateQueries({ queryKey: ['vcr-plan-approval-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['vcr-plan-rollup', payload.handoverPointId] });
+      queryClient.invalidateQueries({ queryKey: ['vcr-plan-approver-row', payload.approverRowId] });
+      queryClient.invalidateQueries({ queryKey: ['vcr-plan-approver-roster', payload.handoverPointId] });
+      queryClient.invalidateQueries({ queryKey: ['vcr-plan-approver-roster-extended', payload.handoverPointId] });
+      queryClient.invalidateQueries({ queryKey: ['project-vcrs'] });
+      queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['ora-plan-activities'] });
+    };
+
+    // Step 3 FIX — scope-change self-heal path. RPC committed a void + reset
+    // and returned without recording a decision. No success toast, no fan-out.
+    if (data && (data as any).scope_changed === true) {
+      toast.info(
+        (data as any).message ||
+          'Plan scope changed — approvals were reset; the ORA Lead must re-review.',
+      );
+      invalidateAll();
+      onDecided?.();
+      return;
+    }
+
     if (decision === 'APPROVED' && payload.projectId) {
       try {
         const { generateBuildingBlockActivities } = await import('@/hooks/useORAActivityPlanSync');
@@ -144,14 +168,7 @@ export const VCRReviewDecisionProvider: React.FC<{
       }
     }
     toast.success(decision === 'APPROVED' ? 'Plan approved' : 'Changes requested');
-    queryClient.invalidateQueries({ queryKey: ['vcr-plan-approval-tasks'] });
-    queryClient.invalidateQueries({ queryKey: ['vcr-plan-rollup', payload.handoverPointId] });
-    queryClient.invalidateQueries({ queryKey: ['vcr-plan-approver-row', payload.approverRowId] });
-    queryClient.invalidateQueries({ queryKey: ['vcr-plan-approver-roster', payload.handoverPointId] });
-    queryClient.invalidateQueries({ queryKey: ['vcr-plan-approver-roster-extended', payload.handoverPointId] });
-    queryClient.invalidateQueries({ queryKey: ['project-vcrs'] });
-    queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
-    queryClient.invalidateQueries({ queryKey: ['ora-plan-activities'] });
+    invalidateAll();
     onDecided?.();
   };
 
