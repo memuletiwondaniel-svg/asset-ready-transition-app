@@ -1193,6 +1193,32 @@ const EditItemForm: React.FC<{
           </div>
 
 
+          {/* Required Evidence — collapsible, read-only, matches Guidance Notes pattern */}
+          <div className="border-t border-border/40 pt-4">
+            <button
+              type="button"
+              onClick={() => setEvidenceOpen(o => !o)}
+              className="flex items-center gap-2 group rounded px-1 -mx-1 py-0.5 hover:bg-muted/50 transition-colors"
+              aria-expanded={evidenceOpen}
+            >
+              {evidenceOpen ? (
+                <ChevronDown className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+              ) : (
+                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+              )}
+              <span className="text-[11px] uppercase tracking-wide text-muted-foreground group-hover:text-foreground font-medium transition-colors">
+                Required Evidence
+              </span>
+            </button>
+            {evidenceOpen && (
+              <div className="mt-2 text-sm text-foreground/90 whitespace-pre-wrap px-1">
+                {item.supporting_evidence?.trim() || (
+                  <span className="text-muted-foreground italic">No evidence specified.</span>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* Guidance Notes — collapsible, matches Approving Parties pattern */}
           <div className="border-t border-border/40 pt-4">
             <button
