@@ -62,6 +62,7 @@ import {
 import { AvatarCropDialog } from './AvatarCropDialog';
 import { PortfolioAssignmentField } from './PortfolioAssignmentField';
 import { B2BReplacementDialog } from './B2BReplacementDialog';
+import { PasswordStrengthIndicator } from './PasswordStrengthIndicator';
 import {
   useUserPortfolioAssignments,
   useSetPortfolioAssignments,
@@ -2343,6 +2344,7 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                       )}
                     </Button>
                   </div>
+                  <PasswordStrengthIndicator password={newPassword} />
                 </div>
 
                 <div className="space-y-2">
