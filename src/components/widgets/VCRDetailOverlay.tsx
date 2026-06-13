@@ -71,6 +71,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CategoryItemsSheet } from './CategoryItemsSheet';
 import { ApproverDetailSheet } from './ApproverDetailSheet';
 import { getVCRCategoryConfig } from '@/lib/vcrCategoryConfig';
+import { useVCRPlanRollup, vcrPlanPillLabel } from '@/hooks/useVCRPlanApprovalTasks';
 interface VCRDetailOverlayProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
