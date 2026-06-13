@@ -1,6 +1,8 @@
 import React from 'react';
+import { Check } from 'lucide-react';
 import { ProjectVCR, VCRLifecycle } from '@/hooks/useProjectVCRs';
 import { cn } from '@/lib/utils';
+
 
 interface VCRCardProps {
   vcr: ProjectVCR;
@@ -33,6 +35,7 @@ const LIFECYCLE_STYLE: Record<
 };
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTHS_LONG = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 const formatShortDate = (iso: string | null) => {
   if (!iso) return '';
@@ -40,6 +43,14 @@ const formatShortDate = (iso: string | null) => {
   if (isNaN(d.getTime())) return '';
   return `${MONTHS[d.getMonth()]} ${d.getDate()}`;
 };
+
+const formatLongDate = (iso: string | null) => {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  return `${MONTHS_LONG[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+};
+
 
 const formatRelative = (iso: string | null) => {
   if (!iso) return '';
@@ -109,21 +120,28 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
   const activeBg = 'hsl(var(--primary) / 0.08)';
   const activeText = 'hsl(var(--primary))';
 
+  const isHandedOver = lifecycle === 'handed_over';
+  const handedOverDate = isHandedOver ? formatLongDate(vcr.gate_signed_at ?? null) : '';
+  const certLineText = isHandedOver && handedOverDate ? `${gateLabel} signed on ${handedOverDate}` : '';
+
   return (
     <button
       type="button"
       onClick={() => onClick(vcr.id)}
       className={cn(
-        'group/vcr w-full text-left rounded-lg px-3.5 py-3',
+        'group/vcr w-full text-left px-3.5 py-3',
         'transition-[background-color,border-color,box-shadow,transform] duration-150 ease-out',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30',
+        isHandedOver ? 'rounded-r-lg rounded-l-none' : 'rounded-lg',
         !isActive &&
           'bg-muted dark:bg-muted/60 border border-border hover:bg-card hover:border-foreground/20 hover:shadow-md hover:-translate-y-px'
       )}
       style={
         isActive
-          ? { backgroundColor: activeBg, border: `1px solid ${activeBorder}` }
-          : undefined
+          ? { backgroundColor: activeBg, border: `1px solid ${activeBorder}`, ...(isHandedOver ? { borderLeft: '3px solid #0E9F6E' } : {}) }
+          : isHandedOver
+            ? { borderLeft: '3px solid #0E9F6E' }
+            : undefined
       }
     >
       {/* Row 1: ID + status pill */}
@@ -138,12 +156,14 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
           {displayCode}
         </span>
         <span
-          className="inline-flex items-center text-[11px] font-medium rounded-full"
+          className="inline-flex items-center gap-1 text-[11px] font-medium rounded-full"
           style={{ padding: '2px 8px', backgroundColor: style.pillBg, color: style.pillText }}
         >
+          {isHandedOver && <Check className="h-3 w-3" strokeWidth={2.5} />}
           {style.label}
         </span>
       </div>
+
 
       {/* Row 2: Title */}
       <h3 className="text-[14px] font-medium leading-[1.4] text-foreground mb-2 truncate">
@@ -156,6 +176,10 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
           style={{ color: 'hsl(var(--muted-foreground))' }}
         >
           No plan yet — click to begin
+        </p>
+      ) : isHandedOver ? (
+        <p className="text-[12px] leading-[1.4] text-muted-foreground truncate">
+          {certLineText}
         </p>
       ) : (
         <>
@@ -200,3 +224,4 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
     </button>
   );
 };
+
