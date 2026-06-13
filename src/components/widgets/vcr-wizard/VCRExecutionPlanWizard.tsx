@@ -543,7 +543,16 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         canProceed: currentStep === 9 ? step9Ready : true,
       }}
     >
-      <div className={cn("p-3 sm:p-6 h-full min-h-0", isReview && "vcr-review-mode")}>
+      <div
+        className={cn(
+          'p-3 sm:p-6 h-full min-h-0',
+          // Carrier mirrors the body-class swap (Step 1) so in-wizard content
+          // becomes interactive when ora_edit is active; review_only keeps
+          // the read-only CSS; create mode adds no carrier class.
+          subMode === 'ora_edit' && 'vcr-ora-edit-mode',
+          subMode === 'review_only' && 'vcr-review-mode',
+        )}
+      >
         {renderStep()}
       </div>
     </WizardShell>
