@@ -52,8 +52,15 @@ const useDecision = () => {
 export const VCRReviewDecisionProvider: React.FC<{
   payload: VCRReviewPayload;
   onDecided?: () => void;
+  /**
+   * Optional pre-approve hook (Step 3c — approve-before-baseline).
+   * Wired by the wizard in `ora_edit` sub-mode to persist any unsaved roster
+   * edits via `submit_vcr_plan` BEFORE `decide_vcr_plan_approval` runs (which
+   * captures the baseline snapshot). Idempotent. Return `false` to abort.
+   */
+  preApprovePersist?: () => Promise<boolean | void>;
   children: React.ReactNode;
-}> = ({ payload, onDecided, children }) => {
+}> = ({ payload, onDecided, preApprovePersist, children }) => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [comment, setComment] = useState('');
@@ -98,6 +105,25 @@ export const VCRReviewDecisionProvider: React.FC<{
 
   const submit = async (decision: Decision) => {
     setSubmitting(decision);
+    // Step 3c — Approve-before-baseline. Persist any unsaved roster/content
+    // via the same submit_vcr_plan path BEFORE decide_vcr_plan_approval runs,
+    // so the baseline freezes exactly what the ORA sees on screen. Idempotent.
+    if (decision === 'APPROVED' && preApprovePersist) {
+      try {
+        const ok = await preApprovePersist();
+        if (ok === false) {
+          setSubmitting(null);
+          setPendingDecision(null);
+          return;
+        }
+      } catch (e: any) {
+        console.error('[VCR Plan Review] preApprovePersist failed:', e);
+        toast.error(`Could not save pending changes: ${e?.message || e}`);
+        setSubmitting(null);
+        setPendingDecision(null);
+        return;
+      }
+    }
     const { error } = await (supabase as any).rpc('decide_vcr_plan_approval', {
       p_approver_row_id: payload.approverRowId,
       p_decision: decision,
@@ -122,6 +148,7 @@ export const VCRReviewDecisionProvider: React.FC<{
     queryClient.invalidateQueries({ queryKey: ['vcr-plan-rollup', payload.handoverPointId] });
     queryClient.invalidateQueries({ queryKey: ['vcr-plan-approver-row', payload.approverRowId] });
     queryClient.invalidateQueries({ queryKey: ['vcr-plan-approver-roster', payload.handoverPointId] });
+    queryClient.invalidateQueries({ queryKey: ['vcr-plan-approver-roster-extended', payload.handoverPointId] });
     queryClient.invalidateQueries({ queryKey: ['project-vcrs'] });
     queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
     queryClient.invalidateQueries({ queryKey: ['ora-plan-activities'] });
