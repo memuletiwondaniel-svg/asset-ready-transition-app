@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
     }
 
     // Parse the request body
-    const { userId, newPassword } = await req.json();
+    const { userId, newPassword, requireChange } = await req.json();
 
     if (!userId || !newPassword) {
       return new Response(
