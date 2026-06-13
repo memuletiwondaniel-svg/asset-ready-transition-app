@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
     }
 
     // Parse the request body
-    const { userId, newPassword } = await req.json();
+    const { userId, newPassword, requireChange } = await req.json();
 
     if (!userId || !newPassword) {
       return new Response(
@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
     await admin
       .from('profiles')
       .update({ 
-        password_change_required: true,
+        password_change_required: requireChange !== undefined ? !!requireChange : true,
         password_changed_at: new Date().toISOString()
       })
       .eq('user_id', userId);
