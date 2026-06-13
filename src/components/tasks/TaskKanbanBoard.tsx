@@ -326,7 +326,7 @@ const KanbanCardContent: React.FC<{
             <button
               {...dragHandleProps}
               onClick={(e) => e.stopPropagation()}
-              className="touch-none p-0.5 -ml-1 opacity-30 group-hover:opacity-60 hover:!opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
+              className="touch-none p-0.5 -ml-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
             >
               <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
             </button>

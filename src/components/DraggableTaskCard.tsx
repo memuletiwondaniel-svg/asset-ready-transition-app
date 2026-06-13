@@ -87,7 +87,8 @@ const DraggableTaskCard: React.FC<DraggableTaskCardProps> = ({
         <div
           {...attributes}
           {...listeners}
-          className="absolute left-2 top-2 cursor-grab active:cursor-grabbing p-1 hover:bg-muted/20 rounded-md transition-colors duration-200 z-10"
+          tabIndex={0}
+          className="absolute left-2 top-2 cursor-grab active:cursor-grabbing p-1 hover:bg-muted/20 rounded-md transition-all duration-200 z-10 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100"
           onClick={(e) => e.stopPropagation()}
         >
           <GripVertical className="h-3 w-3 text-muted-foreground hover:text-primary transition-colors duration-200" />

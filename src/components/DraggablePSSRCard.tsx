@@ -151,7 +151,8 @@ const DraggablePSSRCard: React.FC<DraggablePSSRCardProps> = ({
             <div
               {...attributes}
               {...listeners}
-              className="hidden sm:block cursor-grab active:cursor-grabbing p-2 hover:bg-muted/40 rounded-lg transition-all duration-200 opacity-0 group-hover/pssr-card:opacity-100"
+              tabIndex={0}
+              className="hidden sm:block cursor-grab active:cursor-grabbing p-2 hover:bg-muted/40 rounded-lg transition-all duration-200 opacity-0 group-hover/pssr-card:opacity-100 group-focus-within/pssr-card:opacity-100 focus-visible:opacity-100"
               onClick={(e) => e.stopPropagation()}
             >
               <GripVertical className="h-4 w-4 text-muted-foreground/60 hover:text-foreground transition-colors" />
