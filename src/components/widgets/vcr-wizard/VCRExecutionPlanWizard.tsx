@@ -354,7 +354,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   // Phase-aware status pill — driven by useVCRPlanRollup so a submitted plan
   // no longer reads "Draft". Fix applies in BOTH create and review modes
   // (the old vcr.status fallback was buggy in both).
-  const { data: rollup } = useVCRPlanRollup(vcr.id);
+  // (rollup hoisted to top of component for subMode derivation)
   const pill = rollup ? vcrPlanPillLabel(rollup) : null;
   const pillToneCls: Record<string, string> = {
     muted: 'bg-muted text-muted-foreground border-border',
