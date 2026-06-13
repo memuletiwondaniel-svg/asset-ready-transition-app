@@ -1,6 +1,8 @@
 import React from 'react';
+import { Check } from 'lucide-react';
 import { ProjectVCR, VCRLifecycle } from '@/hooks/useProjectVCRs';
 import { cn } from '@/lib/utils';
+
 
 interface VCRCardProps {
   vcr: ProjectVCR;
