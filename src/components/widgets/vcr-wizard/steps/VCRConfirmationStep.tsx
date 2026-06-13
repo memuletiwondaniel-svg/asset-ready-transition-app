@@ -268,12 +268,126 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
   }
 
 
+  const HC_TEMPLATE_ID = '363a831c-edb3-4224-a97f-2e8b11fac2dc';
+  const NON_HC_TEMPLATE_ID = '2ebe8392-e404-4655-b9eb-46e4e3cb39e8';
+
   const handleConfirmSubmit = async () => {
-    // TODO Phase C — Submit for approval RPC
-    // Call submit_plan_for_approval(plan_type='VCR', plan_id={vcrId}, submission_note={submissionNote})
-    // On success: transition VCR to 'pending_approval', fan out approver tasks, notify approvers
-    setConfirmOpen(false);
-    toast.success('Submission queued (backend wiring pending — see Phase C)');
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    const client = supabase as any;
+
+    try {
+      // 1. Resolve active VCR checklist items for this VCR.
+      //    Active = template items for the resolved (HC|non-HC) template ∩ NOT is_na overrides.
+
+      // 1a. Hydrocarbon status → template id (mirrors VCRItemsStep logic).
+      const { data: linkedSystems, error: lsErr } = await client
+        .from('p2a_handover_point_systems')
+        .select('system_id')
+        .eq('handover_point_id', vcrId);
+      if (lsErr) throw lsErr;
+
+      let hasHC = false;
+      const sysIds = (linkedSystems || []).map((r: any) => r.system_id).filter(Boolean);
+      if (sysIds.length > 0) {
+        const { data: sysRows, error: sErr } = await client
+          .from('p2a_systems')
+          .select('id, hydrocarbon_service')
+          .in('id', sysIds);
+        if (sErr) throw sErr;
+        hasHC = (sysRows || []).some((s: any) => s.hydrocarbon_service === true);
+      }
+      const activeTemplateId = hasHC ? HC_TEMPLATE_ID : NON_HC_TEMPLATE_ID;
+
+      // 1b. Template items for that template.
+      const { data: tplItems, error: tiErr } = await client
+        .from('vcr_template_items')
+        .select('vcr_item_id')
+        .eq('template_id', activeTemplateId);
+      if (tiErr) throw tiErr;
+      const tplItemIds = (tplItems || []).map((r: any) => r.vcr_item_id).filter(Boolean);
+
+      if (tplItemIds.length === 0) {
+        toast.error('No VCR checklist items found for this template.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 1c. Fetch the catalog rows (summary + display_order) and the override is_na flags.
+      const [{ data: items, error: itemsErr }, { data: overrides, error: ovErr }] = await Promise.all([
+        client
+          .from('vcr_items')
+          .select('id, vcr_item, display_order')
+          .in('id', tplItemIds)
+          .eq('is_active', true),
+        client
+          .from('p2a_vcr_item_overrides')
+          .select('vcr_item_id, is_na')
+          .eq('handover_point_id', vcrId),
+      ]);
+      if (itemsErr) throw itemsErr;
+      if (ovErr) throw ovErr;
+
+      const naSet = new Set(
+        (overrides || []).filter((o: any) => o.is_na === true).map((o: any) => o.vcr_item_id),
+      );
+
+      const activeItems = (items || [])
+        .filter((it: any) => !naSet.has(it.id))
+        .map((it: any) => ({
+          vcr_item_id: it.id,
+          summary: it.vcr_item,
+          display_order: it.display_order ?? 0,
+        }));
+
+      // 2. Build approver payload from the roster lifted from Step 8.
+      const approverPayload = (approversRoster || [])
+        .filter(a => !!a.user_id)
+        .map(a => ({
+          user_id: a.user_id,
+          role_key: a.role_key || 'custom',
+          role_label: a.role_name,
+          approver_order: a.display_order,
+        }));
+
+      if (approverPayload.length === 0) {
+        toast.error('No approvers configured. Go back to Step 8 and assign approvers before submitting.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 3. Atomic RPC: prereq upsert + approver reconcile + status → READY.
+      const { data: result, error: rpcErr } = await client.rpc('submit_vcr_plan', {
+        p_handover_point_id: vcrId,
+        p_items: activeItems,
+        p_approvers: approverPayload,
+      });
+      if (rpcErr) throw rpcErr;
+
+      setConfirmOpen(false);
+      toast.success(
+        `Submitted for approval — ${result?.items_upserted ?? activeItems.length} checklist items, ${result?.approvers_upserted ?? approverPayload.length} approvers.`,
+      );
+
+      // Refresh readiness + parent caches.
+      queryClient.invalidateQueries({ queryKey: ['vcr-review-readiness', vcrId] });
+      queryClient.invalidateQueries({ queryKey: ['vcr-wizard-step-counts', vcrId] });
+      queryClient.invalidateQueries({ queryKey: ['project-vcrs'] });
+      queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+
+      onSubmitSuccess?.();
+    } catch (err: any) {
+      console.error('[submit_vcr_plan] failed:', err);
+      const msg = err?.message || String(err);
+      // Surface the decided-approver-removal guard cleanly.
+      if (msg.includes('Cannot remove approvers with recorded decisions')) {
+        toast.error('Cannot remove an approver who has already approved or rejected. Restore them in Step 8 to continue.');
+      } else {
+        toast.error(`Submission failed: ${msg}`);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
