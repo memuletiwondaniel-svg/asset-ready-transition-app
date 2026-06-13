@@ -10,6 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { TaskDetailSheet } from './TaskDetailSheet';
 import { VCRApprovalBundleSheet } from './VCRApprovalBundleSheet';
+import { VCRPlanApprovalSheet } from './VCRPlanApprovalSheet';
 import type { VCRBundleTask } from '@/hooks/useUserVCRBundleTasks';
 import { ORAActivityTaskSheet } from './ORAActivityTaskSheet';
 import { P2APlanCreationWizard } from '@/components/widgets/p2a-wizard/P2APlanCreationWizard';
@@ -639,6 +640,8 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   const [detailOpen, setDetailOpen] = useState(false);
   const [approvalBundle, setApprovalBundle] = useState<VCRBundleTask | null>(null);
   const [approvalBundleOpen, setApprovalBundleOpen] = useState(false);
+  const [vcrPlanApproval, setVcrPlanApproval] = useState<UnifiedTask['vcrPlanApproval'] | null>(null);
+  const [vcrPlanApprovalOpen, setVcrPlanApprovalOpen] = useState(false);
   const [activeTask, setActiveTask] = useState<UnifiedTask | null>(null);
   const { moveTaskToColumn } = useKanbanDragDrop();
 
@@ -879,6 +882,14 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       setDetailOpen(false);
       setApprovalBundle(bundle);
       setApprovalBundleOpen(true);
+      return;
+    }
+
+    // VCR Plan Approval task — has no userTask; route to the dedicated decision sheet.
+    if (task.vcrPlanApproval) {
+      console.log('[TaskKanbanBoard] handleTaskClick:branch', { branch: 'vcr_plan_approval' });
+      setVcrPlanApproval(task.vcrPlanApproval);
+      setVcrPlanApprovalOpen(true);
       return;
     }
 
@@ -1157,6 +1168,16 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
           if (!o) setApprovalBundle(null);
         }}
       />
+
+      <VCRPlanApprovalSheet
+        payload={vcrPlanApproval}
+        open={vcrPlanApprovalOpen}
+        onOpenChange={(o) => {
+          setVcrPlanApprovalOpen(o);
+          if (!o) setVcrPlanApproval(null);
+        }}
+      />
+
 
       {/* ORA Activity sheet opened when dragging to Done - forces evidence/comments */}
       <ORAActivityTaskSheet
