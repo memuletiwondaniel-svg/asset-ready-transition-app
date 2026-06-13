@@ -389,7 +389,19 @@ export function useUnifiedTasks(userId: string) {
         smartPriority: sp,
         isNew: false,
         kanbanColumn: 'todo',
+        vcrPlanApproval: {
+          approverRowId: item.approver_row_id,
+          handoverPointId: item.handover_point_id,
+          vcrCode: item.vcr_code,
+          vcrName,
+          projectCode: item.project_code || undefined,
+          projectId: item.project_id || undefined,
+          roleKey: item.role_key,
+          roleLabel: item.role_label,
+          phase: item.phase ?? null,
+        },
       });
+
     });
 
     const openOWL = (owlItems || []).filter(i => i.status === 'OPEN' || i.status === 'IN_PROGRESS');
