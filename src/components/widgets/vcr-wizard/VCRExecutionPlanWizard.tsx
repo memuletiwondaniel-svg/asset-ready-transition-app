@@ -245,6 +245,11 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   });
 
   const isStepComplete = (idx: number): boolean => {
+    // Review mode: indicators are reviewer-coverage only — green once visited,
+    // neutral otherwise. Non-gating (decision footer governs progress).
+    if (isReview) {
+      return visitedSteps.has(idx);
+    }
     // Visit-based completion for steps without count data:
     // Approvers (7), VCR Checklist (8), Review (9).
     if (idx === 7 || idx === 8 || idx === 9) {
@@ -259,6 +264,8 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   };
 
   const isStepWarning = (idx: number): boolean => {
+    // Review mode never shows amber "skipped mandatory" — coverage is informational.
+    if (isReview) return false;
     return visitedSteps.has(idx) && !isStepComplete(idx) && !isStepOptional(idx);
   };
 
