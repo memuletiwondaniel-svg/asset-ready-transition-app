@@ -13784,6 +13784,47 @@ export type Database = {
           },
         ]
       }
+      vcr_plan_snapshots: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          handover_point_id: string
+          id: string
+          kind: string
+          snapshot: Json
+          snapshot_hash: string | null
+          voided_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          handover_point_id: string
+          id?: string
+          kind: string
+          snapshot: Json
+          snapshot_hash?: string | null
+          voided_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          handover_point_id?: string
+          id?: string
+          kind?: string
+          snapshot?: Json
+          snapshot_hash?: string | null
+          voided_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vcr_plan_snapshots_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_points"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vcr_prerequisite_approvals: {
         Row: {
           approver_role_id: string

@@ -83,6 +83,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   reviewPayload,
 }) => {
   const isReview = !!reviewPayload;
+  const { data: rollup } = useVCRPlanRollup(vcr.id);
   const [currentStep, setCurrentStep] = useState(0);
   const [visitedSteps, setVisitedSteps] = useState<Set<number>>(new Set([0]));
   const [step9Ready, setStep9Ready] = useState(false);
@@ -182,11 +183,30 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   // Body-level review class so portal'd Sheets / Dialogs inherit the
   // read-only CSS too (steps that open detail sheets render outside the
   // wizard's DOM subtree). Cleans up on close / mode change.
+  // Sub-mode: ora_edit only when the viewer is the Phase-1 actionable
+  // approver (= ORA Lead by construction in the rollup gate). Reads phase +
+  // my_actionable_row_id only — never role_label.
+  const subMode: 'ora_edit' | 'review_only' | null = (() => {
+    if (!isReview || !reviewPayload) return null;
+    if (
+      rollup?.phase === 1 &&
+      rollup?.my_actionable_row_id &&
+      rollup.my_actionable_row_id === reviewPayload.approverRowId
+    ) {
+      return 'ora_edit';
+    }
+    return 'review_only';
+  })();
+
+  // Body-level class so portal'd Sheets / Dialogs inherit the right mode.
+  // ora_edit swaps OUT vcr-review-mode and IN vcr-ora-edit-mode, so the
+  // read-only CSS rules go inert and authoring affordances reappear.
   useEffect(() => {
     if (!open || !isReview) return;
-    document.body.classList.add('vcr-review-mode');
-    return () => document.body.classList.remove('vcr-review-mode');
-  }, [open, isReview]);
+    const cls = subMode === 'ora_edit' ? 'vcr-ora-edit-mode' : 'vcr-review-mode';
+    document.body.classList.add(cls);
+    return () => document.body.classList.remove(cls);
+  }, [open, isReview, subMode]);
 
   // Auto-promote associated task from "pending" → "in_progress" (skip in review)
   useEffect(() => {
@@ -334,7 +354,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   // Phase-aware status pill — driven by useVCRPlanRollup so a submitted plan
   // no longer reads "Draft". Fix applies in BOTH create and review modes
   // (the old vcr.status fallback was buggy in both).
-  const { data: rollup } = useVCRPlanRollup(vcr.id);
+  // (rollup hoisted to top of component for subMode derivation)
   const pill = rollup ? vcrPlanPillLabel(rollup) : null;
   const pillToneCls: Record<string, string> = {
     muted: 'bg-muted text-muted-foreground border-border',
@@ -472,7 +492,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   );
 
   return (
-    <VCRWizardModeContext.Provider value={{ mode: isReview ? 'review' : 'create', reviewPayload: reviewPayload ?? null }}>
+    <VCRWizardModeContext.Provider value={{ mode: isReview ? 'review' : 'create', subMode, reviewPayload: reviewPayload ?? null }}>
       {isReview && reviewPayload ? (
         <VCRReviewDecisionProvider
           payload={reviewPayload}
