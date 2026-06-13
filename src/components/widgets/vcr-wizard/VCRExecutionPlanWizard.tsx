@@ -48,7 +48,7 @@ import { ProceduresStep } from './steps/ProceduresStep';
 import { CriticalDocumentsStep } from './steps/CriticalDocumentsStep';
 import { RegistersLogsheetsStep } from './steps/RegistersLogsheetsStep';
 import { InspectionTestPlanStep } from './steps/InspectionTestPlanStep';
-import { ApproversStep } from './steps/ApproversStep';
+import { ApproversStep, VCRApprover } from './steps/ApproversStep';
 import { MaintenanceSystemsStep } from './steps/MaintenanceSystemsStep';
 import { VCRConfirmationStep } from './steps/VCRConfirmationStep';
 import { Layers, CheckCircle2, Eye } from 'lucide-react';
