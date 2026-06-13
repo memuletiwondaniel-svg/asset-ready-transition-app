@@ -124,25 +124,40 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
   const handedOverDate = isHandedOver ? formatLongDate(vcr.gate_signed_at ?? null) : '';
   const certLineText = isHandedOver && handedOverDate ? `${gateLabel} signed on ${handedOverDate}` : '';
 
+  const handedOverPillStyle: React.CSSProperties = {
+    padding: '2px 8px',
+    backgroundColor: 'transparent',
+    color: 'hsl(var(--muted-foreground) / 0.75)',
+    border: '0.5px solid hsl(var(--muted-foreground) / 0.4)',
+  };
+
   return (
     <button
       type="button"
       onClick={() => onClick(vcr.id)}
       className={cn(
-        'group/vcr w-full text-left px-3.5 py-3',
+        'group/vcr w-full text-left py-3',
         'transition-[background-color,border-color,box-shadow,transform] duration-150 ease-out',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30',
         'rounded-lg',
         !isActive &&
           'bg-muted dark:bg-muted/60 border border-border hover:bg-card hover:border-foreground/20 hover:shadow-md hover:-translate-y-px'
       )}
-      style={
-        isActive
-          ? { backgroundColor: activeBg, border: `1px solid ${activeBorder}`, ...(isHandedOver ? { borderLeft: '3px solid #0E9F6E' } : {}) }
+      style={{
+        // Inset green left rule on handed-over cards adds zero outer width (no 3px column drift).
+        // Extra ~2px left padding so text clears the rule.
+        paddingLeft: isHandedOver ? 16 : 14,
+        paddingRight: 14,
+        ...(isActive
+          ? {
+              backgroundColor: activeBg,
+              border: `1px solid ${activeBorder}`,
+              ...(isHandedOver ? { boxShadow: 'inset 3px 0 0 #1D9E75' } : {}),
+            }
           : isHandedOver
-            ? { borderLeft: '3px solid #0E9F6E' }
-            : undefined
-      }
+            ? { boxShadow: 'inset 3px 0 0 #1D9E75' }
+            : {}),
+      }}
     >
       {/* Row 1: ID + status pill */}
       <div className="flex items-center justify-between mb-2">
@@ -157,7 +172,11 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
         </span>
         <span
           className="inline-flex items-center text-[11px] font-medium rounded-full"
-          style={{ padding: '2px 8px', backgroundColor: style.pillBg, color: style.pillText }}
+          style={
+            isHandedOver
+              ? handedOverPillStyle
+              : { padding: '2px 8px', backgroundColor: style.pillBg, color: style.pillText }
+          }
         >
           {style.label}
         </span>
@@ -165,8 +184,14 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
 
 
 
-      {/* Row 2: Title */}
-      <h3 className="text-[14px] font-medium leading-[1.4] text-foreground mb-2 truncate">
+      {/* Row 2: Title — de-emphasised on handed-over cards */}
+      <h3
+        className={cn(
+          'text-[14px] font-medium leading-[1.4] mb-2 truncate',
+          isHandedOver ? '' : 'text-foreground'
+        )}
+        style={isHandedOver ? { color: 'hsl(var(--muted-foreground))' } : undefined}
+      >
         {vcr.name}
       </h3>
 
@@ -178,9 +203,13 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
           No plan yet — click to begin
         </p>
       ) : isHandedOver ? (
-        <p className="text-[12px] leading-[1.4] text-muted-foreground truncate">
+        <p
+          className="text-[12px] leading-[1.4] truncate"
+          style={{ color: 'hsl(var(--muted-foreground) / 0.7)' }}
+        >
           {certLineText}
         </p>
+
       ) : (
         <>
           {/* Row 3: bar + trailing value on one line */}
