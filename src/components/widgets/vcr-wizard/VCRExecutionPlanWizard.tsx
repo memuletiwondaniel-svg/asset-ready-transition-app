@@ -296,9 +296,9 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       case 4: return <CriticalDocumentsStep vcrId={vcr.id} projectCode={effectiveProjectCode} />;
       case 5: return <RegistersLogsheetsStep vcrId={vcr.id} />;
       case 6: return <MaintenanceSystemsStep vcrId={vcr.id} />;
-      case 7: return <ApproversStep vcrId={vcr.id} />;
+      case 7: return <ApproversStep vcrId={vcr.id} onApproversChange={setApproversRoster} />;
       case 8: return <VCRItemsStep vcrId={vcr.id} />;
-      case 9: return <VCRConfirmationStep vcrId={vcr.id} vcrName={vcr.name} vcrCode={vcr.vcr_code} onNavigateToStep={goToStep} onReadyChange={setStep9Ready} submitRequestId={submitRequestId} />;
+      case 9: return <VCRConfirmationStep vcrId={vcr.id} vcrName={vcr.name} vcrCode={vcr.vcr_code} onNavigateToStep={goToStep} onReadyChange={setStep9Ready} submitRequestId={submitRequestId} approversRoster={approversRoster} onSubmitSuccess={() => onOpenChange(false)} />;
       default: return null;
     }
   };
