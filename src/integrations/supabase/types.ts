@@ -13734,6 +13734,56 @@ export type Database = {
           },
         ]
       }
+      vcr_plan_approvers: {
+        Row: {
+          approver_order: number
+          comments: string | null
+          created_at: string
+          decided_at: string | null
+          handover_point_id: string
+          id: string
+          role_key: string
+          role_label: string
+          status: Database["public"]["Enums"]["vcr_plan_approver_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approver_order?: number
+          comments?: string | null
+          created_at?: string
+          decided_at?: string | null
+          handover_point_id: string
+          id?: string
+          role_key: string
+          role_label: string
+          status?: Database["public"]["Enums"]["vcr_plan_approver_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approver_order?: number
+          comments?: string | null
+          created_at?: string
+          decided_at?: string | null
+          handover_point_id?: string
+          id?: string
+          role_key?: string
+          role_label?: string
+          status?: Database["public"]["Enums"]["vcr_plan_approver_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vcr_plan_approvers_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_points"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vcr_prerequisite_approvals: {
         Row: {
           approver_role_id: string
@@ -14872,6 +14922,10 @@ export type Database = {
         Args: { p_comment: string; p_task_id: string; p_user_id?: string }
         Returns: undefined
       }
+      submit_vcr_plan: {
+        Args: { p_approvers: Json; p_handover_point_id: string; p_items: Json }
+        Returns: Json
+      }
       sync_readiness_nodes: { Args: { p_project_id: string }; Returns: number }
       track_failed_login:
         | { Args: { ip_addr?: unknown; user_uuid: string }; Returns: undefined }
@@ -15134,6 +15188,7 @@ export type Database = {
         | "pending_approval"
         | "rejected"
         | "new"
+      vcr_plan_approver_status: "PENDING" | "APPROVED" | "REJECTED"
       vcr_prereq_approval_status:
         | "PENDING"
         | "ACCEPTED"
@@ -15503,6 +15558,7 @@ export const Constants = {
         "rejected",
         "new",
       ],
+      vcr_plan_approver_status: ["PENDING", "APPROVED", "REJECTED"],
       vcr_prereq_approval_status: [
         "PENDING",
         "ACCEPTED",

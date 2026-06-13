@@ -21,17 +21,22 @@ import {
   rpcResolvedLabels,
 } from '@/components/widgets/shared/wizardApproverRoles';
 
-interface ApproversStepProps {
-  vcrId: string;
-}
-
-interface VCRApprover {
+export interface VCRApprover {
   id: string;
   role_name: string;
+  /** Stable key from P2A_AND_VCR_APPROVER_ROLES (e.g. 'ora_lead'); 'custom' for user-added approvers. */
+  role_key?: string;
   display_order: number;
   user_id?: string;
   user_name?: string;
   user_avatar?: string;
+}
+
+interface ApproversStepProps {
+  vcrId: string;
+  /** Called whenever the local roster changes — used by the parent wizard
+   *  to surface the roster to Step 10 (Review & Submit). */
+  onApproversChange?: (approvers: VCRApprover[]) => void;
 }
 
 const getInitials = (name?: string) => {
@@ -48,8 +53,13 @@ const resolveAvatarUrl = (avatarUrl?: string): string | undefined => {
 const FIXED_ROLES = P2A_AND_VCR_APPROVER_ROLES;
 const RPC_LABELS = rpcResolvedLabels(FIXED_ROLES);
 
-export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId }) => {
+export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId, onApproversChange }) => {
   const [approvers, setApprovers] = useState<VCRApprover[]>([]);
+
+  // Surface roster upward so VCRConfirmationStep can submit it.
+  useEffect(() => {
+    onApproversChange?.(approvers);
+  }, [approvers, onApproversChange]);
 
   const { data: allProfileUsers } = useProfileUsers();
 
@@ -141,6 +151,7 @@ export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId }) => {
         return {
           id: `vcr-approver-${role.key}`,
           role_name: role.label,
+          role_key: role.key,
           display_order: role.order,
           user_id: deputyDirector?.user_id,
           user_name: deputyDirector?.full_name,
@@ -151,6 +162,7 @@ export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId }) => {
       return {
         id: `vcr-approver-${role.key}`,
         role_name: role.label,
+        role_key: role.key,
         display_order: role.order,
         user_id: resolved?.user_id,
         user_name: resolved?.full_name,
@@ -360,6 +372,7 @@ export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId }) => {
               {
                 id: `vcr-approver-custom-${Date.now()}`,
                 role_name: u.position || 'Approver',
+                role_key: 'custom',
                 display_order: maxOrder + 1,
                 user_id: u.user_id,
                 user_name: u.full_name,
