@@ -151,6 +151,7 @@ export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId, onApprovers
         return {
           id: `vcr-approver-${role.key}`,
           role_name: role.label,
+          role_key: role.key,
           display_order: role.order,
           user_id: deputyDirector?.user_id,
           user_name: deputyDirector?.full_name,
@@ -161,6 +162,7 @@ export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId, onApprovers
       return {
         id: `vcr-approver-${role.key}`,
         role_name: role.label,
+        role_key: role.key,
         display_order: role.order,
         user_id: resolved?.user_id,
         user_name: resolved?.full_name,
