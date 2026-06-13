@@ -107,6 +107,7 @@ export function useUnifiedTasks(userId: string) {
   const { items: owlItems, isLoading: owlLoading } = useUserOWLItems();
   // Bundle tasks and ORA activity dates now come from the same useUserTasks query (no extra network calls)
   const { tasks: userTasks, bundleTasks, oraActivityDates, p2aActivityProgress, loading: tasksLoading, updateTaskStatus } = useUserTasks();
+  const { data: vcrPlanApprovals } = useVCRPlanApprovalTasks();
 
   // Show cards incrementally: only block on the primary user_tasks hook for first load.
   // Other hooks (PSSR, P2A approvals, ORA, OWL) add cards as they resolve.
