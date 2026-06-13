@@ -42,7 +42,7 @@ export const VCRReviewDecisionStep: React.FC<Props> = ({ payload, onDecided }) =
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from('vcr_plan_approvers')
-        .select('id, status, decision, decided_at, comments, role_label, user_id, approver_order')
+        .select('id, status, decided_at, comments, role_label, user_id, approver_order')
         .eq('id', payload.approverRowId)
         .maybeSingle();
       if (error) throw error;
@@ -57,7 +57,7 @@ export const VCRReviewDecisionStep: React.FC<Props> = ({ payload, onDecided }) =
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from('vcr_plan_approvers')
-        .select('id, role_label, status, decision, decided_at, approver_order, user_id')
+        .select('id, role_label, status, decided_at, approver_order, user_id')
         .eq('handover_point_id', payload.handoverPointId)
         .order('approver_order', { ascending: true });
       if (error) throw error;
@@ -66,7 +66,7 @@ export const VCRReviewDecisionStep: React.FC<Props> = ({ payload, onDecided }) =
   });
 
   const isMine = myRow?.user_id === user?.id;
-  const alreadyDecided = !!myRow && myRow.status !== 'PENDING' && !!myRow.decision;
+  const alreadyDecided = !!myRow && myRow.status !== 'PENDING';
   const canDecide =
     !!rollup?.my_actionable_row_id &&
     rollup.my_actionable_row_id === payload.approverRowId &&
