@@ -1191,21 +1191,20 @@ const EditItemForm: React.FC<{
           </div>
 
 
-          {/* Guidance Notes — collapsible, label-left aligned with peers */}
-          <div className="border-t border-border/40 pt-4 relative">
+          {/* Guidance Notes — collapsible, matches Approving Parties pattern */}
+          <div className="border-t border-border/40 pt-4">
             <button
               type="button"
               onClick={() => setGuidanceOpen(o => !o)}
-              className="w-full flex items-center text-left group"
+              className="flex items-center gap-2 group rounded px-1 -mx-1 py-0.5 hover:bg-muted/50 transition-colors"
+              aria-expanded={guidanceOpen}
             >
-              <span className="absolute -left-5 top-4 flex items-center">
-                {guidanceOpen ? (
-                  <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
-                ) : (
-                  <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
-                )}
-              </span>
-              <span className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
+              {guidanceOpen ? (
+                <ChevronDown className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+              ) : (
+                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+              )}
+              <span className="text-[11px] uppercase tracking-wide text-muted-foreground group-hover:text-foreground font-medium transition-colors">
                 Guidance Notes
               </span>
             </button>
@@ -1225,6 +1224,7 @@ const EditItemForm: React.FC<{
               </div>
             )}
           </div>
+
 
           {/* Delivering Party — header + single row, no standalone dropdown */}
           <div className="border-t border-border/40 pt-4 group/sect">
