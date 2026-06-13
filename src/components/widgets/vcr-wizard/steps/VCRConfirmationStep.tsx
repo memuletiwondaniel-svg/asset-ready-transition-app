@@ -14,6 +14,7 @@ import { AlertCircle, CheckCircle2, Check, Minus, ArrowRight, Send } from 'lucid
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { computeActiveVcrItems } from '@/lib/vcrActiveItems';
+import { buildVcrSubmitApproverPayload } from '@/lib/buildVcrSubmitPayload';
 
 interface VCRConfirmationStepProps {
   vcrId: string;
@@ -309,14 +310,9 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
       // NOTE: We no longer send the active checklist set to the RPC. The RPC
       // derives it server-side from p2a_vcr_item_overrides at execution time,
       // so the materialized rows are authoritative regardless of any stale UI.
-      const approverPayload = (approversRoster || [])
-        .filter(a => !!a.user_id)
-        .map(a => ({
-          user_id: a.user_id,
-          role_key: a.role_key || 'custom',
-          role_label: a.role_name,
-          approver_order: a.display_order,
-        }));
+      // Shared payload builder — also used by the ORA-edit "Save changes"
+      // action in review mode. Do NOT inline / fork.
+      const approverPayload = buildVcrSubmitApproverPayload(approversRoster);
 
       if (approverPayload.length === 0) {
         toast.error('No approvers configured. Go back to Step 8 and assign approvers before submitting.');
