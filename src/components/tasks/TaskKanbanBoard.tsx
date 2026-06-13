@@ -10,6 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { TaskDetailSheet } from './TaskDetailSheet';
 import { VCRApprovalBundleSheet } from './VCRApprovalBundleSheet';
+import { VCRPlanApprovalSheet } from './VCRPlanApprovalSheet';
 import type { VCRBundleTask } from '@/hooks/useUserVCRBundleTasks';
 import { ORAActivityTaskSheet } from './ORAActivityTaskSheet';
 import { P2APlanCreationWizard } from '@/components/widgets/p2a-wizard/P2APlanCreationWizard';
