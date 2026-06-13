@@ -333,7 +333,12 @@ const KanbanCardContent: React.FC<{
           )}
           {!isChild && (
             task.project ? (
-              <span className="text-[10px] font-medium font-mono text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded truncate max-w-[100px]">{task.project}</span>
+              <>
+                <span className="text-[10px] font-medium font-mono text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded truncate max-w-[100px]">{task.project}</span>
+                {task.extraPill && (
+                  <span className="text-[10px] font-medium font-mono text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded truncate max-w-[100px]">{task.extraPill}</span>
+                )}
+              </>
             ) : (
               <span className="text-[10px] text-muted-foreground">{task.categoryLabel}</span>
             )
