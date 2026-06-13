@@ -400,7 +400,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     </TooltipProvider>
   );
 
-  // Review-mode custom footer: Close + Prev/Next + Decide (jumps to step 10).
+  // Review-mode custom footer: Close + Prev + (Next | Approve / Request Changes on last step).
   const isLastStep = currentStep === STEPS.length - 1;
   const reviewFooter = isReview ? (
     <div className="border-t bg-background px-4 sm:px-5 py-3 flex items-center justify-between gap-2">
@@ -411,26 +411,29 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         <Button variant="outline" size="sm" onClick={handleBack} disabled={currentStep === 0} data-rm-safe data-rm-nav>
           ← Prev
         </Button>
-        <Button variant="outline" size="sm" onClick={handleNext} disabled={isLastStep} data-rm-safe data-rm-nav>
-          Next →
-        </Button>
-        {!isLastStep && (
-          <Button
-            size="sm"
-            onClick={() => goToStep(STEPS.length - 1)}
-            className="gap-1.5"
-            data-rm-safe
-            data-rm-nav
-          >
-            Go to decision ▸
-          </Button>
+        {!isLastStep ? (
+          <>
+            <Button variant="outline" size="sm" onClick={handleNext} data-rm-safe data-rm-nav>
+              Next →
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => goToStep(STEPS.length - 1)}
+              className="gap-1.5"
+              data-rm-safe
+              data-rm-nav
+            >
+              Go to decision ▸
+            </Button>
+          </>
+        ) : (
+          <VCRReviewDecisionFooterButtons />
         )}
       </div>
     </div>
   ) : undefined;
 
-  return (
-    <VCRWizardModeContext.Provider value={{ mode: isReview ? 'review' : 'create', reviewPayload: reviewPayload ?? null }}>
+  const wizard = (
     <WizardShell
       open={open}
       onOpenChange={onOpenChange}
@@ -459,6 +462,20 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         {renderStep()}
       </div>
     </WizardShell>
+  );
+
+  return (
+    <VCRWizardModeContext.Provider value={{ mode: isReview ? 'review' : 'create', reviewPayload: reviewPayload ?? null }}>
+      {isReview && reviewPayload ? (
+        <VCRReviewDecisionProvider
+          payload={reviewPayload}
+          onDecided={() => onOpenChange(false)}
+        >
+          {wizard}
+        </VCRReviewDecisionProvider>
+      ) : (
+        wizard
+      )}
     </VCRWizardModeContext.Provider>
   );
 };
