@@ -58,9 +58,13 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
   onNavigateToStep,
   onReadyChange,
   submitRequestId,
+  approversRoster,
+  onSubmitSuccess,
 }) => {
   const [submissionNote, setSubmissionNote] = useState('');
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const queryClient = useQueryClient();
 
 
   const { data: stats, isLoading } = useQuery({
