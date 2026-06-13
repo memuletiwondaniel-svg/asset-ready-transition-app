@@ -94,6 +94,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   const [visitedSteps, setVisitedSteps] = useState<Set<number>>(new Set([0]));
   const [step9Ready, setStep9Ready] = useState(false);
   const [submitRequestId, setSubmitRequestId] = useState(0);
+  const [approversRoster, setApproversRoster] = useState<VCRApprover[]>([]);
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const hasPromotedRef = useRef(false);
