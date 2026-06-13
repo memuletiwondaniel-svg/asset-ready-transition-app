@@ -58,6 +58,8 @@ export const UnifiedTaskList: React.FC<UnifiedTaskListProps> = ({
   const [p2aTarget, setP2aTarget] = useState({ projectId: '', projectCode: '' });
   const [showVCRWizard, setShowVCRWizard] = useState(false);
   const [vcrWizardTarget, setVcrWizardTarget] = useState<{ id: string; vcr_code: string; name: string; projectCode: string } | null>(null);
+  const [vcrReviewPayload, setVcrReviewPayload] = useState<UnifiedTask['vcrPlanApproval'] | null>(null);
+  const [vcrReviewOpen, setVcrReviewOpen] = useState(false);
 
   const handleOpenP2AWizard = useCallback((projectId: string, projectCode: string, openWorkspace?: boolean) => {
     setP2aTarget({ projectId, projectCode });
@@ -114,6 +116,12 @@ export const UnifiedTaskList: React.FC<UnifiedTaskListProps> = ({
 
   const handleTaskClick = (task: UnifiedTask) => {
     if (task.isWaiting) return;
+    // VCR Plan Approval cards open the wizard in read-only review mode.
+    if (task.vcrPlanApproval) {
+      setVcrReviewPayload(task.vcrPlanApproval);
+      setVcrReviewOpen(true);
+      return;
+    }
     if (task.userTask) {
       const meta = task.userTask.metadata as Record<string, any> | undefined;
       const isReviewTask = meta?.source === 'task_review';
