@@ -14666,6 +14666,10 @@ export type Database = {
       }
     }
     Functions: {
+      _vcr_build_snapshot_payload: {
+        Args: { p_handover_point_id: string }
+        Returns: Json
+      }
       admin_hard_delete_project: {
         Args: { _project_id: string }
         Returns: undefined
@@ -15015,6 +15019,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      snapshot_vcr_plan_baseline: {
+        Args: { p_handover_point_id: string }
+        Returns: string
+      }
       soft_delete_checklist_item: {
         Args: { p_unique_id: string }
         Returns: undefined
@@ -15058,6 +15066,10 @@ export type Database = {
           token_id: string
           user_id: string
         }[]
+      }
+      vcr_active_item_ids: {
+        Args: { p_handover_point_id: string }
+        Returns: string[]
       }
       vcr_plan_is_approved: { Args: { _point_id: string }; Returns: boolean }
       write_audit_log: {
