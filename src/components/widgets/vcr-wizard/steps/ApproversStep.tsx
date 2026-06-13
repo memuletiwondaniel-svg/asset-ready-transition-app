@@ -365,35 +365,24 @@ export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId }) => {
           );
         })}
 
-        {showAddRow ? (
-          <div className="flex items-center gap-2 max-w-md">
-            <Input
-              value={newRoleName}
-              onChange={(e) => setNewRoleName(e.target.value)}
-              placeholder="Role name, e.g. Safety Lead"
-              className="h-9 text-sm"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && newRoleName.trim()) handleAdd();
-                if (e.key === 'Escape') { setShowAddRow(false); setNewRoleName(''); }
-              }}
-            />
-            <Button size="sm" onClick={handleAdd} disabled={!newRoleName.trim()}>Add</Button>
-            <Button size="sm" variant="ghost" onClick={() => { setShowAddRow(false); setNewRoleName(''); }}>
-              Cancel
-            </Button>
-          </div>
-        ) : (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1.5 text-xs mt-1 text-muted-foreground border border-dashed border-border/70 hover:text-primary-foreground hover:bg-primary hover:border-primary hover:shadow-sm transition-all"
-            onClick={() => setShowAddRow(true)}
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Add Approver
-          </Button>
-        )}
+        <ApproverCombobox
+          projectId={projectId}
+          excludeUserIds={approvers.map(a => a.user_id).filter(Boolean) as string[]}
+          onSelect={(u) => {
+            const maxOrder = approvers.reduce((m, a) => Math.max(m, a.display_order), 0);
+            setApprovers(prev => [
+              ...prev,
+              {
+                id: `vcr-approver-custom-${Date.now()}`,
+                role_name: u.position || 'Approver',
+                display_order: maxOrder + 1,
+                user_id: u.user_id,
+                user_name: u.full_name,
+                user_avatar: u.avatar_url ?? undefined,
+              },
+            ]);
+          }}
+        />
       </div>
     </div>
   );
