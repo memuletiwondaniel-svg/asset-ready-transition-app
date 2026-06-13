@@ -3,9 +3,9 @@ import { useQuery, useQueries } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Loader2, RefreshCw, Trash2, Plus } from 'lucide-react';
+import { Loader2, RefreshCw, Trash2 } from 'lucide-react';
+import { ApproverCombobox } from './ApproverCombobox';
 import {
   Tooltip,
   TooltipContent,
