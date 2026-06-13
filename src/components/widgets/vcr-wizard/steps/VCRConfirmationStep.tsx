@@ -292,10 +292,10 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
       if (sysIds.length > 0) {
         const { data: sysRows, error: sErr } = await client
           .from('p2a_systems')
-          .select('id, hydrocarbon_service')
+          .select('id, is_hydrocarbon')
           .in('id', sysIds);
         if (sErr) throw sErr;
-        hasHC = (sysRows || []).some((s: any) => s.hydrocarbon_service === true);
+        hasHC = (sysRows || []).some((s: any) => s.is_hydrocarbon === true);
       }
       const activeTemplateId = hasHC ? HC_TEMPLATE_ID : NON_HC_TEMPLATE_ID;
 
