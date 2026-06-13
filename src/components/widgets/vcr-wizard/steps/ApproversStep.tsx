@@ -189,19 +189,6 @@ export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId }) => {
     setApprovers(prev => prev.filter(a => a.id !== id));
   };
 
-  const handleAdd = () => {
-    const maxOrder = approvers.reduce((m, a) => Math.max(m, a.display_order), 0);
-    setApprovers(prev => [
-      ...prev,
-      {
-        id: `vcr-approver-custom-${Date.now()}`,
-        role_name: newRoleName.trim() || 'New Approver',
-        display_order: maxOrder + 1,
-      },
-    ]);
-    setNewRoleName('');
-    setShowAddRow(false);
-  };
 
   // Structured B2B partner lookup per approver — uses roles.is_b2b + shared scope
   // (region/plant/hub/org/project) via fetchB2BPartnerIds. Position-string fallback
