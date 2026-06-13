@@ -435,12 +435,14 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   // SAME submit_vcr_plan RPC used by the create flow. Phase-1 is safe — no
   // prerequisite approvals exist, so the reconcile guard does not trip.
   const [isSavingOra, setIsSavingOra] = useState(false);
-  const handleOraSaveChanges = useCallback(async () => {
-    if (isSavingOra) return; // single-flight
+  // Internal persist — also used by the approve-before-baseline pre-hook
+  // (Step 3c). `silent=true` skips the success toast when called as a
+  // pre-approve step so the user only sees the final "Plan approved" toast.
+  const persistOraRoster = useCallback(async (silent = false): Promise<boolean> => {
     const approverPayload = buildVcrSubmitApproverPayload(approversRoster);
     if (approverPayload.length === 0) {
       toast.error('At least one approver with an assigned user is required.');
-      return;
+      return false;
     }
     setIsSavingOra(true);
     try {
@@ -449,12 +451,13 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         p_approvers: approverPayload,
       });
       if (error) throw error;
-      toast.success('Changes saved');
+      if (!silent) toast.success('Changes saved');
       queryClient.invalidateQueries({ queryKey: ['vcr-plan-approver-roster', vcr.id] });
       queryClient.invalidateQueries({ queryKey: ['vcr-plan-approver-roster-extended', vcr.id] });
       queryClient.invalidateQueries({ queryKey: ['vcr-plan-rollup', vcr.id] });
       queryClient.invalidateQueries({ queryKey: ['vcr-review-readiness', vcr.id] });
       queryClient.invalidateQueries({ queryKey: ['vcr-wizard-step-counts', vcr.id] });
+      return true;
     } catch (err: any) {
       const msg = err?.message || String(err);
       if (msg.includes('Cannot remove approvers with recorded decisions')) {
@@ -462,10 +465,22 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       } else {
         toast.error(`Save failed: ${msg}`);
       }
+      return false;
     } finally {
       setIsSavingOra(false);
     }
-  }, [approversRoster, isSavingOra, queryClient, vcr.id]);
+  }, [approversRoster, queryClient, vcr.id]);
+
+  const handleOraSaveChanges = useCallback(async () => {
+    if (isSavingOra) return; // single-flight
+    await persistOraRoster(false);
+  }, [isSavingOra, persistOraRoster]);
+
+  // Approve-before-baseline pre-hook (Step 3c). Phase-1 ORA-edit only.
+  const preApprovePersist = useCallback(async (): Promise<boolean> => {
+    if (subMode !== 'ora_edit') return true;
+    return await persistOraRoster(true);
+  }, [subMode, persistOraRoster]);
 
   // Review-mode custom footer: Close + Prev + (Next | Approve / Request Changes on last step).
   // ora_edit adds a "Save changes" button so roster edits persist via submit_vcr_plan.
