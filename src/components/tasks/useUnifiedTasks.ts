@@ -62,6 +62,9 @@ export interface UnifiedTask {
   children?: UnifiedTask[];
   // Raw bundle task (vcr_*_bundle / pssr_*_bundle) for action-surface dialogs.
   bundleTask?: any;
+  // Optional secondary muted reference pill (e.g. "VCR-05") rendered next
+  // to the project pill for self-describing cards.
+  extraPill?: string;
 }
 
 export const FILTER_OPTIONS: { value: CategoryFilter; label: string }[] = [
