@@ -884,6 +884,14 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       return;
     }
 
+    // VCR Plan Approval task — has no userTask; route to the dedicated decision sheet.
+    if (task.vcrPlanApproval) {
+      console.log('[TaskKanbanBoard] handleTaskClick:branch', { branch: 'vcr_plan_approval' });
+      setVcrPlanApproval(task.vcrPlanApproval);
+      setVcrPlanApprovalOpen(true);
+      return;
+    }
+
     if (task.userTask) {
       const meta = task.userTask.metadata as Record<string, any> | undefined;
       const isReviewTask = meta?.source === 'task_review';
