@@ -70,6 +70,9 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ['vcr-review-readiness', vcrId],
+    // Always refetch when Step 10 mounts so N/A toggles from Step 9 are reflected.
+    refetchOnMount: 'always',
+    staleTime: 0,
     queryFn: async () => {
       const client = supabase as any;
 
