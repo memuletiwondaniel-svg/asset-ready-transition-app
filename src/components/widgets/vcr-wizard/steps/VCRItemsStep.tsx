@@ -1009,7 +1009,7 @@ const EditItemForm: React.FC<{
   const [editingTopic, setEditingTopic] = useState(false);
   const [guidanceOpen, setGuidanceOpen] = useState(false);
   const [approversOpen, setApproversOpen] = useState(true);
-  const [deliveringOpen, setDeliveringOpen] = useState(true);
+  const [deliveringOpen, setDeliveringOpen] = useState(false);
   const [deleteApproverTarget, setDeleteApproverTarget] = useState<{ roleId: string; name: string } | null>(null);
   const [memberPopoverRoleId, setMemberPopoverRoleId] = useState<string | null>(null);
   const [deliveringPopoverOpen, setDeliveringPopoverOpen] = useState(false);
