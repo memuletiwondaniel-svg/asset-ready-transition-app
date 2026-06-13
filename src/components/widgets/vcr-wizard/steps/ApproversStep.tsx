@@ -372,6 +372,7 @@ export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId, onApprovers
               {
                 id: `vcr-approver-custom-${Date.now()}`,
                 role_name: u.position || 'Approver',
+                role_key: 'custom',
                 display_order: maxOrder + 1,
                 user_id: u.user_id,
                 user_name: u.full_name,
