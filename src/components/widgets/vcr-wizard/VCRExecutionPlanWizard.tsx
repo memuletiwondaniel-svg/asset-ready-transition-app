@@ -179,6 +179,15 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     }
   }, [open]);
 
+  // Body-level review class so portal'd Sheets / Dialogs inherit the
+  // read-only CSS too (steps that open detail sheets render outside the
+  // wizard's DOM subtree). Cleans up on close / mode change.
+  useEffect(() => {
+    if (!open || !isReview) return;
+    document.body.classList.add('vcr-review-mode');
+    return () => document.body.classList.remove('vcr-review-mode');
+  }, [open, isReview]);
+
   // Auto-promote associated task from "pending" → "in_progress" (skip in review)
   useEffect(() => {
     if (isReview) return;
