@@ -73,59 +73,31 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
     queryFn: async () => {
       const client = supabase as any;
 
-      // VCR Checklist readiness = ACTIVE items in the source selection
-      // (catalog template items where vcr_items.is_active) MINUS items marked
-      // is_na=true in p2a_vcr_item_overrides. This is the same set Step 9
-      // displays and the same set submit_vcr_plan will materialize. We must
-      // NOT gate submit on p2a_vcr_prerequisites rows — those are the OUTPUT
-      // of submit, never a precondition.
-      const HC_TEMPLATE = '363a831c-edb3-4224-a97f-2e8b11fac2dc';
-      const NON_HC_TEMPLATE = '2ebe8392-e404-4655-b9eb-46e4e3cb39e8';
-
+      // VCR Checklist readiness uses the SHARED computeActiveVcrItems helper —
+      // the SAME function that submit_vcr_plan's p_items payload is built from.
+      // One source of truth: if the RPC will materialize N rows, this reports N.
+      // We do NOT gate submit on p2a_vcr_prerequisites rows — those are the
+      // OUTPUT of submit, never a precondition.
       const computeActiveChecklist = async (): Promise<number> => {
-        // Resolve HC status from linked systems.
-        const { data: linked } = await client
-          .from('p2a_handover_point_systems')
-          .select('system_id')
-          .eq('handover_point_id', vcrId);
-        const sysIds = (linked || []).map((r: any) => r.system_id);
-        let hasHydrocarbon = false;
-        if (sysIds.length > 0) {
-          const { data: hc } = await client
-            .from('p2a_systems')
-            .select('is_hydrocarbon')
-            .in('id', sysIds)
-            .eq('is_hydrocarbon', true)
-            .limit(1);
-          hasHydrocarbon = (hc?.length ?? 0) > 0;
+        try {
+          const result = await computeActiveVcrItems(vcrId);
+          // Debug surface so any divergence between readiness + submit is visible.
+          // eslint-disable-next-line no-console
+          console.log('[VCR readiness] active checklist', {
+            vcrId,
+            hasHydrocarbon: result.hasHydrocarbon,
+            templateId: result.templateId,
+            templateItemCount: result.templateItemCount,
+            catalogActiveCount: result.catalogActiveCount,
+            naCount: result.naCount,
+            activeItems: result.activeItems.length,
+          });
+          return result.activeItems.length;
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.error('[VCR readiness] computeActiveVcrItems failed', e);
+          return 0;
         }
-        const templateId = hasHydrocarbon ? HC_TEMPLATE : NON_HC_TEMPLATE;
-
-        const { data: tItems } = await client
-          .from('vcr_template_items')
-          .select('vcr_item_id')
-          .eq('template_id', templateId);
-        const itemIds = (tItems || []).map((r: any) => r.vcr_item_id);
-        if (itemIds.length === 0) return 0;
-
-        const { data: activeItems } = await client
-          .from('vcr_items')
-          .select('id')
-          .in('id', itemIds)
-          .eq('is_active', true);
-        const activeIds = new Set((activeItems || []).map((r: any) => r.id));
-        if (activeIds.size === 0) return 0;
-
-        const { data: naOverrides } = await client
-          .from('p2a_vcr_item_overrides')
-          .select('vcr_item_id')
-          .eq('handover_point_id', vcrId)
-          .eq('is_na', true);
-        const naIds = new Set((naOverrides || []).map((r: any) => r.vcr_item_id));
-
-        let count = 0;
-        activeIds.forEach((id) => { if (!naIds.has(id)) count += 1; });
-        return count;
       };
 
       const [
