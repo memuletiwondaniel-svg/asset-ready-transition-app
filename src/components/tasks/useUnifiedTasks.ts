@@ -372,6 +372,7 @@ export function useUnifiedTasks(userId: string) {
         kanbanColumn: 'todo',
       });
     });
+    const openOWL = (owlItems || []).filter(i => i.status === 'OPEN' || i.status === 'IN_PROGRESS');
     openOWL.forEach(item => {
       const projectName = typeof item.project === 'object' && item.project !== null
         ? (item.project as any).project_title || (item.project as any).name || undefined
