@@ -492,7 +492,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   );
 
   return (
-    <VCRWizardModeContext.Provider value={{ mode: isReview ? 'review' : 'create', reviewPayload: reviewPayload ?? null }}>
+    <VCRWizardModeContext.Provider value={{ mode: isReview ? 'review' : 'create', subMode, reviewPayload: reviewPayload ?? null }}>
       {isReview && reviewPayload ? (
         <VCRReviewDecisionProvider
           payload={reviewPayload}
