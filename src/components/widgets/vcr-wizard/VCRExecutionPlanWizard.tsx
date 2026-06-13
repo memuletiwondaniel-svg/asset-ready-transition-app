@@ -430,7 +430,45 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     </TooltipProvider>
   );
 
+  // ─── ORA-edit "Save changes" (review-mode only, subMode === 'ora_edit') ──
+  // Persists the current roster + (server-derived) active checklist via the
+  // SAME submit_vcr_plan RPC used by the create flow. Phase-1 is safe — no
+  // prerequisite approvals exist, so the reconcile guard does not trip.
+  const [isSavingOra, setIsSavingOra] = useState(false);
+  const handleOraSaveChanges = useCallback(async () => {
+    if (isSavingOra) return; // single-flight
+    const approverPayload = buildVcrSubmitApproverPayload(approversRoster);
+    if (approverPayload.length === 0) {
+      toast.error('At least one approver with an assigned user is required.');
+      return;
+    }
+    setIsSavingOra(true);
+    try {
+      const { error } = await (supabase as any).rpc('submit_vcr_plan', {
+        p_handover_point_id: vcr.id,
+        p_approvers: approverPayload,
+      });
+      if (error) throw error;
+      toast.success('Changes saved');
+      queryClient.invalidateQueries({ queryKey: ['vcr-plan-approver-roster', vcr.id] });
+      queryClient.invalidateQueries({ queryKey: ['vcr-plan-approver-roster-extended', vcr.id] });
+      queryClient.invalidateQueries({ queryKey: ['vcr-plan-rollup', vcr.id] });
+      queryClient.invalidateQueries({ queryKey: ['vcr-review-readiness', vcr.id] });
+      queryClient.invalidateQueries({ queryKey: ['vcr-wizard-step-counts', vcr.id] });
+    } catch (err: any) {
+      const msg = err?.message || String(err);
+      if (msg.includes('Cannot remove approvers with recorded decisions')) {
+        toast.error('Cannot remove an approver who already decided. Restore them to continue.');
+      } else {
+        toast.error(`Save failed: ${msg}`);
+      }
+    } finally {
+      setIsSavingOra(false);
+    }
+  }, [approversRoster, isSavingOra, queryClient, vcr.id]);
+
   // Review-mode custom footer: Close + Prev + (Next | Approve / Request Changes on last step).
+  // ora_edit adds a "Save changes" button so roster edits persist via submit_vcr_plan.
   const isLastStep = currentStep === STEPS.length - 1;
   const reviewFooter = isReview ? (
     <div className="border-t bg-background px-4 sm:px-5 py-3 flex items-center justify-between gap-2">
@@ -438,6 +476,23 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         Close
       </Button>
       <div className="flex items-center gap-2">
+        {subMode === 'ora_edit' && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleOraSaveChanges}
+            disabled={isSavingOra}
+            data-rm-safe
+            data-rm-nav
+          >
+            {isSavingOra ? (
+              <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4 mr-1.5" />
+            )}
+            Save changes
+          </Button>
+        )}
         <Button variant="outline" size="sm" onClick={handleBack} disabled={currentStep === 0} data-rm-safe data-rm-nav>
           ← Prev
         </Button>
