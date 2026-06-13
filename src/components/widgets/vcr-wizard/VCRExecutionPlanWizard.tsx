@@ -140,8 +140,9 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   const effectiveProjectCode = projectCode || resolvedProject?.project_code || '';
   const effectiveProjectName = projectName || resolvedProject?.project_title || '';
 
-  // ── Progress sync (mirrors P2A pattern) ──────────────────────────
+  // ── Progress sync (mirrors P2A pattern) — DISABLED in review mode ──
   const syncVCRProgress = useCallback(async (progress: number) => {
+    if (isReview) return; // review = read-only, no telemetry writes
     if (!user?.id) return;
     const clampedProgress = Math.min(progress, DRAFT_COMPLETE_PROGRESS);
     const activityStatus = clampedProgress >= DRAFT_COMPLETE_PROGRESS ? 'IN_PROGRESS' : 'IN_PROGRESS';
@@ -183,7 +184,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     } catch (err) {
       console.error('[VCR Progress Sync] Failed:', err);
     }
-  }, [user?.id, vcr.id, queryClient]);
+  }, [isReview, user?.id, vcr.id, queryClient]);
 
   useEffect(() => {
     if (open) {
@@ -193,8 +194,9 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     }
   }, [open]);
 
-  // Auto-promote associated task from "pending" → "in_progress"
+  // Auto-promote associated task from "pending" → "in_progress" (skip in review)
   useEffect(() => {
+    if (isReview) return;
     if (!open || !user?.id || hasPromotedRef.current) return;
     hasPromotedRef.current = true;
 
@@ -216,7 +218,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
       }
     })();
-  }, [open, user?.id, vcr.id, queryClient]);
+  }, [isReview, open, user?.id, vcr.id, queryClient]);
 
   // Query step data counts for completion. Current order:
   // 0:Systems 1:W&HP(itp) 2:Training 3:Procedures 4:Critical Docs
