@@ -1056,3 +1056,43 @@
   .orsh-logo:hover .orsh-spark { animation: none; opacity: 0; }
   .orsh-logo:hover .orsh-ring { animation: none; stroke-dashoffset: 0; }
 }
+
+/* ─── VCR Plan Review (read-only) mode ─────────────────────────────
+   Applied to the wizard step content when an approver opens the
+   wizard in review mode. Hides explicit edit affordances tagged
+   with `data-rm-hide` and disables interaction on all form controls
+   except those tagged `data-rm-safe` (e.g. the decision step's
+   Approve / Request Changes buttons, navigation, scroll handles).
+*/
+.vcr-review-mode [data-rm-hide] {
+  display: none !important;
+}
+.vcr-review-mode input:not([data-rm-safe]),
+.vcr-review-mode textarea:not([data-rm-safe]),
+.vcr-review-mode select:not([data-rm-safe]),
+.vcr-review-mode [role="switch"]:not([data-rm-safe]),
+.vcr-review-mode [role="checkbox"]:not([data-rm-safe]),
+.vcr-review-mode [role="radio"]:not([data-rm-safe]) {
+  pointer-events: none !important;
+}
+.vcr-review-mode button:not([data-rm-safe]):not([data-rm-nav]) {
+  pointer-events: none !important;
+}
+.vcr-review-mode [contenteditable]:not([data-rm-safe]) {
+  pointer-events: none !important;
+}
+
+/* Bulk-hide common edit affordances in review mode without touching
+   every step file. Lucide icon class names (.lucide-plus, .lucide-trash-2,
+   .lucide-pencil, .lucide-edit) reliably mark add/edit/delete controls
+   across all VCR wizard steps. Buttons explicitly tagged data-rm-safe
+   (decision step Approve/Reject) and data-rm-nav (footer navigation)
+   are never hidden. */
+.vcr-review-mode button:not([data-rm-safe]):not([data-rm-nav]):has(svg.lucide-plus),
+.vcr-review-mode button:not([data-rm-safe]):not([data-rm-nav]):has(svg.lucide-trash-2),
+.vcr-review-mode button:not([data-rm-safe]):not([data-rm-nav]):has(svg.lucide-pencil),
+.vcr-review-mode button:not([data-rm-safe]):not([data-rm-nav]):has(svg.lucide-edit),
+.vcr-review-mode button:not([data-rm-safe]):not([data-rm-nav]):has(svg.lucide-edit-2),
+.vcr-review-mode button:not([data-rm-safe]):not([data-rm-nav]):has(svg.lucide-edit-3) {
+  display: none !important;
+}

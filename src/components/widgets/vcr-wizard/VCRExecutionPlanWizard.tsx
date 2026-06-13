@@ -17,27 +17,8 @@ import {
 } from 'lucide-react';
 import { ProjectVCR } from '@/hooks/useProjectVCRs';
 
-const ID_BADGE_PALETTE = [
-  { bg: 'bg-blue-100 dark:bg-blue-900/40', text: 'text-blue-700 dark:text-blue-300' },
-  { bg: 'bg-emerald-100 dark:bg-emerald-900/40', text: 'text-emerald-700 dark:text-emerald-300' },
-  { bg: 'bg-violet-100 dark:bg-violet-900/40', text: 'text-violet-700 dark:text-violet-300' },
-  { bg: 'bg-amber-100 dark:bg-amber-900/40', text: 'text-amber-700 dark:text-amber-300' },
-  { bg: 'bg-rose-100 dark:bg-rose-900/40', text: 'text-rose-700 dark:text-rose-300' },
-  { bg: 'bg-cyan-100 dark:bg-cyan-900/40', text: 'text-cyan-700 dark:text-cyan-300' },
-  { bg: 'bg-orange-100 dark:bg-orange-900/40', text: 'text-orange-700 dark:text-orange-300' },
-  { bg: 'bg-indigo-100 dark:bg-indigo-900/40', text: 'text-indigo-700 dark:text-indigo-300' },
-  { bg: 'bg-teal-100 dark:bg-teal-900/40', text: 'text-teal-700 dark:text-teal-300' },
-  { bg: 'bg-pink-100 dark:bg-pink-900/40', text: 'text-pink-700 dark:text-pink-300' },
-];
-
-function hashCode(str: string): number {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash) + str.charCodeAt(i);
-    hash |= 0;
-  }
-  return Math.abs(hash);
-}
+// (palette + hash helpers removed — header pill no longer uses them after
+//  the phase-aware status pill refactor.)
 
 import { WizardShell, WizardShellStep } from '../shared/WizardShell';
 import { WizardSubtitle } from '../shared/WizardSubtitle';
@@ -54,6 +35,10 @@ import { VCRConfirmationStep } from './steps/VCRConfirmationStep';
 import { Layers, CheckCircle2, Eye } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useVCRHydrocarbonStatus } from '@/hooks/useVCRHydrocarbonStatus';
+import { useVCRPlanRollup, vcrPlanPillLabel } from '@/hooks/useVCRPlanApprovalTasks';
+import { VCRWizardModeContext, type VCRReviewPayload } from './wizardModeContext';
+import { VCRReviewDecisionStep } from './VCRReviewDecisionStep';
+import { Button } from '@/components/ui/button';
 
 interface VCRExecutionPlanWizardProps {
   open: boolean;
@@ -61,6 +46,8 @@ interface VCRExecutionPlanWizardProps {
   vcr: ProjectVCR;
   projectCode?: string;
   projectName?: string;
+  /** When set, the wizard runs in read-only review mode for an approver. */
+  reviewPayload?: VCRReviewPayload | null;
 }
 
 // Step order — Witness & Hold Points (formerly Inspection Test Plan)
@@ -89,7 +76,9 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   vcr,
   projectCode,
   projectName,
+  reviewPayload,
 }) => {
+  const isReview = !!reviewPayload;
   const [currentStep, setCurrentStep] = useState(0);
   const [visitedSteps, setVisitedSteps] = useState<Set<number>>(new Set([0]));
   const [step9Ready, setStep9Ready] = useState(false);
@@ -132,8 +121,9 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   const effectiveProjectCode = projectCode || resolvedProject?.project_code || '';
   const effectiveProjectName = projectName || resolvedProject?.project_title || '';
 
-  // ── Progress sync (mirrors P2A pattern) ──────────────────────────
+  // ── Progress sync (mirrors P2A pattern) — DISABLED in review mode ──
   const syncVCRProgress = useCallback(async (progress: number) => {
+    if (isReview) return; // review = read-only, no telemetry writes
     if (!user?.id) return;
     const clampedProgress = Math.min(progress, DRAFT_COMPLETE_PROGRESS);
     const activityStatus = clampedProgress >= DRAFT_COMPLETE_PROGRESS ? 'IN_PROGRESS' : 'IN_PROGRESS';
@@ -175,7 +165,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     } catch (err) {
       console.error('[VCR Progress Sync] Failed:', err);
     }
-  }, [user?.id, vcr.id, queryClient]);
+  }, [isReview, user?.id, vcr.id, queryClient]);
 
   useEffect(() => {
     if (open) {
@@ -185,8 +175,9 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     }
   }, [open]);
 
-  // Auto-promote associated task from "pending" → "in_progress"
+  // Auto-promote associated task from "pending" → "in_progress" (skip in review)
   useEffect(() => {
+    if (isReview) return;
     if (!open || !user?.id || hasPromotedRef.current) return;
     hasPromotedRef.current = true;
 
@@ -208,7 +199,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
       }
     })();
-  }, [open, user?.id, vcr.id, queryClient]);
+  }, [isReview, open, user?.id, vcr.id, queryClient]);
 
   // Query step data counts for completion. Current order:
   // 0:Systems 1:W&HP(itp) 2:Training 3:Procedures 4:Critical Docs
@@ -298,7 +289,15 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       case 6: return <MaintenanceSystemsStep vcrId={vcr.id} />;
       case 7: return <ApproversStep vcrId={vcr.id} onApproversChange={setApproversRoster} />;
       case 8: return <VCRItemsStep vcrId={vcr.id} />;
-      case 9: return <VCRConfirmationStep vcrId={vcr.id} vcrName={vcr.name} vcrCode={vcr.vcr_code} onNavigateToStep={goToStep} onReadyChange={setStep9Ready} submitRequestId={submitRequestId} approversRoster={approversRoster} onSubmitSuccess={() => onOpenChange(false)} />;
+      case 9:
+        return isReview && reviewPayload ? (
+          <VCRReviewDecisionStep
+            payload={reviewPayload}
+            onDecided={() => onOpenChange(false)}
+          />
+        ) : (
+          <VCRConfirmationStep vcrId={vcr.id} vcrName={vcr.name} vcrCode={vcr.vcr_code} onNavigateToStep={goToStep} onReadyChange={setStep9Ready} submitRequestId={submitRequestId} approversRoster={approversRoster} onSubmitSuccess={() => onOpenChange(false)} />
+        );
       default: return null;
     }
   };
@@ -312,17 +311,21 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     return code.replace(/^VCR-[A-Z0-9]+-/, 'VCR-');
   })();
 
-  const idColors = shortVcrId
-    ? ID_BADGE_PALETTE[hashCode(shortVcrId) % ID_BADGE_PALETTE.length]
-    : ID_BADGE_PALETTE[0];
-
-  const statusLabel = (() => {
-    const s = (vcr.status || '').toUpperCase();
-    if (s === 'SIGNED') return { label: 'Approved', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
-    if (s === 'READY') return { label: 'Submitted', cls: 'bg-amber-50 text-amber-700 border-amber-200' };
-    if (s === 'IN_PROGRESS') return { label: 'In Progress', cls: 'bg-blue-50 text-blue-700 border-blue-200' };
-    return { label: 'Draft', cls: 'bg-muted text-muted-foreground border-border' };
-  })();
+  // Phase-aware status pill — driven by useVCRPlanRollup so a submitted plan
+  // no longer reads "Draft". Fix applies in BOTH create and review modes
+  // (the old vcr.status fallback was buggy in both).
+  const { data: rollup } = useVCRPlanRollup(vcr.id);
+  const pill = rollup ? vcrPlanPillLabel(rollup) : null;
+  const pillToneCls: Record<string, string> = {
+    muted: 'bg-muted text-muted-foreground border-border',
+    amber: 'bg-amber-50 text-amber-700 border-amber-200',
+    red: 'bg-red-50 text-red-700 border-red-200',
+    green: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    destructive: 'bg-red-600 text-white border-red-700',
+  };
+  const statusLabel = pill
+    ? { label: pill.label, cls: pillToneCls[pill.tone] }
+    : { label: 'Loading…', cls: 'bg-muted text-muted-foreground border-border' };
 
   const { data: hcStatus } = useVCRHydrocarbonStatus(vcr.id);
   const stripeMeta = (() => {
@@ -344,10 +347,11 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     };
   })();
 
+  const titlePrefix = isReview ? 'Review VCR Plan' : 'Create VCR Plan';
+
   const topHeaderContent = (
     <TooltipProvider delayDuration={150}>
     <div className="flex items-stretch gap-3 py-3">
-      {/* HC accent stripe — full content height, 6px thick */}
       <Tooltip>
         <TooltipTrigger asChild>
           <span
@@ -364,12 +368,17 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
           {shortVcrId ? `${shortVcrId}: ` : ''}{vcr.name}
         </h1>
         <WizardSubtitle
-          prefix="Create VCR Plan"
+          prefix={titlePrefix}
           code={effectiveProjectCode}
           name={effectiveProjectName}
         />
       </div>
       <div className="flex items-center gap-1.5 shrink-0 pt-1">
+        {isReview && (
+          <Badge variant="outline" className="text-[10px] h-5 px-2 bg-blue-50 text-blue-700 border-blue-200">
+            Review mode
+          </Badge>
+        )}
         <Badge variant="outline" className={cn("text-[10px] h-5 px-2", statusLabel.cls)}>
           {statusLabel.label}
         </Badge>
@@ -378,11 +387,41 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     </TooltipProvider>
   );
 
+  // Review-mode custom footer: Close + Prev/Next + Decide (jumps to step 10).
+  const isLastStep = currentStep === STEPS.length - 1;
+  const reviewFooter = isReview ? (
+    <div className="border-t bg-background px-4 sm:px-5 py-3 flex items-center justify-between gap-2">
+      <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} data-rm-safe data-rm-nav>
+        Close
+      </Button>
+      <div className="flex items-center gap-2">
+        <Button variant="outline" size="sm" onClick={handleBack} disabled={currentStep === 0} data-rm-safe data-rm-nav>
+          ← Prev
+        </Button>
+        <Button variant="outline" size="sm" onClick={handleNext} disabled={isLastStep} data-rm-safe data-rm-nav>
+          Next →
+        </Button>
+        {!isLastStep && (
+          <Button
+            size="sm"
+            onClick={() => goToStep(STEPS.length - 1)}
+            className="gap-1.5"
+            data-rm-safe
+            data-rm-nav
+          >
+            Go to decision ▸
+          </Button>
+        )}
+      </div>
+    </div>
+  ) : undefined;
+
   return (
+    <VCRWizardModeContext.Provider value={{ mode: isReview ? 'review' : 'create', reviewPayload: reviewPayload ?? null }}>
     <WizardShell
       open={open}
       onOpenChange={onOpenChange}
-      dialogTitle="Create VCR Plan"
+      dialogTitle={titlePrefix}
       steps={STEPS}
       currentStep={currentStep}
       onStepChange={goToStep}
@@ -391,7 +430,8 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       isStepOptional={isStepOptional}
       header={null}
       topHeader={topHeaderContent}
-      navigation={{
+      customFooter={reviewFooter}
+      navigation={isReview ? undefined : {
         onBack: handleBack,
         onNext: handleNext,
         onSaveAndExit: handleSaveAndExit,
@@ -402,9 +442,10 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         canProceed: currentStep === 9 ? step9Ready : true,
       }}
     >
-      <div className="p-3 sm:p-6 h-full min-h-0">
+      <div className={cn("p-3 sm:p-6 h-full min-h-0", isReview && "vcr-review-mode")}>
         {renderStep()}
       </div>
     </WizardShell>
+    </VCRWizardModeContext.Provider>
   );
 };
