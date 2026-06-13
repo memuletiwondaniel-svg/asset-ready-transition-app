@@ -283,7 +283,9 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
       key: 'checklist', stepIdx: 8, stepLabel: 'Step 9', name: 'VCR Checklist',
       required: true,
       complete: stats.checklist > 0,
-      summary: stats.checklist > 0 ? `${stats.checklist} items reviewed` : 'No checklist items',
+      summary: stats.checklist > 0
+        ? `${stats.checklist} active item${stats.checklist === 1 ? '' : 's'} ready to materialize`
+        : 'No checklist items (all marked N/A)',
     },
   ] : [];
 
