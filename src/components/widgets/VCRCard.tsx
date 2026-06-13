@@ -132,7 +132,7 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
         'group/vcr w-full text-left px-3.5 py-3',
         'transition-[background-color,border-color,box-shadow,transform] duration-150 ease-out',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30',
-        isHandedOver ? 'rounded-r-lg rounded-l-none' : 'rounded-lg',
+        'rounded-lg',
         !isActive &&
           'bg-muted dark:bg-muted/60 border border-border hover:bg-card hover:border-foreground/20 hover:shadow-md hover:-translate-y-px'
       )}
@@ -156,13 +156,13 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
           {displayCode}
         </span>
         <span
-          className="inline-flex items-center gap-1 text-[11px] font-medium rounded-full"
+          className="inline-flex items-center text-[11px] font-medium rounded-full"
           style={{ padding: '2px 8px', backgroundColor: style.pillBg, color: style.pillText }}
         >
-          {isHandedOver && <Check className="h-3 w-3" strokeWidth={2.5} />}
           {style.label}
         </span>
       </div>
+
 
 
       {/* Row 2: Title */}
