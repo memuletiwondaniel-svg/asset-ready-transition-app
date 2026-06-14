@@ -87,7 +87,7 @@ export const VCRApprovalHistoryPanel: React.FC<Props> = ({ handoverPointId, defa
                           </span>
                         </div>
                         <div className="text-muted-foreground">
-                          {e.actor_name || (e.actor_id ? 'Unknown' : 'System')}
+                          {e.actor_name || (e.actor_id ? 'User' : 'System')}
                         </div>
                         {comment && (
                           <div className="border-l-2 border-border pl-2 italic text-foreground/80">
