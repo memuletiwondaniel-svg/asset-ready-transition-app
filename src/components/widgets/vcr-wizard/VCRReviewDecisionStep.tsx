@@ -412,6 +412,7 @@ const DecisionConfirmModal: React.FC = () => {
     setComment,
     rollup,
     payload,
+    decisionError,
   } = useDecision();
 
   const open = !!pendingDecision;
