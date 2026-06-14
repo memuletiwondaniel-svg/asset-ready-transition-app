@@ -20,6 +20,10 @@ import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import type { VCRReviewPayload } from './wizardModeContext';
+import { useVCRWizardSubMode } from './wizardModeContext';
+import { VCRPlanDiffSummary } from './VCRPlanDiffSummary';
+
+
 
 type Decision = 'APPROVED' | 'REJECTED';
 
@@ -241,7 +245,11 @@ export const VCRReviewDecisionStep: React.FC<{
     payload,
   } = useDecision();
 
+  const subMode = useVCRWizardSubMode();
+  const showDiff = subMode === 'ora_edit';
+
   const approvedCount = rollup?.approved_count ?? 0;
+
   const totalCount = rollup?.total_count ?? 0;
 
   return (
@@ -295,7 +303,16 @@ export const VCRReviewDecisionStep: React.FC<{
         </div>
       </section>
 
+      {showDiff && (
+        <>
+          <Separator />
+          <VCRPlanDiffSummary handoverPointId={payload.handoverPointId} mode="live" />
+        </>
+      )}
+
       <Separator />
+
+
 
       {/* ─── Decision surface (state + comment textarea only) ──── */}
       <section className="space-y-3">
