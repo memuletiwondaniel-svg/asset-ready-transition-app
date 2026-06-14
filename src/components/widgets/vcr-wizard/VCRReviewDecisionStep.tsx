@@ -267,63 +267,14 @@ export const VCRReviewDecisionStep: React.FC<{
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 p-1">
-      {/* ─── Approver roster (header includes count) ───────────── */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between gap-2">
-          <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Approvers
-            {totalCount > 0 && (
-              <span className="ml-2 normal-case text-muted-foreground/80 font-medium">
-                · Phase {rollup?.phase ?? '—'} · {approvedCount} of {totalCount} approved
-              </span>
-            )}
-          </div>
-        </div>
-        <div className="rounded-lg border divide-y">
-          {(roster || []).map((r) => {
-            const isMineRow = r.id === payload.approverRowId;
-            return (
-              <div
-                key={r.id}
-                className={cn(
-                  'flex items-center justify-between gap-3 px-3 py-2.5 text-sm',
-                  isMineRow && 'bg-primary/5',
-                )}
-              >
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-[10px] font-mono text-muted-foreground w-4 text-center">
-                    {r.approver_order ?? '—'}
-                  </span>
-                  <span className="font-medium truncate">{r.role_label}</span>
-                  {isMineRow && (
-                    <Badge variant="outline" className="text-[9px] h-4 px-1.5">You</Badge>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {decisionChip(r.status)}
-                  {r.decided_at && (
-                    <span className="text-[10px] text-muted-foreground">
-                      {format(new Date(r.decided_at), 'd MMM, HH:mm')}
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-          {(roster || []).length === 0 && (
-            <div className="px-3 py-4 text-sm text-muted-foreground">No approvers configured.</div>
-          )}
-        </div>
-      </section>
-
-      {showDiff && (
-        <>
-          <Separator />
-          <VCRPlanDiffSummary handoverPointId={payload.handoverPointId} mode="live" />
-        </>
-      )}
+      {/* U7 — full roster lives in Step 8 now. Step 10 = change summary +
+          decision + history. Roster changes (if any) are folded into the
+          diff summary below. */}
+      <VCRPlanDiffSummary handoverPointId={payload.handoverPointId} mode={subMode === 'ora_edit' ? 'live' : 'baseline'} />
 
       <Separator />
+
+
 
 
 
