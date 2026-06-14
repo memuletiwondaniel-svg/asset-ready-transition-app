@@ -400,7 +400,12 @@ export const VCRReviewDecisionStep: React.FC<{
           </div>
         )}
       </section>
+
+      <Separator />
+
+      <VCRApprovalHistoryPanel handoverPointId={payload.handoverPointId} />
     </div>
+
   );
 };
 
