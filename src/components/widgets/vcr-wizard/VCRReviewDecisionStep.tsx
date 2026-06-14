@@ -47,6 +47,7 @@ interface DecisionController {
   confirmDecision: () => void;
   rollupLoading: boolean;
   myRowLoading: boolean;
+  decisionError: string | null;
 }
 
 const DecisionCtx = createContext<DecisionController | null>(null);
