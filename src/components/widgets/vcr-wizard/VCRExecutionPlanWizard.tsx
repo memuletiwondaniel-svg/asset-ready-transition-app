@@ -488,10 +488,14 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   }, [isSavingOra, persistOraRoster]);
 
   // Approve-before-baseline pre-hook (Step 3c). Phase-1 ORA-edit only.
+  // B1 — skip submit_vcr_plan when the roster wasn't actually edited. The DB
+  // roster is canonical and the baseline snapshot reads live state, so an
+  // unedited approval should bypass the (empty-payload) submit entirely.
   const preApprovePersist = useCallback(async (): Promise<boolean> => {
     if (subMode !== 'ora_edit') return true;
+    if (!rosterDirty) return true;
     return await persistOraRoster(true);
-  }, [subMode, persistOraRoster]);
+  }, [subMode, rosterDirty, persistOraRoster]);
 
   // Review-mode custom footer: Close + Prev + (Next | Approve / Request Changes on last step).
   // ora_edit adds a "Save changes" button so roster edits persist via submit_vcr_plan.
