@@ -79,8 +79,12 @@ export const ORPApprovalsTab: React.FC<ORPApprovalsTabProps> = ({ planId }) => {
         const config = STATUS_CONFIG[approval.status] || STATUS_CONFIG.PENDING;
         const StatusIcon = config.icon;
         const profile = approval.profile;
-        const initials = profile?.full_name
-          ? profile.full_name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)
+        const displayName =
+          (profile?.full_name && profile.full_name.trim()) ||
+          (profile?.email && profile.email.trim()) ||
+          (approval.approver_user_id ? 'User' : 'Unassigned');
+        const initials = displayName && displayName !== 'Unassigned'
+          ? displayName.split(/[ @._-]/).filter(Boolean).map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
           : '?';
 
         return (
