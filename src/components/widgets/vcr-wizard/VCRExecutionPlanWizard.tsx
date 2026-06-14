@@ -428,11 +428,6 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         />
       </div>
       <div className="flex items-center gap-1.5 shrink-0 pt-1">
-        {isReview && (
-          <Badge variant="outline" className="text-[10px] h-5 px-2 bg-blue-50 text-blue-700 border-blue-200">
-            Review mode
-          </Badge>
-        )}
         <Badge variant="outline" className={cn("text-[10px] h-5 px-2", statusLabel.cls)}>
           {statusLabel.label}
         </Badge>
