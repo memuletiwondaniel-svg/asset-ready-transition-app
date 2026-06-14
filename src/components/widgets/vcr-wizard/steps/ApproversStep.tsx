@@ -353,7 +353,8 @@ export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId, onApprovers
                   </>
                 )}
               </div>
-              <div className="flex items-center shrink-0">
+              <div className="flex items-center gap-2 shrink-0">
+                {renderDecisionBadge && renderDecisionBadge(approver.user_id)}
                 <button
                   onClick={() => handleDelete(approver.id)}
                   className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-destructive/10 text-destructive"
