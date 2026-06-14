@@ -29,12 +29,12 @@ export const ORPApprovalsTab: React.FC<ORPApprovalsTabProps> = ({ planId }) => {
 
       if (error) throw error;
 
-      // Fetch profiles for approvers
+      // Fetch profiles for approvers (with email fallback so a missing profile never blanks the name)
       const userIds = (data || []).map((a: any) => a.approver_user_id).filter(Boolean);
       const { data: profiles } = userIds.length > 0
         ? await supabase
             .from('profiles')
-            .select('user_id, full_name, position, avatar_url')
+            .select('user_id, full_name, position, avatar_url, email')
             .in('user_id', userIds)
         : { data: [] };
 
