@@ -74,6 +74,7 @@ export const VCRReviewDecisionProvider: React.FC<{
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState<Decision | null>(null);
   const [pendingDecision, setPendingDecision] = useState<Decision | null>(null);
+  const [decisionError, setDecisionError] = useState<string | null>(null);
 
   const { data: rollup, isLoading: rollupLoading } = useVCRPlanRollup(payload.handoverPointId);
 
