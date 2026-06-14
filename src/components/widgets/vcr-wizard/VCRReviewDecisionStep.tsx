@@ -218,9 +218,10 @@ export const VCRReviewDecisionProvider: React.FC<{
       confirmDecision,
       rollupLoading,
       myRowLoading,
+      decisionError,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [payload, rollup, myRow, roster, isMine, alreadyDecided, canDecide, comment, submitting, pendingDecision, rollupLoading, myRowLoading],
+    [payload, rollup, myRow, roster, isMine, alreadyDecided, canDecide, comment, submitting, pendingDecision, rollupLoading, myRowLoading, decisionError],
   );
 
   return (
