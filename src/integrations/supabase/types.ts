@@ -13734,6 +13734,41 @@ export type Database = {
           },
         ]
       }
+      vcr_plan_approval_events: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          event_type: string
+          handover_point_id: string
+          id: string
+          payload: Json | null
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          event_type: string
+          handover_point_id: string
+          id?: string
+          payload?: Json | null
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          event_type?: string
+          handover_point_id?: string
+          id?: string
+          payload?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vcr_plan_approval_events_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_points"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vcr_plan_approvers: {
         Row: {
           approver_order: number
@@ -14669,6 +14704,20 @@ export type Database = {
       _vcr_build_snapshot_payload: {
         Args: { p_handover_point_id: string }
         Returns: Json
+      }
+      _vcr_notify: {
+        Args: {
+          p_body: string
+          p_recipient: string
+          p_sender: string
+          p_title: string
+          p_type: string
+        }
+        Returns: undefined
+      }
+      _vcr_plan_submitter: {
+        Args: { p_handover_point_id: string }
+        Returns: string
       }
       admin_hard_delete_project: {
         Args: { _project_id: string }
