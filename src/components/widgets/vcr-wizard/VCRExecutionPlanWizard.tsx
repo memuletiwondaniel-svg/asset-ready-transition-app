@@ -92,6 +92,17 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   const [step9Ready, setStep9Ready] = useState(false);
   const [submitRequestId, setSubmitRequestId] = useState(0);
   const [approversRoster, setApproversRoster] = useState<VCRApprover[]>([]);
+  const rosterSeedSigRef = useRef<string | null>(null);
+  const [rosterDirty, setRosterDirty] = useState(false);
+  const handleRosterChange = useCallback((next: VCRApprover[]) => {
+    setApproversRoster(next);
+    const sig = JSON.stringify(next.map(a => ({ r: a.role_key || a.role_name, u: a.user_id || null })));
+    if (rosterSeedSigRef.current === null) {
+      rosterSeedSigRef.current = sig;
+      return;
+    }
+    if (sig !== rosterSeedSigRef.current) setRosterDirty(true);
+  }, []);
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const hasPromotedRef = useRef(false);
