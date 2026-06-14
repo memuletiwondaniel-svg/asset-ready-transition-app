@@ -113,23 +113,24 @@ export const VCRReviewDecisionProvider: React.FC<{
     !alreadyDecided;
 
   const submit = async (decision: Decision) => {
+    setDecisionError(null);
     setSubmitting(decision);
     // Step 3c — Approve-before-baseline. Persist any unsaved roster/content
     // via the same submit_vcr_plan path BEFORE decide_vcr_plan_approval runs,
     // so the baseline freezes exactly what the ORA sees on screen. Idempotent.
+    // The pre-hook itself short-circuits when the roster wasn't edited.
     if (decision === 'APPROVED' && preApprovePersist) {
       try {
         const ok = await preApprovePersist();
         if (ok === false) {
           setSubmitting(null);
-          setPendingDecision(null);
+          setDecisionError('Could not save pending changes. Please review and try again.');
           return;
         }
       } catch (e: any) {
         console.error('[VCR Plan Review] preApprovePersist failed:', e);
-        toast.error(`Could not save pending changes: ${e?.message || e}`);
         setSubmitting(null);
-        setPendingDecision(null);
+        setDecisionError(`Could not save pending changes: ${e?.message || e}`);
         return;
       }
     }
@@ -139,9 +140,9 @@ export const VCRReviewDecisionProvider: React.FC<{
       p_comment: comment.trim() || null,
     });
     setSubmitting(null);
-    setPendingDecision(null);
     if (error) {
-      toast.error(error.message || 'Decision failed');
+      // Keep confirm modal open and surface the error inline (B1 fix).
+      setDecisionError(error.message || 'Decision failed');
       return;
     }
 
@@ -159,6 +160,7 @@ export const VCRReviewDecisionProvider: React.FC<{
     // Step 3 FIX — scope-change self-heal path. RPC committed a void + reset
     // and returned without recording a decision. No success toast, no fan-out.
     if (data && (data as any).scope_changed === true) {
+      setPendingDecision(null);
       toast.info(
         (data as any).message ||
           'Plan scope changed — approvals were reset; the ORA Lead must re-review.',
@@ -176,6 +178,7 @@ export const VCRReviewDecisionProvider: React.FC<{
         console.error('[VCR Plan Review] Fan-out failed:', e);
       }
     }
+    setPendingDecision(null);
     toast.success(decision === 'APPROVED' ? 'Plan approved' : 'Changes requested');
     invalidateAll();
     onDecided?.();
