@@ -303,7 +303,16 @@ export const VCRReviewDecisionStep: React.FC<{
         </div>
       </section>
 
+      {showDiff && (
+        <>
+          <Separator />
+          <VCRPlanDiffSummary handoverPointId={payload.handoverPointId} mode="live" />
+        </>
+      )}
+
       <Separator />
+
+
 
       {/* ─── Decision surface (state + comment textarea only) ──── */}
       <section className="space-y-3">
