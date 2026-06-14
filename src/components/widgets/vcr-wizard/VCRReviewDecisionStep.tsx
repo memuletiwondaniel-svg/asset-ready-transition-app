@@ -245,7 +245,11 @@ export const VCRReviewDecisionStep: React.FC<{
     payload,
   } = useDecision();
 
+  const subMode = useVCRWizardSubMode();
+  const showDiff = subMode === 'ora_edit';
+
   const approvedCount = rollup?.approved_count ?? 0;
+
   const totalCount = rollup?.total_count ?? 0;
 
   return (
