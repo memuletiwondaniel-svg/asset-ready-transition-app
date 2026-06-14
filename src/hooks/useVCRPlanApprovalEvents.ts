@@ -24,17 +24,21 @@ export function useVCRPlanApprovalEvents(handoverPointId: string | null | undefi
       if (error) throw error;
       const events = (data || []) as VCRPlanApprovalEvent[];
 
-      // Resolve actor names
+      // Resolve actor names (with email fallback so missing profile fields never blank the UI)
       const actorIds = Array.from(new Set(events.map((e) => e.actor_id).filter(Boolean))) as string[];
       let nameMap: Record<string, string> = {};
       if (actorIds.length > 0) {
         const { data: profs } = await (supabase as any)
           .from('profiles')
-          .select('user_id, full_name, first_name, last_name')
+          .select('user_id, full_name, first_name, last_name, email')
           .in('user_id', actorIds);
         (profs || []).forEach((p: any) => {
+          const composed = [p.first_name, p.last_name].filter(Boolean).join(' ').trim();
           nameMap[p.user_id] =
-            p.full_name || [p.first_name, p.last_name].filter(Boolean).join(' ') || 'Unknown';
+            (p.full_name && p.full_name.trim()) ||
+            composed ||
+            (p.email && p.email.trim()) ||
+            'User';
         });
       }
       return events.map((e) => ({ ...e, actor_name: e.actor_id ? nameMap[e.actor_id] || null : null }));
