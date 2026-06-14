@@ -39,6 +39,8 @@ export interface VcrPlanDiff {
   logsheets: SectionDiff;
   maintenance: SectionDiff;
   roster: RosterDiff;
+  /** id → human label for every section row in either side (excluding checklist, which needs a separate lookup). */
+  labels: Record<string, string>;
   totalChanged: number;
 }
 
@@ -59,6 +61,33 @@ function diffSectionById(from: unknown, to: unknown): SectionDiff {
   const fromIds = asArr<any>(from).map((r) => String(r?.id)).filter(Boolean);
   const toIds = asArr<any>(to).map((r) => String(r?.id)).filter(Boolean);
   return diffIdArrays(fromIds, toIds);
+}
+
+/** Best-effort human label for a section row. */
+function rowLabel(row: any): string {
+  if (!row || typeof row !== 'object') return '';
+  return (
+    row.title ||
+    row.name ||
+    row.doc_code ||
+    row.deliverable_type ||
+    row.role_label ||
+    row.id ||
+    ''
+  );
+}
+
+function collectLabels(...sources: unknown[]): Record<string, string> {
+  const out: Record<string, string> = {};
+  sources.forEach((src) => {
+    asArr<any>(src).forEach((row) => {
+      const id = row?.id ? String(row.id) : '';
+      if (!id) return;
+      const lbl = rowLabel(row);
+      if (lbl) out[id] = lbl;
+    });
+  });
+  return out;
 }
 
 function diffRoster(from: unknown, to: unknown): RosterDiff {
@@ -101,6 +130,15 @@ export function computeVcrPlanDiff(
   const maintenance = diffSectionById(f.maintenance, t.maintenance);
   const roster = diffRoster(f.approvers, t.approvers);
 
+  const labels = collectLabels(
+    f.documents, t.documents,
+    f.training, t.training,
+    f.procedures, t.procedures,
+    f.registers, t.registers,
+    f.logsheets, t.logsheets,
+    f.maintenance, t.maintenance,
+  );
+
   const totalChanged =
     checklist.added.length + checklist.removed.length +
     documents.added.length + documents.removed.length +
@@ -111,5 +149,5 @@ export function computeVcrPlanDiff(
     maintenance.added.length + maintenance.removed.length +
     roster.added.length + roster.removed.length;
 
-  return { checklist, documents, training, procedures, registers, logsheets, maintenance, roster, totalChanged };
+  return { checklist, documents, training, procedures, registers, logsheets, maintenance, roster, labels, totalChanged };
 }

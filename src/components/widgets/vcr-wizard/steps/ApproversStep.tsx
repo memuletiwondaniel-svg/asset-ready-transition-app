@@ -37,6 +37,10 @@ interface ApproversStepProps {
   /** Called whenever the local roster changes — used by the parent wizard
    *  to surface the roster to Step 10 (Review & Submit). */
   onApproversChange?: (approvers: VCRApprover[]) => void;
+  /** Optional inline badge renderer (used in review mode to overlay each
+   *  card with that approver's decision state). Receives the approver's
+   *  user_id when assigned. */
+  renderDecisionBadge?: (userId: string | undefined) => React.ReactNode;
 }
 
 const getInitials = (name?: string) => {
@@ -53,7 +57,7 @@ const resolveAvatarUrl = (avatarUrl?: string): string | undefined => {
 const FIXED_ROLES = P2A_AND_VCR_APPROVER_ROLES;
 const RPC_LABELS = rpcResolvedLabels(FIXED_ROLES);
 
-export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId, onApproversChange }) => {
+export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId, onApproversChange, renderDecisionBadge }) => {
   const [approvers, setApprovers] = useState<VCRApprover[]>([]);
 
   // Surface roster upward so VCRConfirmationStep can submit it.
