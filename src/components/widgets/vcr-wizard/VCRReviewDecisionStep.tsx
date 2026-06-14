@@ -189,9 +189,13 @@ export const VCRReviewDecisionProvider: React.FC<{
       toast.error('Please add a comment explaining the change request.');
       return;
     }
+    setDecisionError(null);
     setPendingDecision(d);
   };
-  const cancelConfirm = () => setPendingDecision(null);
+  const cancelConfirm = () => {
+    setPendingDecision(null);
+    setDecisionError(null);
+  };
   const confirmDecision = () => {
     if (pendingDecision) submit(pendingDecision);
   };
