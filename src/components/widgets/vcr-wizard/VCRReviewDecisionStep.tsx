@@ -20,6 +20,10 @@ import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import type { VCRReviewPayload } from './wizardModeContext';
+import { useVCRWizardSubMode } from './wizardModeContext';
+import { VCRPlanDiffSummary } from './VCRPlanDiffSummary';
+
+
 
 type Decision = 'APPROVED' | 'REJECTED';
 
