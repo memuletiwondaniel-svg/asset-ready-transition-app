@@ -37,14 +37,14 @@ export const useTaskReviewers = (taskId: string | undefined) => {
       if (error) throw error;
       if (!data || data.length === 0) return [];
 
-      // Resolve profiles
+      // Resolve profiles (fall back to email then a generic label so a missing profile never blanks the UI)
       const userIds = [...new Set(data.filter((r: any) => r.user_id).map((r: any) => r.user_id))] as string[];
       const profileMap = new Map<string, { full_name: string | null; avatar_url: string | null }>();
 
       if (userIds.length > 0) {
         const { data: profiles } = await supabase
           .from('profiles')
-          .select('user_id, full_name, avatar_url')
+          .select('user_id, full_name, avatar_url, email')
           .in('user_id', userIds);
 
         for (const p of profiles || []) {
@@ -54,7 +54,11 @@ export const useTaskReviewers = (taskId: string | undefined) => {
               ? p.avatar_url
               : supabase.storage.from('user-avatars').getPublicUrl(p.avatar_url).data.publicUrl;
           }
-          profileMap.set(p.user_id, { full_name: p.full_name, avatar_url: resolvedUrl });
+          const displayName =
+            (p.full_name && p.full_name.trim()) ||
+            (p.email && p.email.trim()) ||
+            null;
+          profileMap.set(p.user_id, { full_name: displayName, avatar_url: resolvedUrl });
         }
       }
 
@@ -62,7 +66,7 @@ export const useTaskReviewers = (taskId: string | undefined) => {
         const profile = profileMap.get(r.user_id);
         return {
           ...r,
-          full_name: profile?.full_name || 'Unknown',
+          full_name: profile?.full_name || 'User',
           avatar_url: profile?.avatar_url || null,
         };
       });

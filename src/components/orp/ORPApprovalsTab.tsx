@@ -29,12 +29,12 @@ export const ORPApprovalsTab: React.FC<ORPApprovalsTabProps> = ({ planId }) => {
 
       if (error) throw error;
 
-      // Fetch profiles for approvers
+      // Fetch profiles for approvers (with email fallback so a missing profile never blanks the name)
       const userIds = (data || []).map((a: any) => a.approver_user_id).filter(Boolean);
       const { data: profiles } = userIds.length > 0
         ? await supabase
             .from('profiles')
-            .select('user_id, full_name, position, avatar_url')
+            .select('user_id, full_name, position, avatar_url, email')
             .in('user_id', userIds)
         : { data: [] };
 
@@ -79,8 +79,12 @@ export const ORPApprovalsTab: React.FC<ORPApprovalsTabProps> = ({ planId }) => {
         const config = STATUS_CONFIG[approval.status] || STATUS_CONFIG.PENDING;
         const StatusIcon = config.icon;
         const profile = approval.profile;
-        const initials = profile?.full_name
-          ? profile.full_name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)
+        const displayName =
+          (profile?.full_name && profile.full_name.trim()) ||
+          (profile?.email && profile.email.trim()) ||
+          (approval.approver_user_id ? 'User' : 'Unassigned');
+        const initials = displayName && displayName !== 'Unassigned'
+          ? displayName.split(/[ @._-]/).filter(Boolean).map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
           : '?';
 
         return (
@@ -96,7 +100,7 @@ export const ORPApprovalsTab: React.FC<ORPApprovalsTabProps> = ({ planId }) => {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-medium text-sm">
-                  {profile?.full_name || 'Unassigned'}
+                  {displayName}
                 </span>
               </div>
               {profile?.position && (
