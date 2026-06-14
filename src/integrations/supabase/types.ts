@@ -14982,6 +14982,10 @@ export type Database = {
         Returns: undefined
       }
       initiate_password_reset: { Args: { user_email: string }; Returns: string }
+      is_actionable_ora_lead: {
+        Args: { p_handover_point_id: string }
+        Returns: boolean
+      }
       is_active_task_status: { Args: { _status: string }; Returns: boolean }
       is_b2b_partner_of: { Args: { target_user_id: string }; Returns: boolean }
       is_child_task_complete: {
