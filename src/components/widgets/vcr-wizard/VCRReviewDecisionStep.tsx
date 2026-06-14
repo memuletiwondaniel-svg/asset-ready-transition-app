@@ -47,6 +47,7 @@ interface DecisionController {
   confirmDecision: () => void;
   rollupLoading: boolean;
   myRowLoading: boolean;
+  decisionError: string | null;
 }
 
 const DecisionCtx = createContext<DecisionController | null>(null);
@@ -73,6 +74,7 @@ export const VCRReviewDecisionProvider: React.FC<{
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState<Decision | null>(null);
   const [pendingDecision, setPendingDecision] = useState<Decision | null>(null);
+  const [decisionError, setDecisionError] = useState<string | null>(null);
 
   const { data: rollup, isLoading: rollupLoading } = useVCRPlanRollup(payload.handoverPointId);
 
@@ -111,23 +113,24 @@ export const VCRReviewDecisionProvider: React.FC<{
     !alreadyDecided;
 
   const submit = async (decision: Decision) => {
+    setDecisionError(null);
     setSubmitting(decision);
     // Step 3c — Approve-before-baseline. Persist any unsaved roster/content
     // via the same submit_vcr_plan path BEFORE decide_vcr_plan_approval runs,
     // so the baseline freezes exactly what the ORA sees on screen. Idempotent.
+    // The pre-hook itself short-circuits when the roster wasn't edited.
     if (decision === 'APPROVED' && preApprovePersist) {
       try {
         const ok = await preApprovePersist();
         if (ok === false) {
           setSubmitting(null);
-          setPendingDecision(null);
+          setDecisionError('Could not save pending changes. Please review and try again.');
           return;
         }
       } catch (e: any) {
         console.error('[VCR Plan Review] preApprovePersist failed:', e);
-        toast.error(`Could not save pending changes: ${e?.message || e}`);
         setSubmitting(null);
-        setPendingDecision(null);
+        setDecisionError(`Could not save pending changes: ${e?.message || e}`);
         return;
       }
     }
@@ -137,9 +140,9 @@ export const VCRReviewDecisionProvider: React.FC<{
       p_comment: comment.trim() || null,
     });
     setSubmitting(null);
-    setPendingDecision(null);
     if (error) {
-      toast.error(error.message || 'Decision failed');
+      // Keep confirm modal open and surface the error inline (B1 fix).
+      setDecisionError(error.message || 'Decision failed');
       return;
     }
 
@@ -157,6 +160,7 @@ export const VCRReviewDecisionProvider: React.FC<{
     // Step 3 FIX — scope-change self-heal path. RPC committed a void + reset
     // and returned without recording a decision. No success toast, no fan-out.
     if (data && (data as any).scope_changed === true) {
+      setPendingDecision(null);
       toast.info(
         (data as any).message ||
           'Plan scope changed — approvals were reset; the ORA Lead must re-review.',
@@ -174,6 +178,7 @@ export const VCRReviewDecisionProvider: React.FC<{
         console.error('[VCR Plan Review] Fan-out failed:', e);
       }
     }
+    setPendingDecision(null);
     toast.success(decision === 'APPROVED' ? 'Plan approved' : 'Changes requested');
     invalidateAll();
     onDecided?.();
@@ -184,9 +189,13 @@ export const VCRReviewDecisionProvider: React.FC<{
       toast.error('Please add a comment explaining the change request.');
       return;
     }
+    setDecisionError(null);
     setPendingDecision(d);
   };
-  const cancelConfirm = () => setPendingDecision(null);
+  const cancelConfirm = () => {
+    setPendingDecision(null);
+    setDecisionError(null);
+  };
   const confirmDecision = () => {
     if (pendingDecision) submit(pendingDecision);
   };
@@ -209,9 +218,10 @@ export const VCRReviewDecisionProvider: React.FC<{
       confirmDecision,
       rollupLoading,
       myRowLoading,
+      decisionError,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [payload, rollup, myRow, roster, isMine, alreadyDecided, canDecide, comment, submitting, pendingDecision, rollupLoading, myRowLoading],
+    [payload, rollup, myRow, roster, isMine, alreadyDecided, canDecide, comment, submitting, pendingDecision, rollupLoading, myRowLoading, decisionError],
   );
 
   return (
@@ -257,63 +267,14 @@ export const VCRReviewDecisionStep: React.FC<{
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 p-1">
-      {/* ─── Approver roster (header includes count) ───────────── */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between gap-2">
-          <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Approvers
-            {totalCount > 0 && (
-              <span className="ml-2 normal-case text-muted-foreground/80 font-medium">
-                · Phase {rollup?.phase ?? '—'} · {approvedCount} of {totalCount} approved
-              </span>
-            )}
-          </div>
-        </div>
-        <div className="rounded-lg border divide-y">
-          {(roster || []).map((r) => {
-            const isMineRow = r.id === payload.approverRowId;
-            return (
-              <div
-                key={r.id}
-                className={cn(
-                  'flex items-center justify-between gap-3 px-3 py-2.5 text-sm',
-                  isMineRow && 'bg-primary/5',
-                )}
-              >
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-[10px] font-mono text-muted-foreground w-4 text-center">
-                    {r.approver_order ?? '—'}
-                  </span>
-                  <span className="font-medium truncate">{r.role_label}</span>
-                  {isMineRow && (
-                    <Badge variant="outline" className="text-[9px] h-4 px-1.5">You</Badge>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {decisionChip(r.status)}
-                  {r.decided_at && (
-                    <span className="text-[10px] text-muted-foreground">
-                      {format(new Date(r.decided_at), 'd MMM, HH:mm')}
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-          {(roster || []).length === 0 && (
-            <div className="px-3 py-4 text-sm text-muted-foreground">No approvers configured.</div>
-          )}
-        </div>
-      </section>
-
-      {showDiff && (
-        <>
-          <Separator />
-          <VCRPlanDiffSummary handoverPointId={payload.handoverPointId} mode="live" />
-        </>
-      )}
+      {/* U7 — full roster lives in Step 8 now. Step 10 = change summary +
+          decision + history. Roster changes (if any) are folded into the
+          diff summary below. */}
+      <VCRPlanDiffSummary handoverPointId={payload.handoverPointId} mode={subMode === 'ora_edit' ? 'live' : 'baseline'} />
 
       <Separator />
+
+
 
 
 
@@ -451,6 +412,7 @@ const DecisionConfirmModal: React.FC = () => {
     setComment,
     rollup,
     payload,
+    decisionError,
   } = useDecision();
 
   const open = !!pendingDecision;
@@ -545,6 +507,14 @@ const DecisionConfirmModal: React.FC = () => {
             autoFocus
           />
         </div>
+
+        {decisionError && (
+          <div className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700 flex items-start gap-2">
+            <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+            <span>{decisionError}</span>
+          </div>
+        )}
+
 
         <DialogFooter>
           <Button variant="outline" onClick={cancelConfirm} disabled={!!submitting} data-rm-safe>

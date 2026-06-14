@@ -92,6 +92,17 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   const [step9Ready, setStep9Ready] = useState(false);
   const [submitRequestId, setSubmitRequestId] = useState(0);
   const [approversRoster, setApproversRoster] = useState<VCRApprover[]>([]);
+  const rosterSeedSigRef = useRef<string | null>(null);
+  const [rosterDirty, setRosterDirty] = useState(false);
+  const handleRosterChange = useCallback((next: VCRApprover[]) => {
+    setApproversRoster(next);
+    const sig = JSON.stringify(next.map(a => ({ r: a.role_key || a.role_name, u: a.user_id || null })));
+    if (rosterSeedSigRef.current === null) {
+      rosterSeedSigRef.current = sig;
+      return;
+    }
+    if (sig !== rosterSeedSigRef.current) setRosterDirty(true);
+  }, []);
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const hasPromotedRef = useRef(false);
@@ -330,7 +341,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       case 4: return <CriticalDocumentsStep vcrId={vcr.id} projectCode={effectiveProjectCode} />;
       case 5: return <RegistersLogsheetsStep vcrId={vcr.id} />;
       case 6: return <MaintenanceSystemsStep vcrId={vcr.id} />;
-      case 7: return <Step8ReviewModeWrapper vcrId={vcr.id} onApproversChange={setApproversRoster} />;
+      case 7: return <Step8ReviewModeWrapper vcrId={vcr.id} onApproversChange={handleRosterChange} />;
       case 8: return <VCRItemsStep vcrId={vcr.id} />;
       case 9:
         return isReview && reviewPayload ? (
@@ -417,11 +428,6 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         />
       </div>
       <div className="flex items-center gap-1.5 shrink-0 pt-1">
-        {isReview && (
-          <Badge variant="outline" className="text-[10px] h-5 px-2 bg-blue-50 text-blue-700 border-blue-200">
-            Review mode
-          </Badge>
-        )}
         <Badge variant="outline" className={cn("text-[10px] h-5 px-2", statusLabel.cls)}>
           {statusLabel.label}
         </Badge>
@@ -477,10 +483,14 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   }, [isSavingOra, persistOraRoster]);
 
   // Approve-before-baseline pre-hook (Step 3c). Phase-1 ORA-edit only.
+  // B1 — skip submit_vcr_plan when the roster wasn't actually edited. The DB
+  // roster is canonical and the baseline snapshot reads live state, so an
+  // unedited approval should bypass the (empty-payload) submit entirely.
   const preApprovePersist = useCallback(async (): Promise<boolean> => {
     if (subMode !== 'ora_edit') return true;
+    if (!rosterDirty) return true;
     return await persistOraRoster(true);
-  }, [subMode, persistOraRoster]);
+  }, [subMode, rosterDirty, persistOraRoster]);
 
   // Review-mode custom footer: Close + Prev + (Next | Approve / Request Changes on last step).
   // ora_edit adds a "Save changes" button so roster edits persist via submit_vcr_plan.

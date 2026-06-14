@@ -1,154 +1,74 @@
-import React, { useMemo, useState } from 'react';
-import { ChevronDown, ChevronRight, Loader2, Info } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { Loader2, Info, Plus, Minus, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useVcrPlanDiff, type DiffMode } from '@/hooks/useVcrPlanDiff';
-import type { SectionDiff, RosterDiff } from '@/lib/vcrPlanDiff';
+import type { SectionDiff } from '@/lib/vcrPlanDiff';
 
 interface Props {
   handoverPointId: string;
   mode?: DiffMode;
 }
 
-interface Row {
+interface RenderSection {
   key: string;
   label: string;
-  section: SectionDiff | null;
-  /** Optional id → human label resolver */
-  labelFor?: (id: string) => string;
-  /** For roster section: provide its own renderer */
-  roster?: RosterDiff;
+  section: SectionDiff;
 }
 
-const Chip: React.FC<{ kind: 'add' | 'rem' | 'flat'; children: React.ReactNode }> = ({ kind, children }) => (
-  <span
-    className={cn(
-      'inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-mono tabular-nums',
-      kind === 'add' && 'bg-emerald-500/10 text-emerald-700',
-      kind === 'rem' && 'bg-red-500/10 text-red-700',
-      kind === 'flat' && 'text-muted-foreground',
-    )}
-  >
-    {children}
-  </span>
-);
-
-const SectionRow: React.FC<{ row: Row }> = ({ row }) => {
-  const [open, setOpen] = useState(false);
-  const sec = row.section;
-  const rost = row.roster;
-  const addCount = sec ? sec.added.length : rost!.added.length;
-  const remCount = sec ? sec.removed.length : rost!.removed.length;
-  const changed = addCount + remCount > 0;
-
-  return (
-    <div className="border-b last:border-b-0">
-      <button
-        type="button"
-        onClick={() => changed && setOpen((o) => !o)}
-        className={cn(
-          'w-full flex items-center justify-between gap-3 px-3 py-2 text-left text-sm',
-          changed ? 'hover:bg-muted/30' : 'cursor-default',
-        )}
-        disabled={!changed}
-      >
-        <div className="flex items-center gap-2 min-w-0">
-          {changed ? (
-            open ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-          ) : (
-            <span className="w-3.5" />
-          )}
-          <span className="font-medium">{row.label}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          {changed ? (
-            <>
-              {addCount > 0 && <Chip kind="add">+{addCount}</Chip>}
-              {remCount > 0 && (
-                <Chip kind="rem">
-                  −{remCount}
-                  {row.key === 'checklist' ? ' removed / N/A’d' : ''}
-                </Chip>
-              )}
-            </>
-          ) : (
-            <Chip kind="flat">unchanged</Chip>
-          )}
-        </div>
-      </button>
-      {open && changed && (
-        <div className="px-8 pb-3 pt-1 space-y-2 text-xs">
-          {sec && sec.added.length > 0 && (
-            <div>
-              <div className="text-emerald-700 font-semibold uppercase tracking-wider text-[10px] mb-1">Added</div>
-              <ul className="space-y-0.5">
-                {sec.added.map((id) => (
-                  <li key={id} className="text-foreground/80">+ {row.labelFor ? row.labelFor(id) : id}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {sec && sec.removed.length > 0 && (
-            <div>
-              <div className="text-red-700 font-semibold uppercase tracking-wider text-[10px] mb-1">Removed</div>
-              <ul className="space-y-0.5">
-                {sec.removed.map((id) => (
-                  <li key={id} className="text-foreground/80">− {row.labelFor ? row.labelFor(id) : id}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {rost && rost.added.length > 0 && (
-            <div>
-              <div className="text-emerald-700 font-semibold uppercase tracking-wider text-[10px] mb-1">Added approvers</div>
-              <ul className="space-y-0.5">
-                {rost.added.map((m) => (
-                  <li key={m.id} className="text-foreground/80">+ {m.role_label || '(unnamed role)'}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {rost && rost.removed.length > 0 && (
-            <div>
-              <div className="text-red-700 font-semibold uppercase tracking-wider text-[10px] mb-1">Removed approvers</div>
-              <ul className="space-y-0.5">
-                {rost.removed.map((m) => (
-                  <li key={m.id} className="text-foreground/80">− {m.role_label || '(unnamed role)'}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      )}
+const SectionBlock: React.FC<{
+  label: string;
+  added: string[];
+  removed: string[];
+  labelFor: (id: string) => string;
+}> = ({ label, added, removed, labelFor }) => (
+  <div className="space-y-1.5">
+    <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+      {label}
     </div>
-  );
-};
+    <ul className="space-y-1 text-sm">
+      {added.map((id) => (
+        <li key={`a-${id}`} className="flex items-start gap-2 text-foreground/90">
+          <Plus className="h-3.5 w-3.5 mt-0.5 text-emerald-600 shrink-0" />
+          <span className="font-medium text-emerald-700">Added:</span>
+          <span className="text-foreground/90">{labelFor(id)}</span>
+        </li>
+      ))}
+      {removed.map((id) => (
+        <li key={`r-${id}`} className="flex items-start gap-2 text-foreground/90">
+          <Minus className="h-3.5 w-3.5 mt-0.5 text-red-600 shrink-0" />
+          <span className="font-medium text-red-700">Removed:</span>
+          <span className="text-foreground/90 line-through opacity-80">{labelFor(id)}</span>
+        </li>
+      ))}
+    </ul>
+  </div>
+);
 
 export const VCRPlanDiffSummary: React.FC<Props> = ({ handoverPointId, mode = 'live' }) => {
   const { diff, fromMissing, loading, itemNames } = useVcrPlanDiff(handoverPointId, { mode });
 
-  const labelForItem = useMemo(
-    () => (id: string) => itemNames[id] || id,
-    [itemNames],
+  const labelFor = useMemo(
+    () => (id: string) => itemNames[id] || diff?.labels[id] || id,
+    [itemNames, diff],
   );
 
-  const rows = useMemo<Row[] | null>(() => {
+  const sections = useMemo<RenderSection[] | null>(() => {
     if (!diff) return null;
     return [
-      { key: 'checklist', label: 'Checklist items', section: diff.checklist, labelFor: labelForItem },
-      { key: 'documents', label: 'Documents', section: diff.documents },
-      { key: 'training', label: 'Training', section: diff.training },
-      { key: 'procedures', label: 'Procedures', section: diff.procedures },
-      { key: 'registers', label: 'Registers', section: diff.registers },
-      { key: 'logsheets', label: 'Logsheets', section: diff.logsheets },
-      { key: 'maintenance', label: 'Maintenance', section: diff.maintenance },
-      { key: 'roster', label: 'Approver roster', section: null, roster: diff.roster },
-    ];
-  }, [diff, labelForItem]);
+      { key: 'checklist',   label: 'Checklist items', section: diff.checklist },
+      { key: 'documents',   label: 'Critical documents', section: diff.documents },
+      { key: 'training',    label: 'Training', section: diff.training },
+      { key: 'procedures',  label: 'Procedures', section: diff.procedures },
+      { key: 'registers',   label: 'Registers', section: diff.registers },
+      { key: 'logsheets',   label: 'Logsheets', section: diff.logsheets },
+      { key: 'maintenance', label: 'Maintenance deliverables', section: diff.maintenance },
+    ].filter((s) => s.section.added.length + s.section.removed.length > 0);
+  }, [diff]);
 
   if (loading) {
     return (
       <div className="rounded-lg border bg-muted/20 px-3 py-3 text-xs text-muted-foreground flex items-center gap-2">
-        <Loader2 className="h-3.5 w-3.5 animate-spin" /> Computing diff…
+        <Loader2 className="h-3.5 w-3.5 animate-spin" /> Computing changes…
       </div>
     );
   }
@@ -164,22 +84,53 @@ export const VCRPlanDiffSummary: React.FC<Props> = ({ handoverPointId, mode = 'l
 
   if (!diff || diff.totalChanged === 0) {
     return (
-      <div className="rounded-lg border bg-muted/20 px-3 py-3 text-xs text-muted-foreground flex items-start gap-2">
-        <Info className="h-3.5 w-3.5 mt-0.5" />
+      <div className="rounded-lg border bg-muted/20 px-3 py-3 text-sm text-muted-foreground flex items-start gap-2">
+        <Info className="h-4 w-4 mt-0.5" />
         <span>No changes from the submitted plan.</span>
       </div>
     );
   }
 
+  const rosterChanged = diff.roster.added.length + diff.roster.removed.length > 0;
+
   return (
-    <section className="space-y-2">
+    <section className="space-y-3">
       <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-        {mode === 'live' ? 'Your changes vs the submitted plan' : 'Baseline changes vs submitted plan'}
+        {mode === 'live' ? 'Your changes vs the submitted plan' : 'Approved baseline vs submitted plan'}
       </div>
-      <div className="rounded-lg border bg-card/30">
-        {rows!.map((r) => (
-          <SectionRow key={r.key} row={r} />
+      <div className={cn('rounded-lg border bg-card/30 p-4 space-y-4')}>
+        {sections!.map((s) => (
+          <SectionBlock
+            key={s.key}
+            label={s.label}
+            added={s.section.added}
+            removed={s.section.removed}
+            labelFor={labelFor}
+          />
         ))}
+        {rosterChanged && (
+          <div className="space-y-1.5">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <Users className="h-3.5 w-3.5" /> Approvers
+            </div>
+            <ul className="space-y-1 text-sm">
+              {diff.roster.added.map((m) => (
+                <li key={`ra-${m.id}`} className="flex items-start gap-2">
+                  <Plus className="h-3.5 w-3.5 mt-0.5 text-emerald-600 shrink-0" />
+                  <span className="font-medium text-emerald-700">Added:</span>
+                  <span>{m.role_label || '(unnamed role)'}</span>
+                </li>
+              ))}
+              {diff.roster.removed.map((m) => (
+                <li key={`rr-${m.id}`} className="flex items-start gap-2">
+                  <Minus className="h-3.5 w-3.5 mt-0.5 text-red-600 shrink-0" />
+                  <span className="font-medium text-red-700">Removed:</span>
+                  <span className="line-through opacity-80">{m.role_label || '(unnamed role)'}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </section>
   );
