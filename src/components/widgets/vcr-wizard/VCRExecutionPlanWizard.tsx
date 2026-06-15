@@ -483,10 +483,9 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     }
   }, [approversRoster, queryClient, vcr.id]);
 
-  const handleOraSaveChanges = useCallback(async () => {
-    if (isSavingOra) return; // single-flight
-    await persistOraRoster(false);
-  }, [isSavingOra, persistOraRoster]);
+  // U14 — the explicit "Save changes" button was removed; roster autosaves
+  // on close via handleReviewClose. persistOraRoster is still invoked there
+  // and by the approve-before-baseline pre-hook below.
 
   // Approve-before-baseline pre-hook (Step 3c). Phase-1 ORA-edit only.
   // B1 — skip submit_vcr_plan when the roster wasn't actually edited. The DB
