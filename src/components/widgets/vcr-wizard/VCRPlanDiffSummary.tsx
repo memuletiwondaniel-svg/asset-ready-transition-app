@@ -12,15 +12,17 @@ interface Props {
 interface RenderSection {
   key: string;
   label: string;
+  noun: string;
   section: SectionDiff;
 }
 
 const SectionBlock: React.FC<{
   label: string;
+  noun: string;
   added: string[];
   removed: string[];
   labelFor: (id: string) => string;
-}> = ({ label, added, removed, labelFor }) => (
+}> = ({ label, noun, added, removed, labelFor }) => (
   <div className="space-y-1.5">
     <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
       {label}
@@ -29,13 +31,17 @@ const SectionBlock: React.FC<{
       {added.map((id) => (
         <li key={`a-${id}`} className="flex items-start gap-2 text-foreground/90">
           <Plus className="h-3.5 w-3.5 mt-0.5 text-emerald-600 shrink-0" />
-          <span className="text-foreground/90">{labelFor(id)}</span>
+          <span className="text-foreground/90">
+            Added {noun} — <span className="font-medium">{labelFor(id)}</span>
+          </span>
         </li>
       ))}
       {removed.map((id) => (
         <li key={`r-${id}`} className="flex items-start gap-2 text-foreground/90">
           <Minus className="h-3.5 w-3.5 mt-0.5 text-red-600 shrink-0" />
-          <span className="text-foreground/90 line-through opacity-80">{labelFor(id)}</span>
+          <span className="text-foreground/90">
+            Removed {noun} — <span className="font-medium line-through opacity-80">{labelFor(id)}</span>
+          </span>
         </li>
       ))}
     </ul>
@@ -53,13 +59,13 @@ export const VCRPlanDiffSummary: React.FC<Props> = ({ handoverPointId, mode = 'l
   const sections = useMemo<RenderSection[] | null>(() => {
     if (!diff) return null;
     return [
-      { key: 'checklist',   label: 'Checklist items', section: diff.checklist },
-      { key: 'documents',   label: 'Critical documents', section: diff.documents },
-      { key: 'training',    label: 'Training', section: diff.training },
-      { key: 'procedures',  label: 'Procedures', section: diff.procedures },
-      { key: 'registers',   label: 'Registers', section: diff.registers },
-      { key: 'logsheets',   label: 'Logsheets', section: diff.logsheets },
-      { key: 'maintenance', label: 'Maintenance deliverables', section: diff.maintenance },
+      { key: 'checklist',   label: 'Checklist items',          noun: 'checklist item',        section: diff.checklist },
+      { key: 'documents',   label: 'Critical documents',       noun: 'critical document',     section: diff.documents },
+      { key: 'training',    label: 'Training',                 noun: 'training',              section: diff.training },
+      { key: 'procedures',  label: 'Procedures',               noun: 'procedure',             section: diff.procedures },
+      { key: 'registers',   label: 'Registers',                noun: 'register',              section: diff.registers },
+      { key: 'logsheets',   label: 'Logsheets',                noun: 'logsheet',              section: diff.logsheets },
+      { key: 'maintenance', label: 'Maintenance deliverables', noun: 'maintenance item',      section: diff.maintenance },
     ].filter((s) => s.section.added.length + s.section.removed.length > 0);
   }, [diff]);
 
@@ -108,6 +114,7 @@ export const VCRPlanDiffSummary: React.FC<Props> = ({ handoverPointId, mode = 'l
           <SectionBlock
             key={s.key}
             label={s.label}
+            noun={s.noun}
             added={s.section.added}
             removed={s.section.removed}
             labelFor={labelFor}
@@ -122,13 +129,17 @@ export const VCRPlanDiffSummary: React.FC<Props> = ({ handoverPointId, mode = 'l
               {diff.roster.added.map((m) => (
                 <li key={`ra-${m.id}`} className="flex items-start gap-2">
                   <Plus className="h-3.5 w-3.5 mt-0.5 text-emerald-600 shrink-0" />
-                  <span>{m.role_label || '(unnamed role)'}</span>
+                  <span>
+                    Added approver — <span className="font-medium">{m.role_label || '(unnamed role)'}</span>
+                  </span>
                 </li>
               ))}
               {diff.roster.removed.map((m) => (
                 <li key={`rr-${m.id}`} className="flex items-start gap-2">
                   <Minus className="h-3.5 w-3.5 mt-0.5 text-red-600 shrink-0" />
-                  <span className="line-through opacity-80">{m.role_label || '(unnamed role)'}</span>
+                  <span>
+                    Removed approver — <span className="font-medium line-through opacity-80">{m.role_label || '(unnamed role)'}</span>
+                  </span>
                 </li>
               ))}
             </ul>
