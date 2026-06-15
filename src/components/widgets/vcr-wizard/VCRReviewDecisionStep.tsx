@@ -338,24 +338,8 @@ export const VCRReviewDecisionStep: React.FC<{
             </span>
           </div>
         ) : (
-          <div className="space-y-2" data-testid="vcr-review-decision-active">
-            <label className="text-xs font-medium text-muted-foreground">
-              Comment{' '}
-              <span className="text-muted-foreground/70">
-                (required for Request Changes)
-              </span>
-            </label>
-            <Textarea
-              placeholder="Add a comment explaining your decision…"
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              className="min-h-[120px] text-sm"
-              maxLength={1000}
-              data-rm-safe
-            />
-            <p className="text-[11px] text-muted-foreground">
-              Use the Approve / Request Changes buttons in the footer to submit your decision.
-            </p>
+          <div className="text-sm text-muted-foreground" data-testid="vcr-review-decision-active">
+            Review the changes above, then choose Approve or Request Changes below.
           </div>
         )}
       </section>
