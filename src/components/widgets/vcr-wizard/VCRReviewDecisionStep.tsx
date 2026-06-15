@@ -261,6 +261,13 @@ export const VCRReviewDecisionStep: React.FC<{
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 p-1">
+      <header className="space-y-1">
+        <h2 className="text-lg font-semibold text-foreground">Review & decide</h2>
+        <p className="text-sm text-muted-foreground">
+          Review your edits to the submitted plan, then approve to lock the baseline or request changes.
+        </p>
+      </header>
+
       {/* U7 — full roster lives in Step 8 now. Step 10 = change summary +
           decision + history. Roster changes (if any) are folded into the
           diff summary below. */}
