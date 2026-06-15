@@ -114,6 +114,7 @@ export const VCRPlanDiffSummary: React.FC<Props> = ({ handoverPointId, mode = 'l
           <SectionBlock
             key={s.key}
             label={s.label}
+            noun={s.noun}
             added={s.section.added}
             removed={s.section.removed}
             labelFor={labelFor}
