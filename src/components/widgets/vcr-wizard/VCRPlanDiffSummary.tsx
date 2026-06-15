@@ -129,13 +129,17 @@ export const VCRPlanDiffSummary: React.FC<Props> = ({ handoverPointId, mode = 'l
               {diff.roster.added.map((m) => (
                 <li key={`ra-${m.id}`} className="flex items-start gap-2">
                   <Plus className="h-3.5 w-3.5 mt-0.5 text-emerald-600 shrink-0" />
-                  <span>{m.role_label || '(unnamed role)'}</span>
+                  <span>
+                    Added approver — <span className="font-medium">{m.role_label || '(unnamed role)'}</span>
+                  </span>
                 </li>
               ))}
               {diff.roster.removed.map((m) => (
                 <li key={`rr-${m.id}`} className="flex items-start gap-2">
                   <Minus className="h-3.5 w-3.5 mt-0.5 text-red-600 shrink-0" />
-                  <span className="line-through opacity-80">{m.role_label || '(unnamed role)'}</span>
+                  <span>
+                    Removed approver — <span className="font-medium line-through opacity-80">{m.role_label || '(unnamed role)'}</span>
+                  </span>
                 </li>
               ))}
             </ul>
