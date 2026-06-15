@@ -251,8 +251,6 @@ export const VCRReviewDecisionStep: React.FC<{
     isMine,
     alreadyDecided,
     canDecide,
-    comment,
-    setComment,
     myRow,
     myRowLoading,
     payload,
