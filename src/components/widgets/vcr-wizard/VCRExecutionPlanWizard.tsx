@@ -498,44 +498,83 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     return await persistOraRoster(true);
   }, [subMode, rosterDirty, persistOraRoster]);
 
-  // Review-mode custom footer: Close + Prev + (Next | Approve / Request Changes on last step).
-  // ora_edit adds a "Save changes" button so roster edits persist via submit_vcr_plan.
+  // U14 — autosave the roster on close when an ORA-Lead has edited it.
+  // Content edits already auto-persist via their step components; this keeps
+  // the roster consistent without a "discard or save" modal (which couldn't
+  // truthfully discard the already-saved content edits anyway).
+  const handleReviewClose = useCallback(async () => {
+    if (isReview && subMode === 'ora_edit' && rosterDirty) {
+      try {
+        await persistOraRoster(true);
+      } catch {
+        // persistOraRoster surfaces its own toast; still allow close.
+      }
+    }
+    onOpenChange(false);
+  }, [isReview, subMode, rosterDirty, persistOraRoster, onOpenChange]);
+
+  const handleShellOpenChange = useCallback(
+    (next: boolean) => {
+      if (!next && isReview) {
+        void handleReviewClose();
+        return;
+      }
+      onOpenChange(next);
+    },
+    [isReview, handleReviewClose, onOpenChange],
+  );
+
+  // U15/U16/U17 — review footer split into LEFT (nav: Close, Prev) and
+  // RIGHT (decision/forward: Next/Go-to-decision OR Approve / Request Changes).
+  // Secondary buttons muted at rest, brighten on hover. Approve = solid primary.
   const isLastStep = currentStep === STEPS.length - 1;
+  const mutedBtn =
+    'text-muted-foreground hover:text-foreground hover:bg-accent/60';
   const reviewFooter = isReview ? (
-    <div className="border-t bg-background px-4 sm:px-5 py-3 flex items-center justify-between gap-2">
-      <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} data-rm-safe data-rm-nav>
-        Close
-      </Button>
+    <div className="border-t bg-background px-4 sm:px-5 py-3 flex items-center justify-between gap-3">
+      {/* LEFT — navigation */}
       <div className="flex items-center gap-2">
-        {subMode === 'ora_edit' && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleOraSaveChanges}
-            disabled={isSavingOra}
-            data-rm-safe
-            data-rm-nav
-          >
-            {isSavingOra ? (
-              <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4 mr-1.5" />
-            )}
-            Save changes
-          </Button>
-        )}
-        <Button variant="outline" size="sm" onClick={handleBack} disabled={currentStep === 0} data-rm-safe data-rm-nav>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleReviewClose}
+          className={mutedBtn}
+          data-rm-safe
+          data-rm-nav
+        >
+          Close
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleBack}
+          disabled={currentStep === 0}
+          className={mutedBtn}
+          data-rm-safe
+          data-rm-nav
+        >
           ← Prev
         </Button>
+      </div>
+      {/* RIGHT — forward / decision */}
+      <div className="flex items-center gap-2">
         {!isLastStep ? (
           <>
-            <Button variant="outline" size="sm" onClick={handleNext} data-rm-safe data-rm-nav>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleNext}
+              className={mutedBtn}
+              data-rm-safe
+              data-rm-nav
+            >
               Next →
             </Button>
             <Button
+              variant="outline"
               size="sm"
               onClick={() => goToStep(STEPS.length - 1)}
-              className="gap-1.5"
+              className={cn('gap-1.5', mutedBtn)}
               data-rm-safe
               data-rm-nav
             >
