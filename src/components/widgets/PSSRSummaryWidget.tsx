@@ -114,6 +114,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [wizardVCR, setWizardVCR] = useState<ProjectVCR | null>(null);
+  const [reviewPayload, setReviewPayload] = useState<VCRReviewPayload | null>(null);
   const [showDeleteP2ADraft, setShowDeleteP2ADraft] = useState(false);
   const [showP2ASubmission, setShowP2ASubmission] = useState(false);
   const {
