@@ -121,7 +121,7 @@ const AuditLogRow: React.FC<{ log: AuditLogRecord }> = ({ log }) => {
         <div className="px-4 pb-3 ml-7 space-y-2 animate-fade-in">
           <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-[11px]">
             <div><span className="text-muted-foreground">Action:</span> <span className="font-medium">{log.action}</span></div>
-            <div><span className="text-muted-foreground">Email:</span> <span className="font-mono">{log.user_email || '—'}</span></div>
+            {/* Email field intentionally hidden for demo de-identification (A2) */}
             {log.entity_id && (
               <div className="col-span-2"><span className="text-muted-foreground">Entity ID:</span> <span className="font-mono text-[10px]">{log.entity_id}</span></div>
             )}

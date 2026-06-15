@@ -274,7 +274,7 @@ const AdminActivityLog: React.FC<AdminActivityLogProps> = ({ onBack, selectedLan
                             <User className="h-4 w-4 text-muted-foreground" />
                             <div className="flex flex-col">
                               <span className="text-sm font-medium">{log.user_name || 'Unknown'}</span>
-                              <span className="text-xs text-muted-foreground">{log.user_email}</span>
+                              {/* user_email intentionally hidden for demo de-identification (A2) */}
                             </div>
                           </div>
                         </TableCell>
