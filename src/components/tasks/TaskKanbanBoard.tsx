@@ -256,9 +256,14 @@ const DraggableKanbanCard: React.FC<{
   onClick: () => void;
   accentClass?: string;
 }> = ({ task, onClick, accentClass }) => {
+  // B2 — workflow-driven cards (e.g. VCR plan approval) have no backing
+  // user_task row, so their drop is a no-op. Disable drag entirely so no
+  // grab cursor / handle is shown; click-to-open is preserved.
+  const isDraggable = !!task.userTask;
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: task.id,
     data: { task },
+    disabled: !isDraggable,
   });
 
   const style = transform
@@ -274,7 +279,7 @@ const DraggableKanbanCard: React.FC<{
       <KanbanCardContent
         task={task}
         onClick={onClick}
-        dragHandleProps={{ ...attributes, ...listeners }}
+        dragHandleProps={isDraggable ? { ...attributes, ...listeners } : undefined}
         accentClass={accentClass}
       />
     </div>
