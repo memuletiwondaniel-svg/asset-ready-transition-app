@@ -185,10 +185,6 @@ export const VCRReviewDecisionProvider: React.FC<{
   };
 
   const requestDecision = (d: Decision) => {
-    if (d === 'REJECTED' && !comment.trim()) {
-      toast.error('Please add a comment explaining the change request.');
-      return;
-    }
     setDecisionError(null);
     setPendingDecision(d);
   };
@@ -276,11 +272,13 @@ export const VCRReviewDecisionStep: React.FC<{
 
 
 
-      {/* ─── Decision surface (state + comment textarea only) ──── */}
+      {/* ─── Decision surface (status / already-decided / awaiting) ──── */}
       <section className="space-y-3">
-        <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-          Your decision
-        </div>
+        {myRowLoading || !isMine || alreadyDecided || !canDecide ? (
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Your decision
+          </div>
+        ) : null}
 
         {myRowLoading ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -337,11 +335,7 @@ export const VCRReviewDecisionStep: React.FC<{
                 : 'No action available on this plan for you right now.'}
             </span>
           </div>
-        ) : (
-          <div className="text-sm text-muted-foreground" data-testid="vcr-review-decision-active">
-            Review the changes above, then choose Approve or Request Changes below.
-          </div>
-        )}
+        ) : null}
       </section>
 
       <Separator />
