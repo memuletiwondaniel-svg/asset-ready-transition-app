@@ -29,14 +29,12 @@ const SectionBlock: React.FC<{
       {added.map((id) => (
         <li key={`a-${id}`} className="flex items-start gap-2 text-foreground/90">
           <Plus className="h-3.5 w-3.5 mt-0.5 text-emerald-600 shrink-0" />
-          <span className="font-medium text-emerald-700">Added:</span>
           <span className="text-foreground/90">{labelFor(id)}</span>
         </li>
       ))}
       {removed.map((id) => (
         <li key={`r-${id}`} className="flex items-start gap-2 text-foreground/90">
           <Minus className="h-3.5 w-3.5 mt-0.5 text-red-600 shrink-0" />
-          <span className="font-medium text-red-700">Removed:</span>
           <span className="text-foreground/90 line-through opacity-80">{labelFor(id)}</span>
         </li>
       ))}
