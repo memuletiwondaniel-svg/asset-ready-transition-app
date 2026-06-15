@@ -93,8 +93,15 @@ export const VCRPlanDiffSummary: React.FC<Props> = ({ handoverPointId, mode = 'l
 
   return (
     <section className="space-y-3">
-      <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-        {mode === 'live' ? 'Your changes vs the submitted plan' : 'Approved baseline vs submitted plan'}
+      <div className="space-y-1">
+        <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          {mode === 'live' ? 'Your changes vs the submitted plan' : 'Approved baseline vs submitted plan'}
+        </div>
+        {mode === 'live' && (
+          <p className="text-xs text-muted-foreground/80">
+            These are the edits you've made to the submitted plan. Approving locks this version as the baseline the Phase-2 approvers review.
+          </p>
+        )}
       </div>
       <div className={cn('rounded-lg border bg-card/30 p-4 space-y-4')}>
         {sections!.map((s) => (
