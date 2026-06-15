@@ -591,7 +591,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   const wizard = (
     <WizardShell
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={handleShellOpenChange}
       dialogTitle={titlePrefix}
       steps={STEPS}
       currentStep={currentStep}
