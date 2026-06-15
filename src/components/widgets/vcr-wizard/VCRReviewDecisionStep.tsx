@@ -364,6 +364,7 @@ export const VCRReviewDecisionFooterButtons: React.FC = () => {
         size="sm"
         onClick={() => requestDecision('REJECTED')}
         disabled={!!submitting}
+        className="text-muted-foreground hover:text-destructive hover:border-destructive hover:bg-destructive/5"
         data-rm-safe
         data-rm-nav
       >
