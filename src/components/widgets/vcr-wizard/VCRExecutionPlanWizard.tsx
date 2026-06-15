@@ -466,6 +466,9 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       queryClient.invalidateQueries({ queryKey: ['vcr-plan-rollup', vcr.id] });
       queryClient.invalidateQueries({ queryKey: ['vcr-review-readiness', vcr.id] });
       queryClient.invalidateQueries({ queryKey: ['vcr-wizard-step-counts', vcr.id] });
+      // U8 freshness — VCR card lifecycle pill must reflect "In approval"
+      // after roster persistence without requiring a hard refresh.
+      queryClient.invalidateQueries({ queryKey: ['project-vcrs'] });
       return true;
     } catch (err: any) {
       const msg = err?.message || String(err);
