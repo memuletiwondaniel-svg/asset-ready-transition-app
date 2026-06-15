@@ -59,13 +59,13 @@ export const VCRPlanDiffSummary: React.FC<Props> = ({ handoverPointId, mode = 'l
   const sections = useMemo<RenderSection[] | null>(() => {
     if (!diff) return null;
     return [
-      { key: 'checklist',   label: 'Checklist items', section: diff.checklist },
-      { key: 'documents',   label: 'Critical documents', section: diff.documents },
-      { key: 'training',    label: 'Training', section: diff.training },
-      { key: 'procedures',  label: 'Procedures', section: diff.procedures },
-      { key: 'registers',   label: 'Registers', section: diff.registers },
-      { key: 'logsheets',   label: 'Logsheets', section: diff.logsheets },
-      { key: 'maintenance', label: 'Maintenance deliverables', section: diff.maintenance },
+      { key: 'checklist',   label: 'Checklist items',          noun: 'checklist item',        section: diff.checklist },
+      { key: 'documents',   label: 'Critical documents',       noun: 'critical document',     section: diff.documents },
+      { key: 'training',    label: 'Training',                 noun: 'training',              section: diff.training },
+      { key: 'procedures',  label: 'Procedures',               noun: 'procedure',             section: diff.procedures },
+      { key: 'registers',   label: 'Registers',                noun: 'register',              section: diff.registers },
+      { key: 'logsheets',   label: 'Logsheets',                noun: 'logsheet',              section: diff.logsheets },
+      { key: 'maintenance', label: 'Maintenance deliverables', noun: 'maintenance item',      section: diff.maintenance },
     ].filter((s) => s.section.added.length + s.section.removed.length > 0);
   }, [diff]);
 
