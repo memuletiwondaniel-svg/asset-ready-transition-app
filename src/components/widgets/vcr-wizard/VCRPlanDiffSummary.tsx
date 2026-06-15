@@ -12,15 +12,17 @@ interface Props {
 interface RenderSection {
   key: string;
   label: string;
+  noun: string;
   section: SectionDiff;
 }
 
 const SectionBlock: React.FC<{
   label: string;
+  noun: string;
   added: string[];
   removed: string[];
   labelFor: (id: string) => string;
-}> = ({ label, added, removed, labelFor }) => (
+}> = ({ label, noun, added, removed, labelFor }) => (
   <div className="space-y-1.5">
     <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
       {label}
@@ -29,13 +31,17 @@ const SectionBlock: React.FC<{
       {added.map((id) => (
         <li key={`a-${id}`} className="flex items-start gap-2 text-foreground/90">
           <Plus className="h-3.5 w-3.5 mt-0.5 text-emerald-600 shrink-0" />
-          <span className="text-foreground/90">{labelFor(id)}</span>
+          <span className="text-foreground/90">
+            Added {noun} — <span className="font-medium">{labelFor(id)}</span>
+          </span>
         </li>
       ))}
       {removed.map((id) => (
         <li key={`r-${id}`} className="flex items-start gap-2 text-foreground/90">
           <Minus className="h-3.5 w-3.5 mt-0.5 text-red-600 shrink-0" />
-          <span className="text-foreground/90 line-through opacity-80">{labelFor(id)}</span>
+          <span className="text-foreground/90">
+            Removed {noun} — <span className="font-medium line-through opacity-80">{labelFor(id)}</span>
+          </span>
         </li>
       ))}
     </ul>
