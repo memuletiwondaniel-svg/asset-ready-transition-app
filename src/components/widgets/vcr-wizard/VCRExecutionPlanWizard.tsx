@@ -33,7 +33,7 @@ import { ApproversStep, VCRApprover } from './steps/ApproversStep';
 import { MaintenanceSystemsStep } from './steps/MaintenanceSystemsStep';
 import { VCRConfirmationStep } from './steps/VCRConfirmationStep';
 import { Step8ReviewModeWrapper } from './Step8ReviewModeWrapper';
-import { Layers, CheckCircle2, Eye, Loader2, Save } from 'lucide-react';
+import { Layers, CheckCircle2, Eye } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useVCRHydrocarbonStatus } from '@/hooks/useVCRHydrocarbonStatus';
 import { useVCRPlanRollup, vcrPlanPillLabel } from '@/hooks/useVCRPlanApprovalTasks';
