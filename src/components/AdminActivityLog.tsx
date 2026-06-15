@@ -34,7 +34,7 @@ const AdminActivityLog: React.FC<AdminActivityLogProps> = ({ onBack, selectedLan
     const matchesSearch = searchQuery.trim() === '' ||
       log.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       log.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      log.user_email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      // user_email intentionally excluded from search (A2 de-identification)
       log.activity_type.toLowerCase().includes(searchQuery.toLowerCase());
 
     // Apply quick filter for user/project activities
@@ -78,13 +78,13 @@ const AdminActivityLog: React.FC<AdminActivityLogProps> = ({ onBack, selectedLan
   };
 
   const exportToCSV = () => {
-    const headers = ['Timestamp', 'User', 'Email', 'Activity Type', 'Description', 'IP Address'];
+    const headers = ['Timestamp', 'User', 'Activity Type', 'Description', 'IP Address'];
     const csvData = [
       headers.join(','),
       ...filteredLogs.map(log => [
         format(new Date(log.created_at), 'yyyy-MM-dd HH:mm:ss'),
         log.user_name || 'N/A',
-        log.user_email || 'N/A',
+        // user_email intentionally excluded from export (A2 de-identification)
         log.activity_type,
         log.description || 'N/A',
         log.ip_address || 'N/A'
