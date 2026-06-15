@@ -408,6 +408,7 @@ const AddProcedureForm: React.FC<{
   const [type, setType] = useState<'startup' | 'operating'>('startup');
   const [reason, setReason] = useState('');
   const [selectedSystems, setSelectedSystems] = useState<string[]>([]);
+  const [systemSearch, setSystemSearch] = useState('');
 
   const { data: mappedSystems = [] } = useQuery({
     queryKey: ['vcr-mapped-systems', vcrId],
