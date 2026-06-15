@@ -202,21 +202,55 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
     setSelectedPSSR({ id: pssrId, displayId });
   };
 
-  const handleVCRClick = (vcrId: string) => {
+  const handleVCRClick = async (vcrId: string) => {
     const found = allVCRs.find(v => v.id === vcrId);
     if (!found) return;
     const lifecycle = found.lifecycle;
     // Wizard for editable states: not_started, draft (plan setup), in_progress (checklist work).
-    // Detail overlay (read-only) for in_approval / approved / handed_over.
     const stillEditable =
       lifecycle === 'not_started' ||
       lifecycle === 'draft' ||
       (!lifecycle && (found.status || '').toUpperCase() !== 'SIGNED');
     if (stillEditable) {
       setWizardVCR(found);
-    } else {
-      setSelectedVCR(found);
+      return;
     }
+
+    // U8 routing — for an `in_approval` VCR, if the current user is an
+    // approver on this plan, open the plan-approval review surface; else
+    // fall back to the read-only detail overlay.
+    if (lifecycle === 'in_approval') {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.id) {
+          const { data: row } = await (supabase as any)
+            .from('v_vcr_plan_approver_tasks')
+            .select('approver_row_id, handover_point_id, vcr_code, vcr_name, project_id, project_code, role_key, role_label, phase, user_id')
+            .eq('handover_point_id', found.id)
+            .eq('user_id', user.id)
+            .maybeSingle();
+          if (row?.approver_row_id) {
+            setReviewPayload({
+              approverRowId: row.approver_row_id,
+              handoverPointId: row.handover_point_id,
+              vcrCode: row.vcr_code ?? found.vcr_code,
+              vcrName: row.vcr_name ?? found.name,
+              projectCode: row.project_code ?? projectCode,
+              projectId: row.project_id ?? projectId,
+              roleKey: row.role_key,
+              roleLabel: row.role_label,
+              phase: row.phase ?? null,
+            });
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('[PSSRSummaryWidget] approver lookup failed, falling back to detail overlay', err);
+      }
+    }
+
+    // Detail overlay (read-only) for non-approver in_approval, approved, handed_over.
+    setSelectedVCR(found);
   };
 
   const hasContent = (pssrs && pssrs.length > 0) || allVCRs.length > 0;
