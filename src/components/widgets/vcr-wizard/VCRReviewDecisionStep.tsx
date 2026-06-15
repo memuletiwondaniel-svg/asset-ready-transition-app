@@ -185,10 +185,6 @@ export const VCRReviewDecisionProvider: React.FC<{
   };
 
   const requestDecision = (d: Decision) => {
-    if (d === 'REJECTED' && !comment.trim()) {
-      toast.error('Please add a comment explaining the change request.');
-      return;
-    }
     setDecisionError(null);
     setPendingDecision(d);
   };
