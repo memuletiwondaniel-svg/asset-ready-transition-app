@@ -408,6 +408,7 @@ const AddProcedureForm: React.FC<{
   const [type, setType] = useState<'startup' | 'operating'>('startup');
   const [reason, setReason] = useState('');
   const [selectedSystems, setSelectedSystems] = useState<string[]>([]);
+  const [systemSearch, setSystemSearch] = useState('');
 
   const { data: mappedSystems = [] } = useQuery({
     queryKey: ['vcr-mapped-systems', vcrId],
@@ -536,23 +537,68 @@ const AddProcedureForm: React.FC<{
           {mappedSystems.length === 0 ? (
             <p className="text-xs text-muted-foreground italic">No systems mapped to this VCR.</p>
           ) : (
-            <div className="border rounded-lg divide-y">
-              {mappedSystems.map((sys: any) => (
-                <label
-                  key={sys.id}
-                  className="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-muted/40 transition-colors"
-                >
-                  <Checkbox
-                    checked={selectedSystems.includes(sys.id)}
-                    onCheckedChange={() => toggleSystem(sys.id)}
+            <>
+              {mappedSystems.length > 5 && (
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search systems..."
+                    value={systemSearch}
+                    onChange={(e) => setSystemSearch(e.target.value)}
+                    className="flex h-9 w-full rounded-md border border-input bg-background pl-9 pr-8 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   />
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Layers className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                    <span className="text-sm truncate">{sys.label}</span>
+                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+                  </svg>
+                  {systemSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setSystemSearch('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              )}
+              {(() => {
+                const q = systemSearch.trim().toLowerCase();
+                const filtered = q
+                  ? mappedSystems.filter((s: any) =>
+                      // Always keep already-selected items visible while filtering
+                      selectedSystems.includes(s.id) ||
+                      (s.label || '').toLowerCase().includes(q) ||
+                      (s.name || '').toLowerCase().includes(q)
+                    )
+                  : mappedSystems;
+                if (filtered.length === 0) {
+                  return (
+                    <div className="border rounded-lg py-6 text-center text-xs text-muted-foreground">
+                      No systems match "<span className="font-medium text-foreground">{systemSearch}</span>"
+                    </div>
+                  );
+                }
+                return (
+                  <div className="border rounded-lg divide-y max-h-64 overflow-y-auto">
+                    {filtered.map((sys: any) => (
+                      <label
+                        key={sys.id}
+                        className="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-muted/40 transition-colors"
+                      >
+                        <Checkbox
+                          checked={selectedSystems.includes(sys.id)}
+                          onCheckedChange={() => toggleSystem(sys.id)}
+                        />
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Layers className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                          <span className="text-sm truncate">{sys.label}</span>
+                        </div>
+                      </label>
+                    ))}
                   </div>
-                </label>
-              ))}
-            </div>
+                );
+              })()}
+            </>
           )}
 
           {/* Selected tags */}
