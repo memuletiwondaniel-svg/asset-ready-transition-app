@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      _email_rename_backup: {
+        Row: {
+          column_name: string
+          created_at: string
+          id: number
+          new_value: string
+          old_value: string
+          row_pk: string | null
+          stage: string
+          table_name: string
+          user_id: string | null
+        }
+        Insert: {
+          column_name: string
+          created_at?: string
+          id?: number
+          new_value: string
+          old_value: string
+          row_pk?: string | null
+          stage: string
+          table_name: string
+          user_id?: string | null
+        }
+        Update: {
+          column_name?: string
+          created_at?: string
+          id?: number
+          new_value?: string
+          old_value?: string
+          row_pk?: string | null
+          stage?: string
+          table_name?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       agent_competency_areas: {
         Row: {
           agent_code: string
