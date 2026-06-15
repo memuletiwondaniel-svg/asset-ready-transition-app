@@ -594,6 +594,14 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
         />
       )}
 
+      {/* U8 routing — approver clicking an in_approval VCR opens review wizard */}
+      <VCRPlanReviewLauncher
+        payload={reviewPayload}
+        open={!!reviewPayload}
+        onOpenChange={(open) => { if (!open) setReviewPayload(null); }}
+      />
+
+
       <AlertDialog open={showDeleteP2ADraft} onOpenChange={setShowDeleteP2ADraft}>
         <AlertDialogContent>
           <AlertDialogHeader>
