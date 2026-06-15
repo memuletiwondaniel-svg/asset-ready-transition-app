@@ -402,6 +402,9 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   })();
 
   const titlePrefix = isReview ? 'Review VCR Plan' : 'Create VCR Plan';
+  // U5: in review mode drop the subtitle prefix — the title + the single
+  // status pill already convey "this is a plan under review".
+  const subtitlePrefix = isReview ? undefined : titlePrefix;
 
   const topHeaderContent = (
     <TooltipProvider delayDuration={150}>
@@ -422,7 +425,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
           {shortVcrId ? `${shortVcrId}: ` : ''}{vcr.name}
         </h1>
         <WizardSubtitle
-          prefix={titlePrefix}
+          prefix={subtitlePrefix}
           code={effectiveProjectCode}
           name={effectiveProjectName}
         />
