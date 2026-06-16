@@ -87,6 +87,23 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
 }) => {
   const isReview = !!reviewPayload;
   const { data: rollup } = useVCRPlanRollup(vcr.id);
+  // Read-only-after-decision signal: matches VCRReviewDecisionStep's `alreadyDecided`.
+  // Drives (a) the initial step (jump to Review) and (b) the sidebar step indicators
+  // (all green/complete) when the viewer has already approved/rejected.
+  const { data: viewerApproverRow } = useQuery({
+    queryKey: ['vcr-plan-approver-row-status', reviewPayload?.approverRowId],
+    enabled: isReview && !!reviewPayload?.approverRowId && open,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from('vcr_plan_approvers')
+        .select('id, status')
+        .eq('id', reviewPayload!.approverRowId)
+        .maybeSingle();
+      if (error) throw error;
+      return data as { id: string; status: string } | null;
+    },
+  });
+  const viewerAlreadyDecided = !!viewerApproverRow && viewerApproverRow.status !== 'PENDING';
   const [currentStep, setCurrentStep] = useState(0);
   const [visitedSteps, setVisitedSteps] = useState<Set<number>>(new Set([0]));
   const [step9Ready, setStep9Ready] = useState(false);
