@@ -1235,8 +1235,8 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
                           <DropdownMenuSeparator />
                           <DropdownMenuLabel className="text-[11px] uppercase tracking-wider text-muted-foreground">Group by</DropdownMenuLabel>
                           <DropdownMenuRadioGroup
-                            value={effectiveGroupBy}
-                            onValueChange={(v) => setGroupBy(v as GroupBy)}
+                            value={columnGroupBy[col.key]}
+                            onValueChange={(v) => setColumnGroupBy(prev => ({ ...prev, [col.key]: v as GroupBy }))}
                           >
                             <DropdownMenuRadioItem value="none" className="text-xs">None</DropdownMenuRadioItem>
                             <DropdownMenuRadioItem value="project" className="text-xs">Project</DropdownMenuRadioItem>
