@@ -104,14 +104,17 @@ const ApproverDecisionCard: React.FC<{
     <div className="border-b last:border-b-0">
       <button
         type="button"
-        onClick={() => hasComment && setOpen((o) => !o)}
-        disabled={!hasComment}
+        onClick={() => row.decided_at && setOpen((o) => !o)}
+        disabled={!row.decided_at}
+        aria-expanded={!!row.decided_at && open}
+        data-rm-safe
+        data-rm-nav
         className={cn(
           'w-full px-3 py-3 text-left flex items-center gap-3',
-          hasComment ? 'hover:bg-muted/30 cursor-pointer' : 'cursor-default',
+          row.decided_at ? 'hover:bg-muted/30 cursor-pointer' : 'cursor-default',
         )}
       >
-        {hasComment ? (
+        {row.decided_at ? (
           open ? (
             <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           ) : (
@@ -141,6 +144,11 @@ const ApproverDecisionCard: React.FC<{
           )}
         </div>
       </button>
+      {open && row.decided_at && !hasComment && (
+        <div className="px-12 pb-3 -mt-1 text-[12px] text-muted-foreground/70 italic">
+          No comment left.
+        </div>
+      )}
       {open && hasComment && (
         <div
           className={cn(

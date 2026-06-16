@@ -158,6 +158,8 @@ export const WizardShell: React.FC<WizardShellProps> = ({
                       <button
                         key={step.id}
                         onClick={() => onStepChange(idx)}
+                        data-rm-safe
+                        data-rm-nav
                         className={cn(
                           'relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap shrink-0 transition-all border',
                           isActive
@@ -207,6 +209,8 @@ export const WizardShell: React.FC<WizardShellProps> = ({
                       <button
                         key={step.id}
                         onClick={() => onStepChange(idx)}
+                        data-rm-safe
+                        data-rm-nav
                         className={cn(
                           'group relative w-full flex items-center gap-2.5 pl-3 pr-3 py-2.5 rounded-md text-left transition-colors text-sm',
                           isActive ? 'bg-primary/10' : 'hover:bg-muted/40'
