@@ -203,13 +203,34 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     }
   }, [isReview, user?.id, vcr.id, queryClient]);
 
+  // Initial-step placement for this open session.
+  // - Pending/actionable approver (or non-review): open at Step 1 (idx 0)
+  // - Already-decided approver: jump to Step 10 (idx 9, the decision surface)
+  //   which shows "You approved/requested changes".
+  // Runs on open AND again when the approver-row status arrives (it's async),
+  // but only while still on the default landing step so we don't yank the
+  // user off a step they manually navigated to.
+  const initialPlacementDoneRef = useRef(false);
   useEffect(() => {
     if (open) {
       setCurrentStep(0);
       setVisitedSteps(new Set([0]));
       hasPromotedRef.current = false;
+      initialPlacementDoneRef.current = false;
     }
   }, [open]);
+  useEffect(() => {
+    if (!open || !isReview) return;
+    if (initialPlacementDoneRef.current) return;
+    // Wait for the row query to resolve before deciding.
+    if (viewerApproverRow === undefined) return;
+    initialPlacementDoneRef.current = true;
+    if (viewerAlreadyDecided) {
+      const last = STEPS.length - 1;
+      setCurrentStep(last);
+      setVisitedSteps(new Set([last]));
+    }
+  }, [open, isReview, viewerApproverRow, viewerAlreadyDecided]);
 
   // Body-level review class so portal'd Sheets / Dialogs inherit the
   // read-only CSS too (steps that open detail sheets render outside the
