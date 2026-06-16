@@ -75,11 +75,28 @@ import {
 
 type GroupBy = 'none' | 'project' | 'category';
 type KanbanColumn = 'todo' | 'in_progress' | 'waiting' | 'done';
+type SortKey = 'priority' | 'dueDate' | 'recentlyAdded' | 'recentlyCompleted';
+
+const SORT_LABELS: Record<SortKey, string> = {
+  priority: 'Priority',
+  dueDate: 'Due date',
+  recentlyAdded: 'Recently added',
+  recentlyCompleted: 'Recently completed',
+};
+
+const DEFAULT_COLUMN_SORT: Record<KanbanColumn, SortKey> = {
+  todo: 'priority',
+  in_progress: 'priority',
+  waiting: 'priority',
+  done: 'recentlyCompleted',
+};
 
 interface TaskKanbanBoardProps {
   tasks: UnifiedTask[];
   activeFilter: CategoryFilter;
   groupBy: GroupBy;
+  /** Optional — when provided, the in-board ⋮ menu's "Group by" updates the parent. */
+  onGroupByChange?: (next: GroupBy) => void;
   onUpdateTaskStatus: (taskId: string, status: string) => void;
 }
 
