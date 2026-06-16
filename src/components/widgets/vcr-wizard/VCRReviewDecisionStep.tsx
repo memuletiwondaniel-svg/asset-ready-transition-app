@@ -253,9 +253,40 @@ export const VCRReviewDecisionStep: React.FC<{
     myRowLoading,
     payload,
   } = useDecision();
+  const { user } = useAuth();
 
   const subMode = useVCRWizardSubMode();
   const showDiff = subMode === 'ora_edit';
+
+  // Re-approval signal (review_only only): this approver previously approved,
+  // then a reset/scope-void event occurred, and their row is now PENDING again.
+  const { data: events } = useVCRPlanApprovalEvents(
+    subMode === 'review_only' ? payload.handoverPointId : null,
+  );
+  const reapproval = useMemo(() => {
+    if (subMode !== 'review_only') return null;
+    if (!user?.id || !myRow) return null;
+    if (myRow.status !== 'PENDING') return null;
+    if (!events || events.length === 0) return null;
+    // events come desc; find this user's most recent APPROVED
+    const myLastApproval = events.find(
+      (e) => e.event_type === 'APPROVED' && e.actor_id === user.id,
+    );
+    if (!myLastApproval) return null;
+    // any reset/void event AFTER that approval?
+    const resetEvent = events.find(
+      (e) =>
+        (e.event_type === 'SCOPE_VOIDED' || e.event_type === 'REJECTED') &&
+        new Date(e.created_at).getTime() > new Date(myLastApproval.created_at).getTime(),
+    );
+    if (!resetEvent) return null;
+    const reason =
+      (resetEvent.payload && (resetEvent.payload.reason || resetEvent.payload.message || resetEvent.payload.comment)) ||
+      (resetEvent.event_type === 'SCOPE_VOIDED'
+        ? 'Plan scope changed after your approval — approvals were reset.'
+        : 'Another approver requested changes after your approval.');
+    return { reason, when: resetEvent.created_at };
+  }, [subMode, user?.id, myRow, events]);
 
   const approvedCount = rollup?.approved_count ?? 0;
 
@@ -270,10 +301,26 @@ export const VCRReviewDecisionStep: React.FC<{
         </p>
       </header>
 
-      {/* U7 — full roster lives in Step 8 now. Step 10 = change summary +
-          decision + history. Roster changes (if any) are folded into the
-          diff summary below. */}
-      <VCRPlanDiffSummary handoverPointId={payload.handoverPointId} mode={subMode === 'ora_edit' ? 'live' : 'baseline'} />
+      {showDiff ? (
+        <VCRPlanDiffSummary handoverPointId={payload.handoverPointId} mode="live" />
+      ) : reapproval ? (
+        <div
+          className="rounded-lg border border-amber-500/40 bg-amber-500/5 p-4 space-y-2"
+          data-testid="vcr-review-reapproval-needed"
+        >
+          <div className="flex items-center gap-2">
+            <RefreshCw className="h-4 w-4 text-amber-600" />
+            <span className="font-medium text-sm">Re-approval needed</span>
+            <span className="text-xs text-muted-foreground ml-auto">
+              {format(new Date(reapproval.when), "d MMM yyyy 'at' HH:mm")}
+            </span>
+          </div>
+          <p className="text-sm text-muted-foreground">{reapproval.reason}</p>
+          <p className="text-xs text-muted-foreground">
+            Please review the current plan and record your decision again.
+          </p>
+        </div>
+      ) : null}
 
       <Separator />
 
