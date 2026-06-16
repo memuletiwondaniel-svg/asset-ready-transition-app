@@ -584,11 +584,11 @@ const DroppableColumn: React.FC<{
     <div
       ref={setNodeRef}
       className={cn(
-        "flex-1 transition-all duration-200 rounded-xl min-h-[60px]",
-        isOver && 'ring-2 ring-primary/30 ring-dashed scale-[1.01]',
+        "flex h-full transition-all duration-200 rounded-xl",
+        isOver && 'ring-2 ring-primary/30 ring-dashed',
       )}
     >
-      {children}
+      <div className="flex-1 flex flex-col min-w-0">{children}</div>
     </div>
   );
 };
