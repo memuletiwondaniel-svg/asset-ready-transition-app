@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useCallback, useEffect, createContext, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Badge } from '@/components/ui/badge';
+
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -84,6 +84,13 @@ const SORT_LABELS: Record<SortKey, string> = {
   recentlyCompleted: 'Recently completed',
 };
 
+const SORT_SUBLABELS: Record<SortKey, string> = {
+  priority: 'by priority',
+  dueDate: 'by due date',
+  recentlyAdded: 'by recently added',
+  recentlyCompleted: 'by recently completed',
+};
+
 const DEFAULT_COLUMN_SORT: Record<KanbanColumn, SortKey> = {
   todo: 'priority',
   in_progress: 'priority',
@@ -121,9 +128,9 @@ function isClickableVcrApprovalBundle(task: UnifiedTask): boolean {
 
 
 const getColumns = (t: any) => [
-  { key: 'todo' as const, label: t.kanbanToDo || 'To Do', icon: Circle, accent: 'border-l-slate-400', headerBg: 'bg-gradient-to-r from-slate-200/90 to-slate-100/60 dark:from-slate-800/50 dark:to-slate-900/20', iconColor: 'text-slate-500', headerText: 'text-foreground', emptyIcon: Inbox, emptyMsg: t.kanbanEmptyToDo || 'Nothing to do right now.', emptyHint: t.kanbanEmptyToDoHint || 'New tasks will appear here.' },
-  { key: 'in_progress' as const, label: t.kanbanInProgress || 'In Progress', icon: Timer, accent: 'border-l-amber-500', headerBg: 'bg-gradient-to-r from-amber-200/90 to-amber-100/60 dark:from-amber-900/50 dark:to-amber-950/20', iconColor: 'text-amber-600', headerText: 'text-foreground', emptyIcon: Timer, emptyMsg: t.kanbanEmptyInProgress || 'Nothing in progress.', emptyHint: t.kanbanEmptyInProgressHint || 'Move a task here when you start it.' },
-  { key: 'done' as const, label: t.kanbanDone || 'Done', icon: CheckCircle2, accent: 'border-l-emerald-500', headerBg: 'bg-gradient-to-r from-emerald-200/90 to-emerald-100/60 dark:from-emerald-900/50 dark:to-emerald-950/20', iconColor: 'text-emerald-600', headerText: 'text-foreground', emptyIcon: CheckCircle2, emptyMsg: t.kanbanEmptyDone || 'No completed tasks yet.', emptyHint: t.kanbanEmptyDoneHint || 'Finished work will collect here.' },
+  { key: 'todo' as const, label: t.kanbanToDo || 'To do', icon: Circle, accent: 'border-l-slate-400', iconColor: 'text-muted-foreground', emptyIcon: Inbox, emptyMsg: t.kanbanEmptyToDo || 'Nothing to do right now.', emptyHint: t.kanbanEmptyToDoHint || 'New tasks will appear here.' },
+  { key: 'in_progress' as const, label: t.kanbanInProgress || 'In progress', icon: Timer, accent: 'border-l-amber-500', iconColor: 'text-amber-500', emptyIcon: Timer, emptyMsg: t.kanbanEmptyInProgress || 'Nothing in progress.', emptyHint: t.kanbanEmptyInProgressHint || 'Drag a task here when you start it.' },
+  { key: 'done' as const, label: t.kanbanDone || 'Done', icon: CheckCircle2, accent: 'border-l-emerald-500', iconColor: 'text-emerald-500', emptyIcon: CheckCircle2, emptyMsg: t.kanbanEmptyDone || 'No completed tasks yet.', emptyHint: t.kanbanEmptyDoneHint || 'Finished work will collect here.' },
 ];
 
 // ─── Approval Void Warning Dialog ──────────────────────────────────
@@ -324,7 +331,7 @@ const KanbanCardContent: React.FC<{
   const dateAnnotation = getDateAnnotation(task);
   const sp = task.smartPriority;
   const isWaitingVcrApprovalBundle = task.isWaiting && isClickableVcrApprovalBundle(task);
-  
+
   // Detect ORA activity tasks that can link to a Gantt chart
   const meta = task.userTask?.metadata as Record<string, any> | undefined;
   const isOraActivity = task.userTask?.type === 'ora_activity' || meta?.action === 'complete_ora_activity' || meta?.action === 'create_p2a_plan' || meta?.action === 'create_vcr_delivery_plan' || meta?.ora_plan_activity_id;
@@ -335,21 +342,45 @@ const KanbanCardContent: React.FC<{
   const p2aApprovalSummaries = useContext(P2AApprovalContext);
   const oraApprovalSummaries = useContext(ORAApprovalContext);
 
+  // Urgency rail color (inner element — keeps rounded corners intact).
+  // overdue → red; today or within ~3 days → amber; rejected → destructive; else neutral.
+  const railColor = (() => {
+    if (accentClass === 'border-l-destructive') return 'bg-destructive';
+    if (task.kanbanColumn === 'done') return 'bg-transparent';
+    if (dateAnnotation?.variant === 'overdue') return 'bg-red-500';
+    if (dateAnnotation?.variant === 'today') return 'bg-amber-500';
+    const due = task.dueDate || task.endDate;
+    if (due) {
+      const ms = new Date(due).getTime() - Date.now();
+      if (ms > 0 && ms <= 3 * 24 * 60 * 60 * 1000) return 'bg-amber-500';
+    }
+    return 'bg-transparent';
+  })();
+
   return (
     <Card
       onClick={onClick}
+      tabIndex={0}
       className={cn(
-        isChild ? "p-2 cursor-pointer rounded-md group border-l-2" : "p-3 cursor-pointer transition-all duration-200 rounded-lg group border-l-[3px]",
+        "relative",
+        isChild ? "p-2 cursor-pointer rounded-md group border-l-2" : "px-3 py-2 pl-3.5 cursor-pointer transition-all duration-200 rounded-lg group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
         isChild
           ? "border-0 border-l-border/50 bg-muted/30 shadow-none hover:bg-muted/50"
-          : "border border-border/60 bg-card shadow-[0_1px_3px_0_rgb(0,0,0,0.04)] hover:-translate-y-0.5 hover:shadow-md hover:border-border",
-        !isChild && (accentClass || 'border-l-border'),
+          : "border border-border/60 bg-card shadow-[0_1px_2px_0_rgb(0,0,0,0.03)] hover:-translate-y-0.5 hover:shadow-md hover:border-border",
         isChild && 'border-l-border/50',
         task.isWaiting && !isWaitingVcrApprovalBundle && 'opacity-50',
-        task.isNew && !isChild && 'ring-1 ring-primary/15',
-        isOverlay && 'shadow-xl ring-2 ring-primary/20 rotate-[2deg] scale-[1.03]',
+        isOverlay && 'shadow-xl ring-2 ring-primary/20 rotate-[1deg] scale-[1.02]',
       )}
     >
+      {!isChild && (
+        <span
+          aria-hidden
+          className={cn(
+            "pointer-events-none absolute left-1 top-1.5 bottom-1.5 w-[3px] rounded-full",
+            railColor,
+          )}
+        />
+      )}
       {/* Row 1: drag handle + project ID left, status right */}
       <div className={cn("flex items-center justify-between gap-1.5", isChild ? "mb-1" : "mb-1.5")}>
         <div className="flex items-center gap-1.5 min-w-0">
@@ -362,20 +393,24 @@ const KanbanCardContent: React.FC<{
               <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
             </button>
           )}
+          {!isChild && task.isNew && (
+            <span
+              aria-label="New"
+              title="New"
+              className="h-1.5 w-1.5 rounded-full bg-primary shrink-0"
+            />
+          )}
           {!isChild && (
             task.project ? (
               <>
-                <span className="text-[10px] font-medium font-mono text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded truncate max-w-[100px]">{task.project}</span>
+                <span className="text-[10px] font-mono text-muted-foreground/80 bg-muted/50 px-1.5 py-0.5 rounded truncate max-w-[100px]">{task.project}</span>
                 {task.extraPill && (
-                  <span className="text-[10px] font-medium font-mono text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded truncate max-w-[100px]">{task.extraPill}</span>
+                  <span className="text-[10px] font-mono text-muted-foreground/80 bg-muted/50 px-1.5 py-0.5 rounded truncate max-w-[100px]">{task.extraPill}</span>
                 )}
               </>
             ) : (
               <span className="text-[10px] text-muted-foreground">{task.categoryLabel}</span>
             )
-          )}
-          {task.isNew && (
-            <span className="text-[8px] font-semibold text-primary bg-primary/8 px-1 rounded">NEW</span>
           )}
         </div>
         <div className="flex items-center gap-1">
@@ -529,8 +564,8 @@ const KanbanCardContent: React.FC<{
       {/* Title + View in Gantt */}
       <div className="flex items-start justify-between gap-1">
         <p className={cn(
-          "font-medium text-foreground leading-snug break-words overflow-hidden flex-1",
-          isChild ? "text-xs mb-0.5" : "text-sm mb-1.5"
+          "text-foreground break-words overflow-hidden flex-1",
+          isChild ? "text-xs leading-snug mb-0.5 font-medium" : "text-[13px] leading-[1.3] mb-1 font-medium"
         )}>
           {task.project ? task.title.replace(new RegExp(`\\s*[–\\-]\\s*${task.project.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`), '') : task.title}
         </p>
@@ -577,11 +612,11 @@ const DroppableColumn: React.FC<{
     <div
       ref={setNodeRef}
       className={cn(
-        "flex-1 transition-all duration-200 rounded-xl min-h-[60px]",
-        isOver && 'ring-2 ring-primary/30 ring-dashed scale-[1.01]',
+        "flex h-full transition-all duration-200 rounded-xl",
+        isOver && 'ring-2 ring-primary/30 ring-dashed',
       )}
     >
-      {children}
+      <div className="flex-1 flex flex-col min-w-0">{children}</div>
     </div>
   );
 };
@@ -1193,65 +1228,83 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 items-stretch">
           {columnData.map(col => {
             const ColIcon = col.icon;
+            const isEmpty = col.tasks.length === 0;
+            const EmptyIcon = col.emptyIcon;
             return (
               <DroppableColumn key={col.key} columnKey={col.key}>
-                <div className="bg-muted/70 rounded-xl border border-border shadow-md flex flex-col h-full overflow-hidden">
-                  {/* Column header – tinted background */}
-                  <div className={cn("relative flex items-center justify-center px-3 py-3 border-b border-border/40", col.headerBg)}>
-                    <div className="flex items-center gap-3">
-                      <ColIcon className={cn("h-4 w-4", col.iconColor)} strokeWidth={2.25} />
-                      <span className={cn("text-sm font-black uppercase tracking-wider", col.headerText)}>{col.label}</span>
+                <div className="bg-card/40 dark:bg-muted/20 rounded-xl border border-border/60 flex flex-col h-full min-h-[60vh] overflow-hidden">
+                  {/* Quiet column header */}
+                  <div className="flex items-center justify-between gap-2 px-3 pt-3 pb-2 border-b border-border/40">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <ColIcon className={cn("h-3.5 w-3.5 shrink-0", col.iconColor)} strokeWidth={2.25} />
+                      <span className="text-[13px] font-medium text-foreground truncate">{col.label}</span>
+                      <span className="text-[11px] tabular-nums text-muted-foreground/70">{col.tasks.length}</span>
                     </div>
-                    <div className="absolute right-2 flex items-center gap-1">
-                      <Badge variant="secondary" className="text-[10px] font-medium px-1.5 py-0 min-w-[1.25rem] text-center text-muted-foreground bg-muted/60">{col.tasks.length}</Badge>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            data-rm-safe
-                            data-rm-nav
-                            aria-label={`${col.label} column options`}
-                            className="h-6 w-6 text-muted-foreground/70 hover:text-foreground hover:bg-background/60 focus-visible:ring-1"
-                          >
-                            <MoreVertical className="h-3.5 w-3.5" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-52">
-                          <DropdownMenuLabel className="text-[11px] uppercase tracking-wider text-muted-foreground">Sort by</DropdownMenuLabel>
-                          <DropdownMenuRadioGroup
-                            value={col.sortKey}
-                            onValueChange={(v) => setColumnSort(prev => ({ ...prev, [col.key]: v as SortKey }))}
-                          >
-                            {(Object.keys(SORT_LABELS) as SortKey[]).map(k => (
-                              <DropdownMenuRadioItem key={k} value={k} className="text-xs">
-                                {SORT_LABELS[k]}
-                              </DropdownMenuRadioItem>
-                            ))}
-                          </DropdownMenuRadioGroup>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuLabel className="text-[11px] uppercase tracking-wider text-muted-foreground">Group by</DropdownMenuLabel>
-                          <DropdownMenuRadioGroup
-                            value={columnGroupBy[col.key]}
-                            onValueChange={(v) => setColumnGroupBy(prev => ({ ...prev, [col.key]: v as GroupBy }))}
-                          >
-                            <DropdownMenuRadioItem value="none" className="text-xs">None</DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem value="project" className="text-xs">Project</DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem value="category" className="text-xs">Category</DropdownMenuRadioItem>
-                          </DropdownMenuRadioGroup>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          data-rm-safe
+                          data-rm-nav
+                          aria-label={`${col.label} column options`}
+                          className="h-6 w-6 text-muted-foreground/60 hover:text-foreground hover:bg-muted/60 focus-visible:ring-1"
+                        >
+                          <MoreVertical className="h-3.5 w-3.5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-52">
+                        <DropdownMenuLabel className="text-[11px] uppercase tracking-wider text-muted-foreground">Sort by</DropdownMenuLabel>
+                        <DropdownMenuRadioGroup
+                          value={col.sortKey}
+                          onValueChange={(v) => setColumnSort(prev => ({ ...prev, [col.key]: v as SortKey }))}
+                        >
+                          {(Object.keys(SORT_LABELS) as SortKey[]).map(k => (
+                            <DropdownMenuRadioItem key={k} value={k} className="text-xs">
+                              {SORT_LABELS[k]}
+                            </DropdownMenuRadioItem>
+                          ))}
+                        </DropdownMenuRadioGroup>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel className="text-[11px] uppercase tracking-wider text-muted-foreground">Group by</DropdownMenuLabel>
+                        <DropdownMenuRadioGroup
+                          value={columnGroupBy[col.key]}
+                          onValueChange={(v) => setColumnGroupBy(prev => ({ ...prev, [col.key]: v as GroupBy }))}
+                        >
+                          <DropdownMenuRadioItem value="none" className="text-xs">None</DropdownMenuRadioItem>
+                          <DropdownMenuRadioItem value="project" className="text-xs">Project</DropdownMenuRadioItem>
+                          <DropdownMenuRadioItem value="category" className="text-xs">Category</DropdownMenuRadioItem>
+                        </DropdownMenuRadioGroup>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
-                  {/* Cards */}
-                  <ScrollArea className="flex-1 max-h-[50vh] sm:max-h-[calc(100vh-320px)]">
-                    <div className="px-4 py-2.5 space-y-2.5">
-                      {renderColumnContent(col.tasks, col)}
+                  {/* Active sort sub-label */}
+                  <div className="px-3 pt-1.5 pb-2">
+                    <span className="text-[10px] text-muted-foreground/60">{SORT_SUBLABELS[col.sortKey]}</span>
+                  </div>
+                  {/* Cards or empty drop-zone */}
+                  {isEmpty ? (
+                    <div className="flex-1 flex items-stretch p-3">
+                      <div className="flex-1 rounded-lg border border-dashed border-border/60 flex flex-col items-center justify-center text-center gap-3 px-4 py-8 select-none">
+                        <div className="h-10 w-10 rounded-full bg-muted/40 flex items-center justify-center">
+                          <EmptyIcon className="h-5 w-5 text-muted-foreground/50" strokeWidth={1.75} />
+                        </div>
+                        <div className="space-y-0.5">
+                          <p className="text-xs font-medium text-muted-foreground/70">{col.emptyMsg}</p>
+                          {col.emptyHint && <p className="text-[11px] text-muted-foreground/50">{col.emptyHint}</p>}
+                        </div>
+                      </div>
                     </div>
-                  </ScrollArea>
+                  ) : (
+                    <ScrollArea className="flex-1 max-h-[calc(100vh-320px)]">
+                      <div className="px-3 pb-3 pt-1 space-y-2">
+                        {renderColumnContent(col.tasks, col)}
+                      </div>
+                    </ScrollArea>
+                  )}
                 </div>
               </DroppableColumn>
             );
