@@ -40,7 +40,18 @@ import {
   CheckCircle2,
   Inbox,
   GanttChart,
+  MoreVertical,
+  Check,
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { isPast, isToday } from 'date-fns';
 import type { UnifiedTask, CategoryFilter } from './useUnifiedTasks';
