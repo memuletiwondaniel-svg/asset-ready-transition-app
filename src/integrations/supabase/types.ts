@@ -15036,6 +15036,17 @@ export type Database = {
       }
       is_feature_enabled: { Args: { p_feature_key: string }; Returns: boolean }
       is_harness_user: { Args: never; Returns: boolean }
+      move_task_to_column: {
+        Args: {
+          p_expected_status?: string
+          p_force?: boolean
+          p_is_protected?: boolean
+          p_target_column: string
+          p_task_id: string
+          p_void_reason?: string
+        }
+        Returns: Json
+      }
       offboard_user: {
         Args: {
           admin_user_id: string
