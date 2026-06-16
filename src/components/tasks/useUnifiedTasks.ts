@@ -502,6 +502,7 @@ export function useUnifiedTasks(userId: string) {
         project: isPSSR ? meta?.project_name : normalizeProjectCode(meta?.project_code),
         status: `${completed}/${total}`,
         createdAt: task.created_at,
+        completedAt: task.status === 'completed' ? (task.updated_at ?? null) : null,
         priority: smartPriorityToLegacy(spBundle.level),
         smartPriority: spBundle,
         isNew: isNewSinceLastLogin(task.created_at),
