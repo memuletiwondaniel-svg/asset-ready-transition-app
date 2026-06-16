@@ -168,7 +168,7 @@ const MyTasksPage: React.FC = () => {
 };
 
 // Separate component to use hooks properly
-const KanbanView: React.FC<{ userId: string; searchQuery: string; groupBy: GroupBy; onGroupByChange?: (g: GroupBy) => void }> = ({ userId, searchQuery, groupBy, onGroupByChange }) => {
+const KanbanView: React.FC<{ userId: string; searchQuery: string }> = ({ userId, searchQuery }) => {
   const { allTasks, isLoading, updateTaskStatus } = useUnifiedTasks(userId);
 
   const filteredTasks = React.useMemo(() => {
@@ -196,8 +196,6 @@ const KanbanView: React.FC<{ userId: string; searchQuery: string; groupBy: Group
     <TaskKanbanBoard
       tasks={filteredTasks}
       activeFilter="all"
-      groupBy={groupBy}
-      onGroupByChange={onGroupByChange}
       onUpdateTaskStatus={updateTaskStatus}
     />
   );
