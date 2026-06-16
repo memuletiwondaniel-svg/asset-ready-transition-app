@@ -94,9 +94,6 @@ const DEFAULT_COLUMN_SORT: Record<KanbanColumn, SortKey> = {
 interface TaskKanbanBoardProps {
   tasks: UnifiedTask[];
   activeFilter: CategoryFilter;
-  groupBy: GroupBy;
-  /** Optional — when provided, the in-board ⋮ menu's "Group by" updates the parent. */
-  onGroupByChange?: (next: GroupBy) => void;
   onUpdateTaskStatus: (taskId: string, status: string) => void;
 }
 
