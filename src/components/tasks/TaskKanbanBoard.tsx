@@ -660,8 +660,6 @@ const ProjectGroup: React.FC<{
 export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   tasks,
   activeFilter,
-  groupBy,
-  onGroupByChange,
   onUpdateTaskStatus,
 }) => {
   const navigate = useNavigate();
@@ -676,18 +674,14 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   const [activeTask, setActiveTask] = useState<UnifiedTask | null>(null);
   const { moveTaskToColumn } = useKanbanDragDrop();
 
-  // Per-column sort state (in-memory, board-local). Done defaults to
+  // Per-column sort + group state (in-memory, board-local). Done defaults to
   // recently-completed; the others default to the global priority order.
+  // Grouping is per-column (mirrors the sort model) so changing one column's
+  // grouping does NOT affect the others.
   const [columnSort, setColumnSort] = useState<Record<KanbanColumn, SortKey>>(DEFAULT_COLUMN_SORT);
-  // Group-by is board-wide. If the parent passed onGroupByChange, we route
-  // changes up to it; otherwise we manage it internally seeded from the prop.
-  const [internalGroupBy, setInternalGroupBy] = useState<GroupBy>(groupBy);
-  useEffect(() => { setInternalGroupBy(groupBy); }, [groupBy]);
-  const effectiveGroupBy: GroupBy = onGroupByChange ? groupBy : internalGroupBy;
-  const setGroupBy = (next: GroupBy) => {
-    if (onGroupByChange) onGroupByChange(next);
-    else setInternalGroupBy(next);
-  };
+  const [columnGroupBy, setColumnGroupBy] = useState<Record<KanbanColumn, GroupBy>>({
+    todo: 'none', in_progress: 'none', waiting: 'none', done: 'none',
+  });
 
   // Batch-fetch reviewer summaries for ALL tasks (not just done column)
   const allTaskIds = useMemo(() => 
