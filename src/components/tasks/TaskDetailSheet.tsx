@@ -1132,7 +1132,10 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                 )}
                 <Button
                   className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
-                  onClick={() => setVcrWizardOpen(true)}
+                  onClick={() => {
+                    if (!vcrPlanIsApproved) promoteToInProgressIfNeeded(task, queryClient);
+                    setVcrWizardOpen(true);
+                  }}
                 >
                   {vcrPlanIsApproved ? <Eye className="h-4 w-4" /> : <ClipboardList className="h-4 w-4" />}
                   {vcrCtaLabel}
