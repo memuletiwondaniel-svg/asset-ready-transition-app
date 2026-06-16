@@ -1200,65 +1200,83 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 items-stretch">
           {columnData.map(col => {
             const ColIcon = col.icon;
+            const isEmpty = col.tasks.length === 0;
+            const EmptyIcon = col.emptyIcon;
             return (
               <DroppableColumn key={col.key} columnKey={col.key}>
-                <div className="bg-muted/70 rounded-xl border border-border shadow-md flex flex-col h-full overflow-hidden">
-                  {/* Column header – tinted background */}
-                  <div className={cn("relative flex items-center justify-center px-3 py-3 border-b border-border/40", col.headerBg)}>
-                    <div className="flex items-center gap-3">
-                      <ColIcon className={cn("h-4 w-4", col.iconColor)} strokeWidth={2.25} />
-                      <span className={cn("text-sm font-black uppercase tracking-wider", col.headerText)}>{col.label}</span>
+                <div className="bg-card/40 dark:bg-muted/20 rounded-xl border border-border/60 flex flex-col h-full min-h-[60vh] overflow-hidden">
+                  {/* Quiet column header */}
+                  <div className="flex items-center justify-between gap-2 px-3 pt-3 pb-2 border-b border-border/40">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <ColIcon className={cn("h-3.5 w-3.5 shrink-0", col.iconColor)} strokeWidth={2.25} />
+                      <span className="text-[13px] font-medium text-foreground truncate">{col.label}</span>
+                      <span className="text-[11px] tabular-nums text-muted-foreground/70">{col.tasks.length}</span>
                     </div>
-                    <div className="absolute right-2 flex items-center gap-1">
-                      <Badge variant="secondary" className="text-[10px] font-medium px-1.5 py-0 min-w-[1.25rem] text-center text-muted-foreground bg-muted/60">{col.tasks.length}</Badge>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            data-rm-safe
-                            data-rm-nav
-                            aria-label={`${col.label} column options`}
-                            className="h-6 w-6 text-muted-foreground/70 hover:text-foreground hover:bg-background/60 focus-visible:ring-1"
-                          >
-                            <MoreVertical className="h-3.5 w-3.5" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-52">
-                          <DropdownMenuLabel className="text-[11px] uppercase tracking-wider text-muted-foreground">Sort by</DropdownMenuLabel>
-                          <DropdownMenuRadioGroup
-                            value={col.sortKey}
-                            onValueChange={(v) => setColumnSort(prev => ({ ...prev, [col.key]: v as SortKey }))}
-                          >
-                            {(Object.keys(SORT_LABELS) as SortKey[]).map(k => (
-                              <DropdownMenuRadioItem key={k} value={k} className="text-xs">
-                                {SORT_LABELS[k]}
-                              </DropdownMenuRadioItem>
-                            ))}
-                          </DropdownMenuRadioGroup>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuLabel className="text-[11px] uppercase tracking-wider text-muted-foreground">Group by</DropdownMenuLabel>
-                          <DropdownMenuRadioGroup
-                            value={columnGroupBy[col.key]}
-                            onValueChange={(v) => setColumnGroupBy(prev => ({ ...prev, [col.key]: v as GroupBy }))}
-                          >
-                            <DropdownMenuRadioItem value="none" className="text-xs">None</DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem value="project" className="text-xs">Project</DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem value="category" className="text-xs">Category</DropdownMenuRadioItem>
-                          </DropdownMenuRadioGroup>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          data-rm-safe
+                          data-rm-nav
+                          aria-label={`${col.label} column options`}
+                          className="h-6 w-6 text-muted-foreground/60 hover:text-foreground hover:bg-muted/60 focus-visible:ring-1"
+                        >
+                          <MoreVertical className="h-3.5 w-3.5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-52">
+                        <DropdownMenuLabel className="text-[11px] uppercase tracking-wider text-muted-foreground">Sort by</DropdownMenuLabel>
+                        <DropdownMenuRadioGroup
+                          value={col.sortKey}
+                          onValueChange={(v) => setColumnSort(prev => ({ ...prev, [col.key]: v as SortKey }))}
+                        >
+                          {(Object.keys(SORT_LABELS) as SortKey[]).map(k => (
+                            <DropdownMenuRadioItem key={k} value={k} className="text-xs">
+                              {SORT_LABELS[k]}
+                            </DropdownMenuRadioItem>
+                          ))}
+                        </DropdownMenuRadioGroup>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel className="text-[11px] uppercase tracking-wider text-muted-foreground">Group by</DropdownMenuLabel>
+                        <DropdownMenuRadioGroup
+                          value={columnGroupBy[col.key]}
+                          onValueChange={(v) => setColumnGroupBy(prev => ({ ...prev, [col.key]: v as GroupBy }))}
+                        >
+                          <DropdownMenuRadioItem value="none" className="text-xs">None</DropdownMenuRadioItem>
+                          <DropdownMenuRadioItem value="project" className="text-xs">Project</DropdownMenuRadioItem>
+                          <DropdownMenuRadioItem value="category" className="text-xs">Category</DropdownMenuRadioItem>
+                        </DropdownMenuRadioGroup>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
-                  {/* Cards */}
-                  <ScrollArea className="flex-1 max-h-[50vh] sm:max-h-[calc(100vh-320px)]">
-                    <div className="px-4 py-2.5 space-y-2.5">
-                      {renderColumnContent(col.tasks, col)}
+                  {/* Active sort sub-label */}
+                  <div className="px-3 pt-1.5 pb-2">
+                    <span className="text-[10px] text-muted-foreground/60">{SORT_SUBLABELS[col.sortKey]}</span>
+                  </div>
+                  {/* Cards or empty drop-zone */}
+                  {isEmpty ? (
+                    <div className="flex-1 flex items-stretch p-3">
+                      <div className="flex-1 rounded-lg border border-dashed border-border/60 flex flex-col items-center justify-center text-center gap-3 px-4 py-8 select-none">
+                        <div className="h-10 w-10 rounded-full bg-muted/40 flex items-center justify-center">
+                          <EmptyIcon className="h-5 w-5 text-muted-foreground/50" strokeWidth={1.75} />
+                        </div>
+                        <div className="space-y-0.5">
+                          <p className="text-xs font-medium text-muted-foreground/70">{col.emptyMsg}</p>
+                          {col.emptyHint && <p className="text-[11px] text-muted-foreground/50">{col.emptyHint}</p>}
+                        </div>
+                      </div>
                     </div>
-                  </ScrollArea>
+                  ) : (
+                    <ScrollArea className="flex-1 max-h-[calc(100vh-320px)]">
+                      <div className="px-3 pb-3 pt-1 space-y-2">
+                        {renderColumnContent(col.tasks, col)}
+                      </div>
+                    </ScrollArea>
+                  )}
                 </div>
               </DroppableColumn>
             );
