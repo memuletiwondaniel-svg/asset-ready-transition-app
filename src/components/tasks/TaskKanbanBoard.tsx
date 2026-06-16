@@ -438,19 +438,19 @@ const KanbanCardContent: React.FC<{
   const p2aApprovalSummaries = useContext(P2AApprovalContext);
   const oraApprovalSummaries = useContext(ORAApprovalContext);
 
-  // Urgency rail color (inner element — keeps rounded corners intact).
-  // overdue → red; today or within ~3 days → amber; rejected → destructive; else neutral.
+  // Rail color encodes task CATEGORY (every card has one). Reuses the same
+  // palette family as categoryColor pills. Rejected → destructive overrides.
   const railColor = (() => {
     if (accentClass === 'border-l-destructive') return 'bg-destructive';
-    if (task.kanbanColumn === 'done') return 'bg-transparent';
-    if (dateAnnotation?.variant === 'overdue') return 'bg-red-500';
-    if (dateAnnotation?.variant === 'today') return 'bg-amber-500';
-    const due = task.dueDate || task.endDate;
-    if (due) {
-      const ms = new Date(due).getTime() - Date.now();
-      if (ms > 0 && ms <= 3 * 24 * 60 * 60 * 1000) return 'bg-amber-500';
+    switch (task.category) {
+      case 'pssr':   return 'bg-blue-500';
+      case 'ora':    return 'bg-purple-500';
+      case 'owl':    return 'bg-amber-500';
+      case 'vcr':    return 'bg-teal-500';
+      case 'p2a':    return 'bg-teal-500';
+      case 'action': return 'bg-slate-400 dark:bg-slate-500';
+      default:       return 'bg-slate-400 dark:bg-slate-500';
     }
-    return 'bg-transparent';
   })();
 
   return (
