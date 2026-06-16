@@ -897,6 +897,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               <Button
                 className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
                 onClick={() => {
+                  promoteToInProgressIfNeeded(task, queryClient);
                   onOpenChange(false);
                   setOraActivityOpen(true);
                 }}
