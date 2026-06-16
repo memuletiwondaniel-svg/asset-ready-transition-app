@@ -679,6 +679,19 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   const [activeTask, setActiveTask] = useState<UnifiedTask | null>(null);
   const { moveTaskToColumn } = useKanbanDragDrop();
 
+  // Per-column sort state (in-memory, board-local). Done defaults to
+  // recently-completed; the others default to the global priority order.
+  const [columnSort, setColumnSort] = useState<Record<KanbanColumn, SortKey>>(DEFAULT_COLUMN_SORT);
+  // Group-by is board-wide. If the parent passed onGroupByChange, we route
+  // changes up to it; otherwise we manage it internally seeded from the prop.
+  const [internalGroupBy, setInternalGroupBy] = useState<GroupBy>(groupBy);
+  useEffect(() => { setInternalGroupBy(groupBy); }, [groupBy]);
+  const effectiveGroupBy: GroupBy = onGroupByChange ? groupBy : internalGroupBy;
+  const setGroupBy = (next: GroupBy) => {
+    if (onGroupByChange) onGroupByChange(next);
+    else setInternalGroupBy(next);
+  };
+
   // Batch-fetch reviewer summaries for ALL tasks (not just done column)
   const allTaskIds = useMemo(() => 
     tasks.filter(t => t.userTask?.id).map(t => t.userTask!.id),
