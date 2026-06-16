@@ -1129,9 +1129,16 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     if (columnTasks.length === 0) {
       const EmptyIcon = col.emptyIcon;
       return (
-        <div className="flex flex-col items-center justify-center py-8 gap-2 text-muted-foreground/40">
-          <EmptyIcon className="h-5 w-5" />
-          <p className="text-xs">{col.emptyMsg}</p>
+        <div className="flex flex-col items-center justify-center text-center py-12 px-4 gap-3 select-none">
+          <div className="h-10 w-10 rounded-full bg-muted/40 flex items-center justify-center">
+            <EmptyIcon className="h-5 w-5 text-muted-foreground/50" strokeWidth={1.75} />
+          </div>
+          <div className="space-y-0.5">
+            <p className="text-xs font-medium text-muted-foreground/70">{col.emptyMsg}</p>
+            {col.emptyHint && (
+              <p className="text-[11px] text-muted-foreground/50">{col.emptyHint}</p>
+            )}
+          </div>
         </div>
       );
     }
