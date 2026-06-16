@@ -1318,6 +1318,20 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
             const ColIcon = col.icon;
             const isEmpty = col.tasks.length === 0;
             const EmptyIcon = col.emptyIcon;
+            // Header risk hint — quiet counts of overdue / due-soon (skip Done column)
+            let overdueCount = 0;
+            let dueSoonCount = 0;
+            if (col.key !== 'done') {
+              for (const ct of col.tasks) {
+                const due = ct.dueDate || ct.endDate;
+                if (!due) continue;
+                const d = new Date(due);
+                if (isPast(d) && !isToday(d)) { overdueCount++; continue; }
+                if (isToday(d)) { dueSoonCount++; continue; }
+                const diff = d.getTime() - Date.now();
+                if (diff > 0 && diff <= 3 * 86_400_000) dueSoonCount++;
+              }
+            }
             return (
               <DroppableColumn key={col.key} columnKey={col.key}>
                 <div className="bg-card/40 dark:bg-muted/20 rounded-xl border border-border/60 flex flex-col h-full min-h-[60vh] overflow-hidden">
@@ -1366,10 +1380,17 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                  {/* Active sort sub-label */}
-                  <div className="px-3 pt-1.5 pb-2">
+                  {/* Active sort sub-label + risk hint */}
+                  <div className="px-3 pt-1.5 pb-2 flex items-center gap-2 flex-wrap">
                     <span className="text-[10px] text-muted-foreground/60">{SORT_SUBLABELS[col.sortKey]}</span>
+                    {overdueCount > 0 && (
+                      <span className="text-[10px] text-red-600 dark:text-red-400">· {overdueCount} overdue</span>
+                    )}
+                    {dueSoonCount > 0 && (
+                      <span className="text-[10px] text-amber-600 dark:text-amber-400">· {dueSoonCount} due soon</span>
+                    )}
                   </div>
+
                   {/* Cards or empty drop-zone */}
                   {isEmpty ? (
                     <div className="flex-1 flex items-stretch p-3">
