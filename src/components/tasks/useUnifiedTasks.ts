@@ -362,10 +362,15 @@ export function useUnifiedTasks(userId: string) {
     // Two-phase gate: Phase 1 = ORA Lead pending; Phase 2 = remaining approvers.
     // Non-actionable Phase-2 rows are NOT surfaced as waiting stubs (per spec).
     (vcrPlanApprovals || []).forEach((item: any) => {
-      const created = new Date().toISOString();
+      // task_created_at is the moment this row became actionable to this user:
+      //   - Phase 1 (ora_lead) → row's own created_at
+      //   - Phase 2 (other roles) → ORA Lead's decided_at (fan-out moment)
+      // (See v_vcr_plan_approver_tasks definition.)
+      const created: string | null = item.task_created_at ?? null;
+      const createdForPriority = created || new Date().toISOString();
       const sp = computeSmartPriority({
         category: 'vcr', categoryLabel: 'VCR Plan Approval',
-        createdAt: created,
+        createdAt: createdForPriority,
       });
       // Short VCR code: "VCR-DP300-05" → "VCR-05" (project context is in the project pill).
       const codeParts = (item.vcr_code || '').split('-').filter(Boolean);
@@ -384,10 +389,11 @@ export function useUnifiedTasks(userId: string) {
         projectId: item.project_id || undefined,
         extraPill: shortCode,
         status: 'Pending',
-        createdAt: created,
+        createdAt: createdForPriority,
         priority: smartPriorityToLegacy(sp.level),
         smartPriority: sp,
-        isNew: false,
+        // Only mark "new" when we have a real timestamp; null → false (no false positives).
+        isNew: created ? isNewSinceLastLogin(created) : false,
         kanbanColumn: 'todo',
         vcrPlanApproval: {
           approverRowId: item.approver_row_id,
