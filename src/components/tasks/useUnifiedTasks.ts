@@ -401,6 +401,7 @@ export function useUnifiedTasks(userId: string) {
         createdAt: createdForPriority,
         priority: smartPriorityToLegacy(sp.level),
         smartPriority: sp,
+        completedAt: isDecided ? (item.decided_at ?? null) : null,
         // Only mark "new" when we have a real timestamp AND the user hasn't decided yet.
         isNew: !isDecided && created ? isNewSinceLastLogin(created) : false,
         kanbanColumn,
