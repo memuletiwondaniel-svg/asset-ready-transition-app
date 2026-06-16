@@ -14706,6 +14706,7 @@ export type Database = {
           row_status:
             | Database["public"]["Enums"]["vcr_plan_approver_status"]
             | null
+          task_created_at: string | null
           total_count: number | null
           user_id: string | null
           vcr_code: string | null
