@@ -23,6 +23,8 @@ import type { VCRReviewPayload } from './wizardModeContext';
 import { useVCRWizardSubMode } from './wizardModeContext';
 import { VCRPlanDiffSummary } from './VCRPlanDiffSummary';
 import { VCRApprovalHistoryPanel } from './VCRApprovalHistoryPanel';
+import { useVCRPlanApprovalEvents } from '@/hooks/useVCRPlanApprovalEvents';
+import { RefreshCw } from 'lucide-react';
 
 
 
