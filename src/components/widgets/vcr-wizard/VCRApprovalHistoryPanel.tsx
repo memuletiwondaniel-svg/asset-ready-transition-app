@@ -135,7 +135,6 @@ export const VCRApprovalHistoryPanel: React.FC<Props> = ({ handoverPointId, defa
                             <span className="text-muted-foreground font-normal"> · ×{e._editCount}</span>
                           )}
                           {!isItem && role && <span className="text-muted-foreground font-normal"> · {role}</span>}
-                          {!isItem && phase != null && <span className="text-muted-foreground font-normal"> · Phase {phase}</span>}
                         </span>
                         <span className="text-[10px] text-muted-foreground tabular-nums">
                           {format(new Date(e.created_at), 'd MMM yyyy, HH:mm')}

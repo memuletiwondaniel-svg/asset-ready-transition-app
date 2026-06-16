@@ -87,6 +87,23 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
 }) => {
   const isReview = !!reviewPayload;
   const { data: rollup } = useVCRPlanRollup(vcr.id);
+  // Read-only-after-decision signal: matches VCRReviewDecisionStep's `alreadyDecided`.
+  // Drives (a) the initial step (jump to Review) and (b) the sidebar step indicators
+  // (all green/complete) when the viewer has already approved/rejected.
+  const { data: viewerApproverRow } = useQuery({
+    queryKey: ['vcr-plan-approver-row-status', reviewPayload?.approverRowId],
+    enabled: isReview && !!reviewPayload?.approverRowId && open,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from('vcr_plan_approvers')
+        .select('id, status')
+        .eq('id', reviewPayload!.approverRowId)
+        .maybeSingle();
+      if (error) throw error;
+      return data as { id: string; status: string } | null;
+    },
+  });
+  const viewerAlreadyDecided = !!viewerApproverRow && viewerApproverRow.status !== 'PENDING';
   const [currentStep, setCurrentStep] = useState(0);
   const [visitedSteps, setVisitedSteps] = useState<Set<number>>(new Set([0]));
   const [step9Ready, setStep9Ready] = useState(false);
@@ -186,13 +203,34 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     }
   }, [isReview, user?.id, vcr.id, queryClient]);
 
+  // Initial-step placement for this open session.
+  // - Pending/actionable approver (or non-review): open at Step 1 (idx 0)
+  // - Already-decided approver: jump to Step 10 (idx 9, the decision surface)
+  //   which shows "You approved/requested changes".
+  // Runs on open AND again when the approver-row status arrives (it's async),
+  // but only while still on the default landing step so we don't yank the
+  // user off a step they manually navigated to.
+  const initialPlacementDoneRef = useRef(false);
   useEffect(() => {
     if (open) {
       setCurrentStep(0);
       setVisitedSteps(new Set([0]));
       hasPromotedRef.current = false;
+      initialPlacementDoneRef.current = false;
     }
   }, [open]);
+  useEffect(() => {
+    if (!open || !isReview) return;
+    if (initialPlacementDoneRef.current) return;
+    // Wait for the row query to resolve before deciding.
+    if (viewerApproverRow === undefined) return;
+    initialPlacementDoneRef.current = true;
+    if (viewerAlreadyDecided) {
+      const last = STEPS.length - 1;
+      setCurrentStep(last);
+      setVisitedSteps(new Set([last]));
+    }
+  }, [open, isReview, viewerApproverRow, viewerAlreadyDecided]);
 
   // Body-level review class so portal'd Sheets / Dialogs inherit the
   // read-only CSS too (steps that open detail sheets render outside the
@@ -282,6 +320,10 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     // Review mode: indicators are reviewer-coverage only — green once visited,
     // neutral otherwise. Non-gating (decision footer governs progress).
     if (isReview) {
+      // Once the viewer has decided (APPROVED/REJECTED), the plan is done from
+      // their perspective — show all steps as complete instead of per-session
+      // visited state so re-opens don't look "mostly pending".
+      if (viewerAlreadyDecided) return true;
       return visitedSteps.has(idx);
     }
     // Visit-based completion for steps without count data:
