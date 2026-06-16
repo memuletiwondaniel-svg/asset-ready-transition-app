@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { format } from 'date-fns';
 import {
   CheckCircle2, XCircle, Send, Pencil, Anchor, AlertTriangle,
-  ChevronDown, ChevronRight, Loader2,
+  ChevronDown, ChevronRight, Loader2, Plus, Minus,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useVCRPlanApprovalEvents, type VCRPlanApprovalEvent } from '@/hooks/useVCRPlanApprovalEvents';
@@ -13,13 +13,28 @@ interface Props {
   defaultOpen?: boolean;
 }
 
+const ITEM_TYPE_LABEL: Record<string, string> = {
+  training: 'Training',
+  procedure: 'Procedure',
+  critical_doc: 'Critical doc',
+  cmms: 'CMMS',
+  spare: 'Spare',
+  maintenance: 'Maintenance deliverable',
+  logsheet: 'Logsheet',
+  register: 'Register',
+  documentation: 'Documentation',
+  prerequisite: 'Prerequisite',
+};
+
 const eventStyle: Record<VCRPlanApprovalEvent['event_type'], { icon: React.ElementType; tone: string; label: string }> = {
   SUBMITTED:    { icon: Send,           tone: 'text-sky-600',    label: 'Submitted' },
-  EDIT:         { icon: Pencil,         tone: 'text-amber-600',  label: 'ORA edit saved' },
+  EDIT:         { icon: Pencil,         tone: 'text-muted-foreground', label: 'Plan saved' },
   APPROVED:     { icon: CheckCircle2,   tone: 'text-emerald-600',label: 'Approved' },
   REJECTED:     { icon: XCircle,        tone: 'text-red-600',    label: 'Changes requested' },
   BASELINED:    { icon: Anchor,         tone: 'text-violet-600', label: 'Baseline captured' },
   SCOPE_VOIDED: { icon: AlertTriangle,  tone: 'text-orange-600', label: 'Scope changed — approvals reset' },
+  ITEM_ADDED:   { icon: Plus,           tone: 'text-emerald-600',label: 'Item added' },
+  ITEM_REMOVED: { icon: Minus,          tone: 'text-red-600',    label: 'Item removed' },
 };
 
 export const VCRApprovalHistoryPanel: React.FC<Props> = ({ handoverPointId, defaultOpen = false }) => {
