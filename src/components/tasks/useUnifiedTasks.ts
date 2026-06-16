@@ -290,6 +290,7 @@ export function useUnifiedTasks(userId: string) {
         startDate,
         endDate,
         createdAt: t.created_at,
+        completedAt: t.status === 'completed' ? (t.updated_at ?? null) : null,
         priority: smartPriorityToLegacy(sp.level),
         smartPriority: sp,
         isNew: isNewSinceLastLogin(t.created_at),
