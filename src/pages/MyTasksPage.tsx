@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { CalendarCheck, Plus, Search, Kanban, FolderOpen, Layers, BookOpen, PenLine, TableProperties } from 'lucide-react';
+import { ListChecks, Plus, Search, Kanban, FolderOpen, Layers, BookOpen, PenLine, TableProperties } from 'lucide-react';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -54,8 +54,8 @@ const MyTasksPage: React.FC = () => {
         <div className="border-b border-border/40 bg-card/30 backdrop-blur-xl p-4 md:p-6">
           <BreadcrumbNavigation currentPageLabel={t.myTasksPageTitle || 'My Tasks'} />
           <div className="flex items-center gap-3 mt-4">
-            <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-primary to-primary/80">
-              <CalendarCheck className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+            <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 shadow-lg">
+              <ListChecks className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
             <div>
               <h1 className="text-2xl xl:text-3xl font-bold text-foreground">{t.myTasksPageTitle || 'My Tasks'}</h1>
@@ -75,8 +75,8 @@ const MyTasksPage: React.FC = () => {
         <div className="border-b border-border/50 bg-card/60 backdrop-blur-xl p-3 sm:p-4 md:p-6">
         <BreadcrumbNavigation currentPageLabel={t.myTasksPageTitle || 'My Tasks'} />
         <div className="flex items-center gap-2 sm:gap-3 mt-3 sm:mt-4">
-           <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-primary to-primary/80 shrink-0">
-            <CalendarCheck className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+           <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 shadow-lg shrink-0">
+            <ListChecks className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
           </div>
           <div className="min-w-0">
             <h1 className="text-lg sm:text-2xl xl:text-3xl font-bold text-foreground truncate">{t.myTasksPageTitle || 'My Tasks'}</h1>
