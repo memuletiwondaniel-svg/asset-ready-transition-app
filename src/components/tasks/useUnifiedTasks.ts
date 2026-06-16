@@ -378,6 +378,12 @@ export function useUnifiedTasks(userId: string) {
         ? `${codeParts[0]}-${codeParts[codeParts.length - 1]}`
         : item.vcr_code;
       const vcrName: string = item.vcr_name || item.vcr_code;
+      const rowStatus = String(item.row_status || '').toUpperCase();
+      const isApproved = rowStatus === 'APPROVED';
+      const isRejected = rowStatus === 'REJECTED';
+      const isDecided = isApproved || isRejected;
+      const status = isApproved ? 'Approved' : isRejected ? 'Changes requested' : 'Pending';
+      const kanbanColumn: 'todo' | 'done' = isDecided ? 'done' : 'todo';
       tasks.push({
         id: `vcr-plan-${item.approver_row_id}`,
         category: 'vcr',
@@ -388,13 +394,14 @@ export function useUnifiedTasks(userId: string) {
         project: normalizeProjectCode(item.project_code) || undefined,
         projectId: item.project_id || undefined,
         extraPill: shortCode,
-        status: 'Pending',
+        status,
         createdAt: createdForPriority,
         priority: smartPriorityToLegacy(sp.level),
         smartPriority: sp,
-        // Only mark "new" when we have a real timestamp; null → false (no false positives).
-        isNew: created ? isNewSinceLastLogin(created) : false,
-        kanbanColumn: 'todo',
+        // Only mark "new" when we have a real timestamp AND the user hasn't decided yet.
+        isNew: !isDecided && created ? isNewSinceLastLogin(created) : false,
+        kanbanColumn,
+        isApprovalProtected: isDecided,
         vcrPlanApproval: {
           approverRowId: item.approver_row_id,
           handoverPointId: item.handover_point_id,
