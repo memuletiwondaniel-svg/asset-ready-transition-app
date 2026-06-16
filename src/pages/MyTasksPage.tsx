@@ -88,15 +88,16 @@ const MyTasksPage: React.FC = () => {
       <div className={cn("mx-auto px-3 sm:px-6 py-4 sm:py-6", viewMode === 'kanban' ? 'max-w-[1400px]' : viewMode === 'table' ? 'max-w-6xl' : 'max-w-4xl')}>
         {/* Toolbar - hidden for table view since it has its own filters */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-          <div className="relative flex-1">
+          <div className="relative w-full sm:w-[320px] sm:max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder={t.searchTasksPlaceholder || 'Search tasks...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-9 sm:h-10 text-sm"
+              className="pl-10 h-9 sm:h-9 text-sm bg-background border border-border rounded-md focus-visible:ring-1 focus-visible:ring-ring"
             />
           </div>
+          <div className="hidden sm:block sm:flex-1" />
 
           <TooltipProvider delayDuration={200}>
             <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto">

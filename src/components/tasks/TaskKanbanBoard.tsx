@@ -438,19 +438,19 @@ const KanbanCardContent: React.FC<{
   const p2aApprovalSummaries = useContext(P2AApprovalContext);
   const oraApprovalSummaries = useContext(ORAApprovalContext);
 
-  // Urgency rail color (inner element — keeps rounded corners intact).
-  // overdue → red; today or within ~3 days → amber; rejected → destructive; else neutral.
+  // Rail color encodes task CATEGORY (every card has one). Reuses the same
+  // palette family as categoryColor pills. Rejected → destructive overrides.
   const railColor = (() => {
     if (accentClass === 'border-l-destructive') return 'bg-destructive';
-    if (task.kanbanColumn === 'done') return 'bg-transparent';
-    if (dateAnnotation?.variant === 'overdue') return 'bg-red-500';
-    if (dateAnnotation?.variant === 'today') return 'bg-amber-500';
-    const due = task.dueDate || task.endDate;
-    if (due) {
-      const ms = new Date(due).getTime() - Date.now();
-      if (ms > 0 && ms <= 3 * 24 * 60 * 60 * 1000) return 'bg-amber-500';
+    switch (task.category) {
+      case 'pssr':   return 'bg-blue-500';
+      case 'ora':    return 'bg-purple-500';
+      case 'owl':    return 'bg-amber-500';
+      case 'vcr':    return 'bg-teal-500';
+      case 'p2a':    return 'bg-teal-500';
+      case 'action': return 'bg-slate-400 dark:bg-slate-500';
+      default:       return 'bg-slate-400 dark:bg-slate-500';
     }
-    return 'bg-transparent';
   })();
 
   return (
@@ -459,7 +459,7 @@ const KanbanCardContent: React.FC<{
       tabIndex={0}
       className={cn(
         "relative",
-        isChild ? "p-2 cursor-pointer rounded-md group border-l-2" : "px-3 py-2 pl-3.5 cursor-pointer transition-all duration-200 rounded-lg group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+        isChild ? "p-2 cursor-pointer rounded-md group border-l-2" : "px-3 py-1.5 pl-3.5 cursor-pointer transition-all duration-200 rounded-lg group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
         isChild
           ? "border-0 border-l-border/50 bg-muted/30 shadow-none hover:bg-muted/50"
           : "border border-border/60 bg-card shadow-[0_1px_2px_0_rgb(0,0,0,0.03)] hover:-translate-y-0.5 hover:shadow-md hover:border-border",
@@ -515,7 +515,15 @@ const KanbanCardContent: React.FC<{
           "text-foreground break-words overflow-hidden flex-1",
           isChild ? "text-xs leading-snug mb-0.5 font-medium" : "text-[13px] leading-[1.3] mb-1 font-medium"
         )}>
-          {task.project ? task.title.replace(new RegExp(`\\s*[–\\-]\\s*${task.project.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`), '') : task.title}
+          {(() => {
+            if (!task.project) return task.title;
+            const escaped = task.project.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            // Strip trailing "  - PROJECT" (existing behaviour)
+            let title = task.title.replace(new RegExp(`\\s*[–\\-]\\s*${escaped}\\s*$`), '');
+            // Strip leading "PROJECT:" / "PROJECT -" / "PROJECT –" prefix, case-insensitive
+            title = title.replace(new RegExp(`^\\s*${escaped}\\s*[:\\-–]\\s*`, 'i'), '');
+            return title;
+          })()}
         </p>
         {isOraActivity && oraPlanId && oraActivityCode && (
           <button
@@ -800,7 +808,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   // grouping does NOT affect the others.
   const [columnSort, setColumnSort] = useState<Record<KanbanColumn, SortKey>>(DEFAULT_COLUMN_SORT);
   const [columnGroupBy, setColumnGroupBy] = useState<Record<KanbanColumn, GroupBy>>({
-    todo: 'none', in_progress: 'none', waiting: 'none', done: 'none',
+    todo: 'category', in_progress: 'none', waiting: 'none', done: 'project',
   });
 
   // Batch-fetch reviewer summaries for ALL tasks (not just done column)
