@@ -393,20 +393,24 @@ const KanbanCardContent: React.FC<{
               <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
             </button>
           )}
+          {!isChild && task.isNew && (
+            <span
+              aria-label="New"
+              title="New"
+              className="h-1.5 w-1.5 rounded-full bg-primary shrink-0"
+            />
+          )}
           {!isChild && (
             task.project ? (
               <>
-                <span className="text-[10px] font-medium font-mono text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded truncate max-w-[100px]">{task.project}</span>
+                <span className="text-[10px] font-mono text-muted-foreground/80 bg-muted/50 px-1.5 py-0.5 rounded truncate max-w-[100px]">{task.project}</span>
                 {task.extraPill && (
-                  <span className="text-[10px] font-medium font-mono text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded truncate max-w-[100px]">{task.extraPill}</span>
+                  <span className="text-[10px] font-mono text-muted-foreground/80 bg-muted/50 px-1.5 py-0.5 rounded truncate max-w-[100px]">{task.extraPill}</span>
                 )}
               </>
             ) : (
               <span className="text-[10px] text-muted-foreground">{task.categoryLabel}</span>
             )
-          )}
-          {task.isNew && (
-            <span className="text-[8px] font-semibold text-primary bg-primary/8 px-1 rounded">NEW</span>
           )}
         </div>
         <div className="flex items-center gap-1">
