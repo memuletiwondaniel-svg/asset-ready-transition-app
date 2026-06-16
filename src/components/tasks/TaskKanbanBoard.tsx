@@ -282,6 +282,102 @@ function getDateAnnotation(task: UnifiedTask): { variant: 'overdue' | 'today' } 
   return null;
 }
 
+const DAY_MS = 86_400_000;
+
+type DueInfo = { kind: 'overdue' | 'today' | 'soon'; days: number; text: string };
+
+function getDueInfo(task: UnifiedTask): DueInfo | null {
+  const due = task.dueDate || task.endDate;
+  if (!due) return null;
+  const d = new Date(due);
+  if (isPast(d) && !isToday(d)) {
+    const days = Math.max(1, Math.floor((Date.now() - d.getTime()) / DAY_MS));
+    return { kind: 'overdue', days, text: `Overdue ${days}d` };
+  }
+  if (isToday(d)) return { kind: 'today', days: 0, text: 'Due today' };
+  const diff = d.getTime() - Date.now();
+  if (diff > 0 && diff <= 3 * DAY_MS) {
+    const days = Math.max(1, Math.ceil(diff / DAY_MS));
+    return { kind: 'soon', days, text: `Due in ${days}d` };
+  }
+  return null;
+}
+
+function getAgeInfo(task: UnifiedTask): { days: number; text: string } | null {
+  if (task.kanbanColumn === 'done') return null;
+  if (!task.createdAt) return null;
+  const ageDays = Math.floor((Date.now() - new Date(task.createdAt).getTime()) / DAY_MS);
+  if (ageDays < 2) return null;
+  return { days: ageDays, text: `Pending ${ageDays}d` };
+}
+
+function getApprovalProgress(
+  task: UnifiedTask,
+  reviewerMap: Map<string, ReviewerSummary>,
+  p2aMap: Map<string, P2AApprovalSummary>,
+  oraMap: Map<string, ORAApprovalSummary>,
+): { approved: number; total: number } | null {
+  // Skip if VCR bundle progress already covers this card
+  if (task.totalItems != null && task.totalItems > 0) return null;
+
+  const meta = task.userTask?.metadata as Record<string, any> | undefined;
+  const action = meta?.action;
+  const source = meta?.source;
+  const projectId = meta?.project_id as string | undefined;
+  const isP2aAuthor = action === 'create_p2a_plan';
+  const isOraAuthor = action === 'create_ora_plan' || task.userTask?.type === 'ora_plan_creation';
+
+  if (isP2aAuthor && projectId) {
+    const s = p2aMap.get(projectId);
+    if (s && s.total > 0) return { approved: s.approved, total: s.total };
+  }
+  if (isOraAuthor && projectId) {
+    const s = oraMap.get(projectId);
+    if (s && s.total > 0) return { approved: s.approved, total: s.total };
+  }
+  if (source === 'p2a_handover' && !isP2aAuthor) {
+    const total = meta?.total_approvers as number | undefined;
+    const approved = meta?.approved_count as number | undefined;
+    if (typeof total === 'number' && total > 0) {
+      return { approved: approved ?? 0, total };
+    }
+  }
+  const r = task.userTask?.id ? reviewerMap.get(task.userTask.id) : undefined;
+  if (r && r.total > 0) return { approved: r.approved, total: r.total };
+  return null;
+}
+
+const ApprovalBar: React.FC<{ approved: number; total: number }> = ({ approved, total }) => {
+  if (total <= 0) return null;
+  if (total <= 6) {
+    return (
+      <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-[2px]">
+          {Array.from({ length: total }).map((_, i) => (
+            <span
+              key={i}
+              className={cn(
+                'block h-1 w-2 rounded-[1px]',
+                i < approved ? 'bg-emerald-500/80 dark:bg-emerald-400/80' : 'bg-muted-foreground/20',
+              )}
+            />
+          ))}
+        </div>
+        <span className="text-[10px] tabular-nums text-muted-foreground">{approved}/{total}</span>
+      </div>
+    );
+  }
+  const pct = Math.max(0, Math.min(100, Math.round((approved / total) * 100)));
+  return (
+    <div className="flex items-center gap-1.5">
+      <div className="h-1 w-16 rounded-full bg-muted-foreground/20 overflow-hidden">
+        <div className="h-full bg-emerald-500/80 dark:bg-emerald-400/80" style={{ width: `${pct}%` }} />
+      </div>
+      <span className="text-[10px] tabular-nums text-muted-foreground">{approved}/{total}</span>
+    </div>
+  );
+};
+
 // ─── Draggable Card ────────────────────────────────────────────────
 const DraggableKanbanCard: React.FC<{
   task: UnifiedTask;
