@@ -1136,7 +1136,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       );
     }
 
-    if (groupBy === 'project') {
+    if (effectiveGroupBy === 'project') {
       const groups: Record<string, UnifiedTask[]> = {};
       columnTasks.forEach(t => {
         const key = t.project || 'Unassigned';
