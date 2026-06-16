@@ -564,8 +564,8 @@ const KanbanCardContent: React.FC<{
       {/* Title + View in Gantt */}
       <div className="flex items-start justify-between gap-1">
         <p className={cn(
-          "font-medium text-foreground leading-snug break-words overflow-hidden flex-1",
-          isChild ? "text-xs mb-0.5" : "text-sm mb-1.5"
+          "text-foreground break-words overflow-hidden flex-1",
+          isChild ? "text-xs leading-snug mb-0.5 font-medium" : "text-[13px] leading-[1.3] mb-1 font-medium"
         )}>
           {task.project ? task.title.replace(new RegExp(`\\s*[–\\-]\\s*${task.project.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`), '') : task.title}
         </p>
