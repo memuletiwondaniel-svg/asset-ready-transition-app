@@ -25,7 +25,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { cn } from '@/lib/utils';
 
 type ViewMode = 'kanban' | 'table';
-type GroupBy = 'none' | 'project' | 'category';
+
 
 const MyTasksPage: React.FC = () => {
   const { user } = useAuth();
