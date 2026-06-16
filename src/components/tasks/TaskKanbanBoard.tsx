@@ -1134,7 +1134,9 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       );
     }
 
-    if (effectiveGroupBy === 'project') {
+    const colGroupBy = columnGroupBy[col.key];
+
+    if (colGroupBy === 'project') {
       const groups: Record<string, UnifiedTask[]> = {};
       columnTasks.forEach(t => {
         const key = t.project || 'Unassigned';
@@ -1151,7 +1153,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       ));
     }
 
-    if (effectiveGroupBy === 'category') {
+    if (colGroupBy === 'category') {
       const groups: Record<string, UnifiedTask[]> = {};
       columnTasks.forEach(t => {
         const key = t.categoryLabel;
