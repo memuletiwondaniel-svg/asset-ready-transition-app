@@ -40,7 +40,18 @@ import {
   CheckCircle2,
   Inbox,
   GanttChart,
+  MoreVertical,
+  Check,
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { isPast, isToday } from 'date-fns';
 import type { UnifiedTask, CategoryFilter } from './useUnifiedTasks';
@@ -64,11 +75,28 @@ import {
 
 type GroupBy = 'none' | 'project' | 'category';
 type KanbanColumn = 'todo' | 'in_progress' | 'waiting' | 'done';
+type SortKey = 'priority' | 'dueDate' | 'recentlyAdded' | 'recentlyCompleted';
+
+const SORT_LABELS: Record<SortKey, string> = {
+  priority: 'Priority',
+  dueDate: 'Due date',
+  recentlyAdded: 'Recently added',
+  recentlyCompleted: 'Recently completed',
+};
+
+const DEFAULT_COLUMN_SORT: Record<KanbanColumn, SortKey> = {
+  todo: 'priority',
+  in_progress: 'priority',
+  waiting: 'priority',
+  done: 'recentlyCompleted',
+};
 
 interface TaskKanbanBoardProps {
   tasks: UnifiedTask[];
   activeFilter: CategoryFilter;
   groupBy: GroupBy;
+  /** Optional — when provided, the in-board ⋮ menu's "Group by" updates the parent. */
+  onGroupByChange?: (next: GroupBy) => void;
   onUpdateTaskStatus: (taskId: string, status: string) => void;
 }
 
@@ -636,6 +664,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   tasks,
   activeFilter,
   groupBy,
+  onGroupByChange,
   onUpdateTaskStatus,
 }) => {
   const navigate = useNavigate();
@@ -649,6 +678,19 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   const [vcrPlanApprovalOpen, setVcrPlanApprovalOpen] = useState(false);
   const [activeTask, setActiveTask] = useState<UnifiedTask | null>(null);
   const { moveTaskToColumn } = useKanbanDragDrop();
+
+  // Per-column sort state (in-memory, board-local). Done defaults to
+  // recently-completed; the others default to the global priority order.
+  const [columnSort, setColumnSort] = useState<Record<KanbanColumn, SortKey>>(DEFAULT_COLUMN_SORT);
+  // Group-by is board-wide. If the parent passed onGroupByChange, we route
+  // changes up to it; otherwise we manage it internally seeded from the prop.
+  const [internalGroupBy, setInternalGroupBy] = useState<GroupBy>(groupBy);
+  useEffect(() => { setInternalGroupBy(groupBy); }, [groupBy]);
+  const effectiveGroupBy: GroupBy = onGroupByChange ? groupBy : internalGroupBy;
+  const setGroupBy = (next: GroupBy) => {
+    if (onGroupByChange) onGroupByChange(next);
+    else setInternalGroupBy(next);
+  };
 
   // Batch-fetch reviewer summaries for ALL tasks (not just done column)
   const allTaskIds = useMemo(() => 
@@ -1042,18 +1084,30 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
 
   const COLUMNS = useMemo(() => getColumns(t), [t]);
 
-  // Sort Done column by most-recently-completed first.
-  // Tasks with a real completedAt come before those without; ties / missing
-  // values fall back to createdAt desc. Other columns keep the global priority sort.
-  const sortDoneRecent = (a: UnifiedTask, b: UnifiedTask) => {
-    const aHas = !!a.completedAt;
-    const bHas = !!b.completedAt;
-    if (aHas && bHas) {
-      return new Date(b.completedAt!).getTime() - new Date(a.completedAt!).getTime();
+  // Per-column sort comparators. "Priority" preserves the global pre-sort
+  // from useUnifiedTasks (waiting-last → smartPriority → dueDate → createdAt).
+  const compareBySort = (key: SortKey) => (a: UnifiedTask, b: UnifiedTask) => {
+    const tsDesc = (av?: string | null, bv?: string | null) => {
+      const aHas = !!av, bHas = !!bv;
+      if (aHas && bHas) return new Date(bv!).getTime() - new Date(av!).getTime();
+      if (aHas && !bHas) return -1;
+      if (!aHas && bHas) return 1;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    };
+    const tsAsc = (av?: string | null, bv?: string | null) => {
+      const aHas = !!av, bHas = !!bv;
+      if (aHas && bHas) return new Date(av!).getTime() - new Date(bv!).getTime();
+      if (aHas && !bHas) return -1;
+      if (!aHas && bHas) return 1;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    };
+    switch (key) {
+      case 'recentlyCompleted': return tsDesc(a.completedAt, b.completedAt);
+      case 'recentlyAdded':     return tsDesc(a.createdAt, b.createdAt);
+      case 'dueDate':           return tsAsc(a.dueDate || a.endDate, b.dueDate || b.endDate);
+      case 'priority':
+      default:                  return 0; // preserve incoming (already priority-sorted) order
     }
-    if (aHas && !bHas) return -1;
-    if (!aHas && bHas) return 1;
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   };
 
   const columnData = useMemo(() => {
@@ -1063,10 +1117,13 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
           ? (t.kanbanColumn === 'todo' || t.kanbanColumn === 'waiting')
           : t.kanbanColumn === col.key
       );
-      const ordered = col.key === 'done' ? [...filtered].sort(sortDoneRecent) : filtered;
-      return { ...col, tasks: ordered };
+      const sortKey = columnSort[col.key];
+      const ordered = sortKey === 'priority'
+        ? filtered
+        : [...filtered].sort(compareBySort(sortKey));
+      return { ...col, tasks: ordered, sortKey };
     });
-  }, [tasks, COLUMNS]);
+  }, [tasks, COLUMNS, columnSort]);
 
   const renderColumnContent = (columnTasks: UnifiedTask[], col: typeof columnData[number]) => {
     if (columnTasks.length === 0) {
@@ -1079,7 +1136,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       );
     }
 
-    if (groupBy === 'project') {
+    if (effectiveGroupBy === 'project') {
       const groups: Record<string, UnifiedTask[]> = {};
       columnTasks.forEach(t => {
         const key = t.project || 'Unassigned';
@@ -1096,7 +1153,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       ));
     }
 
-    if (groupBy === 'category') {
+    if (effectiveGroupBy === 'category') {
       const groups: Record<string, UnifiedTask[]> = {};
       columnTasks.forEach(t => {
         const key = t.categoryLabel;
@@ -1148,7 +1205,46 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
                       <ColIcon className={cn("h-4 w-4", col.iconColor)} strokeWidth={2.25} />
                       <span className={cn("text-sm font-black uppercase tracking-wider", col.headerText)}>{col.label}</span>
                     </div>
-                    <Badge variant="secondary" className="absolute right-3 text-[10px] font-medium px-1.5 py-0 min-w-[1.25rem] text-center text-muted-foreground bg-muted/60">{col.tasks.length}</Badge>
+                    <div className="absolute right-2 flex items-center gap-1">
+                      <Badge variant="secondary" className="text-[10px] font-medium px-1.5 py-0 min-w-[1.25rem] text-center text-muted-foreground bg-muted/60">{col.tasks.length}</Badge>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            data-rm-safe
+                            data-rm-nav
+                            aria-label={`${col.label} column options`}
+                            className="h-6 w-6 text-muted-foreground/70 hover:text-foreground hover:bg-background/60 focus-visible:ring-1"
+                          >
+                            <MoreVertical className="h-3.5 w-3.5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-52">
+                          <DropdownMenuLabel className="text-[11px] uppercase tracking-wider text-muted-foreground">Sort by</DropdownMenuLabel>
+                          <DropdownMenuRadioGroup
+                            value={col.sortKey}
+                            onValueChange={(v) => setColumnSort(prev => ({ ...prev, [col.key]: v as SortKey }))}
+                          >
+                            {(Object.keys(SORT_LABELS) as SortKey[]).map(k => (
+                              <DropdownMenuRadioItem key={k} value={k} className="text-xs">
+                                {SORT_LABELS[k]}
+                              </DropdownMenuRadioItem>
+                            ))}
+                          </DropdownMenuRadioGroup>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuLabel className="text-[11px] uppercase tracking-wider text-muted-foreground">Group by</DropdownMenuLabel>
+                          <DropdownMenuRadioGroup
+                            value={effectiveGroupBy}
+                            onValueChange={(v) => setGroupBy(v as GroupBy)}
+                          >
+                            <DropdownMenuRadioItem value="none" className="text-xs">None</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="project" className="text-xs">Project</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="category" className="text-xs">Category</DropdownMenuRadioItem>
+                          </DropdownMenuRadioGroup>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
                   {/* Cards */}
                   <ScrollArea className="flex-1 max-h-[50vh] sm:max-h-[calc(100vh-320px)]">
