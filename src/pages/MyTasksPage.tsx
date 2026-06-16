@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ListChecks, Plus, Search, Kanban, FolderOpen, Layers, BookOpen, PenLine, TableProperties } from 'lucide-react';
+import { ListChecks, Plus, Search, Kanban, BookOpen, PenLine, TableProperties } from 'lucide-react';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
