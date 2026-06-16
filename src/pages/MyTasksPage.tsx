@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ListChecks, Plus, Search, Kanban, FolderOpen, Layers, BookOpen, PenLine, TableProperties } from 'lucide-react';
+import { ListChecks, Plus, Search, Kanban, BookOpen, PenLine, TableProperties } from 'lucide-react';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,7 +25,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { cn } from '@/lib/utils';
 
 type ViewMode = 'kanban' | 'table';
-type GroupBy = 'none' | 'project' | 'category';
+
 
 const MyTasksPage: React.FC = () => {
   const { user } = useAuth();
@@ -36,7 +36,7 @@ const MyTasksPage: React.FC = () => {
   const [addActivityMode, setAddActivityMode] = useState<'catalog' | 'custom'>('catalog');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
-  const [groupBy, setGroupBy] = useState<GroupBy>('none');
+  
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -100,35 +100,6 @@ const MyTasksPage: React.FC = () => {
 
           <TooltipProvider delayDuration={200}>
             <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto">
-              {/* Group by dropdown */}
-              <DropdownMenu>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8 border-transparent bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground hover:border-border transition-colors"
-                      >
-                        {groupBy === 'project' ? <FolderOpen className="h-4 w-4" /> : <Layers className="h-4 w-4" />}
-                      </Button>
-                    </DropdownMenuTrigger>
-                  </TooltipTrigger>
-                  <TooltipContent>Grouping</TooltipContent>
-                </Tooltip>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setGroupBy('none')}>
-                    {t.noGrouping || 'No Grouping'}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setGroupBy('project')}>
-                    <FolderOpen className="h-3.5 w-3.5 mr-2" /> {t.groupByProject || 'By Project'}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setGroupBy('category')}>
-                    <Layers className="h-3.5 w-3.5 mr-2" /> {t.groupByCategory || 'By Category'}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
               {/* Consolidated view toggle — shows the view you'll switch TO */}
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -181,10 +152,9 @@ const MyTasksPage: React.FC = () => {
           <TaskTableView
             searchQuery={searchQuery}
             userId={user.id}
-            groupBy={groupBy}
           />
         ) : (
-          <KanbanView userId={user.id} searchQuery={searchQuery} groupBy={groupBy} onGroupByChange={setGroupBy} />
+          <KanbanView userId={user.id} searchQuery={searchQuery} />
         )}
       </div>
 
@@ -198,7 +168,7 @@ const MyTasksPage: React.FC = () => {
 };
 
 // Separate component to use hooks properly
-const KanbanView: React.FC<{ userId: string; searchQuery: string; groupBy: GroupBy; onGroupByChange?: (g: GroupBy) => void }> = ({ userId, searchQuery, groupBy, onGroupByChange }) => {
+const KanbanView: React.FC<{ userId: string; searchQuery: string }> = ({ userId, searchQuery }) => {
   const { allTasks, isLoading, updateTaskStatus } = useUnifiedTasks(userId);
 
   const filteredTasks = React.useMemo(() => {
@@ -226,8 +196,6 @@ const KanbanView: React.FC<{ userId: string; searchQuery: string; groupBy: Group
     <TaskKanbanBoard
       tasks={filteredTasks}
       activeFilter="all"
-      groupBy={groupBy}
-      onGroupByChange={onGroupByChange}
       onUpdateTaskStatus={updateTaskStatus}
     />
   );

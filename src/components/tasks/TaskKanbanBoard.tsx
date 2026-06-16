@@ -94,9 +94,6 @@ const DEFAULT_COLUMN_SORT: Record<KanbanColumn, SortKey> = {
 interface TaskKanbanBoardProps {
   tasks: UnifiedTask[];
   activeFilter: CategoryFilter;
-  groupBy: GroupBy;
-  /** Optional — when provided, the in-board ⋮ menu's "Group by" updates the parent. */
-  onGroupByChange?: (next: GroupBy) => void;
   onUpdateTaskStatus: (taskId: string, status: string) => void;
 }
 
@@ -663,8 +660,6 @@ const ProjectGroup: React.FC<{
 export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   tasks,
   activeFilter,
-  groupBy,
-  onGroupByChange,
   onUpdateTaskStatus,
 }) => {
   const navigate = useNavigate();
@@ -679,18 +674,14 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   const [activeTask, setActiveTask] = useState<UnifiedTask | null>(null);
   const { moveTaskToColumn } = useKanbanDragDrop();
 
-  // Per-column sort state (in-memory, board-local). Done defaults to
+  // Per-column sort + group state (in-memory, board-local). Done defaults to
   // recently-completed; the others default to the global priority order.
+  // Grouping is per-column (mirrors the sort model) so changing one column's
+  // grouping does NOT affect the others.
   const [columnSort, setColumnSort] = useState<Record<KanbanColumn, SortKey>>(DEFAULT_COLUMN_SORT);
-  // Group-by is board-wide. If the parent passed onGroupByChange, we route
-  // changes up to it; otherwise we manage it internally seeded from the prop.
-  const [internalGroupBy, setInternalGroupBy] = useState<GroupBy>(groupBy);
-  useEffect(() => { setInternalGroupBy(groupBy); }, [groupBy]);
-  const effectiveGroupBy: GroupBy = onGroupByChange ? groupBy : internalGroupBy;
-  const setGroupBy = (next: GroupBy) => {
-    if (onGroupByChange) onGroupByChange(next);
-    else setInternalGroupBy(next);
-  };
+  const [columnGroupBy, setColumnGroupBy] = useState<Record<KanbanColumn, GroupBy>>({
+    todo: 'none', in_progress: 'none', waiting: 'none', done: 'none',
+  });
 
   // Batch-fetch reviewer summaries for ALL tasks (not just done column)
   const allTaskIds = useMemo(() => 
@@ -1143,7 +1134,9 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       );
     }
 
-    if (effectiveGroupBy === 'project') {
+    const colGroupBy = columnGroupBy[col.key];
+
+    if (colGroupBy === 'project') {
       const groups: Record<string, UnifiedTask[]> = {};
       columnTasks.forEach(t => {
         const key = t.project || 'Unassigned';
@@ -1160,7 +1153,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       ));
     }
 
-    if (effectiveGroupBy === 'category') {
+    if (colGroupBy === 'category') {
       const groups: Record<string, UnifiedTask[]> = {};
       columnTasks.forEach(t => {
         const key = t.categoryLabel;
@@ -1242,8 +1235,8 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
                           <DropdownMenuSeparator />
                           <DropdownMenuLabel className="text-[11px] uppercase tracking-wider text-muted-foreground">Group by</DropdownMenuLabel>
                           <DropdownMenuRadioGroup
-                            value={effectiveGroupBy}
-                            onValueChange={(v) => setGroupBy(v as GroupBy)}
+                            value={columnGroupBy[col.key]}
+                            onValueChange={(v) => setColumnGroupBy(prev => ({ ...prev, [col.key]: v as GroupBy }))}
                           >
                             <DropdownMenuRadioItem value="none" className="text-xs">None</DropdownMenuRadioItem>
                             <DropdownMenuRadioItem value="project" className="text-xs">Project</DropdownMenuRadioItem>
