@@ -184,7 +184,7 @@ const MyTasksPage: React.FC = () => {
             groupBy={groupBy}
           />
         ) : (
-          <KanbanView userId={user.id} searchQuery={searchQuery} groupBy={groupBy} />
+          <KanbanView userId={user.id} searchQuery={searchQuery} groupBy={groupBy} onGroupByChange={setGroupBy} />
         )}
       </div>
 
