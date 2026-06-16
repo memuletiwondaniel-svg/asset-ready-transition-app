@@ -664,6 +664,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   tasks,
   activeFilter,
   groupBy,
+  onGroupByChange,
   onUpdateTaskStatus,
 }) => {
   const navigate = useNavigate();
