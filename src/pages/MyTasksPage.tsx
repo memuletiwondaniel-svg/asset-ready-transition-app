@@ -152,10 +152,9 @@ const MyTasksPage: React.FC = () => {
           <TaskTableView
             searchQuery={searchQuery}
             userId={user.id}
-            groupBy={groupBy}
           />
         ) : (
-          <KanbanView userId={user.id} searchQuery={searchQuery} groupBy={groupBy} onGroupByChange={setGroupBy} />
+          <KanbanView userId={user.id} searchQuery={searchQuery} />
         )}
       </div>
 
