@@ -84,6 +84,13 @@ const SORT_LABELS: Record<SortKey, string> = {
   recentlyCompleted: 'Recently completed',
 };
 
+const SORT_SUBLABELS: Record<SortKey, string> = {
+  priority: 'by priority',
+  dueDate: 'by due date',
+  recentlyAdded: 'by recently added',
+  recentlyCompleted: 'by recently completed',
+};
+
 const DEFAULT_COLUMN_SORT: Record<KanbanColumn, SortKey> = {
   todo: 'priority',
   in_progress: 'priority',
