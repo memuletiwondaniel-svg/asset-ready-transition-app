@@ -43,6 +43,8 @@ export interface UnifiedTask {
   startDate?: string;
   endDate?: string;
   createdAt: string;
+  /** When the task reached the Done column (decided_at / updated_at / completed_at). Null if unknown. */
+  completedAt?: string | null;
   priority: 'high' | 'medium' | 'low';
   smartPriority: SmartPriorityResult;
   navigateTo?: string;
