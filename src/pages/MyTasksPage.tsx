@@ -100,35 +100,6 @@ const MyTasksPage: React.FC = () => {
 
           <TooltipProvider delayDuration={200}>
             <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto">
-              {/* Group by dropdown */}
-              <DropdownMenu>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8 border-transparent bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground hover:border-border transition-colors"
-                      >
-                        {groupBy === 'project' ? <FolderOpen className="h-4 w-4" /> : <Layers className="h-4 w-4" />}
-                      </Button>
-                    </DropdownMenuTrigger>
-                  </TooltipTrigger>
-                  <TooltipContent>Grouping</TooltipContent>
-                </Tooltip>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setGroupBy('none')}>
-                    {t.noGrouping || 'No Grouping'}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setGroupBy('project')}>
-                    <FolderOpen className="h-3.5 w-3.5 mr-2" /> {t.groupByProject || 'By Project'}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setGroupBy('category')}>
-                    <Layers className="h-3.5 w-3.5 mr-2" /> {t.groupByCategory || 'By Category'}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
               {/* Consolidated view toggle — shows the view you'll switch TO */}
               <Tooltip>
                 <TooltipTrigger asChild>
