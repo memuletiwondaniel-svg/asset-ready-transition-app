@@ -158,6 +158,8 @@ export const WizardShell: React.FC<WizardShellProps> = ({
                       <button
                         key={step.id}
                         onClick={() => onStepChange(idx)}
+                        data-rm-safe
+                        data-rm-nav
                         className={cn(
                           'relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap shrink-0 transition-all border',
                           isActive
