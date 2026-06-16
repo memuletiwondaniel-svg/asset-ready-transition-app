@@ -1081,6 +1081,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                   if (p2aPlanIsFullyApproved) {
                     setP2aWorkspaceOpen(true);
                   } else {
+                    promoteToInProgressIfNeeded(task, queryClient);
                     setP2aWizardOpen(true);
                   }
                 }}
