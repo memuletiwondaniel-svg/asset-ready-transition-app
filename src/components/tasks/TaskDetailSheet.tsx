@@ -332,6 +332,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   // Save P2A schedule dates — syncs to both user_tasks AND ora_plan_activities (Gantt)
   const handleSaveP2aDates = async () => {
     if (!task) return;
+    promoteToInProgressIfNeeded(task, queryClient);
     setIsSavingP2aDates(true);
     try {
       const startStr = p2aStartDate ? format(p2aStartDate, 'yyyy-MM-dd') : null;
