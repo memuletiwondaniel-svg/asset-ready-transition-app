@@ -6,7 +6,7 @@ export interface VCRPlanApprovalEvent {
   handover_point_id: string;
   actor_id: string | null;
   actor_name?: string | null;
-  event_type: 'SUBMITTED' | 'EDIT' | 'APPROVED' | 'REJECTED' | 'BASELINED' | 'SCOPE_VOIDED';
+  event_type: 'SUBMITTED' | 'EDIT' | 'APPROVED' | 'REJECTED' | 'BASELINED' | 'SCOPE_VOIDED' | 'ITEM_ADDED' | 'ITEM_REMOVED';
   payload: any;
   created_at: string;
 }
