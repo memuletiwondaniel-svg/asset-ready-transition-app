@@ -718,6 +718,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                     onOpenChange(false);
                     setOraGanttOpen(true);
                   } else {
+                    promoteToInProgressIfNeeded(task, queryClient);
                     setOraWizardOpen(true);
                   }
                 }}
