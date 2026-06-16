@@ -22,6 +22,9 @@ export interface VCRPlanApprovalTask {
   total_count: number;
   approved_count: number;
   execution_plan_status: 'DRAFT' | 'SUBMITTED' | 'CHANGES_REQUESTED' | 'APPROVED';
+  row_status?: 'PENDING' | 'APPROVED' | 'REJECTED' | string | null;
+  decided_at?: string | null;
+  task_created_at?: string | null;
 }
 
 export function useVCRPlanApprovalTasks() {
@@ -31,11 +34,16 @@ export function useVCRPlanApprovalTasks() {
     queryKey: ['vcr-plan-approval-tasks', user?.id],
     queryFn: async () => {
       if (!user?.id) return [] as VCRPlanApprovalTask[];
+      // Return:
+      //   (a) actionable rows for this user (pending action), AND
+      //   (b) this user's own already-decided rows (APPROVED/REJECTED) — so
+      //       the card moves to the Done column instead of disappearing.
+      // Non-actionable PENDING rows (e.g. Phase-2 awaiting Phase 1) remain hidden.
       const { data, error } = await (supabase as any)
         .from('v_vcr_plan_approver_tasks')
-        .select('approver_row_id, handover_point_id, vcr_code, vcr_name, project_id, project_code, role_key, role_label, phase, total_count, approved_count, execution_plan_status, is_actionable, user_id')
+        .select('approver_row_id, handover_point_id, vcr_code, vcr_name, project_id, project_code, role_key, role_label, phase, total_count, approved_count, execution_plan_status, is_actionable, user_id, row_status, decided_at, task_created_at')
         .eq('user_id', user.id)
-        .eq('is_actionable', true);
+        .or('is_actionable.eq.true,row_status.in.(APPROVED,REJECTED)');
       if (error) throw error;
       return (data || []) as VCRPlanApprovalTask[];
     },
