@@ -331,7 +331,7 @@ const KanbanCardContent: React.FC<{
   const dateAnnotation = getDateAnnotation(task);
   const sp = task.smartPriority;
   const isWaitingVcrApprovalBundle = task.isWaiting && isClickableVcrApprovalBundle(task);
-  
+
   // Detect ORA activity tasks that can link to a Gantt chart
   const meta = task.userTask?.metadata as Record<string, any> | undefined;
   const isOraActivity = task.userTask?.type === 'ora_activity' || meta?.action === 'complete_ora_activity' || meta?.action === 'create_p2a_plan' || meta?.action === 'create_vcr_delivery_plan' || meta?.ora_plan_activity_id;
@@ -342,21 +342,45 @@ const KanbanCardContent: React.FC<{
   const p2aApprovalSummaries = useContext(P2AApprovalContext);
   const oraApprovalSummaries = useContext(ORAApprovalContext);
 
+  // Urgency rail color (inner element — keeps rounded corners intact).
+  // overdue → red; today or within ~3 days → amber; rejected → destructive; else neutral.
+  const railColor = (() => {
+    if (accentClass === 'border-l-destructive') return 'bg-destructive';
+    if (task.kanbanColumn === 'done') return 'bg-transparent';
+    if (dateAnnotation?.variant === 'overdue') return 'bg-red-500';
+    if (dateAnnotation?.variant === 'today') return 'bg-amber-500';
+    const due = task.dueDate || task.endDate;
+    if (due) {
+      const ms = new Date(due).getTime() - Date.now();
+      if (ms > 0 && ms <= 3 * 24 * 60 * 60 * 1000) return 'bg-amber-500';
+    }
+    return 'bg-transparent';
+  })();
+
   return (
     <Card
       onClick={onClick}
+      tabIndex={0}
       className={cn(
-        isChild ? "p-2 cursor-pointer rounded-md group border-l-2" : "p-3 cursor-pointer transition-all duration-200 rounded-lg group border-l-[3px]",
+        "relative",
+        isChild ? "p-2 cursor-pointer rounded-md group border-l-2" : "px-3 py-2 pl-3.5 cursor-pointer transition-all duration-200 rounded-lg group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
         isChild
           ? "border-0 border-l-border/50 bg-muted/30 shadow-none hover:bg-muted/50"
-          : "border border-border/60 bg-card shadow-[0_1px_3px_0_rgb(0,0,0,0.04)] hover:-translate-y-0.5 hover:shadow-md hover:border-border",
-        !isChild && (accentClass || 'border-l-border'),
+          : "border border-border/60 bg-card shadow-[0_1px_2px_0_rgb(0,0,0,0.03)] hover:-translate-y-0.5 hover:shadow-md hover:border-border",
         isChild && 'border-l-border/50',
         task.isWaiting && !isWaitingVcrApprovalBundle && 'opacity-50',
-        task.isNew && !isChild && 'ring-1 ring-primary/15',
-        isOverlay && 'shadow-xl ring-2 ring-primary/20 rotate-[2deg] scale-[1.03]',
+        isOverlay && 'shadow-xl ring-2 ring-primary/20 rotate-[1deg] scale-[1.02]',
       )}
     >
+      {!isChild && (
+        <span
+          aria-hidden
+          className={cn(
+            "pointer-events-none absolute left-1 top-1.5 bottom-1.5 w-[3px] rounded-full",
+            railColor,
+          )}
+        />
+      )}
       {/* Row 1: drag handle + project ID left, status right */}
       <div className={cn("flex items-center justify-between gap-1.5", isChild ? "mb-1" : "mb-1.5")}>
         <div className="flex items-center gap-1.5 min-w-0">
