@@ -33,6 +33,9 @@ export const VCRApprovalHistoryPanel: React.FC<Props> = ({ handoverPointId, defa
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        data-rm-safe
+        data-rm-nav
         className="w-full flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
       >
         {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
