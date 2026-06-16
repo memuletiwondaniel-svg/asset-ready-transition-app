@@ -43,6 +43,8 @@ export interface UnifiedTask {
   startDate?: string;
   endDate?: string;
   createdAt: string;
+  /** When the task reached the Done column (decided_at / updated_at / completed_at). Null if unknown. */
+  completedAt?: string | null;
   priority: 'high' | 'medium' | 'low';
   smartPriority: SmartPriorityResult;
   navigateTo?: string;
@@ -288,6 +290,7 @@ export function useUnifiedTasks(userId: string) {
         startDate,
         endDate,
         createdAt: t.created_at,
+        completedAt: t.status === 'completed' ? (t.updated_at ?? null) : null,
         priority: smartPriorityToLegacy(sp.level),
         smartPriority: sp,
         isNew: isNewSinceLastLogin(t.created_at),
@@ -398,6 +401,7 @@ export function useUnifiedTasks(userId: string) {
         createdAt: createdForPriority,
         priority: smartPriorityToLegacy(sp.level),
         smartPriority: sp,
+        completedAt: isDecided ? (item.decided_at ?? null) : null,
         // Only mark "new" when we have a real timestamp AND the user hasn't decided yet.
         isNew: !isDecided && created ? isNewSinceLastLogin(created) : false,
         kanbanColumn,
@@ -498,6 +502,7 @@ export function useUnifiedTasks(userId: string) {
         project: isPSSR ? meta?.project_name : normalizeProjectCode(meta?.project_code),
         status: `${completed}/${total}`,
         createdAt: task.created_at,
+        completedAt: task.status === 'completed' ? (task.updated_at ?? null) : null,
         priority: smartPriorityToLegacy(spBundle.level),
         smartPriority: spBundle,
         isNew: isNewSinceLastLogin(task.created_at),

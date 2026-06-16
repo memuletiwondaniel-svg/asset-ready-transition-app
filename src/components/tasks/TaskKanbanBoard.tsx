@@ -1042,15 +1042,30 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
 
   const COLUMNS = useMemo(() => getColumns(t), [t]);
 
+  // Sort Done column by most-recently-completed first.
+  // Tasks with a real completedAt come before those without; ties / missing
+  // values fall back to createdAt desc. Other columns keep the global priority sort.
+  const sortDoneRecent = (a: UnifiedTask, b: UnifiedTask) => {
+    const aHas = !!a.completedAt;
+    const bHas = !!b.completedAt;
+    if (aHas && bHas) {
+      return new Date(b.completedAt!).getTime() - new Date(a.completedAt!).getTime();
+    }
+    if (aHas && !bHas) return -1;
+    if (!aHas && bHas) return 1;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  };
+
   const columnData = useMemo(() => {
-    return COLUMNS.map(col => ({
-      ...col,
-      tasks: tasks.filter(t => 
-        col.key === 'todo' 
+    return COLUMNS.map(col => {
+      const filtered = tasks.filter(t =>
+        col.key === 'todo'
           ? (t.kanbanColumn === 'todo' || t.kanbanColumn === 'waiting')
           : t.kanbanColumn === col.key
-      ),
-    }));
+      );
+      const ordered = col.key === 'done' ? [...filtered].sort(sortDoneRecent) : filtered;
+      return { ...col, tasks: ordered };
+    });
   }, [tasks, COLUMNS]);
 
   const renderColumnContent = (columnTasks: UnifiedTask[], col: typeof columnData[number]) => {
