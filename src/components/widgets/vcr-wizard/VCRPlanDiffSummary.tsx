@@ -7,6 +7,7 @@ import type { SectionDiff } from '@/lib/vcrPlanDiff';
 interface Props {
   handoverPointId: string;
   mode?: DiffMode;
+  title?: string;
 }
 
 interface RenderSection {
@@ -48,7 +49,7 @@ const SectionBlock: React.FC<{
   </div>
 );
 
-export const VCRPlanDiffSummary: React.FC<Props> = ({ handoverPointId, mode = 'live' }) => {
+export const VCRPlanDiffSummary: React.FC<Props> = ({ handoverPointId, mode = 'live', title }) => {
   const { diff, fromMissing, loading, itemNames } = useVcrPlanDiff(handoverPointId, { mode });
 
   const labelFor = useMemo(
@@ -101,7 +102,7 @@ export const VCRPlanDiffSummary: React.FC<Props> = ({ handoverPointId, mode = 'l
     <section className="space-y-3">
       <div className="space-y-1">
         <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-          {mode === 'live' ? 'Your changes vs the submitted plan' : 'Approved baseline vs submitted plan'}
+          {title ?? (mode === 'live' ? 'Your changes vs the submitted plan' : 'Approved baseline vs submitted plan')}
         </div>
         {mode === 'live' && (
           <p className="text-xs text-muted-foreground/80">
