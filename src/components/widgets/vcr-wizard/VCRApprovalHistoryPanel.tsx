@@ -69,15 +69,40 @@ export const VCRApprovalHistoryPanel: React.FC<Props> = ({ handoverPointId, defa
             </div>
           ) : !events || events.length === 0 ? (
             <div className="text-xs text-muted-foreground italic">No events recorded yet.</div>
-          ) : (
+          ) : (() => {
+            // Collapse consecutive EDIT rows by the same actor into one "Plan saved" entry
+            // (events arrive desc by created_at). Display-only; underlying rows untouched.
+            const collapsed: Array<VCRPlanApprovalEvent & { _editCount?: number }> = [];
+            for (const e of events) {
+              const prev = collapsed[collapsed.length - 1];
+              if (
+                e.event_type === 'EDIT' &&
+                prev &&
+                prev.event_type === 'EDIT' &&
+                prev.actor_id === e.actor_id
+              ) {
+                prev._editCount = (prev._editCount || 1) + 1;
+                continue;
+              }
+              collapsed.push({ ...e });
+            }
+            return (
             <ol className="space-y-2">
-              {events.map((e) => {
+              {collapsed.map((e) => {
                 const meta = eventStyle[e.event_type];
                 const Icon = meta.icon;
                 const role = e.payload?.role_label || e.payload?.role_key;
                 const phase = e.payload?.phase;
                 const comment = e.payload?.comment;
                 const isBaselined = e.event_type === 'BASELINED';
+                const isItem = e.event_type === 'ITEM_ADDED' || e.event_type === 'ITEM_REMOVED';
+                const itemType = e.payload?.item_type as string | undefined;
+                const itemName = e.payload?.name as string | undefined;
+                const itemLabel = itemType ? (ITEM_TYPE_LABEL[itemType] || itemType) : null;
+                const actionWord = e.event_type === 'ITEM_ADDED' ? 'added' : 'removed';
+                const headline = isItem && itemLabel
+                  ? `${itemLabel} ${actionWord}`
+                  : meta.label;
                 return (
                   <li
                     key={e.id}
@@ -102,9 +127,15 @@ export const VCRApprovalHistoryPanel: React.FC<Props> = ({ handoverPointId, defa
                                 : <ChevronRight className="h-3.5 w-3.5" />}
                             </button>
                           )}
-                          {meta.label}
-                          {role && <span className="text-muted-foreground font-normal"> · {role}</span>}
-                          {phase != null && <span className="text-muted-foreground font-normal"> · Phase {phase}</span>}
+                          {headline}
+                          {isItem && itemName && (
+                            <span className="text-muted-foreground font-normal"> — {itemName}</span>
+                          )}
+                          {e._editCount && e._editCount > 1 && (
+                            <span className="text-muted-foreground font-normal"> · ×{e._editCount}</span>
+                          )}
+                          {!isItem && role && <span className="text-muted-foreground font-normal"> · {role}</span>}
+                          {!isItem && phase != null && <span className="text-muted-foreground font-normal"> · Phase {phase}</span>}
                         </span>
                         <span className="text-[10px] text-muted-foreground tabular-nums">
                           {format(new Date(e.created_at), 'd MMM yyyy, HH:mm')}
@@ -132,7 +163,8 @@ export const VCRApprovalHistoryPanel: React.FC<Props> = ({ handoverPointId, defa
                 );
               })}
             </ol>
-          )}
+            );
+          })()}
         </div>
       )}
     </section>
