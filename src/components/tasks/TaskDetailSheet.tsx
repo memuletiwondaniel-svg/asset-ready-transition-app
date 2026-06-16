@@ -30,6 +30,7 @@ import { ApprovalActivityFeed } from './ApprovalActivityFeed';
 import { TaskActivityFeed } from './TaskActivityFeed';
 import { TaskReviewersSection } from './TaskReviewersSection';
 import { TaskAttachmentsSection } from './TaskAttachmentsSection';
+import { promoteToInProgressIfNeeded } from './promoteToInProgress';
 
 import { VCRExecutionPlanWizard } from '@/components/widgets/vcr-wizard/VCRExecutionPlanWizard';
 import type { UserTask } from '@/hooks/useUserTasks';
@@ -331,6 +332,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   // Save P2A schedule dates — syncs to both user_tasks AND ora_plan_activities (Gantt)
   const handleSaveP2aDates = async () => {
     if (!task) return;
+    promoteToInProgressIfNeeded(task, queryClient);
     setIsSavingP2aDates(true);
     try {
       const startStr = p2aStartDate ? format(p2aStartDate, 'yyyy-MM-dd') : null;
@@ -717,6 +719,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                     onOpenChange(false);
                     setOraGanttOpen(true);
                   } else {
+                    promoteToInProgressIfNeeded(task, queryClient);
                     setOraWizardOpen(true);
                   }
                 }}
@@ -895,6 +898,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               <Button
                 className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
                 onClick={() => {
+                  promoteToInProgressIfNeeded(task, queryClient);
                   onOpenChange(false);
                   setOraActivityOpen(true);
                 }}
@@ -1078,6 +1082,7 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                   if (p2aPlanIsFullyApproved) {
                     setP2aWorkspaceOpen(true);
                   } else {
+                    promoteToInProgressIfNeeded(task, queryClient);
                     setP2aWizardOpen(true);
                   }
                 }}
@@ -1128,7 +1133,10 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                 )}
                 <Button
                   className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
-                  onClick={() => setVcrWizardOpen(true)}
+                  onClick={() => {
+                    if (!vcrPlanIsApproved) promoteToInProgressIfNeeded(task, queryClient);
+                    setVcrWizardOpen(true);
+                  }}
                 >
                   {vcrPlanIsApproved ? <Eye className="h-4 w-4" /> : <ClipboardList className="h-4 w-4" />}
                   {vcrCtaLabel}
