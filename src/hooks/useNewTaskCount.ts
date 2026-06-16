@@ -1,57 +1,35 @@
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useMemo } from 'react';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
-import { fetchB2BPartnerIds } from './useB2BPartner';
+import { useUnifiedTasks } from '@/components/tasks/useUnifiedTasks';
 
 /**
- * Returns the count of tasks created since the user's last login.
- * Used to show a badge on the "My Tasks" sidebar item.
- * Includes B2B partner's pending tasks (same inbox model).
+ * Returns the count of "new" actionable tasks across ALL sources that feed My Tasks
+ * (user_tasks, PSSR reviews, P2A approvals, ORA workflow, OWL, bundle tasks,
+ *  VCR plan approvals). A task is "new" when its created/assigned timestamp is
+ *  after the user's prior last_login_at (snapshot captured by useUserLastLogin).
+ *
+ * Excluded from "new":
+ *  - tasks already in the `done` kanban column (closed/approved/completed)
+ *  - VCR plan-approval rows (v_vcr_plan_approver_tasks has no per-row created_at;
+ *    we never mark them "new" to avoid false positives)
+ *
+ * De-duplication is inherited from useUnifiedTasks (P2A approval cycles + parent/child
+ * collapse + PSSR/plan_id guards), so identical tasks aren't double-counted.
  */
-export const useNewTaskCount = () => {
+export const useNewTaskCount = (): number => {
   const { user } = useAuth();
+  const { allTasks } = useUnifiedTasks(user?.id || '');
 
-  const { data: newTaskCount = 0 } = useQuery({
-    queryKey: ['new-task-count', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return 0;
-
-      // Get user's last login timestamp
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('last_login_at')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      const partnerIds = await fetchB2BPartnerIds(user.id);
-      const effectiveUserIds = [user.id, ...partnerIds];
-
-      // Build query for pending/in_progress tasks.
-      // Read binds to ora_activity_plan_v (M5) — cancelled + cancelled_superseded auto-excluded.
-      let query = (supabase as any)
-        .from('ora_activity_plan_v')
-        .select('id', { count: 'exact', head: true })
-        .in('user_id', effectiveUserIds)
-        .in('status', ['pending', 'in_progress']);
-
-      // If last_login_at exists, only count tasks created after it
-      // If null (first login or never visited tasks), count ALL pending tasks
-      if (profile?.last_login_at) {
-        query = query.gt('created_at', profile.last_login_at);
+  return useMemo(() => {
+    if (!user?.id) return 0;
+    let count = 0;
+    const walk = (list: typeof allTasks) => {
+      for (const t of list) {
+        if (t.isNew && t.kanbanColumn !== 'done') count += 1;
+        if (t.children?.length) walk(t.children);
       }
-
-      const { count, error } = await query;
-
-      if (error) {
-        console.error('Error fetching new task count:', error);
-        return 0;
-      }
-
-      return count ?? 0;
-    },
-    enabled: !!user?.id,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-  });
-
-  return newTaskCount;
+    };
+    walk(allTasks);
+    return count;
+  }, [allTasks, user?.id]);
 };

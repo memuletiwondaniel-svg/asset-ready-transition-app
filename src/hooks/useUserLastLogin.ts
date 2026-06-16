@@ -1,10 +1,10 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 
 export const useUserLastLogin = () => {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
+
 
   const { data: lastLogin } = useQuery({
     queryKey: ['user-last-login', user?.id],
@@ -35,9 +35,10 @@ export const useUserLastLogin = () => {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user-last-login', user?.id] });
-    },
+    // Intentionally NO invalidate: keep the prior last_login_at snapshot in
+    // the cache for the rest of the session so "New" badges/counter remain
+    // visible while the user is reviewing My Tasks. The fresh value is picked
+    // up on the next page load / new session.
   });
 
   const isNewSinceLastLogin = (createdAt: string): boolean => {
