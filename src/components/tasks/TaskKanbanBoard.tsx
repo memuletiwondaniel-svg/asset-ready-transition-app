@@ -515,7 +515,15 @@ const KanbanCardContent: React.FC<{
           "text-foreground break-words overflow-hidden flex-1",
           isChild ? "text-xs leading-snug mb-0.5 font-medium" : "text-[13px] leading-[1.3] mb-1 font-medium"
         )}>
-          {task.project ? task.title.replace(new RegExp(`\\s*[–\\-]\\s*${task.project.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`), '') : task.title}
+          {(() => {
+            if (!task.project) return task.title;
+            const escaped = task.project.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            // Strip trailing "  - PROJECT" (existing behaviour)
+            let title = task.title.replace(new RegExp(`\\s*[–\\-]\\s*${escaped}\\s*$`), '');
+            // Strip leading "PROJECT:" / "PROJECT -" / "PROJECT –" prefix, case-insensitive
+            title = title.replace(new RegExp(`^\\s*${escaped}\\s*[:\\-–]\\s*`, 'i'), '');
+            return title;
+          })()}
         </p>
         {isOraActivity && oraPlanId && oraActivityCode && (
           <button
