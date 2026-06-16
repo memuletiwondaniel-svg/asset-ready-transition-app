@@ -23,6 +23,7 @@ export interface UserTask {
   status: string;
   display_order: number;
   created_at: string;
+  updated_at?: string | null;
   metadata: any;
   parent_task_id?: string | null;
   progress_percentage?: number | null;
