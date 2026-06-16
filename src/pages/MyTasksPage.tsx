@@ -227,6 +227,7 @@ const KanbanView: React.FC<{ userId: string; searchQuery: string; groupBy: Group
       tasks={filteredTasks}
       activeFilter="all"
       groupBy={groupBy}
+      onGroupByChange={onGroupByChange}
       onUpdateTaskStatus={updateTaskStatus}
     />
   );
