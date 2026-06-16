@@ -1205,7 +1205,46 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
                       <ColIcon className={cn("h-4 w-4", col.iconColor)} strokeWidth={2.25} />
                       <span className={cn("text-sm font-black uppercase tracking-wider", col.headerText)}>{col.label}</span>
                     </div>
-                    <Badge variant="secondary" className="absolute right-3 text-[10px] font-medium px-1.5 py-0 min-w-[1.25rem] text-center text-muted-foreground bg-muted/60">{col.tasks.length}</Badge>
+                    <div className="absolute right-2 flex items-center gap-1">
+                      <Badge variant="secondary" className="text-[10px] font-medium px-1.5 py-0 min-w-[1.25rem] text-center text-muted-foreground bg-muted/60">{col.tasks.length}</Badge>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            data-rm-safe
+                            data-rm-nav
+                            aria-label={`${col.label} column options`}
+                            className="h-6 w-6 text-muted-foreground/70 hover:text-foreground hover:bg-background/60 focus-visible:ring-1"
+                          >
+                            <MoreVertical className="h-3.5 w-3.5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-52">
+                          <DropdownMenuLabel className="text-[11px] uppercase tracking-wider text-muted-foreground">Sort by</DropdownMenuLabel>
+                          <DropdownMenuRadioGroup
+                            value={col.sortKey}
+                            onValueChange={(v) => setColumnSort(prev => ({ ...prev, [col.key]: v as SortKey }))}
+                          >
+                            {(Object.keys(SORT_LABELS) as SortKey[]).map(k => (
+                              <DropdownMenuRadioItem key={k} value={k} className="text-xs">
+                                {SORT_LABELS[k]}
+                              </DropdownMenuRadioItem>
+                            ))}
+                          </DropdownMenuRadioGroup>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuLabel className="text-[11px] uppercase tracking-wider text-muted-foreground">Group by</DropdownMenuLabel>
+                          <DropdownMenuRadioGroup
+                            value={effectiveGroupBy}
+                            onValueChange={(v) => setGroupBy(v as GroupBy)}
+                          >
+                            <DropdownMenuRadioItem value="none" className="text-xs">None</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="project" className="text-xs">Project</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="category" className="text-xs">Category</DropdownMenuRadioItem>
+                          </DropdownMenuRadioGroup>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
                   {/* Cards */}
                   <ScrollArea className="flex-1 max-h-[50vh] sm:max-h-[calc(100vh-320px)]">
