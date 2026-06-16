@@ -297,7 +297,9 @@ export const VCRReviewDecisionStep: React.FC<{
       <header className="space-y-1">
         <h2 className="text-lg font-semibold text-foreground">Review & decide</h2>
         <p className="text-sm text-muted-foreground">
-          Review your edits to the submitted plan, then approve to lock the baseline or request changes.
+          {subMode === 'review_only'
+            ? 'Review the plan approved by the ORA Lead, then record your decision.'
+            : 'Review your edits to the submitted plan, then approve to lock the baseline or request changes.'}
         </p>
       </header>
 

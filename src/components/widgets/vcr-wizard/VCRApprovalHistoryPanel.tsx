@@ -49,7 +49,11 @@ export const VCRApprovalHistoryPanel: React.FC<Props> = ({ handoverPointId, defa
       {open && (
         <div className="space-y-4 pl-1">
           {/* Baseline diff for the submitter / approvers */}
-          <VCRPlanDiffSummary handoverPointId={handoverPointId} mode="baseline" />
+          <VCRPlanDiffSummary
+            handoverPointId={handoverPointId}
+            mode="baseline"
+            title="Changes the ORA Lead made before locking the baseline"
+          />
 
           <Separator />
 
