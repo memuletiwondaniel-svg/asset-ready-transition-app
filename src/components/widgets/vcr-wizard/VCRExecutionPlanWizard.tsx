@@ -320,6 +320,10 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     // Review mode: indicators are reviewer-coverage only — green once visited,
     // neutral otherwise. Non-gating (decision footer governs progress).
     if (isReview) {
+      // Once the viewer has decided (APPROVED/REJECTED), the plan is done from
+      // their perspective — show all steps as complete instead of per-session
+      // visited state so re-opens don't look "mostly pending".
+      if (viewerAlreadyDecided) return true;
       return visitedSteps.has(idx);
     }
     // Visit-based completion for steps without count data:
