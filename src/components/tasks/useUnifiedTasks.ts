@@ -26,6 +26,31 @@ function normalizeProjectCode(code?: string): string | undefined {
   return raw.replace(/^([A-Za-z]+)(\d+)$/, '$1-$2');
 }
 
+/**
+ * Add N business days (Mon–Fri) to an ISO timestamp, returning an ISO string.
+ * Calendar-day approximation: skips Saturdays/Sundays. Public holidays not
+ * considered in v1. If `fromISO` is falsy/invalid or n<=0, returns undefined.
+ */
+export function addBusinessDays(fromISO: string | undefined | null, n: number): string | undefined {
+  if (!fromISO || n <= 0) return undefined;
+  const d = new Date(fromISO);
+  if (isNaN(d.getTime())) return undefined;
+  let added = 0;
+  while (added < n) {
+    d.setDate(d.getDate() + 1);
+    const day = d.getDay(); // 0=Sun, 6=Sat
+    if (day !== 0 && day !== 6) added++;
+  }
+  return d.toISOString();
+}
+
+/** SLA business-days policy. Returns 0 when no SLA should be applied. */
+function slaDaysFor(kind: 'approval_review' | 'plan_creation' | 'none'): number {
+  if (kind === 'approval_review') return 5;
+  if (kind === 'plan_creation') return 10;
+  return 0;
+}
+
 export type CategoryFilter = 'all' | 'pssr' | 'ora' | 'owl' | 'vcr' | 'p2a' | 'action';
 
 export interface UnifiedTask {
