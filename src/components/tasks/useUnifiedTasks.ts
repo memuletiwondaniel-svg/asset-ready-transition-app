@@ -382,8 +382,10 @@ export function useUnifiedTasks(userId: string) {
 
     (approvals || []).forEach(item => {
       if (tasks.some(t => t.userTask?.metadata?.plan_id === item.handover_id)) return;
+      const p2aDue = addBusinessDays(item.created_at, slaDaysFor('approval_review'));
       const spP2a = computeSmartPriority({
         category: 'p2a', categoryLabel: 'P2A Approval',
+        dueDate: p2aDue,
         createdAt: item.created_at,
       });
       tasks.push({
@@ -395,6 +397,7 @@ export function useUnifiedTasks(userId: string) {
         title: item.handover_name || 'Handover Approval',
         project: normalizeProjectCode(item.project_number) || undefined,
         status: item.stage,
+        dueDate: p2aDue,
         createdAt: item.created_at,
         priority: smartPriorityToLegacy(spP2a.level),
         smartPriority: spP2a,
