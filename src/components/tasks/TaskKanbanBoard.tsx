@@ -56,6 +56,7 @@ import { cn } from '@/lib/utils';
 import { isPast, isToday } from 'date-fns';
 import type { UnifiedTask, CategoryFilter } from './useUnifiedTasks';
 import type { UserTask } from '@/hooks/useUserTasks';
+import { computeUrgency } from './taskUrgency';
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useKanbanDragDrop, type MoveResult } from './useKanbanDragDrop';
@@ -273,43 +274,8 @@ const ApprovalVoidWarningDialog: React.FC<{
   );
 };
 
-function getDateAnnotation(task: UnifiedTask): { variant: 'overdue' | 'today' } | null {
-  const date = task.dueDate || task.endDate;
-  if (!date) return null;
-  const d = new Date(date);
-  if (isPast(d) && !isToday(d)) return { variant: 'overdue' };
-  if (isToday(d)) return { variant: 'today' };
-  return null;
-}
 
 const DAY_MS = 86_400_000;
-
-type DueInfo = { kind: 'overdue' | 'today' | 'soon'; days: number; text: string };
-
-function getDueInfo(task: UnifiedTask): DueInfo | null {
-  const due = task.dueDate || task.endDate;
-  if (!due) return null;
-  const d = new Date(due);
-  if (isPast(d) && !isToday(d)) {
-    const days = Math.max(1, Math.floor((Date.now() - d.getTime()) / DAY_MS));
-    return { kind: 'overdue', days, text: `Overdue ${days}d` };
-  }
-  if (isToday(d)) return { kind: 'today', days: 0, text: 'Due today' };
-  const diff = d.getTime() - Date.now();
-  if (diff > 0 && diff <= 3 * DAY_MS) {
-    const days = Math.max(1, Math.ceil(diff / DAY_MS));
-    return { kind: 'soon', days, text: `Due in ${days}d` };
-  }
-  return null;
-}
-
-function getAgeInfo(task: UnifiedTask): { days: number; text: string } | null {
-  if (task.kanbanColumn === 'done') return null;
-  if (!task.createdAt) return null;
-  const ageDays = Math.floor((Date.now() - new Date(task.createdAt).getTime()) / DAY_MS);
-  if (ageDays < 2) return null;
-  return { days: ageDays, text: `Pending ${ageDays}d` };
-}
 
 function getApprovalProgress(
   task: UnifiedTask,
@@ -424,7 +390,6 @@ const KanbanCardContent: React.FC<{
   isChild?: boolean;
 }> = ({ task, onClick, dragHandleProps, isOverlay, accentClass, isChild }) => {
   const navigate = useNavigate();
-  const dateAnnotation = getDateAnnotation(task);
   const sp = task.smartPriority;
   const isWaitingVcrApprovalBundle = task.isWaiting && isClickableVcrApprovalBundle(task);
 
@@ -438,18 +403,16 @@ const KanbanCardContent: React.FC<{
   const p2aApprovalSummaries = useContext(P2AApprovalContext);
   const oraApprovalSummaries = useContext(ORAApprovalContext);
 
-  // Rail color encodes task CATEGORY (every card has one). Reuses the same
-  // palette family as categoryColor pills. Rejected → destructive overrides.
+  // Rail color encodes URGENCY (overdue/due-soon/on-track) — see computeUrgency.
+  // Rejected status keeps the destructive override.
+  const urgency = computeUrgency(task);
   const railColor = (() => {
     if (accentClass === 'border-l-destructive') return 'bg-destructive';
-    switch (task.category) {
-      case 'pssr':   return 'bg-blue-500';
-      case 'ora':    return 'bg-purple-500';
-      case 'owl':    return 'bg-amber-500';
-      case 'vcr':    return 'bg-teal-500';
-      case 'p2a':    return 'bg-teal-500';
-      case 'action': return 'bg-slate-400 dark:bg-slate-500';
-      default:       return 'bg-slate-400 dark:bg-slate-500';
+    switch (urgency.rail) {
+      case 'red':   return 'bg-red-500 dark:bg-red-500';
+      case 'amber': return 'bg-amber-500 dark:bg-amber-500';
+      case 'grey':
+      default:      return 'bg-border dark:bg-border';
     }
   })();
 
@@ -458,8 +421,8 @@ const KanbanCardContent: React.FC<{
       onClick={onClick}
       tabIndex={0}
       className={cn(
-        "relative",
-        isChild ? "p-2 cursor-pointer rounded-md group border-l-2" : "px-3 py-1.5 pl-3.5 cursor-pointer transition-all duration-200 rounded-lg group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+        "relative overflow-hidden",
+        isChild ? "p-2 cursor-pointer rounded-md group border-l-2" : "px-3 py-1.5 pl-4 cursor-pointer transition-all duration-200 rounded-lg group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
         isChild
           ? "border-0 border-l-border/50 bg-muted/30 shadow-none hover:bg-muted/50"
           : "border border-border/60 bg-card shadow-[0_1px_2px_0_rgb(0,0,0,0.03)] hover:-translate-y-0.5 hover:shadow-md hover:border-border",
@@ -472,7 +435,7 @@ const KanbanCardContent: React.FC<{
         <span
           aria-hidden
           className={cn(
-            "pointer-events-none absolute left-1 top-1.5 bottom-1.5 w-[3px] rounded-full",
+            "pointer-events-none absolute left-0 top-0 bottom-0 w-1",
             railColor,
           )}
         />
@@ -487,13 +450,6 @@ const KanbanCardContent: React.FC<{
           >
             <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
           </button>
-        )}
-        {!isChild && task.isNew && (
-          <span
-            aria-label="New"
-            title="New"
-            className="h-1.5 w-1.5 rounded-full bg-primary shrink-0"
-          />
         )}
         {!isChild && (
           task.project ? (
@@ -661,21 +617,20 @@ const KanbanCardContent: React.FC<{
           );
         })() : null;
 
-        const dueInfo = task.kanbanColumn !== 'done' ? getDueInfo(task) : null;
-        const ageInfo = !statusPillNode && !dueInfo ? getAgeInfo(task) : null;
+        // Urgency label (overdue / due / age) — computed once at the top
+        // of the card and reused here. Status pill (Done column) wins.
+        const urgencyLabel = !statusPillNode && urgency.label ? (
+          <span className={cn(
+            "text-[10px] font-medium whitespace-nowrap",
+            urgency.tone === 'red'    && 'text-red-600 dark:text-red-400',
+            urgency.tone === 'amber'  && 'text-amber-600 dark:text-amber-500',
+            urgency.tone === 'muted'  && 'text-muted-foreground/70',
+            urgency.tone === 'accent' && 'text-primary font-semibold',
+          )}>{urgency.label}</span>
+        ) : null;
         const approvalProgress = getApprovalProgress(task, reviewerSummaries, p2aApprovalSummaries, oraApprovalSummaries);
 
-        const leftNode = statusPillNode ?? (
-          dueInfo ? (
-            <span className={cn(
-              "text-[10px] font-medium px-1.5 py-0.5 rounded whitespace-nowrap",
-              dueInfo.kind === 'overdue' && 'text-red-700 bg-red-100 dark:bg-red-900/30 dark:text-red-400',
-              (dueInfo.kind === 'soon' || dueInfo.kind === 'today') && 'text-amber-700 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400',
-            )}>{dueInfo.text}</span>
-          ) : ageInfo ? (
-            <span className="text-[10px] text-muted-foreground/70 whitespace-nowrap">{ageInfo.text}</span>
-          ) : null
-        );
+        const leftNode = statusPillNode ?? urgencyLabel;
 
         if (!leftNode && !approvalProgress) return null;
 
