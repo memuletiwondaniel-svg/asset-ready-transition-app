@@ -390,7 +390,6 @@ const KanbanCardContent: React.FC<{
   isChild?: boolean;
 }> = ({ task, onClick, dragHandleProps, isOverlay, accentClass, isChild }) => {
   const navigate = useNavigate();
-  const dateAnnotation = getDateAnnotation(task);
   const sp = task.smartPriority;
   const isWaitingVcrApprovalBundle = task.isWaiting && isClickableVcrApprovalBundle(task);
 
