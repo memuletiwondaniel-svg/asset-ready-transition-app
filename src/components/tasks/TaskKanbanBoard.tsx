@@ -274,14 +274,6 @@ const ApprovalVoidWarningDialog: React.FC<{
   );
 };
 
-function getDateAnnotation(task: UnifiedTask): { variant: 'overdue' | 'today' } | null {
-  const date = task.dueDate || task.endDate;
-  if (!date) return null;
-  const d = new Date(date);
-  if (isPast(d) && !isToday(d)) return { variant: 'overdue' };
-  if (isToday(d)) return { variant: 'today' };
-  return null;
-}
 
 const DAY_MS = 86_400_000;
 
