@@ -1151,6 +1151,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     if (result === 'needs_warning') {
       setWarningState({ task, targetColumn });
     }
+    // 'stale' is surfaced by the hook via toast; nothing else to do here.
   }, [moveTaskToColumn]);
 
   // Handle confirmation from the warning dialog (with mandatory reason)
