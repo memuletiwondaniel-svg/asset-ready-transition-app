@@ -412,18 +412,16 @@ const KanbanCardContent: React.FC<{
   const p2aApprovalSummaries = useContext(P2AApprovalContext);
   const oraApprovalSummaries = useContext(ORAApprovalContext);
 
-  // Rail color encodes task CATEGORY (every card has one). Reuses the same
-  // palette family as categoryColor pills. Rejected → destructive overrides.
+  // Rail color encodes URGENCY (overdue/due-soon/on-track) — see computeUrgency.
+  // Rejected status keeps the destructive override.
+  const urgency = computeUrgency(task);
   const railColor = (() => {
     if (accentClass === 'border-l-destructive') return 'bg-destructive';
-    switch (task.category) {
-      case 'pssr':   return 'bg-blue-500';
-      case 'ora':    return 'bg-purple-500';
-      case 'owl':    return 'bg-amber-500';
-      case 'vcr':    return 'bg-teal-500';
-      case 'p2a':    return 'bg-teal-500';
-      case 'action': return 'bg-slate-400 dark:bg-slate-500';
-      default:       return 'bg-slate-400 dark:bg-slate-500';
+    switch (urgency.rail) {
+      case 'red':   return 'bg-red-500 dark:bg-red-500';
+      case 'amber': return 'bg-amber-500 dark:bg-amber-500';
+      case 'grey':
+      default:      return 'bg-border dark:bg-border';
     }
   })();
 
