@@ -1186,6 +1186,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     };
     switch (key) {
       case 'recentlyCompleted': return tsDesc(a.completedAt, b.completedAt);
+      case 'oldestCompleted': return tsAsc(a.completedAt, b.completedAt);
       case 'recentlyAdded':     return tsDesc(a.createdAt, b.createdAt);
       case 'dueDate':           return tsAsc(a.dueDate || a.endDate, b.dueDate || b.endDate);
       case 'priority':
