@@ -417,8 +417,17 @@ export function useUnifiedTasks(userId: string) {
       // (See v_vcr_plan_approver_tasks definition.)
       const created: string | null = item.task_created_at ?? null;
       const createdForPriority = created || new Date().toISOString();
+      // SLA: 5 business days from the ACTIONABLE-FROM moment for this user
+      // (createdForPriority = task_created_at = fan-out moment for Phase-2).
+      // Only applied to still-open rows; decided rows keep neutral due date.
+      const rowStatusForDue = String(item.row_status || '').toUpperCase();
+      const isDecidedForDue = rowStatusForDue === 'APPROVED' || rowStatusForDue === 'REJECTED';
+      const vcrPlanDue = !isDecidedForDue
+        ? addBusinessDays(createdForPriority, slaDaysFor('approval_review'))
+        : undefined;
       const sp = computeSmartPriority({
         category: 'vcr', categoryLabel: 'VCR Plan Approval',
+        dueDate: vcrPlanDue,
         createdAt: createdForPriority,
       });
       // Short VCR code: "VCR-DP300-05" → "VCR-05" (project context is in the project pill).
@@ -444,6 +453,7 @@ export function useUnifiedTasks(userId: string) {
         projectId: item.project_id || undefined,
         extraPill: shortCode,
         status,
+        dueDate: vcrPlanDue,
         createdAt: createdForPriority,
         priority: smartPriorityToLegacy(sp.level),
         smartPriority: sp,
