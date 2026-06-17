@@ -76,20 +76,22 @@ import {
 
 type GroupBy = 'none' | 'project' | 'category';
 type KanbanColumn = 'todo' | 'in_progress' | 'waiting' | 'done';
-type SortKey = 'priority' | 'dueDate' | 'recentlyAdded' | 'recentlyCompleted';
+type SortKey = 'priority' | 'dueDate' | 'recentlyAdded' | 'recentlyCompleted' | 'oldestCompleted';
 
 const SORT_LABELS: Record<SortKey, string> = {
   priority: 'Priority',
   dueDate: 'Due date',
   recentlyAdded: 'Recently added',
-  recentlyCompleted: 'Recently completed',
+  recentlyCompleted: 'Date completed (newest first)',
+  oldestCompleted: 'Date completed (oldest first)',
 };
 
 const SORT_SUBLABELS: Record<SortKey, string> = {
   priority: 'by priority',
   dueDate: 'by due date',
   recentlyAdded: 'by recently added',
-  recentlyCompleted: 'by recently completed',
+  recentlyCompleted: 'by date completed (newest)',
+  oldestCompleted: 'by date completed (oldest)',
 };
 
 const DEFAULT_COLUMN_SORT: Record<KanbanColumn, SortKey> = {
@@ -97,6 +99,13 @@ const DEFAULT_COLUMN_SORT: Record<KanbanColumn, SortKey> = {
   in_progress: 'priority',
   waiting: 'priority',
   done: 'recentlyCompleted',
+};
+
+const COLUMN_ALLOWED_SORTS: Record<KanbanColumn, SortKey[]> = {
+  todo: ['priority', 'recentlyAdded'],
+  in_progress: ['priority', 'recentlyAdded'],
+  waiting: ['priority', 'recentlyAdded'],
+  done: ['recentlyCompleted', 'oldestCompleted'],
 };
 
 interface TaskKanbanBoardProps {
@@ -1177,6 +1186,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     };
     switch (key) {
       case 'recentlyCompleted': return tsDesc(a.completedAt, b.completedAt);
+      case 'oldestCompleted': return tsAsc(a.completedAt, b.completedAt);
       case 'recentlyAdded':     return tsDesc(a.createdAt, b.createdAt);
       case 'dueDate':           return tsAsc(a.dueDate || a.endDate, b.dueDate || b.endDate);
       case 'priority':
@@ -1191,7 +1201,10 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
           ? (t.kanbanColumn === 'todo' || t.kanbanColumn === 'waiting')
           : t.kanbanColumn === col.key
       );
-      const sortKey = columnSort[col.key];
+      // Guard against out-of-range stored sort values (e.g. legacy 'recentlyCompleted' on To Do)
+      const allowed = COLUMN_ALLOWED_SORTS[col.key] || [DEFAULT_COLUMN_SORT[col.key]];
+      const rawSort = columnSort[col.key] as SortKey;
+      const sortKey = allowed.includes(rawSort) ? rawSort : DEFAULT_COLUMN_SORT[col.key];
       const ordered = sortKey === 'priority'
         ? filtered
         : [...filtered].sort(compareBySort(sortKey));
@@ -1324,7 +1337,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
                           value={col.sortKey}
                           onValueChange={(v) => setColumnSort(prev => ({ ...prev, [col.key]: v as SortKey }))}
                         >
-                          {(Object.keys(SORT_LABELS) as SortKey[]).map(k => (
+                          {(COLUMN_ALLOWED_SORTS[col.key as KanbanColumn] || []).map(k => (
                             <DropdownMenuRadioItem key={k} value={k} className="text-xs">
                               {SORT_LABELS[k]}
                             </DropdownMenuRadioItem>
