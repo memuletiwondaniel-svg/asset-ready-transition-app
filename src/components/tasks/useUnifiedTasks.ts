@@ -26,6 +26,31 @@ function normalizeProjectCode(code?: string): string | undefined {
   return raw.replace(/^([A-Za-z]+)(\d+)$/, '$1-$2');
 }
 
+/**
+ * Add N business days (Mon–Fri) to an ISO timestamp, returning an ISO string.
+ * Calendar-day approximation: skips Saturdays/Sundays. Public holidays not
+ * considered in v1. If `fromISO` is falsy/invalid or n<=0, returns undefined.
+ */
+export function addBusinessDays(fromISO: string | undefined | null, n: number): string | undefined {
+  if (!fromISO || n <= 0) return undefined;
+  const d = new Date(fromISO);
+  if (isNaN(d.getTime())) return undefined;
+  let added = 0;
+  while (added < n) {
+    d.setDate(d.getDate() + 1);
+    const day = d.getDay(); // 0=Sun, 6=Sat
+    if (day !== 0 && day !== 6) added++;
+  }
+  return d.toISOString();
+}
+
+/** SLA business-days policy. Returns 0 when no SLA should be applied. */
+function slaDaysFor(kind: 'approval_review' | 'plan_creation' | 'none'): number {
+  if (kind === 'approval_review') return 5;
+  if (kind === 'plan_creation') return 10;
+  return 0;
+}
+
 export type CategoryFilter = 'all' | 'pssr' | 'ora' | 'owl' | 'vcr' | 'p2a' | 'action';
 
 export interface UnifiedTask {
@@ -263,12 +288,27 @@ export function useUnifiedTasks(userId: string) {
         }
       }
 
+      // ─── Resolve effective due date (Step 1 policy) ───
+      // Precedence: real t.due_date → inherited ORA endDate (no SLA) → SLA fallback.
+      let slaKind: 'approval_review' | 'plan_creation' | 'none' = 'none';
+      if (isAdHocReview || source === 'p2a_handover' || t.type === 'ora_plan_review') {
+        slaKind = 'approval_review';
+      } else if (isOraPlanCreation || isP2aPlanCreation || action === 'create_vcr_delivery_plan' || t.type === 'vcr_delivery_plan') {
+        slaKind = 'plan_creation';
+      }
+      const realDueDate = t.due_date || undefined;
+      const inheritedEnd = endDate; // ORA activity end_date — keep as-is, no SLA
+      const slaDue = !realDueDate && !inheritedEnd
+        ? addBusinessDays(t.created_at, slaDaysFor(slaKind))
+        : undefined;
+      const resolvedDueDate = realDueDate || slaDue;
+
       const sp = computeSmartPriority({
         category,
         categoryLabel,
         startDate,
         endDate,
-        dueDate: t.due_date || undefined,
+        dueDate: resolvedDueDate,
         durationDays,
         progressPercentage: resolvedProgress,
         isWaiting,
@@ -286,7 +326,7 @@ export function useUnifiedTasks(userId: string) {
         project: normalizeProjectCode(meta?.project_code) || undefined,
         projectId: meta?.project_id || undefined,
         status: t.status,
-        dueDate: t.due_date || undefined,
+        dueDate: resolvedDueDate,
         startDate,
         endDate,
         createdAt: t.created_at,
@@ -314,8 +354,10 @@ export function useUnifiedTasks(userId: string) {
       const pssrId = item.pssr?.id;
       if (!pssrId) return;
       if (tasks.some(t => t.userTask?.metadata?.pssr_id === pssrId)) return;
+      const pssrDue = addBusinessDays(item.pendingSince, slaDaysFor('approval_review'));
       const spPssr = computeSmartPriority({
         category: 'pssr', categoryLabel: 'PSSR Review',
+        dueDate: pssrDue,
         createdAt: item.pendingSince,
       });
       tasks.push({
@@ -328,6 +370,7 @@ export function useUnifiedTasks(userId: string) {
         subtitle: item.pssr?.title || undefined,
         project: item.pssr?.project_name || undefined,
         status: 'Pending Review',
+        dueDate: pssrDue,
         createdAt: item.pendingSince,
         priority: smartPriorityToLegacy(spPssr.level),
         smartPriority: spPssr,
@@ -339,8 +382,10 @@ export function useUnifiedTasks(userId: string) {
 
     (approvals || []).forEach(item => {
       if (tasks.some(t => t.userTask?.metadata?.plan_id === item.handover_id)) return;
+      const p2aDue = addBusinessDays(item.created_at, slaDaysFor('approval_review'));
       const spP2a = computeSmartPriority({
         category: 'p2a', categoryLabel: 'P2A Approval',
+        dueDate: p2aDue,
         createdAt: item.created_at,
       });
       tasks.push({
@@ -352,6 +397,7 @@ export function useUnifiedTasks(userId: string) {
         title: item.handover_name || 'Handover Approval',
         project: normalizeProjectCode(item.project_number) || undefined,
         status: item.stage,
+        dueDate: p2aDue,
         createdAt: item.created_at,
         priority: smartPriorityToLegacy(spP2a.level),
         smartPriority: spP2a,
@@ -371,8 +417,17 @@ export function useUnifiedTasks(userId: string) {
       // (See v_vcr_plan_approver_tasks definition.)
       const created: string | null = item.task_created_at ?? null;
       const createdForPriority = created || new Date().toISOString();
+      // SLA: 5 business days from the ACTIONABLE-FROM moment for this user
+      // (createdForPriority = task_created_at = fan-out moment for Phase-2).
+      // Only applied to still-open rows; decided rows keep neutral due date.
+      const rowStatusForDue = String(item.row_status || '').toUpperCase();
+      const isDecidedForDue = rowStatusForDue === 'APPROVED' || rowStatusForDue === 'REJECTED';
+      const vcrPlanDue = !isDecidedForDue
+        ? addBusinessDays(createdForPriority, slaDaysFor('approval_review'))
+        : undefined;
       const sp = computeSmartPriority({
         category: 'vcr', categoryLabel: 'VCR Plan Approval',
+        dueDate: vcrPlanDue,
         createdAt: createdForPriority,
       });
       // Short VCR code: "VCR-DP300-05" → "VCR-05" (project context is in the project pill).
@@ -398,6 +453,7 @@ export function useUnifiedTasks(userId: string) {
         projectId: item.project_id || undefined,
         extraPill: shortCode,
         status,
+        dueDate: vcrPlanDue,
         createdAt: createdForPriority,
         priority: smartPriorityToLegacy(sp.level),
         smartPriority: sp,
@@ -484,8 +540,15 @@ export function useUnifiedTasks(userId: string) {
       const bundleLabel = isPSSR
         ? (isApproval ? 'PSSR Review' : 'PSSR Checklist')
         : (isApproval ? 'VCR Review' : 'VCR Checklist');
+      // Approval bundles (vcr_approval_bundle / pssr_approval_bundle) are
+      // review work → 5 BD SLA from task.created_at. Checklist bundles get
+      // no SLA fallback (author work, no fabricated date).
+      const bundleDue = isApproval
+        ? addBusinessDays(task.created_at, slaDaysFor('approval_review'))
+        : undefined;
       const spBundle = computeSmartPriority({
         category: bundleCat, categoryLabel: bundleLabel,
+        dueDate: bundleDue,
         progressPercentage: pct,
         isWaiting,
         createdAt: task.created_at,
@@ -501,6 +564,7 @@ export function useUnifiedTasks(userId: string) {
         title: task.title,
         project: isPSSR ? meta?.project_name : normalizeProjectCode(meta?.project_code),
         status: `${completed}/${total}`,
+        dueDate: bundleDue,
         createdAt: task.created_at,
         completedAt: task.status === 'completed' ? (task.updated_at ?? null) : null,
         priority: smartPriorityToLegacy(spBundle.level),
