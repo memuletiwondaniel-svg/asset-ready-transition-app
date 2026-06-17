@@ -34,7 +34,7 @@ import {
   ChevronRight,
   GripVertical,
   AlertTriangle,
-  Circle,
+  CircleDashed,
   Timer,
   Clock,
   CheckCircle2,
@@ -82,16 +82,16 @@ const SORT_LABELS: Record<SortKey, string> = {
   priority: 'Priority',
   dueDate: 'Due date',
   recentlyAdded: 'Recently added',
-  recentlyCompleted: 'Date completed (newest first)',
-  oldestCompleted: 'Date completed (oldest first)',
+  recentlyCompleted: 'Completed (newest)',
+  oldestCompleted:   'Completed (oldest)',
 };
 
 const SORT_SUBLABELS: Record<SortKey, string> = {
   priority: 'by priority',
   dueDate: 'by due date',
   recentlyAdded: 'by recently added',
-  recentlyCompleted: 'by date completed (newest)',
-  oldestCompleted: 'by date completed (oldest)',
+  recentlyCompleted: 'by completed (newest)',
+  oldestCompleted:   'by completed (oldest)',
 };
 
 const DEFAULT_COLUMN_SORT: Record<KanbanColumn, SortKey> = {
@@ -138,7 +138,7 @@ function isClickableVcrApprovalBundle(task: UnifiedTask): boolean {
 
 
 const getColumns = (t: any) => [
-  { key: 'todo' as const, label: t.kanbanToDo || 'To do', icon: Circle, accent: 'border-l-slate-400', iconColor: 'text-muted-foreground', emptyIcon: Inbox, emptyMsg: t.kanbanEmptyToDo || 'Nothing to do right now.', emptyHint: t.kanbanEmptyToDoHint || 'New tasks will appear here.' },
+  { key: 'todo' as const, label: t.kanbanToDo || 'To do', icon: CircleDashed, accent: 'border-l-slate-400', iconColor: 'text-muted-foreground', emptyIcon: Inbox, emptyMsg: t.kanbanEmptyToDo || 'Nothing to do right now.', emptyHint: t.kanbanEmptyToDoHint || 'New tasks will appear here.' },
   { key: 'in_progress' as const, label: t.kanbanInProgress || 'In progress', icon: Timer, accent: 'border-l-amber-500', iconColor: 'text-amber-500', emptyIcon: Timer, emptyMsg: t.kanbanEmptyInProgress || 'Nothing in progress.', emptyHint: t.kanbanEmptyInProgressHint || 'Drag a task here when you start it.' },
   { key: 'done' as const, label: t.kanbanDone || 'Done', icon: CheckCircle2, accent: 'border-l-emerald-500', iconColor: 'text-emerald-500', emptyIcon: CheckCircle2, emptyMsg: t.kanbanEmptyDone || 'No completed tasks yet.', emptyHint: t.kanbanEmptyDoneHint || 'Finished work will collect here.' },
 ];
