@@ -76,20 +76,22 @@ import {
 
 type GroupBy = 'none' | 'project' | 'category';
 type KanbanColumn = 'todo' | 'in_progress' | 'waiting' | 'done';
-type SortKey = 'priority' | 'dueDate' | 'recentlyAdded' | 'recentlyCompleted';
+type SortKey = 'priority' | 'dueDate' | 'recentlyAdded' | 'recentlyCompleted' | 'oldestCompleted';
 
 const SORT_LABELS: Record<SortKey, string> = {
   priority: 'Priority',
   dueDate: 'Due date',
   recentlyAdded: 'Recently added',
-  recentlyCompleted: 'Recently completed',
+  recentlyCompleted: 'Date completed (newest first)',
+  oldestCompleted: 'Date completed (oldest first)',
 };
 
 const SORT_SUBLABELS: Record<SortKey, string> = {
   priority: 'by priority',
   dueDate: 'by due date',
   recentlyAdded: 'by recently added',
-  recentlyCompleted: 'by recently completed',
+  recentlyCompleted: 'by date completed (newest)',
+  oldestCompleted: 'by date completed (oldest)',
 };
 
 const DEFAULT_COLUMN_SORT: Record<KanbanColumn, SortKey> = {
@@ -97,6 +99,13 @@ const DEFAULT_COLUMN_SORT: Record<KanbanColumn, SortKey> = {
   in_progress: 'priority',
   waiting: 'priority',
   done: 'recentlyCompleted',
+};
+
+const COLUMN_ALLOWED_SORTS: Record<KanbanColumn, SortKey[]> = {
+  todo: ['priority', 'recentlyAdded'],
+  in_progress: ['priority', 'recentlyAdded'],
+  waiting: ['priority', 'recentlyAdded'],
+  done: ['recentlyCompleted', 'oldestCompleted'],
 };
 
 interface TaskKanbanBoardProps {
