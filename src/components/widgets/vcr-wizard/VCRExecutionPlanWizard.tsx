@@ -210,27 +210,59 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   // Runs on open AND again when the approver-row status arrives (it's async),
   // but only while still on the default landing step so we don't yank the
   // user off a step they manually navigated to.
+  // Per-(handover_point + user) saved step for review mode, so reopening
+  // a review returns to the last-viewed step. Cleared after a decision is
+  // submitted (see onDecided handler) so future reviews start fresh.
+  const reviewStepStorageKey = (isReview && user?.id)
+    ? `vcr-review-step:${vcr.id}:${user.id}`
+    : null;
   const initialPlacementDoneRef = useRef(false);
   useEffect(() => {
     if (open) {
-      setCurrentStep(0);
-      setVisitedSteps(new Set([0]));
+      // Try to restore a saved review step; fall back to step 0.
+      let restored = 0;
+      if (reviewStepStorageKey) {
+        try {
+          const raw = localStorage.getItem(reviewStepStorageKey);
+          if (raw != null) {
+            const parsed = parseInt(raw, 10);
+            if (Number.isFinite(parsed) && parsed >= 0 && parsed < STEPS.length) {
+              restored = parsed;
+            }
+          }
+        } catch { /* ignore */ }
+      }
+      setCurrentStep(restored);
+      setVisitedSteps(new Set([restored]));
       hasPromotedRef.current = false;
       initialPlacementDoneRef.current = false;
     }
-  }, [open]);
+  }, [open, reviewStepStorageKey]);
   useEffect(() => {
     if (!open || !isReview) return;
     if (initialPlacementDoneRef.current) return;
     // Wait for the row query to resolve before deciding.
     if (viewerApproverRow === undefined) return;
     initialPlacementDoneRef.current = true;
-    if (viewerAlreadyDecided) {
+    // Only auto-jump to the decision surface if the user hasn't navigated
+    // away from the default landing step (i.e. no saved step was restored).
+    if (viewerAlreadyDecided && currentStep === 0) {
       const last = STEPS.length - 1;
       setCurrentStep(last);
       setVisitedSteps(new Set([last]));
     }
-  }, [open, isReview, viewerApproverRow, viewerAlreadyDecided]);
+  }, [open, isReview, viewerApproverRow, viewerAlreadyDecided, currentStep]);
+
+  // Persist current step while a review is open.
+  useEffect(() => {
+    if (!open || !reviewStepStorageKey) return;
+    try { localStorage.setItem(reviewStepStorageKey, String(currentStep)); } catch { /* ignore */ }
+  }, [open, reviewStepStorageKey, currentStep]);
+
+  const clearSavedReviewStep = useCallback(() => {
+    if (!reviewStepStorageKey) return;
+    try { localStorage.removeItem(reviewStepStorageKey); } catch { /* ignore */ }
+  }, [reviewStepStorageKey]);
 
   // Body-level review class so portal'd Sheets / Dialogs inherit the
   // read-only CSS too (steps that open detail sheets render outside the
@@ -389,7 +421,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         return isReview && reviewPayload ? (
           <VCRReviewDecisionStep
             payload={reviewPayload}
-            onDecided={() => onOpenChange(false)}
+            onDecided={() => { clearSavedReviewStep(); onOpenChange(false); }}
           />
         ) : (
           <VCRConfirmationStep vcrId={vcr.id} vcrName={vcr.name} vcrCode={vcr.vcr_code} onNavigateToStep={goToStep} onReadyChange={setStep9Ready} submitRequestId={submitRequestId} approversRoster={approversRoster} onSubmitSuccess={() => onOpenChange(false)} />
@@ -674,7 +706,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       {isReview && reviewPayload ? (
         <VCRReviewDecisionProvider
           payload={reviewPayload}
-          onDecided={() => onOpenChange(false)}
+          onDecided={() => { clearSavedReviewStep(); onOpenChange(false); }}
           preApprovePersist={preApprovePersist}
         >
           {wizard}
