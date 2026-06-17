@@ -56,6 +56,7 @@ import { cn } from '@/lib/utils';
 import { isPast, isToday } from 'date-fns';
 import type { UnifiedTask, CategoryFilter } from './useUnifiedTasks';
 import type { UserTask } from '@/hooks/useUserTasks';
+import { computeUrgency } from './taskUrgency';
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useKanbanDragDrop, type MoveResult } from './useKanbanDragDrop';
@@ -283,33 +284,6 @@ function getDateAnnotation(task: UnifiedTask): { variant: 'overdue' | 'today' } 
 }
 
 const DAY_MS = 86_400_000;
-
-type DueInfo = { kind: 'overdue' | 'today' | 'soon'; days: number; text: string };
-
-function getDueInfo(task: UnifiedTask): DueInfo | null {
-  const due = task.dueDate || task.endDate;
-  if (!due) return null;
-  const d = new Date(due);
-  if (isPast(d) && !isToday(d)) {
-    const days = Math.max(1, Math.floor((Date.now() - d.getTime()) / DAY_MS));
-    return { kind: 'overdue', days, text: `Overdue ${days}d` };
-  }
-  if (isToday(d)) return { kind: 'today', days: 0, text: 'Due today' };
-  const diff = d.getTime() - Date.now();
-  if (diff > 0 && diff <= 3 * DAY_MS) {
-    const days = Math.max(1, Math.ceil(diff / DAY_MS));
-    return { kind: 'soon', days, text: `Due in ${days}d` };
-  }
-  return null;
-}
-
-function getAgeInfo(task: UnifiedTask): { days: number; text: string } | null {
-  if (task.kanbanColumn === 'done') return null;
-  if (!task.createdAt) return null;
-  const ageDays = Math.floor((Date.now() - new Date(task.createdAt).getTime()) / DAY_MS);
-  if (ageDays < 2) return null;
-  return { days: ageDays, text: `Pending ${ageDays}d` };
-}
 
 function getApprovalProgress(
   task: UnifiedTask,
