@@ -540,8 +540,15 @@ export function useUnifiedTasks(userId: string) {
       const bundleLabel = isPSSR
         ? (isApproval ? 'PSSR Review' : 'PSSR Checklist')
         : (isApproval ? 'VCR Review' : 'VCR Checklist');
+      // Approval bundles (vcr_approval_bundle / pssr_approval_bundle) are
+      // review work → 5 BD SLA from task.created_at. Checklist bundles get
+      // no SLA fallback (author work, no fabricated date).
+      const bundleDue = isApproval
+        ? addBusinessDays(task.created_at, slaDaysFor('approval_review'))
+        : undefined;
       const spBundle = computeSmartPriority({
         category: bundleCat, categoryLabel: bundleLabel,
+        dueDate: bundleDue,
         progressPercentage: pct,
         isWaiting,
         createdAt: task.created_at,
@@ -557,6 +564,7 @@ export function useUnifiedTasks(userId: string) {
         title: task.title,
         project: isPSSR ? meta?.project_name : normalizeProjectCode(meta?.project_code),
         status: `${completed}/${total}`,
+        dueDate: bundleDue,
         createdAt: task.created_at,
         completedAt: task.status === 'completed' ? (task.updated_at ?? null) : null,
         priority: smartPriorityToLegacy(spBundle.level),
