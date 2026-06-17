@@ -288,17 +288,57 @@ export function useUnifiedTasks(userId: string) {
         }
       }
 
+      // ─── Resolve effective due date (Step 1 policy) ───
+      // Precedence: real t.due_date → inherited ORA endDate (no SLA) → SLA fallback.
+      let slaKind: 'approval_review' | 'plan_creation' | 'none' = 'none';
+      if (isAdHocReview || source === 'p2a_handover' || t.type === 'ora_plan_review') {
+        slaKind = 'approval_review';
+      } else if (isOraPlanCreation || isP2aPlanCreation || action === 'create_vcr_delivery_plan' || t.type === 'vcr_delivery_plan') {
+        slaKind = 'plan_creation';
+      }
+      const realDueDate = t.due_date || undefined;
+      const inheritedEnd = endDate; // ORA activity end_date — keep as-is, no SLA
+      const slaDue = !realDueDate && !inheritedEnd
+        ? addBusinessDays(t.created_at, slaDaysFor(slaKind))
+        : undefined;
+      const resolvedDueDate = realDueDate || slaDue;
+
       const sp = computeSmartPriority({
         category,
         categoryLabel,
         startDate,
         endDate,
-        dueDate: t.due_date || undefined,
+        dueDate: resolvedDueDate,
         durationDays,
         progressPercentage: resolvedProgress,
         isWaiting,
         createdAt: t.created_at,
       });
+
+      tasks.push({
+        id: `ut-${t.id}`,
+        category,
+        categoryLabel,
+        categoryColor,
+        icon,
+        title: t.title,
+        subtitle: t.description || undefined,
+        project: normalizeProjectCode(meta?.project_code) || undefined,
+        projectId: meta?.project_id || undefined,
+        status: t.status,
+        dueDate: resolvedDueDate,
+        startDate,
+        endDate,
+        createdAt: t.created_at,
+        completedAt: t.status === 'completed' ? (t.updated_at ?? null) : null,
+        priority: smartPriorityToLegacy(sp.level),
+        smartPriority: sp,
+        isNew: isNewSinceLastLogin(t.created_at),
+        userTask: t,
+        isWaiting,
+        durationDays,
+        progressPercentage: resolvedProgress,
+        kanbanColumn: mapToKanbanColumn({
 
       tasks.push({
         id: `ut-${t.id}`,
