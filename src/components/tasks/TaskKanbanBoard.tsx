@@ -1080,6 +1080,18 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
 
     const targetColumn = over.id as KanbanColumn;
     if (task.kanbanColumn === targetColumn) return;
+
+    // VCR Plan Approval cards have no user_task row. Any drop routes to the
+    // review modal; the actual approve/reject only happens inside the wizard.
+    if (task.vcrPlanApproval && !task.userTask) {
+      if (targetColumn === 'in_progress' || targetColumn === 'done') {
+        setVcrPlanApproval(task.vcrPlanApproval);
+        setVcrPlanApprovalOpen(true);
+      }
+      // targetColumn === 'todo' → no-op (snap back)
+      return;
+    }
+
     if (!task.userTask) return;
 
     const meta = task.userTask.metadata as Record<string, any> | undefined;
