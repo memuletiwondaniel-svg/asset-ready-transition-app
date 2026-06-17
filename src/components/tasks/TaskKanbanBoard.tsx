@@ -359,10 +359,10 @@ const DraggableKanbanCard: React.FC<{
   onClick: () => void;
   accentClass?: string;
 }> = ({ task, onClick, accentClass }) => {
-  // B2 — workflow-driven cards (e.g. VCR plan approval) have no backing
-  // user_task row, so their drop is a no-op. Disable drag entirely so no
-  // grab cursor / handle is shown; click-to-open is preserved.
-  const isDraggable = !!task.userTask;
+  // Workflow-driven cards (e.g. VCR plan approval) have no backing user_task
+  // row; we still allow dragging so dropping opens the review modal (handled
+  // in handleDragEnd). Other cards remain unchanged.
+  const isDraggable = !!task.userTask || !!task.vcrPlanApproval;
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: task.id,
     data: { task },
