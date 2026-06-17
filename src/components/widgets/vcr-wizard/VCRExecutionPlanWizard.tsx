@@ -706,7 +706,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       {isReview && reviewPayload ? (
         <VCRReviewDecisionProvider
           payload={reviewPayload}
-          onDecided={() => onOpenChange(false)}
+          onDecided={() => { clearSavedReviewStep(); onOpenChange(false); }}
           preApprovePersist={preApprovePersist}
         >
           {wizard}
