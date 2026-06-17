@@ -354,8 +354,10 @@ export function useUnifiedTasks(userId: string) {
       const pssrId = item.pssr?.id;
       if (!pssrId) return;
       if (tasks.some(t => t.userTask?.metadata?.pssr_id === pssrId)) return;
+      const pssrDue = addBusinessDays(item.pendingSince, slaDaysFor('approval_review'));
       const spPssr = computeSmartPriority({
         category: 'pssr', categoryLabel: 'PSSR Review',
+        dueDate: pssrDue,
         createdAt: item.pendingSince,
       });
       tasks.push({
@@ -368,6 +370,7 @@ export function useUnifiedTasks(userId: string) {
         subtitle: item.pssr?.title || undefined,
         project: item.pssr?.project_name || undefined,
         status: 'Pending Review',
+        dueDate: pssrDue,
         createdAt: item.pendingSince,
         priority: smartPriorityToLegacy(spPssr.level),
         smartPriority: spPssr,
