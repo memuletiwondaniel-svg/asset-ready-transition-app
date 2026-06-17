@@ -626,21 +626,20 @@ const KanbanCardContent: React.FC<{
           );
         })() : null;
 
-        const dueInfo = task.kanbanColumn !== 'done' ? getDueInfo(task) : null;
-        const ageInfo = !statusPillNode && !dueInfo ? getAgeInfo(task) : null;
+        // Urgency label (overdue / due / age) — computed once at the top
+        // of the card and reused here. Status pill (Done column) wins.
+        const urgencyLabel = !statusPillNode && urgency.label ? (
+          <span className={cn(
+            "text-[10px] font-medium whitespace-nowrap",
+            urgency.tone === 'red'    && 'text-red-600 dark:text-red-400',
+            urgency.tone === 'amber'  && 'text-amber-600 dark:text-amber-500',
+            urgency.tone === 'muted'  && 'text-muted-foreground/70',
+            urgency.tone === 'accent' && 'text-primary font-semibold',
+          )}>{urgency.label}</span>
+        ) : null;
         const approvalProgress = getApprovalProgress(task, reviewerSummaries, p2aApprovalSummaries, oraApprovalSummaries);
 
-        const leftNode = statusPillNode ?? (
-          dueInfo ? (
-            <span className={cn(
-              "text-[10px] font-medium px-1.5 py-0.5 rounded whitespace-nowrap",
-              dueInfo.kind === 'overdue' && 'text-red-700 bg-red-100 dark:bg-red-900/30 dark:text-red-400',
-              (dueInfo.kind === 'soon' || dueInfo.kind === 'today') && 'text-amber-700 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400',
-            )}>{dueInfo.text}</span>
-          ) : ageInfo ? (
-            <span className="text-[10px] text-muted-foreground/70 whitespace-nowrap">{ageInfo.text}</span>
-          ) : null
-        );
+        const leftNode = statusPillNode ?? urgencyLabel;
 
         if (!leftNode && !approvalProgress) return null;
 
