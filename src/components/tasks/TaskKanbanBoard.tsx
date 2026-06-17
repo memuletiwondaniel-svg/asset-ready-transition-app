@@ -430,8 +430,8 @@ const KanbanCardContent: React.FC<{
       onClick={onClick}
       tabIndex={0}
       className={cn(
-        "relative",
-        isChild ? "p-2 cursor-pointer rounded-md group border-l-2" : "px-3 py-1.5 pl-3.5 cursor-pointer transition-all duration-200 rounded-lg group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+        "relative overflow-hidden",
+        isChild ? "p-2 cursor-pointer rounded-md group border-l-2" : "px-3 py-1.5 pl-4 cursor-pointer transition-all duration-200 rounded-lg group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
         isChild
           ? "border-0 border-l-border/50 bg-muted/30 shadow-none hover:bg-muted/50"
           : "border border-border/60 bg-card shadow-[0_1px_2px_0_rgb(0,0,0,0.03)] hover:-translate-y-0.5 hover:shadow-md hover:border-border",
@@ -444,7 +444,7 @@ const KanbanCardContent: React.FC<{
         <span
           aria-hidden
           className={cn(
-            "pointer-events-none absolute left-1 top-1.5 bottom-1.5 w-[3px] rounded-full",
+            "pointer-events-none absolute left-0 top-0 bottom-0 w-1",
             railColor,
           )}
         />
@@ -459,13 +459,6 @@ const KanbanCardContent: React.FC<{
           >
             <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
           </button>
-        )}
-        {!isChild && task.isNew && (
-          <span
-            aria-label="New"
-            title="New"
-            className="h-1.5 w-1.5 rounded-full bg-primary shrink-0"
-          />
         )}
         {!isChild && (
           task.project ? (
