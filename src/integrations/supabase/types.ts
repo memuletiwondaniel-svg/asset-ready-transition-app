@@ -50,24 +50,6 @@ export type Database = {
         }
         Relationships: []
       }
-      _mtc_diag: {
-        Row: {
-          id: number
-          msg: string | null
-          ts: string | null
-        }
-        Insert: {
-          id?: number
-          msg?: string | null
-          ts?: string | null
-        }
-        Update: {
-          id?: number
-          msg?: string | null
-          ts?: string | null
-        }
-        Relationships: []
-      }
       agent_competency_areas: {
         Row: {
           agent_code: string
