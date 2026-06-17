@@ -421,7 +421,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         return isReview && reviewPayload ? (
           <VCRReviewDecisionStep
             payload={reviewPayload}
-            onDecided={() => onOpenChange(false)}
+            onDecided={() => { clearSavedReviewStep(); onOpenChange(false); }}
           />
         ) : (
           <VCRConfirmationStep vcrId={vcr.id} vcrName={vcr.name} vcrCode={vcr.vcr_code} onNavigateToStep={goToStep} onReadyChange={setStep9Ready} submitRequestId={submitRequestId} approversRoster={approversRoster} onSubmitSuccess={() => onOpenChange(false)} />
