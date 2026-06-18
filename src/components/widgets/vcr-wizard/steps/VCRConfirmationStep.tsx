@@ -205,6 +205,33 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
     },
   });
 
+  // Persisted approvers from vcr_plan_approvers — used as fallback when the
+  // user resubmits a CHANGES_REQUESTED plan by jumping straight to Step 10
+  // without visiting Step 8 (so approversRoster prop is empty).
+  const { data: persistedApprovers } = useQuery<VcrSubmitApproverPayload[]>({
+    queryKey: ['vcr-plan-approvers-persisted', vcrId],
+    queryFn: async () => {
+      const client = supabase as any;
+      const { data, error } = await client
+        .from('vcr_plan_approvers')
+        .select('user_id, role_key, role_label, approver_order')
+        .eq('vcr_id', vcrId)
+        .order('approver_order', { ascending: true });
+      if (error) {
+        console.error('[vcr-plan-approvers-persisted] failed', error);
+        return [];
+      }
+      return (data || [])
+        .filter((r: any) => !!r.user_id)
+        .map((r: any) => ({
+          user_id: r.user_id,
+          role_key: r.role_key || 'custom',
+          role_label: r.role_label,
+          approver_order: r.approver_order ?? 0,
+        }));
+    },
+  });
+
   const rows: ReadinessRow[] = stats ? [
     {
       key: 'systems', stepIdx: 0, stepLabel: 'Step 1', name: 'Systems',
