@@ -486,6 +486,7 @@ export function useUnifiedTasks(userId: string) {
           roleKey: item.role_key,
           roleLabel: item.role_label,
           phase: item.phase ?? null,
+          rowStatus: (rowStatus || null) as 'PENDING' | 'APPROVED' | 'REJECTED' | null,
           reviewStartedAt,
           reviewMaxStep,
         },
