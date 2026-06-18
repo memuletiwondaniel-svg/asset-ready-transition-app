@@ -13813,6 +13813,7 @@ export type Database = {
           decided_at: string | null
           handover_point_id: string
           id: string
+          review_max_step: number | null
           review_started_at: string | null
           role_key: string
           role_label: string
@@ -13827,6 +13828,7 @@ export type Database = {
           decided_at?: string | null
           handover_point_id: string
           id?: string
+          review_max_step?: number | null
           review_started_at?: string | null
           role_key: string
           role_label: string
@@ -13841,6 +13843,7 @@ export type Database = {
           decided_at?: string | null
           handover_point_id?: string
           id?: string
+          review_max_step?: number | null
           review_started_at?: string | null
           role_key?: string
           role_label?: string
@@ -14704,6 +14707,7 @@ export type Database = {
           project_code: string | null
           project_id: string | null
           rejectors: Json | null
+          review_max_step: number | null
           review_started_at: string | null
           role_key: string | null
           role_label: string | null
