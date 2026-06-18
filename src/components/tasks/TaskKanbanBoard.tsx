@@ -580,13 +580,14 @@ const KanbanCardContent: React.FC<{
   // Rail color encodes URGENCY (overdue/due-soon/on-track) — see computeUrgency.
   // Rejected status keeps the destructive override.
   const urgency = computeUrgency(task);
-  const railColor = (() => {
-    if (accentClass === 'border-l-destructive') return 'bg-destructive';
+  const railShadow = (() => {
+    if (task.kanbanColumn === 'done') return undefined;
+    if (accentClass === 'border-l-destructive') return 'inset 4px 0 0 0 hsl(var(--destructive))';
     switch (urgency.rail) {
-      case 'red':   return 'bg-red-500 dark:bg-red-500';
-      case 'amber': return 'bg-amber-500 dark:bg-amber-500';
+      case 'red':   return 'inset 4px 0 0 0 rgb(239 68 68)';
+      case 'amber': return 'inset 4px 0 0 0 rgb(245 158 11)';
       case 'grey':
-      default:      return 'bg-border dark:bg-border';
+      default:      return 'inset 4px 0 0 0 hsl(var(--border))';
     }
   })();
 
@@ -594,6 +595,7 @@ const KanbanCardContent: React.FC<{
     <Card
       onClick={onClick}
       tabIndex={0}
+      style={railShadow ? { boxShadow: `${railShadow}, 0 1px 2px 0 rgb(0,0,0,0.03)` } : undefined}
       className={cn(
         "relative overflow-hidden",
         isChild ? "p-2 cursor-pointer rounded-md group border-l-2" : "px-3 py-1.5 pl-4 cursor-pointer transition-all duration-200 rounded-lg group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
@@ -605,15 +607,6 @@ const KanbanCardContent: React.FC<{
         isOverlay && 'shadow-xl ring-2 ring-primary/20 rotate-[1deg] scale-[1.02]',
       )}
     >
-      {!isChild && (
-        <span
-          aria-hidden
-          className={cn(
-            "pointer-events-none absolute left-0 top-0 bottom-0 w-1",
-            railColor,
-          )}
-        />
-      )}
       {/* Row 1: drag handle + project / category pills */}
       <div className={cn("flex items-center gap-1.5 min-w-0", isChild ? "mb-1" : "mb-1.5")}>
         {!isChild && dragHandleProps && (
