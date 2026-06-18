@@ -108,6 +108,9 @@ export interface UnifiedTask {
     reviewStartedAt?: string | null;
     reviewMaxStep?: number | null;
   };
+  // Generic step-progress payload (e.g. vcr_plan_resubmit). Drives the
+  // "N of M steps" label on in-progress kanban cards.
+  stepProgress?: { reviewed: number; total: number };
 }
 
 export const FILTER_OPTIONS: { value: CategoryFilter; label: string }[] = [
