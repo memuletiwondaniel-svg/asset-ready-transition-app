@@ -400,6 +400,10 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     // Review mode: indicators are reviewer-coverage only — green once visited,
     // neutral otherwise. Non-gating (decision footer governs progress).
     if (isReview) {
+      // View-only review (no approver row): plan is fully submitted; per-step
+      // coverage is meaningless. Render every step uniformly complete so the
+      // rail does not flip state as the viewer pages through.
+      if (!reviewPayload?.approverRowId) return true;
       // Once the viewer has decided (APPROVED/REJECTED), the plan is done from
       // their perspective — show all steps as complete instead of per-session
       // visited state so re-opens don't look "mostly pending".
