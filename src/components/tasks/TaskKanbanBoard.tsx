@@ -1253,7 +1253,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     } else {
       console.log('[TaskKanbanBoard] handleTaskClick:branch', { branch: 'no_action' });
     }
-  }, [navigate]);
+  }, [navigate, handleOpenVCRWizard]);
 
   const handleApprove = (taskId: string) => onUpdateTaskStatus(taskId, 'completed');
   const handleReject = (taskId: string) => onUpdateTaskStatus(taskId, 'cancelled');
