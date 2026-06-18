@@ -25,6 +25,7 @@ export interface VCRPlanApprovalTask {
   row_status?: 'PENDING' | 'APPROVED' | 'REJECTED' | string | null;
   decided_at?: string | null;
   task_created_at?: string | null;
+  review_started_at?: string | null;
 }
 
 export function useVCRPlanApprovalTasks() {
