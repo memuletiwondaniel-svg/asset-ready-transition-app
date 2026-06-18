@@ -41,6 +41,18 @@ export interface ProjectVCR {
   planProgress?: number;
   /** Plan-creation wizard step 1–10 derived for "Step X of 10". */
   planStep?: number;
+  /**
+   * Live VCR-plan approval rollup. Populated ONLY for `in_approval`
+   * lifecycle (single batched read against `v_vcr_plan_approver_tasks`).
+   * `phase`: 1 = awaiting ORA Lead, 2 = parallel Phase-2 fan-out,
+   * `null` = no actionable phase (rejected / fully approved / unconfigured).
+   */
+  planApproval?: {
+    phase: number | null;
+    approvedCount: number;
+    totalCount: number;
+    anyRejected: boolean;
+  };
 }
 
 const DRAFT_COMPLETE_PROGRESS = 83;
