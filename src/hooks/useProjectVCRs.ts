@@ -208,6 +208,33 @@ export function useProjectVCRs(projectId: string) {
         })
       );
 
+      // Batched VCR-plan approval rollup for in_approval VCRs only. The view
+      // returns one row per approver per handover point; rollup columns
+      // (phase, approved_count, total_count, any_rejected) are constant
+      // across rows of the same handover point, so we de-dupe by id.
+      const inApprovalIds = vcrsWithProgress
+        .filter((v) => v.lifecycle === 'in_approval')
+        .map((v) => v.id);
+      if (inApprovalIds.length > 0) {
+        const rollupResult = await client
+          .from('v_vcr_plan_approver_tasks')
+          .select('handover_point_id, phase, approved_count, total_count, any_rejected')
+          .in('handover_point_id', inApprovalIds);
+        const rollupByHp = new Map<string, ProjectVCR['planApproval']>();
+        for (const row of (rollupResult.data || []) as any[]) {
+          if (rollupByHp.has(row.handover_point_id)) continue;
+          rollupByHp.set(row.handover_point_id, {
+            phase: row.phase ?? null,
+            approvedCount: Number(row.approved_count) || 0,
+            totalCount: Number(row.total_count) || 0,
+            anyRejected: !!row.any_rejected,
+          });
+        }
+        for (const v of vcrsWithProgress) {
+          if (v.lifecycle === 'in_approval') v.planApproval = rollupByHp.get(v.id);
+        }
+      }
+
       return vcrsWithProgress;
     },
     enabled: !!projectId,
