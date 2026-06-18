@@ -582,12 +582,12 @@ const KanbanCardContent: React.FC<{
   const urgency = computeUrgency(task);
   const railShadow = (() => {
     if (task.kanbanColumn === 'done') return undefined;
-    if (accentClass === 'border-l-destructive') return 'inset 4px 0 0 0 hsl(var(--destructive))';
+    if (accentClass === 'border-l-destructive') return 'inset 2px 0 0 0 hsl(var(--destructive) / 0.5)';
     switch (urgency.rail) {
-      case 'red':   return 'inset 4px 0 0 0 rgb(239 68 68)';
-      case 'amber': return 'inset 4px 0 0 0 rgb(245 158 11)';
+      case 'red':   return 'inset 2px 0 0 0 rgb(239 68 68 / 0.45)';
+      case 'amber': return 'inset 2px 0 0 0 rgb(245 158 11 / 0.45)';
       case 'grey':
-      default:      return 'inset 4px 0 0 0 hsl(var(--border))';
+      default:      return undefined;
     }
   })();
 
