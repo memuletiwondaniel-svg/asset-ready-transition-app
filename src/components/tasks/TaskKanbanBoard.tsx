@@ -671,11 +671,14 @@ const KanbanCardContent: React.FC<{
               ? Math.min((task.vcrPlanApproval!.reviewMaxStep as number) + 1, 10)
               : (task.vcrPlanApproval!.reviewStartedAt ? 1 : 0))
           : 0;
+        const stepInfo = isVcrReview
+          ? { reviewed: reviewedSteps, total: 10 }
+          : (task.stepProgress ?? null);
         return (
           <div className="flex items-center gap-1.5 mt-1.5">
             <Progress value={pct} className="h-1 flex-1 bg-muted/30" indicatorClassName="bg-muted-foreground/25" />
             <span className="text-[10px] font-medium text-muted-foreground">
-              {isVcrReview ? `${reviewedSteps} of 10 steps` : `${Math.round(pct)}%`}
+              {stepInfo ? `${stepInfo.reviewed} of ${stepInfo.total} steps` : `${Math.round(pct)}%`}
             </span>
           </div>
         );

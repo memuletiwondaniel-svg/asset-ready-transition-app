@@ -108,6 +108,9 @@ export interface UnifiedTask {
     reviewStartedAt?: string | null;
     reviewMaxStep?: number | null;
   };
+  // Generic step-progress payload (e.g. vcr_plan_resubmit). Drives the
+  // "N of M steps" label on in-progress kanban cards.
+  stepProgress?: { reviewed: number; total: number };
 }
 
 export const FILTER_OPTIONS: { value: CategoryFilter; label: string }[] = [
@@ -318,6 +321,15 @@ export function useUnifiedTasks(userId: string) {
         createdAt: t.created_at,
       });
 
+      // vcr_plan_resubmit: surface edit-step progress on the in-progress card.
+      let stepProgress: { reviewed: number; total: number } | undefined;
+      if (t.type === 'vcr_plan_resubmit') {
+        const editMaxStep = typeof meta?.edit_max_step === 'number' ? meta.edit_max_step : undefined;
+        const reviewed = editMaxStep != null ? Math.min(editMaxStep + 1, 10) : 0;
+        stepProgress = { reviewed, total: 10 };
+        resolvedProgress = Math.round((reviewed / 10) * 100);
+      }
+
       tasks.push({
         id: `ut-${t.id}`,
         category,
@@ -350,6 +362,7 @@ export function useUnifiedTasks(userId: string) {
         }),
         isApprovalProtected,
         parentTaskId: t.parent_task_id ?? null,
+        stepProgress,
       });
     });
 
