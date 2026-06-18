@@ -444,9 +444,16 @@ export function useUnifiedTasks(userId: string) {
       const isDecided = isApproved || isRejected;
       const status = isApproved ? 'Approved' : isRejected ? 'Changes requested' : 'Pending';
       const reviewStartedAt: string | null = item.review_started_at ?? null;
+      const reviewMaxStep: number | null = (item.review_max_step ?? null) as number | null;
       const kanbanColumn: 'todo' | 'in_progress' | 'done' = isDecided
         ? 'done'
         : (reviewStartedAt ? 'in_progress' : 'todo');
+      // Review wizard has 10 steps. Show real progress on the In Progress card.
+      const VCR_REVIEW_TOTAL_STEPS = 10;
+      const reviewedSteps = reviewMaxStep != null
+        ? Math.min(reviewMaxStep + 1, VCR_REVIEW_TOTAL_STEPS)
+        : (reviewStartedAt ? 1 : 0);
+      const reviewProgressPct = Math.round((reviewedSteps / VCR_REVIEW_TOTAL_STEPS) * 100);
       tasks.push({
         id: `vcr-plan-${item.approver_row_id}`,
         category: 'vcr',
@@ -467,6 +474,7 @@ export function useUnifiedTasks(userId: string) {
         isNew: !isDecided && created ? isNewSinceLastLogin(created) : false,
         kanbanColumn,
         isApprovalProtected: isDecided,
+        progressPercentage: kanbanColumn === 'in_progress' ? reviewProgressPct : undefined,
         vcrPlanApproval: {
           approverRowId: item.approver_row_id,
           handoverPointId: item.handover_point_id,
@@ -478,6 +486,7 @@ export function useUnifiedTasks(userId: string) {
           roleLabel: item.role_label,
           phase: item.phase ?? null,
           reviewStartedAt,
+          reviewMaxStep,
         },
       });
 
