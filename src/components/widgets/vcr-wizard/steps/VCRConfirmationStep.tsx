@@ -215,7 +215,7 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
       const { data, error } = await client
         .from('vcr_plan_approvers')
         .select('user_id, role_key, role_label, approver_order')
-        .eq('vcr_id', vcrId)
+        .eq('handover_point_id', vcrId)
         .order('approver_order', { ascending: true });
       if (error) {
         console.error('[vcr-plan-approvers-persisted] failed', error);
