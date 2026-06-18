@@ -746,7 +746,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
 
   return (
     <VCRWizardModeContext.Provider value={{ mode: isReview ? 'review' : 'create', subMode, reviewPayload: reviewPayload ?? null }}>
-      {isReview && reviewPayload ? (
+      {isReview && reviewPayload && reviewPayload.approverRowId ? (
         <VCRReviewDecisionProvider
           payload={reviewPayload}
           onDecided={() => { clearSavedReviewStep(); onOpenChange(false); }}
@@ -758,5 +758,32 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         wizard
       )}
     </VCRWizardModeContext.Provider>
+  );
+};
+
+// ─── View-only approver-status board (Step 10 in review_only when the
+// viewer has NO approver row — submitter / observer). Reuses the shared
+// ApproverDecisionList rendering (role, name, status chip, comment,
+// decided-at) and surfaces a phase-aware banner so a non-approver can see
+// whether Phase-1 is still open. NO decision controls.
+const ViewOnlyApproverStatusBoard: React.FC<{ payload: VCRReviewPayload }> = ({ payload }) => {
+  const { data: rollup } = useVCRPlanRollup(payload.handoverPointId);
+  const phase = rollup?.phase ?? payload.phase ?? null;
+  const banner = phase === 1
+    ? 'Phase 1 — Awaiting ORA Lead review. Phase-2 approvers are not yet active.'
+    : phase === 2
+      ? 'Phase 2 — ORA Lead has approved; Phase-2 approvers are reviewing in parallel.'
+      : 'This plan is under approval.';
+  return (
+    <div className="max-w-3xl mx-auto space-y-4 p-1">
+      <header className="space-y-1">
+        <h2 className="text-lg font-semibold text-foreground">Approver status</h2>
+        <p className="text-sm text-muted-foreground">{banner}</p>
+      </header>
+      <div className="rounded-md border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+        You are viewing this plan in read-only mode. No decision can be recorded from this screen.
+      </div>
+      <Step8ReviewModeWrapper vcrId={payload.handoverPointId} />
+    </div>
   );
 };
