@@ -224,6 +224,8 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     if (!open) {
       hasRestoredStepRef.current = false;
       initialPlacementDoneRef.current = false;
+      hasPromotedRef.current = false;
+      resubmitMaxStepRef.current = -1;
     }
   }, [open]);
   // Restore saved step. Waits for reviewStepStorageKey to become non-null
