@@ -1725,6 +1725,14 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         onCancel={handleWarningCancel}
         onConfirm={handleWarningConfirm}
       />
+
+      <WithdrawDecisionDialog
+        open={!!withdrawState}
+        state={withdrawState}
+        onCancel={handleWithdrawCancel}
+        onConfirm={handleWithdrawConfirm}
+        submitting={withdrawSubmitting}
+      />
     </>
     </ReviewerSummaryContext.Provider>
     </P2AApprovalContext.Provider>
