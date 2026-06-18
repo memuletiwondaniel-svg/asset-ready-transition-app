@@ -236,8 +236,12 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       // Wait for user?.id to hydrate before restoring.
       return;
     }
-    let restored = 0;
-    if (reviewStepStorageKey) {
+    // View-only review (no approver row) opens directly on Step 10 (the
+    // approver-status board). Actionable review (approverRowId set) keeps
+    // its existing resume-from-saved-step behaviour.
+    const isViewOnlyReview = isReview && !reviewPayload?.approverRowId;
+    let restored = isViewOnlyReview ? STEPS.length - 1 : 0;
+    if (reviewStepStorageKey && !isViewOnlyReview) {
       try {
         const raw = localStorage.getItem(reviewStepStorageKey);
         if (raw != null) {
