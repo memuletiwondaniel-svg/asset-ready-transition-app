@@ -216,10 +216,14 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
       return;
     }
 
-    // U8 routing — for an `in_approval` VCR, if the current user is an
-    // approver on this plan, open the plan-approval review surface; else
-    // fall back to the read-only detail overlay.
+    // U8 routing — for an `in_approval` VCR, ALWAYS open the read-only
+    // review wizard. If the viewer has an actionable approver row, the
+    // wizard runs the actionable review (decision step). Otherwise it
+    // launches in view-only mode (approverRowId=null) and the final step
+    // renders the read-only approver-status board. Non-approvers no longer
+    // fall through to the detail overlay for in_approval VCRs.
     if (lifecycle === 'in_approval') {
+      let approverRow: any = null;
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user?.id) {
@@ -229,27 +233,26 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
             .eq('handover_point_id', found.id)
             .eq('user_id', user.id)
             .maybeSingle();
-          if (row?.approver_row_id) {
-            setReviewPayload({
-              approverRowId: row.approver_row_id,
-              handoverPointId: row.handover_point_id,
-              vcrCode: row.vcr_code ?? found.vcr_code,
-              vcrName: row.vcr_name ?? found.name,
-              projectCode: row.project_code ?? projectCode,
-              projectId: row.project_id ?? projectId,
-              roleKey: row.role_key,
-              roleLabel: row.role_label,
-              phase: row.phase ?? null,
-            });
-            return;
-          }
+          approverRow = row || null;
         }
       } catch (err) {
-        console.warn('[PSSRSummaryWidget] approver lookup failed, falling back to detail overlay', err);
+        console.warn('[PSSRSummaryWidget] approver lookup failed, opening view-only review', err);
       }
+      setReviewPayload({
+        approverRowId: approverRow?.approver_row_id ?? null,
+        handoverPointId: approverRow?.handover_point_id ?? found.id,
+        vcrCode: approverRow?.vcr_code ?? found.vcr_code,
+        vcrName: approverRow?.vcr_name ?? found.name,
+        projectCode: approverRow?.project_code ?? projectCode,
+        projectId: approverRow?.project_id ?? projectId,
+        roleKey: approverRow?.role_key ?? '',
+        roleLabel: approverRow?.role_label ?? '',
+        phase: approverRow?.phase ?? null,
+      });
+      return;
     }
 
-    // Detail overlay (read-only) for non-approver in_approval, approved, handed_over.
+    // Detail overlay (read-only) for approved / handed_over (fully-approved) VCRs.
     setSelectedVCR(found);
   };
 
