@@ -105,6 +105,7 @@ export interface UnifiedTask {
     roleLabel: string;
     phase: number | null;
     reviewStartedAt?: string | null;
+    reviewMaxStep?: number | null;
   };
 }
 
