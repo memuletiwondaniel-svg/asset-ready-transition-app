@@ -367,7 +367,7 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
         approverPayload = ((persistedRows || []) as Array<{
           user_id: string | null;
           role_key: string | null;
-          role_label: string | null;
+          role_label: string;
           approver_order: number | null;
         }>)
           .filter((r) => !!r.user_id)
