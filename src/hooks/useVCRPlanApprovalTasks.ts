@@ -26,6 +26,7 @@ export interface VCRPlanApprovalTask {
   decided_at?: string | null;
   task_created_at?: string | null;
   review_started_at?: string | null;
+  review_max_step?: number | null;
 }
 
 export function useVCRPlanApprovalTasks() {
