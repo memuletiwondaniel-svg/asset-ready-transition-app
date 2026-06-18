@@ -144,6 +144,32 @@ const getColumns = (t: any) => [
   { key: 'done' as const, label: t.kanbanDone || 'Done', icon: CheckCircle2, accent: 'border-l-emerald-500', iconColor: 'text-emerald-500', emptyIcon: CheckCircle2, emptyMsg: t.kanbanEmptyDone || 'No completed tasks yet.', emptyHint: t.kanbanEmptyDoneHint || 'Finished work will collect here.' },
 ];
 
+/**
+ * Lock predicate: an approved plan-creation card sitting in Done must not be
+ * draggable — dragging out triggers the destructive p2a_revert / ora_revert
+ * cascade in move_task_to_column. Reuses the same metadata flags as
+ * isApprovalProtected (useUnifiedTasks) but narrowed to plan-creation tasks
+ * and only in the "done" column.
+ *
+ * Exported for unit testing.
+ */
+export function isApprovedPlanCardLocked(task: UnifiedTask): boolean {
+  if (task.kanbanColumn !== 'done') return false;
+  const userTask = task.userTask;
+  if (!userTask) return false;
+  const meta = userTask.metadata as Record<string, any> | undefined;
+  const action = meta?.action;
+  const type = userTask.type;
+  const planStatus = (meta?.plan_status ?? '').toString().toUpperCase();
+  const isP2aPlanCreation = action === 'create_p2a_plan' || type === 'p2a_plan_creation';
+  const isOraPlanCreation = action === 'create_ora_plan' || type === 'ora_plan_creation';
+  if (isP2aPlanCreation && (planStatus === 'COMPLETED' || planStatus === 'ACTIVE')) return true;
+  if (isOraPlanCreation && (planStatus === 'APPROVED' || planStatus === 'COMPLETED')) return true;
+  return false;
+}
+
+
+
 // ─── Approval Void Warning Dialog ──────────────────────────────────
 const ApprovalVoidWarningDialog: React.FC<{
   open: boolean;
@@ -481,7 +507,11 @@ const DraggableKanbanCard: React.FC<{
   // Workflow-driven cards (e.g. VCR plan approval) have no backing user_task
   // row; we still allow dragging so dropping opens the review modal (handled
   // in handleDragEnd). Other cards remain unchanged.
-  const isDraggable = !!task.userTask || !!task.vcrPlanApproval;
+  // Approved plan-creation cards in Done are LOCKED — an accidental drag out
+  // of Done would trigger the destructive p2a_revert / ora_revert cascade in
+  // move_task_to_column. The drag handle is hidden and dnd-kit is disabled.
+  const isLocked = isApprovedPlanCardLocked(task);
+  const isDraggable = (!!task.userTask || !!task.vcrPlanApproval) && !isLocked;
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: task.id,
     data: { task },
@@ -497,6 +527,8 @@ const DraggableKanbanCard: React.FC<{
       ref={setNodeRef}
       style={style}
       className={cn(isDragging && 'opacity-30')}
+      aria-disabled={isLocked || undefined}
+      data-drag-locked={isLocked || undefined}
     >
       <KanbanCardContent
         task={task}
