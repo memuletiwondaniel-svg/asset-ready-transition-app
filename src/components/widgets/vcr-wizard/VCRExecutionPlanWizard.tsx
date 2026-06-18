@@ -276,8 +276,11 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   useEffect(() => {
     if (!open || !reviewStepStorageKey) return;
     if (!hasRestoredStepRef.current) return;
+    // View-only review never writes — the saved step belongs to the
+    // actionable approver session, and view-only always opens on step 10.
+    if (!reviewPayload?.approverRowId) return;
     try { localStorage.setItem(reviewStepStorageKey, String(currentStep)); } catch { /* ignore */ }
-  }, [open, reviewStepStorageKey, currentStep]);
+  }, [open, reviewStepStorageKey, currentStep, reviewPayload?.approverRowId]);
 
   // Persist furthest-reached review step to the DB so the My Tasks board
   // can show real review progress on the In Progress card. Monotonic
