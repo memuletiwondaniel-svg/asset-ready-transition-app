@@ -100,9 +100,30 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
     ctxLeft = `${closedItems} of ${totalItems} items closed`;
     ctxRight = vcr.updated_at ? `Updated ${formatRelative(vcr.updated_at)}` : '';
   } else if (lifecycle === 'in_approval') {
-    barPercent = 100;
-    trailingValue = '100%';
-    ctxLeft = `${systemsLabel} · ${gateLabel} ${gateSigned ? 'signed' : 'pending'}`;
+    // VCR-plan approval rollup (NOT the SoF/PAC handover gate, which only
+    // applies post-handover). `planApproval` is populated by useProjectVCRs
+    // for in_approval VCRs from v_vcr_plan_approver_tasks.
+    const pa = vcr.planApproval;
+    const approved = pa?.approvedCount ?? 0;
+    const total = pa?.totalCount ?? 0;
+    const pct = total > 0 ? Math.round((approved / total) * 100) : 0;
+    if (pa?.anyRejected) {
+      ctxLeft = 'Changes requested';
+      barPercent = pct;
+      trailingValue = total > 0 ? `${approved}/${total}` : '';
+    } else if (pa?.phase === 1) {
+      ctxLeft = 'Awaiting ORA Lead approval';
+      barPercent = pct; // 0% at Phase 1 is honest
+      trailingValue = 'Phase 1';
+    } else if (pa?.phase === 2) {
+      ctxLeft = `${approved} of ${total} approvers signed`;
+      barPercent = pct;
+      trailingValue = `${approved}/${total}`;
+    } else {
+      ctxLeft = 'In approval';
+      barPercent = pct;
+      trailingValue = total > 0 ? `${approved}/${total}` : '';
+    }
     ctxRight = vcr.submitted_at ? `Submitted ${formatShortDate(vcr.submitted_at)}` : '';
   } else if (lifecycle === 'approved') {
     barPercent = 100;
