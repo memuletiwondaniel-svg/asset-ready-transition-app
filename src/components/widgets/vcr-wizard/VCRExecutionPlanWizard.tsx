@@ -254,11 +254,43 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         }
       } catch { /* ignore */ }
     }
+
+    // Non-review (edit/resubmit) restoration: if a vcr_plan_resubmit task
+    // exists for this VCR with a persisted edit_max_step, resume at that
+    // step. Async — mark restored only after the lookup resolves.
+    if (!isReview && user?.id) {
+      let cancelled = false;
+      (async () => {
+        try {
+          const { data: rows } = await (supabase as any)
+            .from('user_tasks')
+            .select('metadata')
+            .eq('user_id', user.id)
+            .eq('type', 'vcr_plan_resubmit')
+            .eq('dedupe_key', `vcr_plan_resubmit:${vcr.id}`)
+            .neq('status', 'completed')
+            .limit(1);
+          if (cancelled) return;
+          const meta = (rows?.[0]?.metadata || {}) as Record<string, any>;
+          const editMaxStep = typeof meta.edit_max_step === 'number' ? meta.edit_max_step : null;
+          if (editMaxStep != null && editMaxStep >= 0 && editMaxStep < STEPS.length) {
+            restored = editMaxStep;
+            resubmitMaxStepRef.current = editMaxStep;
+          }
+        } catch { /* ignore */ }
+        setCurrentStep(restored);
+        setVisitedSteps(new Set(Array.from({ length: restored + 1 }, (_, i) => i)));
+        hasPromotedRef.current = false;
+        hasRestoredStepRef.current = true;
+      })();
+      return () => { cancelled = true; };
+    }
+
     setCurrentStep(restored);
     setVisitedSteps(new Set(Array.from({ length: restored + 1 }, (_, i) => i)));
     hasPromotedRef.current = false;
     hasRestoredStepRef.current = true;
-  }, [open, isReview, reviewStepStorageKey, reviewPayload?.approverRowId]);
+  }, [open, isReview, reviewStepStorageKey, reviewPayload?.approverRowId, user?.id, vcr.id]);
   useEffect(() => {
     if (!open || !isReview) return;
     if (initialPlacementDoneRef.current) return;
