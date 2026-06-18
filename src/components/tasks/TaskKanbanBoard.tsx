@@ -1225,6 +1225,23 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     // review modal; the actual approve/reject only happens inside the wizard.
     if (task.vcrPlanApproval && !task.userTask) {
       const approverRowId = task.vcrPlanApproval.approverRowId;
+      const rowStatus = task.vcrPlanApproval.rowStatus;
+      const isDecided = rowStatus === 'APPROVED' || rowStatus === 'REJECTED';
+
+      // Decided card dragged OUT of Done → open Withdraw dialog instead of
+      // marking/clearing review-started or opening the review modal.
+      if (isDecided && task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo')) {
+        const isPhase1Cascade =
+          task.vcrPlanApproval.roleKey === 'ora_lead' && rowStatus === 'APPROVED';
+        setWithdrawState({
+          task,
+          approverRowId,
+          rowStatus: rowStatus as 'APPROVED' | 'REJECTED',
+          isPhase1Cascade,
+        });
+        return;
+      }
+
       if (targetColumn === 'done') {
         setVcrPlanApproval(task.vcrPlanApproval);
         setVcrPlanApprovalOpen(true);
