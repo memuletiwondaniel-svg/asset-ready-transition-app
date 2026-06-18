@@ -194,8 +194,10 @@ const ApprovalVoidWarningDialog: React.FC<{
   const isApproverTask = metaSource === 'p2a_handover' && meta?.action !== 'create_p2a_plan';
   const isAdHocReviewTask = metaSource === 'task_review';
   const planStatus = meta?.plan_status?.toUpperCase?.() || '';
-  const isFullyApproved = !isApproverTask && !isAdHocReviewTask && ['COMPLETED', 'APPROVED'].includes(planStatus);
+  const isFullyApproved = !isApproverTask && !isAdHocReviewTask && ['COMPLETED', 'APPROVED', 'ACTIVE'].includes(planStatus);
   const isGenericTask = !isApproverTask && !isAdHocReviewTask && !planStatus;
+  const isP2aPlanRevert = isFullyApproved && (meta?.action === 'create_p2a_plan' || task?.userTask?.type === 'p2a_plan_creation');
+  const isOraPlanRevert = isFullyApproved && (meta?.action === 'create_ora_plan' || task?.userTask?.type === 'ora_plan_creation');
 
   const taskTitle = task?.title || '';
   const trimmedReason = voidReason.trim();
@@ -243,9 +245,21 @@ const ApprovalVoidWarningDialog: React.FC<{
                   </>
                 ) : isFullyApproved ? (
                   <>
-                    <li>Void all existing approvals</li>
-                    <li>Require a completely new review cycle</li>
-                    <li>Notify all approvers of the change</li>
+                    <li>Return the plan to <span className="font-medium text-foreground">DRAFT</span></li>
+                    <li>Clear <span className="font-medium text-foreground">every approver's decision</span> (all approvers reset to Pending; prior decisions archived)</li>
+                    {isP2aPlanRevert && (
+                      <>
+                        <li>Delete the linked <span className="font-medium text-foreground">VCR delivery-plan</span> and <span className="font-medium text-foreground">P2A VCR</span> activities from the ORA plan</li>
+                        <li>Delete the <span className="font-medium text-foreground">ORI approval snapshot</span> recorded at plan approval</li>
+                        <li>Delete the open <span className="font-medium text-foreground">P2A approval tasks</span> and the <span className="font-medium text-foreground">"plan approved" notification</span></li>
+                      </>
+                    )}
+                    {isOraPlanRevert && (
+                      <>
+                        <li>Delete the open <span className="font-medium text-foreground">ORA approval tasks</span> and approval notifications</li>
+                      </>
+                    )}
+                    <li><span className="font-medium text-foreground">Only re-submission and full re-approval</span> can restore this plan</li>
                   </>
                 ) : isGenericTask ? (
                   <>
