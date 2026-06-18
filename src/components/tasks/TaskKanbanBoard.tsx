@@ -1347,6 +1347,44 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     setWarningState(null);
   }, []);
 
+  const handleWithdrawCancel = useCallback(() => {
+    if (withdrawSubmitting) return;
+    setWithdrawState(null);
+  }, [withdrawSubmitting]);
+
+  const handleWithdrawConfirm = useCallback(async (reason: string) => {
+    if (!withdrawState) return;
+    setWithdrawSubmitting(true);
+    try {
+      const { data, error } = await (supabase as any).rpc('withdraw_vcr_plan_approval', {
+        p_approver_row_id: withdrawState.approverRowId,
+        p_reason: reason,
+      });
+      if (error) throw error;
+      const payload = data as { scope?: string; approvers_reset?: number } | null;
+      if (payload?.scope === 'phase1_cascade') {
+        toast.success(`Approvals reset (${payload.approvers_reset ?? 0}) — plan returned to Phase 1`);
+      } else {
+        toast.success('Decision withdrawn — back to Pending');
+      }
+      queryClient.invalidateQueries({ queryKey: ['vcr-plan-approval-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+      setWithdrawState(null);
+    } catch (err: any) {
+      const msg: string = err?.message || String(err);
+      if (msg.includes('42501') || /forbidden/i.test(msg)) {
+        toast.error('You can only withdraw your own decision');
+      } else if (/nothing to withdraw/i.test(msg)) {
+        toast.error('This decision is already pending');
+      } else {
+        toast.error(msg);
+      }
+      setWithdrawState(null);
+    } finally {
+      setWithdrawSubmitting(false);
+    }
+  }, [withdrawState, queryClient]);
+
   const COLUMNS = useMemo(() => getColumns(t), [t]);
 
   // Per-column sort comparators. "Priority" preserves the global pre-sort
