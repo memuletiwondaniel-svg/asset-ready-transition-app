@@ -295,7 +295,15 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
 
   const requiredGaps = rows.filter(r => r.required && !r.complete);
   const isReady = stats ? requiredGaps.length === 0 : false;
-  const approverCount = approvers?.length || 0;
+  // The dialog count should reflect what will actually be submitted.
+  // Prefer the lifted Step-8 roster (user intent wins), fall back to the
+  // persisted approvers loaded from vcr_plan_approvers — same precedence
+  // applied in handleConfirmSubmit.
+  const liftedPayload = buildVcrSubmitApproverPayload(approversRoster);
+  const submitPayloadPreview = liftedPayload.length > 0
+    ? liftedPayload
+    : (persistedApprovers || []);
+  const approverCount = submitPayloadPreview.length || approvers?.length || 0;
 
   const handleSubmitClick = () => {
     if (!isReady) {
