@@ -697,9 +697,9 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
               Go to decision ▸
             </Button>
           </>
-        ) : (
+        ) : reviewPayload?.approverRowId ? (
           <VCRReviewDecisionFooterButtons />
-        )}
+        ) : null}
       </div>
     </div>
   ) : undefined;
