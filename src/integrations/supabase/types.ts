@@ -15185,6 +15185,10 @@ export type Database = {
         Args: { p_handover_point_id: string }
         Returns: Json
       }
+      withdraw_vcr_plan_approval: {
+        Args: { p_approver_row_id: string; p_reason: string }
+        Returns: Json
+      }
       write_audit_log: {
         Args: {
           p_action: string
