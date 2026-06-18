@@ -31,3 +31,25 @@ export async function clearVcrReviewStarted(approverRowId: string): Promise<void
     console.warn('[clearVcrReviewStarted] failed', err);
   }
 }
+
+/**
+ * Monotonically records the furthest review step the approver has reached.
+ * Never decreases — going back to an earlier step does NOT lower the stored
+ * value (UPDATE is guarded by `review_max_step IS NULL OR review_max_step < stepIndex`).
+ * Backed by RLS policy `vcr_plan_approvers_update_own`.
+ */
+export async function markVcrReviewStep(
+  approverRowId: string,
+  stepIndex: number,
+): Promise<void> {
+  if (!Number.isFinite(stepIndex) || stepIndex < 0) return;
+  try {
+    await (supabase as any)
+      .from('vcr_plan_approvers')
+      .update({ review_max_step: stepIndex })
+      .eq('id', approverRowId)
+      .or(`review_max_step.is.null,review_max_step.lt.${stepIndex}`);
+  } catch (err) {
+    console.warn('[markVcrReviewStep] failed', err);
+  }
+}

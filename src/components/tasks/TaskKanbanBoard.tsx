@@ -505,12 +505,23 @@ const KanbanCardContent: React.FC<{
       </div>
 
       {/* Progress for in-progress tasks (hidden on child rows — leaves use status pill only) */}
-      {!isChild && task.kanbanColumn === 'in_progress' && (
-        <div className="flex items-center gap-1.5 mt-1.5">
-          <Progress value={task.progressPercentage ?? 0} className="h-1 flex-1 bg-muted/30" indicatorClassName="bg-muted-foreground/25" />
-          <span className="text-[10px] font-medium text-muted-foreground">{Math.round(task.progressPercentage ?? 0)}%</span>
-        </div>
-      )}
+      {!isChild && task.kanbanColumn === 'in_progress' && (() => {
+        const isVcrReview = !!task.vcrPlanApproval;
+        const pct = task.progressPercentage ?? 0;
+        const reviewedSteps = isVcrReview
+          ? (task.vcrPlanApproval!.reviewMaxStep != null
+              ? Math.min((task.vcrPlanApproval!.reviewMaxStep as number) + 1, 10)
+              : (task.vcrPlanApproval!.reviewStartedAt ? 1 : 0))
+          : 0;
+        return (
+          <div className="flex items-center gap-1.5 mt-1.5">
+            <Progress value={pct} className="h-1 flex-1 bg-muted/30" indicatorClassName="bg-muted-foreground/25" />
+            <span className="text-[10px] font-medium text-muted-foreground">
+              {isVcrReview ? `${reviewedSteps} of 10 steps` : `${Math.round(pct)}%`}
+            </span>
+          </div>
+        );
+      })()}
       {/* Item counts for bundle tasks */}
       {!isChild && task.kanbanColumn !== 'in_progress' && task.totalItems != null && task.totalItems > 0 && (
         <div className="flex items-center gap-1.5 mt-1.5">
@@ -1025,6 +1036,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       import('@/lib/vcrPlanReviewStart').then(({ markVcrReviewStarted }) => {
         markVcrReviewStarted(approverRowId).then(() => {
           queryClient.invalidateQueries({ queryKey: ['vcr-plan-approval-tasks'] });
+          queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
         });
       });
       return;
@@ -1100,11 +1112,13 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         const { markVcrReviewStarted } = await import('@/lib/vcrPlanReviewStart');
         await markVcrReviewStarted(approverRowId);
         queryClient.invalidateQueries({ queryKey: ['vcr-plan-approval-tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
       } else if (targetColumn === 'todo') {
         // Drag back from In Progress → clear the marker so it returns to To Do.
         const { clearVcrReviewStarted } = await import('@/lib/vcrPlanReviewStart');
         await clearVcrReviewStarted(approverRowId);
         queryClient.invalidateQueries({ queryKey: ['vcr-plan-approval-tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
       }
       return;
     }

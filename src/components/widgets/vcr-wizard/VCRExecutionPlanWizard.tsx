@@ -46,6 +46,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { buildVcrSubmitApproverPayload } from '@/lib/buildVcrSubmitPayload';
 import { toast } from 'sonner';
+import { markVcrReviewStarted, markVcrReviewStep } from '@/lib/vcrPlanReviewStart';
 
 interface VCRExecutionPlanWizardProps {
   open: boolean;
@@ -279,6 +280,31 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     if (!hasRestoredStepRef.current) return;
     try { localStorage.setItem(reviewStepStorageKey, String(currentStep)); } catch { /* ignore */ }
   }, [open, reviewStepStorageKey, currentStep]);
+
+  // Persist furthest-reached review step to the DB so the My Tasks board
+  // can show real review progress on the In Progress card. Monotonic
+  // (markVcrReviewStep guards with `review_max_step < stepIndex`). Also
+  // ensures review_started_at is set on first navigation. Skipped once the
+  // viewer has decided (no need to keep bumping).
+  useEffect(() => {
+    if (!open || !isReview) return;
+    if (!hasRestoredStepRef.current) return;
+    const rowId = reviewPayload?.approverRowId;
+    if (!rowId) return;
+    if (viewerAlreadyDecided) return;
+    let cancelled = false;
+    (async () => {
+      await markVcrReviewStarted(rowId);
+      await markVcrReviewStep(rowId, currentStep);
+      if (cancelled) return;
+      // Invalidate BOTH task feeds so the Kanban card reflects new progress
+      // without a manual refresh.
+      queryClient.invalidateQueries({ queryKey: ['vcr-plan-approval-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+    })();
+    return () => { cancelled = true; };
+  }, [open, isReview, reviewPayload?.approverRowId, viewerAlreadyDecided, currentStep, queryClient]);
+
 
   const clearSavedReviewStep = useCallback(() => {
     if (!reviewStepStorageKey) return;
