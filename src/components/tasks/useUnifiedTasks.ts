@@ -104,6 +104,7 @@ export interface UnifiedTask {
     roleKey: string;
     roleLabel: string;
     phase: number | null;
+    rowStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' | null;
     reviewStartedAt?: string | null;
     reviewMaxStep?: number | null;
   };
