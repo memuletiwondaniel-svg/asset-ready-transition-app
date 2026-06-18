@@ -217,45 +217,66 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     ? `vcr-review-step:${vcr.id}:${user.id}`
     : null;
   const initialPlacementDoneRef = useRef(false);
+  const hasRestoredStepRef = useRef(false);
+  // Reset restoration state when the wizard closes.
   useEffect(() => {
-    if (open) {
-      // Try to restore a saved review step; fall back to step 0.
-      let restored = 0;
-      if (reviewStepStorageKey) {
-        try {
-          const raw = localStorage.getItem(reviewStepStorageKey);
-          if (raw != null) {
-            const parsed = parseInt(raw, 10);
-            if (Number.isFinite(parsed) && parsed >= 0 && parsed < STEPS.length) {
-              restored = parsed;
-            }
-          }
-        } catch { /* ignore */ }
-      }
-      setCurrentStep(restored);
-      setVisitedSteps(new Set([restored]));
-      hasPromotedRef.current = false;
+    if (!open) {
+      hasRestoredStepRef.current = false;
       initialPlacementDoneRef.current = false;
     }
-  }, [open, reviewStepStorageKey]);
+  }, [open]);
+  // Restore saved step. Waits for reviewStepStorageKey to become non-null
+  // (auth hydration race). For non-review (create) mode, key is null and we
+  // simply land on step 0 once.
+  useEffect(() => {
+    if (!open) return;
+    if (hasRestoredStepRef.current) return;
+    if (isReview && !reviewStepStorageKey) {
+      // Wait for user?.id to hydrate before restoring.
+      return;
+    }
+    let restored = 0;
+    if (reviewStepStorageKey) {
+      try {
+        const raw = localStorage.getItem(reviewStepStorageKey);
+        if (raw != null) {
+          const parsed = parseInt(raw, 10);
+          if (Number.isFinite(parsed) && parsed >= 0 && parsed < STEPS.length) {
+            restored = parsed;
+          }
+        }
+      } catch { /* ignore */ }
+    }
+    setCurrentStep(restored);
+    setVisitedSteps(new Set([restored]));
+    hasPromotedRef.current = false;
+    hasRestoredStepRef.current = true;
+  }, [open, isReview, reviewStepStorageKey]);
   useEffect(() => {
     if (!open || !isReview) return;
     if (initialPlacementDoneRef.current) return;
+    if (!hasRestoredStepRef.current) return;
     // Wait for the row query to resolve before deciding.
     if (viewerApproverRow === undefined) return;
     initialPlacementDoneRef.current = true;
     // Only auto-jump to the decision surface if the user hasn't navigated
-    // away from the default landing step (i.e. no saved step was restored).
-    if (viewerAlreadyDecided && currentStep === 0) {
+    // away from the default landing step AND no saved step was restored.
+    let hadSaved = false;
+    if (reviewStepStorageKey) {
+      try { hadSaved = localStorage.getItem(reviewStepStorageKey) != null; } catch { /* ignore */ }
+    }
+    if (viewerAlreadyDecided && currentStep === 0 && !hadSaved) {
       const last = STEPS.length - 1;
       setCurrentStep(last);
       setVisitedSteps(new Set([last]));
     }
-  }, [open, isReview, viewerApproverRow, viewerAlreadyDecided, currentStep]);
+  }, [open, isReview, viewerApproverRow, viewerAlreadyDecided, currentStep, reviewStepStorageKey]);
 
-  // Persist current step while a review is open.
+  // Persist current step while a review is open. Guarded so we never write
+  // before restoration has run (which would clobber the saved value with 0).
   useEffect(() => {
     if (!open || !reviewStepStorageKey) return;
+    if (!hasRestoredStepRef.current) return;
     try { localStorage.setItem(reviewStepStorageKey, String(currentStep)); } catch { /* ignore */ }
   }, [open, reviewStepStorageKey, currentStep]);
 
