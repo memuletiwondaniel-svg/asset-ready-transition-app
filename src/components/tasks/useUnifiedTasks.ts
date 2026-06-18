@@ -104,6 +104,7 @@ export interface UnifiedTask {
     roleKey: string;
     roleLabel: string;
     phase: number | null;
+    rowStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' | null;
     reviewStartedAt?: string | null;
     reviewMaxStep?: number | null;
   };
@@ -485,6 +486,7 @@ export function useUnifiedTasks(userId: string) {
           roleKey: item.role_key,
           roleLabel: item.role_label,
           phase: item.phase ?? null,
+          rowStatus: (rowStatus || null) as 'PENDING' | 'APPROVED' | 'REJECTED' | null,
           reviewStartedAt,
           reviewMaxStep,
         },

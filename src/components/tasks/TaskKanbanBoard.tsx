@@ -18,6 +18,7 @@ import { P2AWorkspaceOverlay } from '@/components/widgets/P2AWorkspaceOverlay';
 import { VCRExecutionPlanWizard } from '@/components/widgets/vcr-wizard/VCRExecutionPlanWizard';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -276,6 +277,124 @@ const ApprovalVoidWarningDialog: React.FC<{
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isAdHocReviewTask ? 'Move Anyway – Void Decision' : isApproverTask ? 'Move Anyway – Void Approval' : isFullyApproved ? 'Move Anyway – Void Approvals' : isGenericTask ? 'Reopen Task' : 'Move Anyway – Cancel Review'}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+};
+
+// ─── Withdraw VCR Plan Decision Dialog ─────────────────────────────
+interface WithdrawDecisionState {
+  task: UnifiedTask;
+  approverRowId: string;
+  rowStatus: 'APPROVED' | 'REJECTED';
+  isPhase1Cascade: boolean;
+}
+
+const WithdrawDecisionDialog: React.FC<{
+  open: boolean;
+  state: WithdrawDecisionState | null;
+  onCancel: () => void;
+  onConfirm: (reason: string) => void;
+  submitting: boolean;
+}> = ({ open, state, onCancel, onConfirm, submitting }) => {
+  const [acknowledged, setAcknowledged] = useState(false);
+  const [reason, setReason] = useState('');
+
+  React.useEffect(() => {
+    if (open) {
+      setAcknowledged(false);
+      setReason('');
+    }
+  }, [open]);
+
+  const cascade = !!state?.isPhase1Cascade;
+  const decisionWord = state?.rowStatus === 'REJECTED' ? 'rejected' : 'approved';
+  const trimmed = reason.trim();
+  const isValid = acknowledged && trimmed.length >= 5 && trimmed.length <= 500 && !submitting;
+  const confirmLabel = cascade ? 'Withdraw & reset all approvals' : 'Withdraw decision';
+
+  return (
+    <AlertDialog open={open} onOpenChange={(o) => !o && !submitting && onCancel()}>
+      <AlertDialogContent className="max-w-md">
+        <AlertDialogHeader>
+          <div className="flex items-center gap-3 mb-2">
+            <div className={cn(
+              'flex items-center justify-center w-10 h-10 rounded-full',
+              cascade ? 'bg-destructive/10' : 'bg-amber-500/10',
+            )}>
+              <AlertTriangle className={cn('h-5 w-5', cascade ? 'text-destructive' : 'text-amber-600')} />
+            </div>
+            <AlertDialogTitle className="text-lg">Withdraw your decision?</AlertDialogTitle>
+          </div>
+          <AlertDialogDescription asChild>
+            <div className="space-y-3 text-sm">
+              {cascade ? (
+                <>
+                  <p className="font-medium text-destructive">
+                    You are the ORA Lead. Withdrawing your approval will VOID the baseline and
+                    RESET ALL downstream approvals on this plan back to Pending, returning it to
+                    Phase 1.
+                  </p>
+                  <p className="text-muted-foreground">This cannot be undone.</p>
+                </>
+              ) : (
+                <p>
+                  You {decisionWord} this VCR plan. Withdrawing returns your decision to{' '}
+                  <span className="font-medium text-foreground">Pending</span>. Other approvers
+                  are unaffected.
+                </p>
+              )}
+
+              <div className="space-y-1.5 pt-1">
+                <label htmlFor="withdraw-reason" className="text-xs font-medium text-foreground">
+                  Reason for withdrawing <span className="text-destructive">*</span>
+                </label>
+                <Textarea
+                  id="withdraw-reason"
+                  placeholder="Explain why you are withdrawing your decision..."
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  className="min-h-[72px] resize-none text-sm"
+                  maxLength={500}
+                />
+                <div className="flex justify-between">
+                  <p className="text-[10px] text-muted-foreground">
+                    {trimmed.length < 5 && trimmed.length > 0 ? 'Minimum 5 characters required' : '\u00A0'}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">{reason.length}/500</p>
+                </div>
+              </div>
+
+              <label className="flex items-start gap-2.5 pt-1 cursor-pointer select-none">
+                <Checkbox
+                  checked={acknowledged}
+                  onCheckedChange={(c) => setAcknowledged(!!c)}
+                  className="mt-0.5"
+                />
+                <span className="text-xs text-muted-foreground leading-relaxed">
+                  {cascade
+                    ? 'I understand this will reset every approver on this plan to Pending.'
+                    : 'I understand this returns my decision to Pending.'}
+                </span>
+              </label>
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="gap-2 sm:gap-2">
+          <AlertDialogCancel onClick={onCancel} disabled={submitting}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() => onConfirm(trimmed)}
+            disabled={!isValid}
+            className={cn(
+              'disabled:opacity-50 disabled:cursor-not-allowed',
+              cascade
+                ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                : 'bg-amber-600 text-white hover:bg-amber-700',
+            )}
+          >
+            {submitting ? 'Withdrawing…' : confirmLabel}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -774,6 +893,8 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   const [approvalBundleOpen, setApprovalBundleOpen] = useState(false);
   const [vcrPlanApproval, setVcrPlanApproval] = useState<UnifiedTask['vcrPlanApproval'] | null>(null);
   const [vcrPlanApprovalOpen, setVcrPlanApprovalOpen] = useState(false);
+  const [withdrawState, setWithdrawState] = useState<WithdrawDecisionState | null>(null);
+  const [withdrawSubmitting, setWithdrawSubmitting] = useState(false);
   const [activeTask, setActiveTask] = useState<UnifiedTask | null>(null);
   const { moveTaskToColumn } = useKanbanDragDrop();
 
@@ -1104,6 +1225,23 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     // review modal; the actual approve/reject only happens inside the wizard.
     if (task.vcrPlanApproval && !task.userTask) {
       const approverRowId = task.vcrPlanApproval.approverRowId;
+      const rowStatus = task.vcrPlanApproval.rowStatus;
+      const isDecided = rowStatus === 'APPROVED' || rowStatus === 'REJECTED';
+
+      // Decided card dragged OUT of Done → open Withdraw dialog instead of
+      // marking/clearing review-started or opening the review modal.
+      if (isDecided && task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo')) {
+        const isPhase1Cascade =
+          task.vcrPlanApproval.roleKey === 'ora_lead' && rowStatus === 'APPROVED';
+        setWithdrawState({
+          task,
+          approverRowId,
+          rowStatus: rowStatus as 'APPROVED' | 'REJECTED',
+          isPhase1Cascade,
+        });
+        return;
+      }
+
       if (targetColumn === 'done') {
         setVcrPlanApproval(task.vcrPlanApproval);
         setVcrPlanApprovalOpen(true);
@@ -1208,6 +1346,44 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   const handleWarningCancel = useCallback(() => {
     setWarningState(null);
   }, []);
+
+  const handleWithdrawCancel = useCallback(() => {
+    if (withdrawSubmitting) return;
+    setWithdrawState(null);
+  }, [withdrawSubmitting]);
+
+  const handleWithdrawConfirm = useCallback(async (reason: string) => {
+    if (!withdrawState) return;
+    setWithdrawSubmitting(true);
+    try {
+      const { data, error } = await (supabase as any).rpc('withdraw_vcr_plan_approval', {
+        p_approver_row_id: withdrawState.approverRowId,
+        p_reason: reason,
+      });
+      if (error) throw error;
+      const payload = data as { scope?: string; approvers_reset?: number } | null;
+      if (payload?.scope === 'phase1_cascade') {
+        toast.success(`Approvals reset (${payload.approvers_reset ?? 0}) — plan returned to Phase 1`);
+      } else {
+        toast.success('Decision withdrawn — back to Pending');
+      }
+      queryClient.invalidateQueries({ queryKey: ['vcr-plan-approval-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+      setWithdrawState(null);
+    } catch (err: any) {
+      const msg: string = err?.message || String(err);
+      if (msg.includes('42501') || /forbidden/i.test(msg)) {
+        toast.error('You can only withdraw your own decision');
+      } else if (/nothing to withdraw/i.test(msg)) {
+        toast.error('This decision is already pending');
+      } else {
+        toast.error(msg);
+      }
+      setWithdrawState(null);
+    } finally {
+      setWithdrawSubmitting(false);
+    }
+  }, [withdrawState, queryClient]);
 
   const COLUMNS = useMemo(() => getColumns(t), [t]);
 
@@ -1548,6 +1724,14 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         task={warningState?.task || null}
         onCancel={handleWarningCancel}
         onConfirm={handleWarningConfirm}
+      />
+
+      <WithdrawDecisionDialog
+        open={!!withdrawState}
+        state={withdrawState}
+        onCancel={handleWithdrawCancel}
+        onConfirm={handleWithdrawConfirm}
+        submitting={withdrawSubmitting}
       />
     </>
     </ReviewerSummaryContext.Provider>
