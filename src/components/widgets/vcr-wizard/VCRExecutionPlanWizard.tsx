@@ -236,8 +236,12 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       // Wait for user?.id to hydrate before restoring.
       return;
     }
-    let restored = 0;
-    if (reviewStepStorageKey) {
+    // View-only review (no approver row) opens directly on Step 10 (the
+    // approver-status board). Actionable review (approverRowId set) keeps
+    // its existing resume-from-saved-step behaviour.
+    const isViewOnlyReview = isReview && !reviewPayload?.approverRowId;
+    let restored = isViewOnlyReview ? STEPS.length - 1 : 0;
+    if (reviewStepStorageKey && !isViewOnlyReview) {
       try {
         const raw = localStorage.getItem(reviewStepStorageKey);
         if (raw != null) {
@@ -252,7 +256,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     setVisitedSteps(new Set(Array.from({ length: restored + 1 }, (_, i) => i)));
     hasPromotedRef.current = false;
     hasRestoredStepRef.current = true;
-  }, [open, isReview, reviewStepStorageKey]);
+  }, [open, isReview, reviewStepStorageKey, reviewPayload?.approverRowId]);
   useEffect(() => {
     if (!open || !isReview) return;
     if (initialPlacementDoneRef.current) return;
@@ -272,8 +276,11 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   useEffect(() => {
     if (!open || !reviewStepStorageKey) return;
     if (!hasRestoredStepRef.current) return;
+    // View-only review never writes — the saved step belongs to the
+    // actionable approver session, and view-only always opens on step 10.
+    if (!reviewPayload?.approverRowId) return;
     try { localStorage.setItem(reviewStepStorageKey, String(currentStep)); } catch { /* ignore */ }
-  }, [open, reviewStepStorageKey, currentStep]);
+  }, [open, reviewStepStorageKey, currentStep, reviewPayload?.approverRowId]);
 
   // Persist furthest-reached review step to the DB so the My Tasks board
   // can show real review progress on the In Progress card. Monotonic
@@ -393,6 +400,10 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     // Review mode: indicators are reviewer-coverage only — green once visited,
     // neutral otherwise. Non-gating (decision footer governs progress).
     if (isReview) {
+      // View-only review (no approver row): plan is fully submitted; per-step
+      // coverage is meaningless. Render every step uniformly complete so the
+      // rail does not flip state as the viewer pages through.
+      if (!reviewPayload?.approverRowId) return true;
       // Once the viewer has decided (APPROVED/REJECTED), the plan is done from
       // their perspective — show all steps as complete instead of per-session
       // visited state so re-opens don't look "mostly pending".
