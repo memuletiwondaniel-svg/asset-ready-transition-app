@@ -1101,11 +1101,13 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         const { markVcrReviewStarted } = await import('@/lib/vcrPlanReviewStart');
         await markVcrReviewStarted(approverRowId);
         queryClient.invalidateQueries({ queryKey: ['vcr-plan-approval-tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
       } else if (targetColumn === 'todo') {
         // Drag back from In Progress → clear the marker so it returns to To Do.
         const { clearVcrReviewStarted } = await import('@/lib/vcrPlanReviewStart');
         await clearVcrReviewStarted(approverRowId);
         queryClient.invalidateQueries({ queryKey: ['vcr-plan-approval-tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
       }
       return;
     }
