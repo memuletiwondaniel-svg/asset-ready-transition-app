@@ -144,6 +144,32 @@ const getColumns = (t: any) => [
   { key: 'done' as const, label: t.kanbanDone || 'Done', icon: CheckCircle2, accent: 'border-l-emerald-500', iconColor: 'text-emerald-500', emptyIcon: CheckCircle2, emptyMsg: t.kanbanEmptyDone || 'No completed tasks yet.', emptyHint: t.kanbanEmptyDoneHint || 'Finished work will collect here.' },
 ];
 
+/**
+ * Lock predicate: an approved plan-creation card sitting in Done must not be
+ * draggable — dragging out triggers the destructive p2a_revert / ora_revert
+ * cascade in move_task_to_column. Reuses the same metadata flags as
+ * isApprovalProtected (useUnifiedTasks) but narrowed to plan-creation tasks
+ * and only in the "done" column.
+ *
+ * Exported for unit testing.
+ */
+export function isApprovedPlanCardLocked(task: UnifiedTask): boolean {
+  if (task.kanbanColumn !== 'done') return false;
+  const userTask = task.userTask;
+  if (!userTask) return false;
+  const meta = userTask.metadata as Record<string, any> | undefined;
+  const action = meta?.action;
+  const type = userTask.type;
+  const planStatus = (meta?.plan_status ?? '').toString().toUpperCase();
+  const isP2aPlanCreation = action === 'create_p2a_plan' || type === 'p2a_plan_creation';
+  const isOraPlanCreation = action === 'create_ora_plan' || type === 'ora_plan_creation';
+  if (isP2aPlanCreation && (planStatus === 'COMPLETED' || planStatus === 'ACTIVE')) return true;
+  if (isOraPlanCreation && (planStatus === 'APPROVED' || planStatus === 'COMPLETED')) return true;
+  return false;
+}
+
+
+
 // ─── Approval Void Warning Dialog ──────────────────────────────────
 const ApprovalVoidWarningDialog: React.FC<{
   open: boolean;
@@ -168,8 +194,10 @@ const ApprovalVoidWarningDialog: React.FC<{
   const isApproverTask = metaSource === 'p2a_handover' && meta?.action !== 'create_p2a_plan';
   const isAdHocReviewTask = metaSource === 'task_review';
   const planStatus = meta?.plan_status?.toUpperCase?.() || '';
-  const isFullyApproved = !isApproverTask && !isAdHocReviewTask && ['COMPLETED', 'APPROVED'].includes(planStatus);
+  const isFullyApproved = !isApproverTask && !isAdHocReviewTask && ['COMPLETED', 'APPROVED', 'ACTIVE'].includes(planStatus);
   const isGenericTask = !isApproverTask && !isAdHocReviewTask && !planStatus;
+  const isP2aPlanRevert = isFullyApproved && (meta?.action === 'create_p2a_plan' || task?.userTask?.type === 'p2a_plan_creation');
+  const isOraPlanRevert = isFullyApproved && (meta?.action === 'create_ora_plan' || task?.userTask?.type === 'ora_plan_creation');
 
   const taskTitle = task?.title || '';
   const trimmedReason = voidReason.trim();
@@ -217,9 +245,21 @@ const ApprovalVoidWarningDialog: React.FC<{
                   </>
                 ) : isFullyApproved ? (
                   <>
-                    <li>Void all existing approvals</li>
-                    <li>Require a completely new review cycle</li>
-                    <li>Notify all approvers of the change</li>
+                    <li>Return the plan to <span className="font-medium text-foreground">DRAFT</span></li>
+                    <li>Clear <span className="font-medium text-foreground">every approver's decision</span> (all approvers reset to Pending; prior decisions archived)</li>
+                    {isP2aPlanRevert && (
+                      <>
+                        <li>Delete the linked <span className="font-medium text-foreground">VCR delivery-plan</span> and <span className="font-medium text-foreground">P2A VCR</span> activities from the ORA plan</li>
+                        <li>Delete the <span className="font-medium text-foreground">ORI approval snapshot</span> recorded at plan approval</li>
+                        <li>Delete the open <span className="font-medium text-foreground">P2A approval tasks</span> and the <span className="font-medium text-foreground">"plan approved" notification</span></li>
+                      </>
+                    )}
+                    {isOraPlanRevert && (
+                      <>
+                        <li>Delete the open <span className="font-medium text-foreground">ORA approval tasks</span> and approval notifications</li>
+                      </>
+                    )}
+                    <li><span className="font-medium text-foreground">Only re-submission and full re-approval</span> can restore this plan</li>
                   </>
                 ) : isGenericTask ? (
                   <>
@@ -481,7 +521,11 @@ const DraggableKanbanCard: React.FC<{
   // Workflow-driven cards (e.g. VCR plan approval) have no backing user_task
   // row; we still allow dragging so dropping opens the review modal (handled
   // in handleDragEnd). Other cards remain unchanged.
-  const isDraggable = !!task.userTask || !!task.vcrPlanApproval;
+  // Approved plan-creation cards in Done are LOCKED — an accidental drag out
+  // of Done would trigger the destructive p2a_revert / ora_revert cascade in
+  // move_task_to_column. The drag handle is hidden and dnd-kit is disabled.
+  const isLocked = isApprovedPlanCardLocked(task);
+  const isDraggable = (!!task.userTask || !!task.vcrPlanApproval) && !isLocked;
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: task.id,
     data: { task },
@@ -497,6 +541,8 @@ const DraggableKanbanCard: React.FC<{
       ref={setNodeRef}
       style={style}
       className={cn(isDragging && 'opacity-30')}
+      aria-disabled={isLocked || undefined}
+      data-drag-locked={isLocked || undefined}
     >
       <KanbanCardContent
         task={task}
