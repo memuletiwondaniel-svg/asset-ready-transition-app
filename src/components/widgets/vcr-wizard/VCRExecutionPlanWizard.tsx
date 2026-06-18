@@ -248,7 +248,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       } catch { /* ignore */ }
     }
     setCurrentStep(restored);
-    setVisitedSteps(new Set([restored]));
+    setVisitedSteps(new Set(Array.from({ length: restored + 1 }, (_, i) => i)));
     hasPromotedRef.current = false;
     hasRestoredStepRef.current = true;
   }, [open, isReview, reviewStepStorageKey]);
