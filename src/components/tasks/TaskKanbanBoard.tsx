@@ -1084,11 +1084,21 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     // VCR Plan Approval cards have no user_task row. Any drop routes to the
     // review modal; the actual approve/reject only happens inside the wizard.
     if (task.vcrPlanApproval && !task.userTask) {
+      const approverRowId = task.vcrPlanApproval.approverRowId;
       if (targetColumn === 'done') {
         setVcrPlanApproval(task.vcrPlanApproval);
         setVcrPlanApprovalOpen(true);
+      } else if (targetColumn === 'in_progress') {
+        // Mark "review started" (idempotent: only writes when null).
+        const { markVcrReviewStarted } = await import('@/lib/vcrPlanReviewStart');
+        await markVcrReviewStarted(approverRowId);
+        queryClient.invalidateQueries({ queryKey: ['vcr-plan-approval-tasks'] });
+      } else if (targetColumn === 'todo') {
+        // Drag back from In Progress → clear the marker so it returns to To Do.
+        const { clearVcrReviewStarted } = await import('@/lib/vcrPlanReviewStart');
+        await clearVcrReviewStarted(approverRowId);
+        queryClient.invalidateQueries({ queryKey: ['vcr-plan-approval-tasks'] });
       }
-      // targetColumn === 'in_progress' | 'todo' → no-op (snap back)
       return;
     }
 
