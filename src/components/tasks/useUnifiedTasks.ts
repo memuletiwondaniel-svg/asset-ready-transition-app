@@ -104,6 +104,7 @@ export interface UnifiedTask {
     roleKey: string;
     roleLabel: string;
     phase: number | null;
+    reviewStartedAt?: string | null;
   };
 }
 
@@ -441,7 +442,10 @@ export function useUnifiedTasks(userId: string) {
       const isRejected = rowStatus === 'REJECTED';
       const isDecided = isApproved || isRejected;
       const status = isApproved ? 'Approved' : isRejected ? 'Changes requested' : 'Pending';
-      const kanbanColumn: 'todo' | 'done' = isDecided ? 'done' : 'todo';
+      const reviewStartedAt: string | null = item.review_started_at ?? null;
+      const kanbanColumn: 'todo' | 'in_progress' | 'done' = isDecided
+        ? 'done'
+        : (reviewStartedAt ? 'in_progress' : 'todo');
       tasks.push({
         id: `vcr-plan-${item.approver_row_id}`,
         category: 'vcr',
@@ -472,6 +476,7 @@ export function useUnifiedTasks(userId: string) {
           roleKey: item.role_key,
           roleLabel: item.role_label,
           phase: item.phase ?? null,
+          reviewStartedAt,
         },
       });
 

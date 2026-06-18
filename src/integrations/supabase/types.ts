@@ -13813,6 +13813,7 @@ export type Database = {
           decided_at: string | null
           handover_point_id: string
           id: string
+          review_started_at: string | null
           role_key: string
           role_label: string
           status: Database["public"]["Enums"]["vcr_plan_approver_status"]
@@ -13826,6 +13827,7 @@ export type Database = {
           decided_at?: string | null
           handover_point_id: string
           id?: string
+          review_started_at?: string | null
           role_key: string
           role_label: string
           status?: Database["public"]["Enums"]["vcr_plan_approver_status"]
@@ -13839,6 +13841,7 @@ export type Database = {
           decided_at?: string | null
           handover_point_id?: string
           id?: string
+          review_started_at?: string | null
           role_key?: string
           role_label?: string
           status?: Database["public"]["Enums"]["vcr_plan_approver_status"]
@@ -14701,6 +14704,7 @@ export type Database = {
           project_code: string | null
           project_id: string | null
           rejectors: Json | null
+          review_started_at: string | null
           role_key: string | null
           role_label: string | null
           row_status:
