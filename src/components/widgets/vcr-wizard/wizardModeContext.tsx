@@ -1,7 +1,13 @@
 import { createContext, useContext } from 'react';
 
 export interface VCRReviewPayload {
-  approverRowId: string;
+  /**
+   * Approver row this viewer owns on the plan, or `null` for a view-only
+   * launch (submitter / observer / non-approver). When `null` the wizard
+   * runs in `review_only` sub-mode with no decision controls and the final
+   * step renders the read-only approver-status board only.
+   */
+  approverRowId: string | null;
   handoverPointId: string;
   vcrCode: string;
   vcrName: string;
