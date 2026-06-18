@@ -42,7 +42,7 @@ export function useVCRPlanApprovalTasks() {
       // Non-actionable PENDING rows (e.g. Phase-2 awaiting Phase 1) remain hidden.
       const { data, error } = await (supabase as any)
         .from('v_vcr_plan_approver_tasks')
-        .select('approver_row_id, handover_point_id, vcr_code, vcr_name, project_id, project_code, role_key, role_label, phase, total_count, approved_count, execution_plan_status, is_actionable, user_id, row_status, decided_at, task_created_at')
+        .select('approver_row_id, handover_point_id, vcr_code, vcr_name, project_id, project_code, role_key, role_label, phase, total_count, approved_count, execution_plan_status, is_actionable, user_id, row_status, decided_at, task_created_at, review_started_at')
         .eq('user_id', user.id)
         .or('is_actionable.eq.true,row_status.in.(APPROVED,REJECTED)');
       if (error) throw error;
