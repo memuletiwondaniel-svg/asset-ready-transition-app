@@ -46,6 +46,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { buildVcrSubmitApproverPayload } from '@/lib/buildVcrSubmitPayload';
 import { toast } from 'sonner';
+import { markVcrReviewStarted, markVcrReviewStep } from '@/lib/vcrPlanReviewStart';
 
 interface VCRExecutionPlanWizardProps {
   open: boolean;
