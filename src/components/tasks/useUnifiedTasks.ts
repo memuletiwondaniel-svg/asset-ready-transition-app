@@ -104,6 +104,7 @@ export interface UnifiedTask {
     roleKey: string;
     roleLabel: string;
     phase: number | null;
+    reviewStartedAt?: string | null;
   };
 }
 
