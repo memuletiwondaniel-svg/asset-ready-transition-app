@@ -351,12 +351,33 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
       // action in review mode. Do NOT inline / fork.
       // Precedence: if Step 8 was visited / edited, the lifted roster wins
       // (user intent). Otherwise — e.g. resubmit of a CHANGES_REQUESTED plan
-      // where the user jumps straight to Step 10 — fall back to the persisted
-      // roster from vcr_plan_approvers so submit is not a silent no-op.
+      // where the user jumps straight to Step 10 — fetch the persisted roster
+      // fresh from vcr_plan_approvers so submit does not depend on query cache.
       const liftedPayloadNow = buildVcrSubmitApproverPayload(approversRoster);
-      const approverPayload: VcrSubmitApproverPayload[] = liftedPayloadNow.length > 0
-        ? liftedPayloadNow
-        : (persistedApprovers || []);
+      let approverPayload: VcrSubmitApproverPayload[] = liftedPayloadNow;
+
+      if (approverPayload.length === 0) {
+        const { data: persistedRows, error: persistedErr } = await client
+          .from('vcr_plan_approvers')
+          .select('user_id, role_key, role_label, approver_order')
+          .eq('handover_point_id', vcrId)
+          .order('approver_order', { ascending: true });
+        if (persistedErr) throw persistedErr;
+
+        approverPayload = ((persistedRows || []) as Array<{
+          user_id: string | null;
+          role_key: string | null;
+          role_label: string;
+          approver_order: number | null;
+        }>)
+          .filter((r) => !!r.user_id)
+          .map((r) => ({
+            user_id: r.user_id as string,
+            role_key: r.role_key || 'custom',
+            role_label: r.role_label,
+            approver_order: r.approver_order ?? 0,
+          }));
+      }
 
       if (approverPayload.length === 0) {
         toast.error('No approvers configured. Go back to Step 8 and assign approvers before submitting.');
