@@ -1018,8 +1018,15 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     // VCR Plan Approval task — has no userTask; route to the dedicated decision sheet.
     if (task.vcrPlanApproval) {
       console.log('[TaskKanbanBoard] handleTaskClick:branch', { branch: 'vcr_plan_approval' });
+      const approverRowId = task.vcrPlanApproval.approverRowId;
       setVcrPlanApproval(task.vcrPlanApproval);
       setVcrPlanApprovalOpen(true);
+      // Fire-and-forget: opening the review counts as "started".
+      import('@/lib/vcrPlanReviewStart').then(({ markVcrReviewStarted }) => {
+        markVcrReviewStarted(approverRowId).then(() => {
+          queryClient.invalidateQueries({ queryKey: ['vcr-plan-approval-tasks'] });
+        });
+      });
       return;
     }
 
