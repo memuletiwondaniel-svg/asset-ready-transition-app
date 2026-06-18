@@ -256,7 +256,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     setVisitedSteps(new Set(Array.from({ length: restored + 1 }, (_, i) => i)));
     hasPromotedRef.current = false;
     hasRestoredStepRef.current = true;
-  }, [open, isReview, reviewStepStorageKey]);
+  }, [open, isReview, reviewStepStorageKey, reviewPayload?.approverRowId]);
   useEffect(() => {
     if (!open || !isReview) return;
     if (initialPlacementDoneRef.current) return;
