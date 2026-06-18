@@ -601,7 +601,7 @@ const KanbanCardContent: React.FC<{
         isChild ? "p-2 cursor-pointer rounded-md group border-l-2" : "px-3 py-1.5 pl-4 cursor-pointer transition-all duration-200 rounded-lg group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
         isChild
           ? "border-0 border-l-border/50 bg-muted/30 shadow-none hover:bg-muted/50"
-          : "border border-border/60 bg-card hover:-translate-y-0.5 hover:shadow-md hover:border-border",
+          : "border border-border/60 bg-card shadow-[0_1px_2px_0_rgb(0,0,0,0.03)] hover:-translate-y-0.5 hover:shadow-md hover:border-border",
         isChild && 'border-l-border/50',
         task.isWaiting && !isWaitingVcrApprovalBundle && 'opacity-50',
         isOverlay && 'shadow-xl ring-2 ring-primary/20 rotate-[1deg] scale-[1.02]',
