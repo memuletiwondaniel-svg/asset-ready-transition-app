@@ -540,9 +540,10 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
         </div>
       )}
 
-      {/* Submission note (ready state only) */}
+      {/* Submission note (ready state only) — pinned to bottom of the
+          scroll container so it stays visible as the user scrolls. */}
       {isReady && (
-        <div>
+        <div className="sticky bottom-0 -mx-1 px-1 pt-3 pb-1 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-t border-border z-10">
           <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
             Submission note (optional)
           </div>
