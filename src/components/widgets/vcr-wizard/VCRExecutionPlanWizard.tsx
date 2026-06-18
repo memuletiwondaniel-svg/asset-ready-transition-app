@@ -459,11 +459,13 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       case 7: return <Step8ReviewModeWrapper vcrId={vcr.id} onApproversChange={handleRosterChange} />;
       case 8: return <VCRItemsStep vcrId={vcr.id} />;
       case 9:
-        return isReview && reviewPayload ? (
+        return isReview && reviewPayload && reviewPayload.approverRowId ? (
           <VCRReviewDecisionStep
             payload={reviewPayload}
             onDecided={() => { clearSavedReviewStep(); onOpenChange(false); }}
           />
+        ) : isReview && reviewPayload ? (
+          <ViewOnlyApproverStatusBoard payload={reviewPayload} />
         ) : (
           <VCRConfirmationStep vcrId={vcr.id} vcrName={vcr.name} vcrCode={vcr.vcr_code} onNavigateToStep={goToStep} onReadyChange={setStep9Ready} submitRequestId={submitRequestId} approversRoster={approversRoster} onSubmitSuccess={() => onOpenChange(false)} />
         );
