@@ -893,6 +893,8 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   const [approvalBundleOpen, setApprovalBundleOpen] = useState(false);
   const [vcrPlanApproval, setVcrPlanApproval] = useState<UnifiedTask['vcrPlanApproval'] | null>(null);
   const [vcrPlanApprovalOpen, setVcrPlanApprovalOpen] = useState(false);
+  const [withdrawState, setWithdrawState] = useState<WithdrawDecisionState | null>(null);
+  const [withdrawSubmitting, setWithdrawSubmitting] = useState(false);
   const [activeTask, setActiveTask] = useState<UnifiedTask | null>(null);
   const { moveTaskToColumn } = useKanbanDragDrop();
 
