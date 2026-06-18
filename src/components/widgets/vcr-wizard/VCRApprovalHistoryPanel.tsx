@@ -89,7 +89,7 @@ export const VCRApprovalHistoryPanel: React.FC<Props> = ({ handoverPointId, defa
             return (
             <ol className="space-y-2">
               {collapsed.map((e) => {
-                const meta = eventStyle[e.event_type];
+                const meta = eventStyle[e.event_type] ?? { icon: Pencil, tone: 'text-muted-foreground', label: e.event_type };
                 const Icon = meta.icon;
                 const role = e.payload?.role_label || e.payload?.role_key;
                 const phase = e.payload?.phase;
