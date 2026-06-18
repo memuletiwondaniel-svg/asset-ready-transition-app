@@ -1205,7 +1205,21 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     if (task.userTask) {
       const meta = task.userTask.metadata as Record<string, any> | undefined;
       const isReviewTask = meta?.source === 'task_review';
-      const isOraActivity = !isReviewTask && (task.userTask.type === 'ora_activity' || meta?.action === 'complete_ora_activity' || meta?.action === 'create_p2a_plan' || meta?.action === 'create_vcr_delivery_plan' || meta?.ora_plan_activity_id);
+
+      // VCR plan resubmit task — open the VCR wizard directly in edit mode for the submitter.
+      if (task.userTask.type === 'vcr_plan_resubmit' && meta?.vcr_id) {
+        console.log('[TaskKanbanBoard] handleTaskClick:branch', { branch: 'vcr_plan_resubmit' });
+        handleOpenVCRWizard(
+          meta.vcr_id as string,
+          (meta.vcr_code as string) || '',
+          (meta.vcr_name as string) || (task.userTask.title || ''),
+          (meta.project_id as string) || '',
+          (meta.project_code as string) || ''
+        );
+        return;
+      }
+
+      const isOraActivity = !isReviewTask && task.userTask.type !== 'vcr_plan_resubmit' && (task.userTask.type === 'ora_activity' || meta?.action === 'complete_ora_activity' || meta?.action === 'create_p2a_plan' || meta?.action === 'create_vcr_delivery_plan' || meta?.ora_plan_activity_id);
       console.log('[TaskKanbanBoard] handleTaskClick:userTaskBranchCheck', {
         isReviewTask,
         isOraActivity,
