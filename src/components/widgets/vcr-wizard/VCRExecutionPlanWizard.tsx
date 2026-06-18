@@ -347,7 +347,8 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     hasPromotedRef.current = true;
 
     (async () => {
-      const { data: tasks } = await (supabase as any)
+      const client = supabase as any;
+      const { data: tasks } = await client
         .from('user_tasks')
         .select('id, status')
         .eq('user_id', user.id)
@@ -357,14 +358,75 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         .limit(1);
 
       if (tasks?.[0]) {
-        await (supabase as any)
+        await client
           .from('user_tasks')
           .update({ status: 'in_progress' })
           .eq('id', tasks[0].id);
-        queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
       }
+
+      // Also auto-promote a matching resubmit task (type='vcr_plan_resubmit').
+      const { data: resubmitTasks } = await client
+        .from('user_tasks')
+        .select('id, status')
+        .eq('user_id', user.id)
+        .eq('type', 'vcr_plan_resubmit')
+        .eq('status', 'pending')
+        .eq('dedupe_key', `vcr_plan_resubmit:${vcr.id}`)
+        .limit(1);
+      if (resubmitTasks?.[0]) {
+        await client
+          .from('user_tasks')
+          .update({ status: 'in_progress' })
+          .eq('id', resubmitTasks[0].id);
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
     })();
   }, [isReview, open, user?.id, vcr.id, queryClient]);
+
+  // Step telemetry for the resubmit task (create/edit mode only). Mirrors the
+  // approver-review markVcrReviewStep monotonic pattern: never decreases.
+  const resubmitMaxStepRef = useRef<number>(-1);
+  useEffect(() => {
+    if (isReview) return;
+    if (!open || !user?.id) return;
+    if (currentStep <= resubmitMaxStepRef.current) return;
+    const stepToWrite = currentStep;
+    let cancelled = false;
+    (async () => {
+      const client = supabase as any;
+      const { data: rows } = await client
+        .from('user_tasks')
+        .select('id, status, metadata')
+        .eq('user_id', user.id)
+        .eq('type', 'vcr_plan_resubmit')
+        .eq('dedupe_key', `vcr_plan_resubmit:${vcr.id}`)
+        .neq('status', 'completed')
+        .limit(1);
+      if (cancelled || !rows?.[0]) return;
+      const row = rows[0];
+      const existingMeta = (row.metadata || {}) as Record<string, any>;
+      const prevMax = typeof existingMeta.edit_max_step === 'number' ? existingMeta.edit_max_step : -1;
+      const nextMax = Math.max(prevMax, stepToWrite);
+      if (nextMax <= prevMax) {
+        resubmitMaxStepRef.current = Math.max(resubmitMaxStepRef.current, nextMax);
+        return;
+      }
+      const reviewed = Math.min(nextMax + 1, TOTAL_STEPS);
+      const pct = Math.round((reviewed / TOTAL_STEPS) * 100);
+      await client
+        .from('user_tasks')
+        .update({
+          progress_percentage: pct,
+          metadata: { ...existingMeta, edit_max_step: nextMax },
+        })
+        .eq('id', row.id);
+      if (cancelled) return;
+      resubmitMaxStepRef.current = nextMax;
+      queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+    })();
+    return () => { cancelled = true; };
+  }, [isReview, open, user?.id, vcr.id, currentStep, queryClient]);
 
   // Query step data counts for completion. Current order:
   // 0:Systems 1:W&HP(itp) 2:Training 3:Procedures 4:Critical Docs
