@@ -260,18 +260,12 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     // Wait for the row query to resolve before deciding.
     if (viewerApproverRow === undefined) return;
     initialPlacementDoneRef.current = true;
-    // Only auto-jump to the decision surface if the user hasn't navigated
-    // away from the default landing step AND no saved step was restored.
-    let hadSaved = false;
-    if (reviewStepStorageKey) {
-      try { hadSaved = localStorage.getItem(reviewStepStorageKey) != null; } catch { /* ignore */ }
-    }
-    if (viewerAlreadyDecided && currentStep === 0 && !hadSaved) {
+    if (viewerAlreadyDecided) {
       const last = STEPS.length - 1;
       setCurrentStep(last);
-      setVisitedSteps(new Set([last]));
+      setVisitedSteps(new Set(Array.from({ length: last + 1 }, (_, i) => i)));
     }
-  }, [open, isReview, viewerApproverRow, viewerAlreadyDecided, currentStep, reviewStepStorageKey]);
+  }, [open, isReview, viewerApproverRow, viewerAlreadyDecided]);
 
   // Persist current step while a review is open. Guarded so we never write
   // before restoration has run (which would clobber the saved value with 0).
