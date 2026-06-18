@@ -1025,6 +1025,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       import('@/lib/vcrPlanReviewStart').then(({ markVcrReviewStarted }) => {
         markVcrReviewStarted(approverRowId).then(() => {
           queryClient.invalidateQueries({ queryKey: ['vcr-plan-approval-tasks'] });
+          queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
         });
       });
       return;
