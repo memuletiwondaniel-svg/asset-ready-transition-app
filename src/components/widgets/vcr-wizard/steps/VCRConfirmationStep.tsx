@@ -347,7 +347,16 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
       // so the materialized rows are authoritative regardless of any stale UI.
       // Shared payload builder — also used by the ORA-edit "Save changes"
       // action in review mode. Do NOT inline / fork.
-      const approverPayload = buildVcrSubmitApproverPayload(approversRoster);
+      // Shared payload builder — also used by the ORA-edit "Save changes"
+      // action in review mode. Do NOT inline / fork.
+      // Precedence: if Step 8 was visited / edited, the lifted roster wins
+      // (user intent). Otherwise — e.g. resubmit of a CHANGES_REQUESTED plan
+      // where the user jumps straight to Step 10 — fall back to the persisted
+      // roster from vcr_plan_approvers so submit is not a silent no-op.
+      const liftedPayloadNow = buildVcrSubmitApproverPayload(approversRoster);
+      const approverPayload: VcrSubmitApproverPayload[] = liftedPayloadNow.length > 0
+        ? liftedPayloadNow
+        : (persistedApprovers || []);
 
       if (approverPayload.length === 0) {
         toast.error('No approvers configured. Go back to Step 8 and assign approvers before submitting.');
