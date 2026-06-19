@@ -627,17 +627,36 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       case 6: return <MaintenanceSystemsStep vcrId={vcr.id} />;
       case 7: return <Step8ReviewModeWrapper vcrId={vcr.id} onApproversChange={handleRosterChange} />;
       case 8: return <VCRItemsStep vcrId={vcr.id} />;
-      case 9:
-        return isReview && reviewPayload && reviewPayload.approverRowId && !viewerAlreadyDecided ? (
-          <VCRReviewDecisionStep
-            payload={reviewPayload}
-            onDecided={() => { clearSavedReviewStep(); onOpenChange(false); }}
-          />
-        ) : isReview && reviewPayload ? (
-          <ViewOnlyApproverStatusBoard payload={reviewPayload} />
-        ) : (
+      case 9: {
+        if (isReview && reviewPayload && reviewPayload.approverRowId && !viewerAlreadyDecided) {
+          return (
+            <VCRReviewDecisionStep
+              payload={reviewPayload}
+              onDecided={() => { clearSavedReviewStep(); onOpenChange(false); }}
+            />
+          );
+        }
+        if (isReview && reviewPayload) {
+          return <ViewOnlyApproverStatusBoard payload={reviewPayload} />;
+        }
+        if (submittedReadOnly) {
+          const submitterPayload: VCRReviewPayload = {
+            handoverPointId: vcr.id,
+            approverRowId: null,
+            phase: rollup?.phase ?? null,
+            vcrCode: vcr.vcr_code,
+            vcrName: vcr.name,
+            projectCode: effectiveProjectCode,
+            projectId: undefined,
+            roleKey: '',
+            roleLabel: '',
+          };
+          return <ViewOnlyApproverStatusBoard payload={submitterPayload} />;
+        }
+        return (
           <VCRConfirmationStep vcrId={vcr.id} vcrName={vcr.name} vcrCode={vcr.vcr_code} onNavigateToStep={goToStep} onReadyChange={setStep9Ready} submitRequestId={submitRequestId} approversRoster={approversRoster} onSubmitSuccess={() => onOpenChange(false)} />
         );
+      }
       default: return null;
     }
   };
