@@ -909,6 +909,32 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     </WizardShell>
   );
 
+  const recallDialog = (
+    <AlertDialog open={recallConfirmOpen} onOpenChange={setRecallConfirmOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Recall this plan?</AlertDialogTitle>
+          <AlertDialogDescription>
+            It returns to draft for editing and the ORA Lead's review task is removed until you re-submit.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isRecalling}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={isRecalling}
+            onClick={async (e) => {
+              e.preventDefault();
+              const ok = await recallPlan(vcr.id, { onSuccess: () => onOpenChange(false) });
+              if (ok) setRecallConfirmOpen(false);
+            }}
+          >
+            Recall plan
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
   return (
     <VCRWizardModeContext.Provider value={{ mode: isReview ? 'review' : 'create', subMode, reviewPayload: reviewPayload ?? null }}>
       {isReview && reviewPayload && reviewPayload.approverRowId ? (
@@ -922,6 +948,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       ) : (
         wizard
       )}
+      {recallDialog}
     </VCRWizardModeContext.Provider>
   );
 };
