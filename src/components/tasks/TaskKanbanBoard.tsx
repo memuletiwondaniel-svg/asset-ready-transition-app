@@ -1329,6 +1329,33 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     const isAdHocReview = meta?.source === 'task_review';
     const isOraCreationTask = meta?.action === 'create_ora_plan' || task.userTask.type === 'ora_plan_creation';
     const isOraReviewTask = task.userTask.type === 'ora_plan_review';
+    const isVcrDeliveryPlan = task.userTask.type === 'vcr_delivery_plan' || meta?.action === 'create_vcr_delivery_plan';
+    const vcrHandoverId = isVcrDeliveryPlan ? (meta?.vcr_id || meta?.handover_point_id || meta?.source_ref_id) as string | undefined : undefined;
+
+    // ── VCR delivery plan: Done → back triggers recall (or blocked dialog) ──
+    if (isVcrDeliveryPlan && vcrHandoverId && task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo')) {
+      try {
+        const { data: rows } = await (supabase as any)
+          .from('v_vcr_plan_approver_tasks')
+          .select('execution_plan_status, approved_count, any_rejected')
+          .eq('handover_point_id', vcrHandoverId)
+          .limit(1);
+        const first = rows?.[0];
+        const status = first?.execution_plan_status;
+        const anyApproval = (first?.approved_count ?? 0) > 0 || !!first?.any_rejected;
+        if (status === 'SUBMITTED' && !anyApproval) {
+          await recallVcrPlan(vcrHandoverId);
+          return;
+        }
+        if (status === 'SUBMITTED' && anyApproval) {
+          setRecallBlockedOpen(true);
+          return;
+        }
+      } catch (err) {
+        console.error('[Kanban] VCR recall pre-check failed', err);
+      }
+      // Fall through to generic warning for non-SUBMITTED states (e.g. APPROVED).
+    }
 
     // ── UNIVERSAL: Any task moving from Done back requires confirmation dialog ──
     if (task.kanbanColumn === 'done' && (targetColumn === 'in_progress' || targetColumn === 'todo')) {
