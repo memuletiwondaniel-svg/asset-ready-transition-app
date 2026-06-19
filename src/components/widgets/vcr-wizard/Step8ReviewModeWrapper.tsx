@@ -216,10 +216,11 @@ const ApproverDecisionList: React.FC<{ handoverPointId: string; title: string; s
 export const Step8ReviewModeWrapper: React.FC<{
   vcrId: string;
   onApproversChange?: (approvers: VCRApprover[]) => void;
-}> = ({ vcrId, onApproversChange }) => {
+  readOnly?: boolean;
+}> = ({ vcrId, onApproversChange, readOnly }) => {
   const subMode = useVCRWizardSubMode();
 
-  if (subMode === 'review_only') {
+  if (subMode === 'review_only' || readOnly) {
     return (
       <ApproverDecisionList
         handoverPointId={vcrId}

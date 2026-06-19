@@ -351,9 +351,11 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     if (!hasRestoredStepRef.current) return;
     if (!submittedReadOnly) return;
     if (currentStep !== 0) return;
+    if (initialPlacementDoneRef.current) return;
     const last = STEPS.length - 1;
     setCurrentStep(last);
     setVisitedSteps(new Set(Array.from({ length: last + 1 }, (_, i) => i)));
+    initialPlacementDoneRef.current = true;
   }, [open, isReview, submittedReadOnly, currentStep]);
 
   // Persist current step while a review is open. Guarded so we never write
@@ -625,7 +627,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       case 4: return <CriticalDocumentsStep vcrId={vcr.id} projectCode={effectiveProjectCode} />;
       case 5: return <RegistersLogsheetsStep vcrId={vcr.id} />;
       case 6: return <MaintenanceSystemsStep vcrId={vcr.id} />;
-      case 7: return <Step8ReviewModeWrapper vcrId={vcr.id} onApproversChange={handleRosterChange} />;
+      case 7: return <Step8ReviewModeWrapper vcrId={vcr.id} onApproversChange={handleRosterChange} readOnly={submittedReadOnly} />;
       case 8: return <VCRItemsStep vcrId={vcr.id} />;
       case 9: {
         if (isReview && reviewPayload && reviewPayload.approverRowId && !viewerAlreadyDecided) {
@@ -748,9 +750,10 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
           const blocked = anyApproved || anyRejected;
           const button = (
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
-              className="h-6 px-2 text-[11px] gap-1"
+              data-rm-safe
+              className="h-6 px-2 text-[11px] gap-1 text-muted-foreground hover:text-foreground hover:bg-accent/60"
               disabled={blocked || isRecalling}
               onClick={() => setRecallConfirmOpen(true)}
             >
@@ -973,8 +976,9 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isRecalling}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel data-rm-safe disabled={isRecalling}>Cancel</AlertDialogCancel>
           <AlertDialogAction
+            data-rm-safe
             disabled={isRecalling}
             onClick={async (e) => {
               e.preventDefault();
@@ -1029,7 +1033,7 @@ const ViewOnlyApproverStatusBoard: React.FC<{ payload: VCRReviewPayload }> = ({ 
       <div className="rounded-md border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
         You are viewing this plan in read-only mode. No decision can be recorded from this screen.
       </div>
-      <Step8ReviewModeWrapper vcrId={payload.handoverPointId} />
+      <Step8ReviewModeWrapper vcrId={payload.handoverPointId} readOnly />
     </div>
   );
 };
