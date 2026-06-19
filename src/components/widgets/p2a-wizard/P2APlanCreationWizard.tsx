@@ -93,7 +93,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     !isReviewMode ? existingPlan?.status : undefined
   );
 
-  const isReadOnly = existingPlan ? ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingPlan.status) : false;
+  const isReadOnly = existingPlan ? existingPlan.status !== 'DRAFT' : false;
 
   const {
     state,
