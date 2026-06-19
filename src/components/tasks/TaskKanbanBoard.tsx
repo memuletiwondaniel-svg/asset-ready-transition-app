@@ -1819,6 +1819,18 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         onConfirm={handleWithdrawConfirm}
         submitting={withdrawSubmitting}
       />
+
+      <AlertDialog open={recallBlockedOpen} onOpenChange={setRecallBlockedOpen}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Can't recall this plan</AlertDialogTitle>
+            <AlertDialogDescription>{RECALL_BLOCKED_MESSAGE}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setRecallBlockedOpen(false)}>OK</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
     </ReviewerSummaryContext.Provider>
     </P2AApprovalContext.Provider>
