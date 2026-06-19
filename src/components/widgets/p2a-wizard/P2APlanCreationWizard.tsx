@@ -603,6 +603,9 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
           />
         );
       case 5:
+        if (submitterReadOnly && existingPlan) {
+          return <P2AApproverStatusBoard handoverId={existingPlan.id} planStatus={existingPlan.status} />;
+        }
         return (
           <WorkspacePreviewStep
             systems={state.systems}
