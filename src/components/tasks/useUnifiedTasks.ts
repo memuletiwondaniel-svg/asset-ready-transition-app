@@ -321,13 +321,19 @@ export function useUnifiedTasks(userId: string) {
         createdAt: t.created_at,
       });
 
-      // vcr_plan_resubmit: surface edit-step progress on the in-progress card.
-      let stepProgress: { reviewed: number; total: number } | undefined;
-      if (t.type === 'vcr_plan_resubmit') {
-        const editMaxStep = typeof meta?.edit_max_step === 'number' ? meta.edit_max_step : undefined;
-        const reviewed = editMaxStep != null ? Math.min(editMaxStep + 1, 10) : 0;
-        stepProgress = { reviewed, total: 10 };
-        resolvedProgress = Math.round((reviewed / 10) * 100);
+      // VCR create/resubmit cards: mirror approver-card VCR identity (code chip + VCR name).
+      let vcrTitle = t.title;
+      let vcrExtraPill: string | undefined;
+      if (category === 'vcr') {
+        const codeParts = (meta?.vcr_code || '').split('-').filter(Boolean);
+        vcrExtraPill = codeParts.length >= 2
+          ? `${codeParts[0]}-${codeParts[codeParts.length - 1]}`
+          : (meta?.vcr_code || undefined);
+        if (t.type === 'vcr_plan_resubmit') {
+          vcrTitle = meta?.vcr_name ? `Resubmit VCR Plan: ${meta.vcr_name}` : t.title;
+        } else if (action === 'create_vcr_delivery_plan' || t.type === 'vcr_delivery_plan') {
+          vcrTitle = meta?.vcr_name ? `Develop VCR Plan: ${meta.vcr_name}` : t.title;
+        }
       }
 
       tasks.push({
@@ -336,7 +342,7 @@ export function useUnifiedTasks(userId: string) {
         categoryLabel,
         categoryColor,
         icon,
-        title: t.title,
+        title: vcrTitle,
         subtitle: t.description || undefined,
         project: normalizeProjectCode(meta?.project_code) || undefined,
         projectId: meta?.project_id || undefined,
@@ -362,6 +368,7 @@ export function useUnifiedTasks(userId: string) {
         }),
         isApprovalProtected,
         parentTaskId: t.parent_task_id ?? null,
+        extraPill: vcrExtraPill,
         stepProgress,
       });
     });
