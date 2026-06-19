@@ -873,7 +873,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
         pinnedFooterContent={pinnedFooter}
         navigation={navigationProps}
       >
-        <div className="flex-1">
+        <div className={cn('flex-1', submitterReadOnly && 'plan-readonly-mode')}>
           {renderStepContent()}
         </div>
       </WizardShell>
