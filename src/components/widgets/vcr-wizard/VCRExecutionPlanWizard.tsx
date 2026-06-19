@@ -100,6 +100,23 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
 }) => {
   const isReview = !!reviewPayload;
   const { data: rollup } = useVCRPlanRollup(vcr.id);
+  const { recall: recallPlan, isRecalling } = useRecallVcrPlan();
+  const [recallConfirmOpen, setRecallConfirmOpen] = useState(false);
+
+  // Submitter id from p2a_handover_points — drives Recall button visibility.
+  const { data: submitterId } = useQuery({
+    queryKey: ['vcr-plan-submitter', vcr.id],
+    enabled: !!vcr.id && open,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from('p2a_handover_points')
+        .select('execution_plan_submitted_by')
+        .eq('id', vcr.id)
+        .maybeSingle();
+      if (error) throw error;
+      return (data?.execution_plan_submitted_by as string | null) ?? null;
+    },
+  });
   // Read-only-after-decision signal: matches VCRReviewDecisionStep's `alreadyDecided`.
   // Drives (a) the initial step (jump to Review) and (b) the sidebar step indicators
   // (all green/complete) when the viewer has already approved/rejected.
