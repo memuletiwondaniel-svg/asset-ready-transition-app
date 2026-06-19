@@ -626,7 +626,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   // Status chip for header
   const statusChip = (() => {
     if (isReviewMode) return { label: 'In Review', cls: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800' };
-    if (existingPlan?.status === 'ACTIVE') return { label: 'Pending Approval', cls: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800' };
+    if (existingPlan && ['PENDING_APPROVAL', 'ACTIVE'].includes(existingPlan.status)) return { label: 'Pending Approval', cls: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800' };
     if (existingPlan && ['COMPLETED', 'APPROVED'].includes(existingPlan.status)) return { label: 'Approved', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800' };
     return { label: 'Draft', cls: 'bg-muted text-muted-foreground border-border' };
   })();
