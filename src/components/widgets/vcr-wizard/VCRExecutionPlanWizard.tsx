@@ -425,6 +425,14 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     return () => document.body.classList.remove(cls);
   }, [open, isReview, subMode]);
 
+  // Submitter read-only branch: mirror the review_only body class so portal'd
+  // Sheets/Dialogs render content as read-only too.
+  useEffect(() => {
+    if (!open || !submittedReadOnly) return;
+    document.body.classList.add('vcr-review-mode');
+    return () => document.body.classList.remove('vcr-review-mode');
+  }, [open, submittedReadOnly]);
+
   // Auto-promote associated task from "pending" → "in_progress" (skip in review)
   useEffect(() => {
     if (isReview) return;
