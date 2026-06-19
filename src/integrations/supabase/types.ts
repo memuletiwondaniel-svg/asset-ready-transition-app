@@ -15070,6 +15070,7 @@ export type Database = {
         Args: { retention_days_param?: number }
         Returns: number
       }
+      recall_vcr_plan: { Args: { p_handover_point_id: string }; Returns: Json }
       reconcile_ora_plan_tasks: { Args: { p_plan_id: string }; Returns: Json }
       reconcile_vcr_approval_bundles: {
         Args: { p_point_id: string }
