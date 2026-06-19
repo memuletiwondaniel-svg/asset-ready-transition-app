@@ -935,8 +935,8 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       isStepOptional={isStepOptional}
       header={null}
       topHeader={topHeaderContent}
-      customFooter={reviewFooter}
-      navigation={isReview ? undefined : {
+      customFooter={readOnlyFooter}
+      navigation={readOnlyFooterActive ? undefined : {
         onBack: handleBack,
         onNext: handleNext,
         onSaveAndExit: handleSaveAndExit,
