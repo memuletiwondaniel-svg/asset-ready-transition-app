@@ -939,7 +939,9 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   const [withdrawState, setWithdrawState] = useState<WithdrawDecisionState | null>(null);
   const [withdrawSubmitting, setWithdrawSubmitting] = useState(false);
   const [activeTask, setActiveTask] = useState<UnifiedTask | null>(null);
+  const [recallBlockedOpen, setRecallBlockedOpen] = useState(false);
   const { moveTaskToColumn } = useKanbanDragDrop();
+  const { recall: recallVcrPlan } = useRecallVcrPlan();
 
   // Per-column sort + group state (in-memory, board-local). Done defaults to
   // recently-completed; the others default to the global priority order.
