@@ -863,14 +863,15 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   const isLastStep = currentStep === STEPS.length - 1;
   const mutedBtn =
     'text-muted-foreground hover:text-foreground hover:bg-accent/60';
-  const reviewFooter = isReview ? (
+  const readOnlyFooterActive = isReview || submittedReadOnly;
+  const readOnlyFooter = readOnlyFooterActive ? (
     <div className="border-t bg-background px-4 sm:px-5 py-3 flex items-center justify-between gap-3">
       {/* LEFT — navigation */}
       <div className="flex items-center gap-2">
         <Button
           variant="ghost"
           size="sm"
-          onClick={handleReviewClose}
+          onClick={isReview ? handleReviewClose : () => onOpenChange(false)}
           className={mutedBtn}
           data-rm-safe
           data-rm-nav
@@ -911,10 +912,10 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
               data-rm-safe
               data-rm-nav
             >
-              Go to decision ▸
+              {isReview ? 'Go to decision ▸' : 'Go to status ▸'}
             </Button>
           </>
-        ) : reviewPayload?.approverRowId && !viewerAlreadyDecided ? (
+        ) : isReview && reviewPayload?.approverRowId && !viewerAlreadyDecided ? (
           <VCRReviewDecisionFooterButtons />
         ) : null}
       </div>
