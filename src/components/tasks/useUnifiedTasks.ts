@@ -210,7 +210,7 @@ export function useUnifiedTasks(userId: string) {
         categoryLabel = 'ORA Review';
         categoryColor = 'bg-amber-500/10 text-amber-600 border-amber-500/20';
         icon = Activity;
-      } else if (action === 'create_vcr_delivery_plan' || t.type === 'vcr_delivery_plan') {
+      } else if (action === 'create_vcr_delivery_plan' || t.type === 'vcr_delivery_plan' || t.type === 'vcr_plan_resubmit') {
         category = 'vcr';
         categoryLabel = 'VCR Plan';
         categoryColor = 'bg-teal-500/10 text-teal-600 border-teal-500/20';
@@ -330,13 +330,28 @@ export function useUnifiedTasks(userId: string) {
         resolvedProgress = Math.round((reviewed / 10) * 100);
       }
 
+      // VCR create/resubmit cards: mirror approver-card VCR identity (code chip + VCR name).
+      let vcrTitle = t.title;
+      let vcrExtraPill: string | undefined;
+      if (category === 'vcr') {
+        const codeParts = (meta?.vcr_code || '').split('-').filter(Boolean);
+        vcrExtraPill = codeParts.length >= 2
+          ? `${codeParts[0]}-${codeParts[codeParts.length - 1]}`
+          : (meta?.vcr_code || undefined);
+        if (t.type === 'vcr_plan_resubmit') {
+          vcrTitle = meta?.vcr_name ? `Resubmit VCR Plan: ${meta.vcr_name}` : t.title;
+        } else if (action === 'create_vcr_delivery_plan' || t.type === 'vcr_delivery_plan') {
+          vcrTitle = meta?.vcr_name ? `Develop VCR Plan: ${meta.vcr_name}` : t.title;
+        }
+      }
+
       tasks.push({
         id: `ut-${t.id}`,
         category,
         categoryLabel,
         categoryColor,
         icon,
-        title: t.title,
+        title: vcrTitle,
         subtitle: t.description || undefined,
         project: normalizeProjectCode(meta?.project_code) || undefined,
         projectId: meta?.project_id || undefined,
@@ -362,6 +377,7 @@ export function useUnifiedTasks(userId: string) {
         }),
         isApprovalProtected,
         parentTaskId: t.parent_task_id ?? null,
+        extraPill: vcrExtraPill,
         stepProgress,
       });
     });
