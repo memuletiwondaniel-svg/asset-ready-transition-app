@@ -11,6 +11,7 @@ import { VCRCreationStep, WizardVCR } from './steps/VCRCreationStep';
 import { SystemMappingStep } from './steps/SystemMappingStep';
 import { PhasesStep, WizardPhase } from './steps/PhasesStep';
 import { WorkspacePreviewStep } from './steps/WorkspacePreviewStep';
+import { P2AApproverStatusBoard } from './P2AApproverStatusBoard';
 import { ApprovalSetupStep, WizardApprover } from './steps/ApprovalSetupStep';
 import { SubmissionSuccessDialog } from './SubmissionSuccessDialog';
 
