@@ -210,7 +210,7 @@ export function useUnifiedTasks(userId: string) {
         categoryLabel = 'ORA Review';
         categoryColor = 'bg-amber-500/10 text-amber-600 border-amber-500/20';
         icon = Activity;
-      } else if (action === 'create_vcr_delivery_plan' || t.type === 'vcr_delivery_plan') {
+      } else if (action === 'create_vcr_delivery_plan' || t.type === 'vcr_delivery_plan' || t.type === 'vcr_plan_resubmit') {
         category = 'vcr';
         categoryLabel = 'VCR Plan';
         categoryColor = 'bg-teal-500/10 text-teal-600 border-teal-500/20';
