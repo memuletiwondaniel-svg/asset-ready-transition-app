@@ -364,7 +364,10 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   // OPTIONAL steps: 0 (Select Systems) and 2 (Assign Systems) — never gate forward nav or submit
   const isStepOptional = (idx: number): boolean => idx === 0 || idx === 2;
 
+  const submitterReadOnly = isReadOnly && !isReviewMode;
+
   const isStepComplete = (idx: number): boolean => {
+    if (submitterReadOnly) return true;
     switch (idx) {
       case 0: return state.systems.length > 0;
       case 1: return state.vcrs.length > 0;
@@ -377,10 +380,12 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   };
 
   const isStepWarning = (idx: number): boolean => {
+    if (submitterReadOnly) return false;
     if (isStepOptional(idx)) return false; // optional steps never show warning
     const hasBeenPast = currentStep > idx;
     return hasBeenPast && !isStepComplete(idx);
   };
+
 
   const recalculateCompletedSteps = () => {
     const newCompleted = new Set<number>();
