@@ -11,6 +11,7 @@ import { VCRCreationStep, WizardVCR } from './steps/VCRCreationStep';
 import { SystemMappingStep } from './steps/SystemMappingStep';
 import { PhasesStep, WizardPhase } from './steps/PhasesStep';
 import { WorkspacePreviewStep } from './steps/WorkspacePreviewStep';
+import { P2AApproverStatusBoard } from './P2AApproverStatusBoard';
 import { ApprovalSetupStep, WizardApprover } from './steps/ApprovalSetupStep';
 import { SubmissionSuccessDialog } from './SubmissionSuccessDialog';
 
@@ -93,7 +94,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     !isReviewMode ? existingPlan?.status : undefined
   );
 
-  const isReadOnly = existingPlan ? ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingPlan.status) : false;
+  const isReadOnly = existingPlan ? existingPlan.status !== 'DRAFT' : false;
 
   const {
     state,
@@ -270,7 +271,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             setSelectedApproach('wizard');
             if (isReviewMode) {
               setCurrentStep(0);
-            } else if (['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingPlan.status)) {
+            } else if (existingPlan.status !== 'DRAFT') {
               setCurrentStep(WIZARD_STEPS.length - 1);
             } else {
               setCurrentStep(0);
@@ -602,6 +603,9 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
           />
         );
       case 5:
+        if (submitterReadOnly && existingPlan) {
+          return <P2AApproverStatusBoard handoverId={existingPlan.id} planStatus={existingPlan.status} />;
+        }
         return (
           <WorkspacePreviewStep
             systems={state.systems}
@@ -626,7 +630,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   // Status chip for header
   const statusChip = (() => {
     if (isReviewMode) return { label: 'In Review', cls: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800' };
-    if (existingPlan?.status === 'ACTIVE') return { label: 'Pending Approval', cls: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800' };
+    if (existingPlan && ['PENDING_APPROVAL', 'ACTIVE'].includes(existingPlan.status)) return { label: 'Pending Approval', cls: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800' };
     if (existingPlan && ['COMPLETED', 'APPROVED'].includes(existingPlan.status)) return { label: 'Approved', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800' };
     return { label: 'Draft', cls: 'bg-muted text-muted-foreground border-border' };
   })();
@@ -751,7 +755,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
             <p className="text-[11px] sm:text-xs flex-1">
-              {existingPlan?.status === 'ACTIVE'
+              {existingPlan && ['PENDING_APPROVAL', 'ACTIVE'].includes(existingPlan.status)
                 ? 'This plan has been submitted and is pending approval. Changes are not allowed until the review is complete.'
                 : 'This plan has been approved. Any modifications will require resubmitting for re-approval.'}
             </p>
