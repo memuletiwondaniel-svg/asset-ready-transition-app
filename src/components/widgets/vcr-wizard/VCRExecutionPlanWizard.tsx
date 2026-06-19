@@ -985,7 +985,9 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
               const ok = await recallPlan(vcr.id, { onSuccess: () => onOpenChange(false) });
               if (ok) setRecallConfirmOpen(false);
             }}
+            className="inline-flex items-center gap-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground"
           >
+            <Undo2 className="h-4 w-4" />
             Recall plan
           </AlertDialogAction>
         </AlertDialogFooter>
