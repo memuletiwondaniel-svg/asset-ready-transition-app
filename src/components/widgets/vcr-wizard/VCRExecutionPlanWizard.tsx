@@ -343,6 +343,19 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     }
   }, [open, isReview, viewerApproverRow, viewerAlreadyDecided]);
 
+  // Late-arriving rollup: if the plan resolves as SUBMITTED/APPROVED after
+  // restoration ran (rollup is async), and the user hasn't navigated away
+  // from the default landing step, jump them to step 10 read-only view.
+  useEffect(() => {
+    if (!open || isReview) return;
+    if (!hasRestoredStepRef.current) return;
+    if (!submittedReadOnly) return;
+    if (currentStep !== 0) return;
+    const last = STEPS.length - 1;
+    setCurrentStep(last);
+    setVisitedSteps(new Set(Array.from({ length: last + 1 }, (_, i) => i)));
+  }, [open, isReview, submittedReadOnly, currentStep]);
+
   // Persist current step while a review is open. Guarded so we never write
   // before restoration has run (which would clobber the saved value with 0).
   useEffect(() => {
