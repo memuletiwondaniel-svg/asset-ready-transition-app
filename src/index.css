@@ -1064,7 +1064,8 @@
    except those tagged `data-rm-safe` (e.g. the decision step's
    Approve / Request Changes buttons, navigation, scroll handles).
 */
-.vcr-review-mode [data-rm-hide] {
+.vcr-review-mode [data-rm-hide],
+.plan-readonly-mode [data-rm-hide] {
   display: none !important;
 }
 .vcr-review-mode input:not([data-rm-safe]),
@@ -1072,16 +1073,24 @@
 .vcr-review-mode select:not([data-rm-safe]),
 .vcr-review-mode [role="switch"]:not([data-rm-safe]),
 .vcr-review-mode [role="checkbox"]:not([data-rm-safe]),
-.vcr-review-mode [role="radio"]:not([data-rm-safe]) {
+.vcr-review-mode [role="radio"]:not([data-rm-safe]),
+.plan-readonly-mode input:not([data-rm-safe]),
+.plan-readonly-mode textarea:not([data-rm-safe]),
+.plan-readonly-mode select:not([data-rm-safe]),
+.plan-readonly-mode [role="switch"]:not([data-rm-safe]),
+.plan-readonly-mode [role="checkbox"]:not([data-rm-safe]),
+.plan-readonly-mode [role="radio"]:not([data-rm-safe]) {
   pointer-events: none !important;
 }
 /* View-only controls (disclosures, accordions, tabs, popover/select/dialog
    triggers, drawer handles) always carry aria-expanded, aria-haspopup, or
    role="tab". These are NOT edits — keep them interactive in review mode. */
-.vcr-review-mode button:not([data-rm-safe]):not([data-rm-nav]):not([aria-expanded]):not([aria-haspopup]):not([role="tab"]):not([role="combobox"]) {
+.vcr-review-mode button:not([data-rm-safe]):not([data-rm-nav]):not([aria-expanded]):not([aria-haspopup]):not([role="tab"]):not([role="combobox"]),
+.plan-readonly-mode button:not([data-rm-safe]):not([data-rm-nav]):not([aria-expanded]):not([aria-haspopup]):not([role="tab"]):not([role="combobox"]) {
   pointer-events: none !important;
 }
-.vcr-review-mode [contenteditable]:not([data-rm-safe]) {
+.vcr-review-mode [contenteditable]:not([data-rm-safe]),
+.plan-readonly-mode [contenteditable]:not([data-rm-safe]) {
   pointer-events: none !important;
 }
 
@@ -1097,13 +1106,22 @@
 .vcr-review-mode button:not([data-rm-safe]):not([data-rm-nav]):has(svg.lucide-edit),
 .vcr-review-mode button:not([data-rm-safe]):not([data-rm-nav]):has(svg.lucide-edit-2),
 .vcr-review-mode button:not([data-rm-safe]):not([data-rm-nav]):has(svg.lucide-edit-3),
-.vcr-review-mode button:not([data-rm-safe]):not([data-rm-nav]):has(svg.lucide-save) {
+.vcr-review-mode button:not([data-rm-safe]):not([data-rm-nav]):has(svg.lucide-save),
+.plan-readonly-mode button:not([data-rm-safe]):not([data-rm-nav]):has(svg.lucide-plus),
+.plan-readonly-mode button:not([data-rm-safe]):not([data-rm-nav]):has(svg.lucide-trash-2),
+.plan-readonly-mode button:not([data-rm-safe]):not([data-rm-nav]):has(svg.lucide-pencil),
+.plan-readonly-mode button:not([data-rm-safe]):not([data-rm-nav]):has(svg.lucide-edit),
+.plan-readonly-mode button:not([data-rm-safe]):not([data-rm-nav]):has(svg.lucide-edit-2),
+.plan-readonly-mode button:not([data-rm-safe]):not([data-rm-nav]):has(svg.lucide-edit-3),
+.plan-readonly-mode button:not([data-rm-safe]):not([data-rm-nav]):has(svg.lucide-save) {
   display: none !important;
 }
 
 /* Hide entire dirty-state save footers in detail sheets — they only appear
    when fields are edited, but in review mode fields are inert. Belt-and-
    braces: also hide bare "Save Changes" / "Discard" / "Add" footer rows. */
-.vcr-review-mode [data-rm-save-footer] {
+.vcr-review-mode [data-rm-save-footer],
+.plan-readonly-mode [data-rm-save-footer] {
   display: none !important;
 }
+
