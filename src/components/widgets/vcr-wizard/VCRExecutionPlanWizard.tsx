@@ -102,6 +102,15 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   const { data: rollup } = useVCRPlanRollup(vcr.id);
   const { recall: recallPlan, isRecalling } = useRecallVcrPlan();
   const [recallConfirmOpen, setRecallConfirmOpen] = useState(false);
+  // Submitter-facing read-only branch: the plan is already SUBMITTED/APPROVED
+  // and the viewer is NOT an approver. Mirrors the review_only experience
+  // (step 10, all-green rail, read-only content, no Submit button) so the
+  // submitter cannot re-submit an in-flight plan from the wizard — they
+  // must use the header Recall CTA first.
+  const submittedReadOnly = !isReview && (
+    rollup?.execution_plan_status === 'SUBMITTED' ||
+    rollup?.execution_plan_status === 'APPROVED'
+  );
 
   // Submitter id from p2a_handover_points — drives Recall button visibility.
   const { data: submitterId } = useQuery({
