@@ -1419,7 +1419,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       setWarningState({ task, targetColumn });
     }
     // 'stale' is surfaced by the hook via toast; nothing else to do here.
-  }, [moveTaskToColumn]);
+  }, [moveTaskToColumn, recallVcrPlan, queryClient]);
 
   // Handle confirmation from the warning dialog (with mandatory reason)
   const handleWarningConfirm = useCallback(async (voidReason: string) => {
