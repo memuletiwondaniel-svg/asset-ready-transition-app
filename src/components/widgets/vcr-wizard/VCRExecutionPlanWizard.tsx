@@ -280,7 +280,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     // approver-status board). Actionable review (approverRowId set) keeps
     // its existing resume-from-saved-step behaviour.
     const isViewOnlyReview = isReview && !reviewPayload?.approverRowId;
-    let restored = isViewOnlyReview ? STEPS.length - 1 : 0;
+    let restored = (isViewOnlyReview || submittedReadOnly) ? STEPS.length - 1 : 0;
     if (reviewStepStorageKey && !isViewOnlyReview) {
       try {
         const raw = localStorage.getItem(reviewStepStorageKey);
