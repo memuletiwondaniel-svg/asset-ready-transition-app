@@ -751,7 +751,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
             <p className="text-[11px] sm:text-xs flex-1">
-              {existingPlan?.status === 'ACTIVE'
+              {existingPlan && ['PENDING_APPROVAL', 'ACTIVE'].includes(existingPlan.status)
                 ? 'This plan has been submitted and is pending approval. Changes are not allowed until the review is complete.'
                 : 'This plan has been approved. Any modifications will require resubmitting for re-approval.'}
             </p>
