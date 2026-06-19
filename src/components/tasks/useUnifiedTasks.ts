@@ -321,6 +321,15 @@ export function useUnifiedTasks(userId: string) {
         createdAt: t.created_at,
       });
 
+      // vcr_plan_resubmit: surface edit-step progress on the in-progress card.
+      let stepProgress: { reviewed: number; total: number } | undefined;
+      if (t.type === 'vcr_plan_resubmit') {
+        const editMaxStep = typeof meta?.edit_max_step === 'number' ? meta.edit_max_step : undefined;
+        const reviewed = editMaxStep != null ? Math.min(editMaxStep + 1, 10) : 0;
+        stepProgress = { reviewed, total: 10 };
+        resolvedProgress = Math.round((reviewed / 10) * 100);
+      }
+
       // VCR create/resubmit cards: mirror approver-card VCR identity (code chip + VCR name).
       let vcrTitle = t.title;
       let vcrExtraPill: string | undefined;
