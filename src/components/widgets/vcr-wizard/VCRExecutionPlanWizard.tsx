@@ -296,7 +296,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     // Non-review (edit/resubmit) restoration: if a vcr_plan_resubmit task
     // exists for this VCR with a persisted edit_max_step, resume at that
     // step. Async — mark restored only after the lookup resolves.
-    if (!isReview && user?.id) {
+    if (!isReview && !submittedReadOnly && user?.id) {
       let cancelled = false;
       (async () => {
         try {
