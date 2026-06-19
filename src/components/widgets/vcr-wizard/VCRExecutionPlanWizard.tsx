@@ -955,6 +955,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
           // the read-only CSS; create mode adds no carrier class.
           subMode === 'ora_edit' && 'vcr-ora-edit-mode',
           subMode === 'review_only' && 'vcr-review-mode',
+          submittedReadOnly && 'vcr-review-mode',
         )}
       >
         {renderStep()}
