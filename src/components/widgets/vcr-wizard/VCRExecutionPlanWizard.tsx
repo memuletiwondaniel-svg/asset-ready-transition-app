@@ -47,6 +47,18 @@ import { Button } from '@/components/ui/button';
 import { buildVcrSubmitApproverPayload } from '@/lib/buildVcrSubmitPayload';
 import { toast } from 'sonner';
 import { markVcrReviewStarted, markVcrReviewStep } from '@/lib/vcrPlanReviewStart';
+import { useRecallVcrPlan, RECALL_BLOCKED_MESSAGE } from '@/hooks/useRecallVcrPlan';
+import { Undo2 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface VCRExecutionPlanWizardProps {
   open: boolean;
@@ -88,6 +100,23 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
 }) => {
   const isReview = !!reviewPayload;
   const { data: rollup } = useVCRPlanRollup(vcr.id);
+  const { recall: recallPlan, isRecalling } = useRecallVcrPlan();
+  const [recallConfirmOpen, setRecallConfirmOpen] = useState(false);
+
+  // Submitter id from p2a_handover_points — drives Recall button visibility.
+  const { data: submitterId } = useQuery({
+    queryKey: ['vcr-plan-submitter', vcr.id],
+    enabled: !!vcr.id && open,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from('p2a_handover_points')
+        .select('execution_plan_submitted_by')
+        .eq('id', vcr.id)
+        .maybeSingle();
+      if (error) throw error;
+      return (data?.execution_plan_submitted_by as string | null) ?? null;
+    },
+  });
   // Read-only-after-decision signal: matches VCRReviewDecisionStep's `alreadyDecided`.
   // Drives (a) the initial step (jump to Review) and (b) the sidebar step indicators
   // (all green/complete) when the viewer has already approved/rejected.
@@ -658,6 +687,35 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         <Badge variant="outline" className={cn("text-[10px] h-5 px-2", statusLabel.cls)}>
           {statusLabel.label}
         </Badge>
+        {(() => {
+          if (isReview) return null;
+          if (!user?.id || !submitterId || user.id !== submitterId) return null;
+          if (rollup?.execution_plan_status !== 'SUBMITTED') return null;
+          const anyApproved = (rollup?.approved_count ?? 0) > 0;
+          const anyRejected = !!rollup?.any_rejected;
+          const blocked = anyApproved || anyRejected;
+          const button = (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-6 px-2 text-[11px] gap-1"
+              disabled={blocked || isRecalling}
+              onClick={() => setRecallConfirmOpen(true)}
+            >
+              <Undo2 className="h-3 w-3" />
+              Recall plan
+            </Button>
+          );
+          if (!blocked) return button;
+          return (
+            <Tooltip>
+              <TooltipTrigger asChild><span>{button}</span></TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-xs text-xs">
+                {RECALL_BLOCKED_MESSAGE}
+              </TooltipContent>
+            </Tooltip>
+          );
+        })()}
       </div>
     </div>
     </TooltipProvider>
@@ -851,6 +909,32 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     </WizardShell>
   );
 
+  const recallDialog = (
+    <AlertDialog open={recallConfirmOpen} onOpenChange={setRecallConfirmOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Recall this plan?</AlertDialogTitle>
+          <AlertDialogDescription>
+            It returns to draft for editing and the ORA Lead's review task is removed until you re-submit.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isRecalling}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={isRecalling}
+            onClick={async (e) => {
+              e.preventDefault();
+              const ok = await recallPlan(vcr.id, { onSuccess: () => onOpenChange(false) });
+              if (ok) setRecallConfirmOpen(false);
+            }}
+          >
+            Recall plan
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
   return (
     <VCRWizardModeContext.Provider value={{ mode: isReview ? 'review' : 'create', subMode, reviewPayload: reviewPayload ?? null }}>
       {isReview && reviewPayload && reviewPayload.approverRowId ? (
@@ -864,6 +948,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       ) : (
         wizard
       )}
+      {recallDialog}
     </VCRWizardModeContext.Provider>
   );
 };
