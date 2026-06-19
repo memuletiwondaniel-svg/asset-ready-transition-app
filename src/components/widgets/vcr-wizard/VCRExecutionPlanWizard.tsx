@@ -552,6 +552,9 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   });
 
   const isStepComplete = (idx: number): boolean => {
+    // Submitter read-only branch mirrors view-only review — plan is in
+    // approval; every step renders complete.
+    if (submittedReadOnly) return true;
     // Review mode: indicators are reviewer-coverage only — green once visited,
     // neutral otherwise. Non-gating (decision footer governs progress).
     if (isReview) {
