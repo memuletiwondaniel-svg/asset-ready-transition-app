@@ -102,6 +102,15 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   const { data: rollup } = useVCRPlanRollup(vcr.id);
   const { recall: recallPlan, isRecalling } = useRecallVcrPlan();
   const [recallConfirmOpen, setRecallConfirmOpen] = useState(false);
+  // Submitter-facing read-only branch: the plan is already SUBMITTED/APPROVED
+  // and the viewer is NOT an approver. Mirrors the review_only experience
+  // (step 10, all-green rail, read-only content, no Submit button) so the
+  // submitter cannot re-submit an in-flight plan from the wizard — they
+  // must use the header Recall CTA first.
+  const submittedReadOnly = !isReview && (
+    rollup?.execution_plan_status === 'SUBMITTED' ||
+    rollup?.execution_plan_status === 'APPROVED'
+  );
 
   // Submitter id from p2a_handover_points — drives Recall button visibility.
   const { data: submitterId } = useQuery({
@@ -271,7 +280,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     // approver-status board). Actionable review (approverRowId set) keeps
     // its existing resume-from-saved-step behaviour.
     const isViewOnlyReview = isReview && !reviewPayload?.approverRowId;
-    let restored = isViewOnlyReview ? STEPS.length - 1 : 0;
+    let restored = (isViewOnlyReview || submittedReadOnly) ? STEPS.length - 1 : 0;
     if (reviewStepStorageKey && !isViewOnlyReview) {
       try {
         const raw = localStorage.getItem(reviewStepStorageKey);
@@ -287,7 +296,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     // Non-review (edit/resubmit) restoration: if a vcr_plan_resubmit task
     // exists for this VCR with a persisted edit_max_step, resume at that
     // step. Async — mark restored only after the lookup resolves.
-    if (!isReview && user?.id) {
+    if (!isReview && !submittedReadOnly && user?.id) {
       let cancelled = false;
       (async () => {
         try {
@@ -333,6 +342,19 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       setVisitedSteps(new Set(Array.from({ length: last + 1 }, (_, i) => i)));
     }
   }, [open, isReview, viewerApproverRow, viewerAlreadyDecided]);
+
+  // Late-arriving rollup: if the plan resolves as SUBMITTED/APPROVED after
+  // restoration ran (rollup is async), and the user hasn't navigated away
+  // from the default landing step, jump them to step 10 read-only view.
+  useEffect(() => {
+    if (!open || isReview) return;
+    if (!hasRestoredStepRef.current) return;
+    if (!submittedReadOnly) return;
+    if (currentStep !== 0) return;
+    const last = STEPS.length - 1;
+    setCurrentStep(last);
+    setVisitedSteps(new Set(Array.from({ length: last + 1 }, (_, i) => i)));
+  }, [open, isReview, submittedReadOnly, currentStep]);
 
   // Persist current step while a review is open. Guarded so we never write
   // before restoration has run (which would clobber the saved value with 0).
@@ -402,6 +424,14 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     document.body.classList.add(cls);
     return () => document.body.classList.remove(cls);
   }, [open, isReview, subMode]);
+
+  // Submitter read-only branch: mirror the review_only body class so portal'd
+  // Sheets/Dialogs render content as read-only too.
+  useEffect(() => {
+    if (!open || !submittedReadOnly) return;
+    document.body.classList.add('vcr-review-mode');
+    return () => document.body.classList.remove('vcr-review-mode');
+  }, [open, submittedReadOnly]);
 
   // Auto-promote associated task from "pending" → "in_progress" (skip in review)
   useEffect(() => {
@@ -522,6 +552,9 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   });
 
   const isStepComplete = (idx: number): boolean => {
+    // Submitter read-only branch mirrors view-only review — plan is in
+    // approval; every step renders complete.
+    if (submittedReadOnly) return true;
     // Review mode: indicators are reviewer-coverage only — green once visited,
     // neutral otherwise. Non-gating (decision footer governs progress).
     if (isReview) {
@@ -594,17 +627,36 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       case 6: return <MaintenanceSystemsStep vcrId={vcr.id} />;
       case 7: return <Step8ReviewModeWrapper vcrId={vcr.id} onApproversChange={handleRosterChange} />;
       case 8: return <VCRItemsStep vcrId={vcr.id} />;
-      case 9:
-        return isReview && reviewPayload && reviewPayload.approverRowId && !viewerAlreadyDecided ? (
-          <VCRReviewDecisionStep
-            payload={reviewPayload}
-            onDecided={() => { clearSavedReviewStep(); onOpenChange(false); }}
-          />
-        ) : isReview && reviewPayload ? (
-          <ViewOnlyApproverStatusBoard payload={reviewPayload} />
-        ) : (
+      case 9: {
+        if (isReview && reviewPayload && reviewPayload.approverRowId && !viewerAlreadyDecided) {
+          return (
+            <VCRReviewDecisionStep
+              payload={reviewPayload}
+              onDecided={() => { clearSavedReviewStep(); onOpenChange(false); }}
+            />
+          );
+        }
+        if (isReview && reviewPayload) {
+          return <ViewOnlyApproverStatusBoard payload={reviewPayload} />;
+        }
+        if (submittedReadOnly) {
+          const submitterPayload: VCRReviewPayload = {
+            handoverPointId: vcr.id,
+            approverRowId: null,
+            phase: rollup?.phase ?? null,
+            vcrCode: vcr.vcr_code,
+            vcrName: vcr.name,
+            projectCode: effectiveProjectCode,
+            projectId: undefined,
+            roleKey: '',
+            roleLabel: '',
+          };
+          return <ViewOnlyApproverStatusBoard payload={submitterPayload} />;
+        }
+        return (
           <VCRConfirmationStep vcrId={vcr.id} vcrName={vcr.name} vcrCode={vcr.vcr_code} onNavigateToStep={goToStep} onReadyChange={setStep9Ready} submitRequestId={submitRequestId} approversRoster={approversRoster} onSubmitSuccess={() => onOpenChange(false)} />
         );
+      }
       default: return null;
     }
   };
@@ -811,14 +863,15 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   const isLastStep = currentStep === STEPS.length - 1;
   const mutedBtn =
     'text-muted-foreground hover:text-foreground hover:bg-accent/60';
-  const reviewFooter = isReview ? (
+  const readOnlyFooterActive = isReview || submittedReadOnly;
+  const readOnlyFooter = readOnlyFooterActive ? (
     <div className="border-t bg-background px-4 sm:px-5 py-3 flex items-center justify-between gap-3">
       {/* LEFT — navigation */}
       <div className="flex items-center gap-2">
         <Button
           variant="ghost"
           size="sm"
-          onClick={handleReviewClose}
+          onClick={isReview ? handleReviewClose : () => onOpenChange(false)}
           className={mutedBtn}
           data-rm-safe
           data-rm-nav
@@ -859,10 +912,10 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
               data-rm-safe
               data-rm-nav
             >
-              Go to decision ▸
+              {isReview ? 'Go to decision ▸' : 'Go to status ▸'}
             </Button>
           </>
-        ) : reviewPayload?.approverRowId && !viewerAlreadyDecided ? (
+        ) : isReview && reviewPayload?.approverRowId && !viewerAlreadyDecided ? (
           <VCRReviewDecisionFooterButtons />
         ) : null}
       </div>
@@ -882,8 +935,8 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       isStepOptional={isStepOptional}
       header={null}
       topHeader={topHeaderContent}
-      customFooter={reviewFooter}
-      navigation={isReview ? undefined : {
+      customFooter={readOnlyFooter}
+      navigation={readOnlyFooterActive ? undefined : {
         onBack: handleBack,
         onNext: handleNext,
         onSaveAndExit: handleSaveAndExit,
@@ -902,6 +955,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
           // the read-only CSS; create mode adds no carrier class.
           subMode === 'ora_edit' && 'vcr-ora-edit-mode',
           subMode === 'review_only' && 'vcr-review-mode',
+          submittedReadOnly && 'vcr-review-mode',
         )}
       >
         {renderStep()}
