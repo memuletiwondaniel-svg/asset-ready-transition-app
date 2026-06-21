@@ -54,7 +54,7 @@ const OrshMarkSvg: React.FC<{ height: number; surface?: 'light' | 'dark'; classN
         d="M 29.3 9.44 A 15.5 15.5 0 1 1 18.7 9.44"
         fill="none"
         stroke={surface === 'dark' ? 'currentColor' : '#a1a1aa'}
-        strokeWidth="5"
+        strokeWidth="4"
         strokeLinecap="butt"
         pathLength={100}
       />
@@ -101,7 +101,7 @@ const OrshLogo: React.FC<OrshLogoProps> = ({
               fontSize: `${Math.round(h * 0.55)}px`,
               lineHeight: 1,
               letterSpacing: '0.04em',
-              marginBottom: `${Math.round(h * 0.06)}px`,
+              marginBottom: `${Math.round(h * 0.10)}px`,
               marginLeft: `-${Math.max(2, Math.round(h * 0.06))}px`,
             }}
           >
