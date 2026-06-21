@@ -1337,18 +1337,13 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       try {
         const { data: rows } = await (supabase as any)
           .from('v_vcr_plan_approver_tasks')
-          .select('execution_plan_status, approved_count, any_rejected')
+          .select('execution_plan_status')
           .eq('handover_point_id', vcrHandoverId)
           .limit(1);
         const first = rows?.[0];
         const status = first?.execution_plan_status;
-        const anyApproval = (first?.approved_count ?? 0) > 0 || !!first?.any_rejected;
-        if (status === 'SUBMITTED' && !anyApproval) {
+        if (status === 'SUBMITTED') {
           await recallVcrPlan(vcrHandoverId);
-          return;
-        }
-        if (status === 'SUBMITTED' && anyApproval) {
-          setRecallBlockedOpen(true);
           return;
         }
       } catch (err) {
