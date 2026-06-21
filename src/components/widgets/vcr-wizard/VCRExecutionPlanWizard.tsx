@@ -640,34 +640,21 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
           );
         }
         if (isReview && reviewPayload) {
-          const viewerRole: ViewerRole = viewerAlreadyDecided ? 'decided_approver' : 'observer';
-          const viewerDecision = viewerAlreadyDecided && viewerApproverRow
-            ? { status: viewerApproverRow.status, decided_at: viewerApproverRow.decided_at }
-            : undefined;
           return (
-            <ViewOnlyApproverStatusBoard
-              payload={reviewPayload}
-              viewerRole={viewerRole}
-              viewerDecision={viewerDecision}
+            <VCRApprovalStatusPanel
+              handoverPointId={reviewPayload.handoverPointId}
+              vcrCode={reviewPayload.vcrCode}
+              vcrName={reviewPayload.vcrName}
+              onRecall={() => setRecallConfirmOpen(true)}
             />
           );
         }
         if (submittedReadOnly) {
-          const submitterPayload: VCRReviewPayload = {
-            handoverPointId: vcr.id,
-            approverRowId: null,
-            phase: rollup?.phase ?? null,
-            vcrCode: vcr.vcr_code,
-            vcrName: vcr.name,
-            projectCode: effectiveProjectCode,
-            projectId: undefined,
-            roleKey: '',
-            roleLabel: '',
-          };
           return (
-            <ViewOnlyApproverStatusBoard
-              payload={submitterPayload}
-              viewerRole="submitter"
+            <VCRApprovalStatusPanel
+              handoverPointId={vcr.id}
+              vcrCode={vcr.vcr_code}
+              vcrName={vcr.name}
               onRecall={() => setRecallConfirmOpen(true)}
             />
           );
