@@ -639,7 +639,17 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
           );
         }
         if (isReview && reviewPayload) {
-          return <ViewOnlyApproverStatusBoard payload={reviewPayload} />;
+          const viewerRole: ViewerRole = viewerAlreadyDecided ? 'decided_approver' : 'observer';
+          const viewerDecision = viewerAlreadyDecided && viewerApproverRow
+            ? { status: viewerApproverRow.status, decided_at: viewerApproverRow.decided_at }
+            : undefined;
+          return (
+            <ViewOnlyApproverStatusBoard
+              payload={reviewPayload}
+              viewerRole={viewerRole}
+              viewerDecision={viewerDecision}
+            />
+          );
         }
         if (submittedReadOnly) {
           const submitterPayload: VCRReviewPayload = {
@@ -653,7 +663,13 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
             roleKey: '',
             roleLabel: '',
           };
-          return <ViewOnlyApproverStatusBoard payload={submitterPayload} />;
+          return (
+            <ViewOnlyApproverStatusBoard
+              payload={submitterPayload}
+              viewerRole="submitter"
+              onRecall={() => setRecallConfirmOpen(true)}
+            />
+          );
         }
         return (
           <VCRConfirmationStep vcrId={vcr.id} vcrName={vcr.name} vcrCode={vcr.vcr_code} onNavigateToStep={goToStep} onReadyChange={setStep9Ready} submitRequestId={submitRequestId} approversRoster={approversRoster} onSubmitSuccess={() => onOpenChange(false)} />
