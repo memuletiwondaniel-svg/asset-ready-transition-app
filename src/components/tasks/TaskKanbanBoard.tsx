@@ -939,7 +939,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   const [withdrawState, setWithdrawState] = useState<WithdrawDecisionState | null>(null);
   const [withdrawSubmitting, setWithdrawSubmitting] = useState(false);
   const [activeTask, setActiveTask] = useState<UnifiedTask | null>(null);
-  const [recallBlockedOpen, setRecallBlockedOpen] = useState(false);
+  
   const { moveTaskToColumn } = useKanbanDragDrop();
   const { recall: recallVcrPlan } = useRecallVcrPlan();
 
