@@ -1028,7 +1028,23 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
 // ApproverDecisionList rendering (role, name, status chip, comment,
 // decided-at) and surfaces a phase-aware banner so a non-approver can see
 // whether Phase-1 is still open. NO decision controls.
-const ViewOnlyApproverStatusBoard: React.FC<{ payload: VCRReviewPayload }> = ({ payload }) => {
+export type ViewerRole = 'submitter' | 'decided_approver' | 'observer';
+
+const formatDecisionDate = (iso?: string | null) => {
+  if (!iso) return '';
+  try {
+    return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  } catch {
+    return '';
+  }
+};
+
+const ViewOnlyApproverStatusBoard: React.FC<{
+  payload: VCRReviewPayload;
+  viewerRole: ViewerRole;
+  onRecall?: () => void;
+  viewerDecision?: { status: string; decided_at?: string | null };
+}> = ({ payload, viewerRole, onRecall, viewerDecision }) => {
   const { data: rollup } = useVCRPlanRollup(payload.handoverPointId);
   const phase = rollup?.phase ?? payload.phase ?? null;
   const banner = phase === 1
@@ -1036,16 +1052,56 @@ const ViewOnlyApproverStatusBoard: React.FC<{ payload: VCRReviewPayload }> = ({ 
     : phase === 2
       ? 'Phase 2 — ORA Lead has approved; Phase-2 approvers are reviewing in parallel.'
       : 'This plan is under approval.';
+
+  const renderFooter = () => {
+    if (viewerRole === 'submitter') {
+      return (
+        <div className="flex items-center justify-between gap-3 rounded-md border bg-muted/20 px-3 py-2">
+          <span className="text-sm text-muted-foreground">
+            Awaiting approvals — you can pull the plan back to edit.
+          </span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onRecall}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <Undo2 className="h-4 w-4" />
+            Recall plan
+          </Button>
+        </div>
+      );
+    }
+    if (viewerRole === 'decided_approver' && viewerDecision) {
+      const status = (viewerDecision.status || '').toUpperCase();
+      const verb = status === 'APPROVED'
+        ? 'approved'
+        : status === 'CHANGES_REQUESTED' || status === 'REJECTED'
+          ? 'requested changes'
+          : 'recorded your decision';
+      const dateStr = formatDecisionDate(viewerDecision.decided_at);
+      return (
+        <div className="rounded-md border bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
+          You {verb}{dateStr ? ` on ${dateStr}` : ''}.
+        </div>
+      );
+    }
+    return (
+      <div className="rounded-md border bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
+        Viewing only.
+      </div>
+    );
+  };
+
   return (
     <div className="max-w-3xl mx-auto space-y-4 p-1">
       <header className="space-y-1">
         <h2 className="text-lg font-semibold text-foreground">Approver status</h2>
         <p className="text-sm text-muted-foreground">{banner}</p>
       </header>
-      <div className="rounded-md border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-        You are viewing this plan in read-only mode. No decision can be recorded from this screen.
-      </div>
       <Step8ReviewModeWrapper vcrId={payload.handoverPointId} readOnly />
+      {renderFooter()}
     </div>
   );
 };
