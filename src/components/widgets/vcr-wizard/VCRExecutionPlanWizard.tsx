@@ -745,30 +745,18 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
           if (isReview) return null;
           if (!user?.id || !submitterId || user.id !== submitterId) return null;
           if (rollup?.execution_plan_status !== 'SUBMITTED') return null;
-          const anyApproved = (rollup?.approved_count ?? 0) > 0;
-          const anyRejected = !!rollup?.any_rejected;
-          const blocked = anyApproved || anyRejected;
-          const button = (
+          return (
             <Button
               variant="ghost"
               size="sm"
               data-rm-safe
               className="h-6 px-2 text-[11px] gap-1 text-muted-foreground hover:text-foreground hover:bg-accent/60"
-              disabled={blocked || isRecalling}
+              disabled={isRecalling}
               onClick={() => setRecallConfirmOpen(true)}
             >
               <Undo2 className="h-3 w-3" />
               Recall plan
             </Button>
-          );
-          if (!blocked) return button;
-          return (
-            <Tooltip>
-              <TooltipTrigger asChild><span>{button}</span></TooltipTrigger>
-              <TooltipContent side="bottom" className="max-w-xs text-xs">
-                {RECALL_BLOCKED_MESSAGE}
-              </TooltipContent>
-            </Tooltip>
           );
         })()}
       </div>
