@@ -135,11 +135,11 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from('vcr_plan_approvers')
-        .select('id, status')
+        .select('id, status, decided_at')
         .eq('id', reviewPayload!.approverRowId)
         .maybeSingle();
       if (error) throw error;
-      return data as { id: string; status: string } | null;
+      return data as { id: string; status: string; decided_at: string | null } | null;
     },
   });
   const viewerAlreadyDecided = !!viewerApproverRow && viewerApproverRow.status !== 'PENDING';
