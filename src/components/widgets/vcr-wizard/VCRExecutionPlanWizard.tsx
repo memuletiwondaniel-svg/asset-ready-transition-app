@@ -33,6 +33,7 @@ import { ApproversStep, VCRApprover } from './steps/ApproversStep';
 import { MaintenanceSystemsStep } from './steps/MaintenanceSystemsStep';
 import { VCRConfirmationStep } from './steps/VCRConfirmationStep';
 import { Step8ReviewModeWrapper } from './Step8ReviewModeWrapper';
+import { VCRApprovalStatusPanel } from './VCRApprovalStatusPanel';
 import { Layers, CheckCircle2, Eye } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useVCRHydrocarbonStatus } from '@/hooks/useVCRHydrocarbonStatus';
@@ -639,34 +640,21 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
           );
         }
         if (isReview && reviewPayload) {
-          const viewerRole: ViewerRole = viewerAlreadyDecided ? 'decided_approver' : 'observer';
-          const viewerDecision = viewerAlreadyDecided && viewerApproverRow
-            ? { status: viewerApproverRow.status, decided_at: viewerApproverRow.decided_at }
-            : undefined;
           return (
-            <ViewOnlyApproverStatusBoard
-              payload={reviewPayload}
-              viewerRole={viewerRole}
-              viewerDecision={viewerDecision}
+            <VCRApprovalStatusPanel
+              handoverPointId={reviewPayload.handoverPointId}
+              vcrCode={reviewPayload.vcrCode}
+              vcrName={reviewPayload.vcrName}
+              onRecall={() => setRecallConfirmOpen(true)}
             />
           );
         }
         if (submittedReadOnly) {
-          const submitterPayload: VCRReviewPayload = {
-            handoverPointId: vcr.id,
-            approverRowId: null,
-            phase: rollup?.phase ?? null,
-            vcrCode: vcr.vcr_code,
-            vcrName: vcr.name,
-            projectCode: effectiveProjectCode,
-            projectId: undefined,
-            roleKey: '',
-            roleLabel: '',
-          };
           return (
-            <ViewOnlyApproverStatusBoard
-              payload={submitterPayload}
-              viewerRole="submitter"
+            <VCRApprovalStatusPanel
+              handoverPointId={vcr.id}
+              vcrCode={vcr.vcr_code}
+              vcrName={vcr.name}
               onRecall={() => setRecallConfirmOpen(true)}
             />
           );
@@ -1023,85 +1011,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   );
 };
 
-// ─── View-only approver-status board (Step 10 in review_only when the
-// viewer has NO approver row — submitter / observer). Reuses the shared
-// ApproverDecisionList rendering (role, name, status chip, comment,
-// decided-at) and surfaces a phase-aware banner so a non-approver can see
-// whether Phase-1 is still open. NO decision controls.
-export type ViewerRole = 'submitter' | 'decided_approver' | 'observer';
+// ViewOnlyApproverStatusBoard was replaced by the shared
+// `VCRApprovalStatusPanel` (phase-grouped, B2B-aware, viewer-aware
+// footer). All Step-10 view-only renders go through that component now.
 
-const formatDecisionDate = (iso?: string | null) => {
-  if (!iso) return '';
-  try {
-    return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-  } catch {
-    return '';
-  }
-};
-
-const ViewOnlyApproverStatusBoard: React.FC<{
-  payload: VCRReviewPayload;
-  viewerRole: ViewerRole;
-  onRecall?: () => void;
-  viewerDecision?: { status: string; decided_at?: string | null };
-}> = ({ payload, viewerRole, onRecall, viewerDecision }) => {
-  const { data: rollup } = useVCRPlanRollup(payload.handoverPointId);
-  const phase = rollup?.phase ?? payload.phase ?? null;
-  const banner = phase === 1
-    ? 'Phase 1 — Awaiting ORA Lead review. Phase-2 approvers are not yet active.'
-    : phase === 2
-      ? 'Phase 2 — ORA Lead has approved; Phase-2 approvers are reviewing in parallel.'
-      : 'This plan is under approval.';
-
-  const renderFooter = () => {
-    if (viewerRole === 'submitter') {
-      return (
-        <div className="flex items-center justify-between gap-3 rounded-md border bg-muted/20 px-3 py-2">
-          <span className="text-sm text-muted-foreground">
-            Awaiting approvals — you can pull the plan back to edit.
-          </span>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={onRecall}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <Undo2 className="h-4 w-4" />
-            Recall plan
-          </Button>
-        </div>
-      );
-    }
-    if (viewerRole === 'decided_approver' && viewerDecision) {
-      const status = (viewerDecision.status || '').toUpperCase();
-      const verb = status === 'APPROVED'
-        ? 'approved'
-        : status === 'CHANGES_REQUESTED' || status === 'REJECTED'
-          ? 'requested changes'
-          : 'recorded your decision';
-      const dateStr = formatDecisionDate(viewerDecision.decided_at);
-      return (
-        <div className="rounded-md border bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
-          You {verb}{dateStr ? ` on ${dateStr}` : ''}.
-        </div>
-      );
-    }
-    return (
-      <div className="rounded-md border bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
-        Viewing only.
-      </div>
-    );
-  };
-
-  return (
-    <div className="max-w-3xl mx-auto space-y-4 p-1">
-      <header className="space-y-1">
-        <h2 className="text-lg font-semibold text-foreground">Approver status</h2>
-        <p className="text-sm text-muted-foreground">{banner}</p>
-      </header>
-      <Step8ReviewModeWrapper vcrId={payload.handoverPointId} readOnly />
-      {renderFooter()}
-    </div>
-  );
-};
