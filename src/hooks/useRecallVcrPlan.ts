@@ -3,14 +3,9 @@ import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-export const RECALL_BLOCKED_MESSAGE =
-  "Can't recall — an approver has already acted. To change the plan, request changes (reject) and resubmit, or change the scope (which voids approvals).";
-
 interface RecallOptions {
   /** Called after a successful recall (e.g. to close the wizard). */
   onSuccess?: () => void;
-  /** Called when the RPC reports the plan is blocked by an existing approval. */
-  onBlocked?: (message: string) => void;
 }
 
 export function useRecallVcrPlan() {
@@ -28,7 +23,6 @@ export function useRecallVcrPlan() {
         if (error) throw error;
 
         toast.success('Plan recalled — back to draft for editing');
-        // Invalidate task feeds and VCR plan queries so both boards refresh.
         queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
         queryClient.invalidateQueries({ queryKey: ['vcr-plan-approval-tasks'] });
         queryClient.invalidateQueries({ queryKey: ['vcr-plan-rollup', handoverPointId] });
@@ -43,12 +37,7 @@ export function useRecallVcrPlan() {
         return true;
       } catch (err: any) {
         const msg: string = err?.message || String(err);
-        if (/Cannot recall/i.test(msg)) {
-          options.onBlocked?.(RECALL_BLOCKED_MESSAGE);
-          toast.error(RECALL_BLOCKED_MESSAGE);
-        } else {
-          toast.error(msg);
-        }
+        toast.error(msg);
         return false;
       } finally {
         setIsRecalling(false);

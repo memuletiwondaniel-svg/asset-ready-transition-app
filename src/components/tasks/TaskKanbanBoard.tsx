@@ -12,7 +12,7 @@ import { TaskDetailSheet } from './TaskDetailSheet';
 import { VCRApprovalBundleSheet } from './VCRApprovalBundleSheet';
 import { VCRPlanReviewLauncher } from './VCRPlanReviewLauncher';
 import type { VCRBundleTask } from '@/hooks/useUserVCRBundleTasks';
-import { useRecallVcrPlan, RECALL_BLOCKED_MESSAGE } from '@/hooks/useRecallVcrPlan';
+import { useRecallVcrPlan } from '@/hooks/useRecallVcrPlan';
 import { ORAActivityTaskSheet } from './ORAActivityTaskSheet';
 import { P2APlanCreationWizard } from '@/components/widgets/p2a-wizard/P2APlanCreationWizard';
 import { P2AWorkspaceOverlay } from '@/components/widgets/P2AWorkspaceOverlay';
@@ -939,7 +939,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   const [withdrawState, setWithdrawState] = useState<WithdrawDecisionState | null>(null);
   const [withdrawSubmitting, setWithdrawSubmitting] = useState(false);
   const [activeTask, setActiveTask] = useState<UnifiedTask | null>(null);
-  const [recallBlockedOpen, setRecallBlockedOpen] = useState(false);
+  
   const { moveTaskToColumn } = useKanbanDragDrop();
   const { recall: recallVcrPlan } = useRecallVcrPlan();
 
@@ -1337,18 +1337,13 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       try {
         const { data: rows } = await (supabase as any)
           .from('v_vcr_plan_approver_tasks')
-          .select('execution_plan_status, approved_count, any_rejected')
+          .select('execution_plan_status')
           .eq('handover_point_id', vcrHandoverId)
           .limit(1);
         const first = rows?.[0];
         const status = first?.execution_plan_status;
-        const anyApproval = (first?.approved_count ?? 0) > 0 || !!first?.any_rejected;
-        if (status === 'SUBMITTED' && !anyApproval) {
+        if (status === 'SUBMITTED') {
           await recallVcrPlan(vcrHandoverId);
-          return;
-        }
-        if (status === 'SUBMITTED' && anyApproval) {
-          setRecallBlockedOpen(true);
           return;
         }
       } catch (err) {
@@ -1820,17 +1815,6 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         submitting={withdrawSubmitting}
       />
 
-      <AlertDialog open={recallBlockedOpen} onOpenChange={setRecallBlockedOpen}>
-        <AlertDialogContent className="max-w-md">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Can't recall this plan</AlertDialogTitle>
-            <AlertDialogDescription>{RECALL_BLOCKED_MESSAGE}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction onClick={() => setRecallBlockedOpen(false)}>OK</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
     </ReviewerSummaryContext.Provider>
     </P2AApprovalContext.Provider>

@@ -47,7 +47,7 @@ import { Button } from '@/components/ui/button';
 import { buildVcrSubmitApproverPayload } from '@/lib/buildVcrSubmitPayload';
 import { toast } from 'sonner';
 import { markVcrReviewStarted, markVcrReviewStep } from '@/lib/vcrPlanReviewStart';
-import { useRecallVcrPlan, RECALL_BLOCKED_MESSAGE } from '@/hooks/useRecallVcrPlan';
+import { useRecallVcrPlan } from '@/hooks/useRecallVcrPlan';
 import { Undo2 } from 'lucide-react';
 import {
   AlertDialog,
@@ -745,30 +745,18 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
           if (isReview) return null;
           if (!user?.id || !submitterId || user.id !== submitterId) return null;
           if (rollup?.execution_plan_status !== 'SUBMITTED') return null;
-          const anyApproved = (rollup?.approved_count ?? 0) > 0;
-          const anyRejected = !!rollup?.any_rejected;
-          const blocked = anyApproved || anyRejected;
-          const button = (
+          return (
             <Button
               variant="ghost"
               size="sm"
               data-rm-safe
               className="h-6 px-2 text-[11px] gap-1 text-muted-foreground hover:text-foreground hover:bg-accent/60"
-              disabled={blocked || isRecalling}
+              disabled={isRecalling}
               onClick={() => setRecallConfirmOpen(true)}
             >
               <Undo2 className="h-3 w-3" />
               Recall plan
             </Button>
-          );
-          if (!blocked) return button;
-          return (
-            <Tooltip>
-              <TooltipTrigger asChild><span>{button}</span></TooltipTrigger>
-              <TooltipContent side="bottom" className="max-w-xs text-xs">
-                {RECALL_BLOCKED_MESSAGE}
-              </TooltipContent>
-            </Tooltip>
           );
         })()}
       </div>
@@ -966,15 +954,21 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     </WizardShell>
   );
 
+  const recallApprovedCount = rollup?.approved_count ?? 0;
   const recallDialog = (
     <AlertDialog open={recallConfirmOpen} onOpenChange={setRecallConfirmOpen}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Recall this plan?</AlertDialogTitle>
           <AlertDialogDescription>
-            It returns to draft for editing and the ORA Lead's review task is removed until you re-submit.
+            It returns to draft for editing and the approvers' review tasks are removed until you re-submit.
           </AlertDialogDescription>
         </AlertDialogHeader>
+        {recallApprovedCount > 0 && (
+          <div className="rounded-md border border-amber-300/60 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800/50 px-3 py-2 text-sm text-amber-900 dark:text-amber-200">
+            Recalling clears the {recallApprovedCount} approval{recallApprovedCount === 1 ? '' : 's'} already given — you'll need to re-submit for the full sequence again.
+          </div>
+        )}
         <AlertDialogFooter>
           <AlertDialogCancel data-rm-safe disabled={isRecalling}>Cancel</AlertDialogCancel>
           <AlertDialogAction
