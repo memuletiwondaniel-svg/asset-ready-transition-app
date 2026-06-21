@@ -954,15 +954,21 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     </WizardShell>
   );
 
+  const recallApprovedCount = rollup?.approved_count ?? 0;
   const recallDialog = (
     <AlertDialog open={recallConfirmOpen} onOpenChange={setRecallConfirmOpen}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Recall this plan?</AlertDialogTitle>
           <AlertDialogDescription>
-            It returns to draft for editing and the ORA Lead's review task is removed until you re-submit.
+            It returns to draft for editing and the approvers' review tasks are removed until you re-submit.
           </AlertDialogDescription>
         </AlertDialogHeader>
+        {recallApprovedCount > 0 && (
+          <div className="rounded-md border border-amber-300/60 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800/50 px-3 py-2 text-sm text-amber-900 dark:text-amber-200">
+            Recalling clears the {recallApprovedCount} approval{recallApprovedCount === 1 ? '' : 's'} already given — you'll need to re-submit for the full sequence again.
+          </div>
+        )}
         <AlertDialogFooter>
           <AlertDialogCancel data-rm-safe disabled={isRecalling}>Cancel</AlertDialogCancel>
           <AlertDialogAction
