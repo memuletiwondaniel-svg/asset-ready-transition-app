@@ -33,6 +33,7 @@ import { ApproversStep, VCRApprover } from './steps/ApproversStep';
 import { MaintenanceSystemsStep } from './steps/MaintenanceSystemsStep';
 import { VCRConfirmationStep } from './steps/VCRConfirmationStep';
 import { Step8ReviewModeWrapper } from './Step8ReviewModeWrapper';
+import { VCRApprovalStatusPanel } from './VCRApprovalStatusPanel';
 import { Layers, CheckCircle2, Eye } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useVCRHydrocarbonStatus } from '@/hooks/useVCRHydrocarbonStatus';
