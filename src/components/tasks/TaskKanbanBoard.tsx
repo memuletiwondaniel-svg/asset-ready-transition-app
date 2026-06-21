@@ -12,7 +12,7 @@ import { TaskDetailSheet } from './TaskDetailSheet';
 import { VCRApprovalBundleSheet } from './VCRApprovalBundleSheet';
 import { VCRPlanReviewLauncher } from './VCRPlanReviewLauncher';
 import type { VCRBundleTask } from '@/hooks/useUserVCRBundleTasks';
-import { useRecallVcrPlan, RECALL_BLOCKED_MESSAGE } from '@/hooks/useRecallVcrPlan';
+import { useRecallVcrPlan } from '@/hooks/useRecallVcrPlan';
 import { ORAActivityTaskSheet } from './ORAActivityTaskSheet';
 import { P2APlanCreationWizard } from '@/components/widgets/p2a-wizard/P2APlanCreationWizard';
 import { P2AWorkspaceOverlay } from '@/components/widgets/P2AWorkspaceOverlay';
