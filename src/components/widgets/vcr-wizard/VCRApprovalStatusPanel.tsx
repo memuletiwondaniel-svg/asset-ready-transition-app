@@ -445,8 +445,9 @@ export const VCRApprovalStatusPanel: React.FC<VCRApprovalStatusPanelProps> = ({
           <div className="min-w-0">
             <h2 className="text-lg font-semibold text-foreground">Approval status</h2>
             <p className="text-xs text-muted-foreground mt-0.5 tabular-nums">
-              {[vcrCode, vcrName].filter(Boolean).join(' · ') || 'VCR Plan'}
-              {vcrCode || vcrName ? ' · VCR Plan' : ''}
+              {vcrCode ? `${vcrCode} · ` : ''}
+              {vcrName ? `${vcrName} · ` : ''}
+              VCR Plan
             </p>
           </div>
           <Badge variant="outline" className={cn('shrink-0 font-medium', planPill.cls)}>
