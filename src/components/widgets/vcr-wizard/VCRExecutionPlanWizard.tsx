@@ -47,7 +47,7 @@ import { Button } from '@/components/ui/button';
 import { buildVcrSubmitApproverPayload } from '@/lib/buildVcrSubmitPayload';
 import { toast } from 'sonner';
 import { markVcrReviewStarted, markVcrReviewStep } from '@/lib/vcrPlanReviewStart';
-import { useRecallVcrPlan, RECALL_BLOCKED_MESSAGE } from '@/hooks/useRecallVcrPlan';
+import { useRecallVcrPlan } from '@/hooks/useRecallVcrPlan';
 import { Undo2 } from 'lucide-react';
 import {
   AlertDialog,
