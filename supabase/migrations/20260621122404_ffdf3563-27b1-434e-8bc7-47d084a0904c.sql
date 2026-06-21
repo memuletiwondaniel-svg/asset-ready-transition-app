@@ -1,0 +1,2 @@
+ALTER TABLE public.vcr_plan_approval_events DROP CONSTRAINT vcr_plan_approval_events_event_type_check;
+ALTER TABLE public.vcr_plan_approval_events ADD CONSTRAINT vcr_plan_approval_events_event_type_check CHECK (event_type = ANY (ARRAY['SUBMITTED'::text, 'EDIT'::text, 'APPROVED'::text, 'REJECTED'::text, 'BASELINED'::text, 'SCOPE_VOIDED'::text, 'WITHDRAWN'::text, 'ITEM_ADDED'::text, 'ITEM_REMOVED'::text, 'RECALLED'::text, 'CHANGES_REQUESTED'::text]));
