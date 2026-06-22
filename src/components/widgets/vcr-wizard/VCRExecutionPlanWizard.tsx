@@ -745,24 +745,9 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         <Badge variant="outline" className={cn("text-[10px] h-5 px-2", statusLabel.cls)}>
           {statusLabel.label}
         </Badge>
-        {(() => {
-          if (isReview) return null;
-          if (!user?.id || !submitterId || user.id !== submitterId) return null;
-          if (rollup?.execution_plan_status !== 'SUBMITTED') return null;
-          return (
-            <Button
-              variant="ghost"
-              size="sm"
-              data-rm-safe
-              className="h-6 px-2 text-[11px] gap-1 text-muted-foreground hover:text-foreground hover:bg-accent/60"
-              disabled={isRecalling}
-              onClick={() => setRecallConfirmOpen(true)}
-            >
-              <Undo2 className="h-3 w-3" />
-              Recall plan
-            </Button>
-          );
-        })()}
+        {/* Recall action lives in the wizard footer at Step 10 — header
+            shows status pill only. */}
+
       </div>
     </div>
     </TooltipProvider>
