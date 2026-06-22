@@ -884,6 +884,25 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         >
           ← Prev
         </Button>
+        {currentStep === 9 &&
+          !!user?.id &&
+          !!submitterId &&
+          user.id === submitterId &&
+          rollup?.execution_plan_status === 'SUBMITTED' && (
+            <Button
+              variant="outline"
+              size="sm"
+              data-rm-safe
+              disabled={isRecalling}
+              onClick={() => setRecallConfirmOpen(true)}
+              className={cn('gap-1.5', mutedBtn)}
+              style={{ pointerEvents: 'auto' }}
+            >
+              <Undo2 className="h-4 w-4" />
+              Recall plan
+            </Button>
+          )}
+
       </div>
       {/* RIGHT — forward / decision */}
       <div className="flex items-center gap-2">
