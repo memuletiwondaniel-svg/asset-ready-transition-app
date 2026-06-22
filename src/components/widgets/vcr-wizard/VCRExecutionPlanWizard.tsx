@@ -745,24 +745,9 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         <Badge variant="outline" className={cn("text-[10px] h-5 px-2", statusLabel.cls)}>
           {statusLabel.label}
         </Badge>
-        {(() => {
-          if (isReview) return null;
-          if (!user?.id || !submitterId || user.id !== submitterId) return null;
-          if (rollup?.execution_plan_status !== 'SUBMITTED') return null;
-          return (
-            <Button
-              variant="ghost"
-              size="sm"
-              data-rm-safe
-              className="h-6 px-2 text-[11px] gap-1 text-muted-foreground hover:text-foreground hover:bg-accent/60"
-              disabled={isRecalling}
-              onClick={() => setRecallConfirmOpen(true)}
-            >
-              <Undo2 className="h-3 w-3" />
-              Recall plan
-            </Button>
-          );
-        })()}
+        {/* Recall action lives in the wizard footer at Step 10 — header
+            shows status pill only. */}
+
       </div>
     </div>
     </TooltipProvider>
@@ -884,6 +869,25 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         >
           ← Prev
         </Button>
+        {currentStep === 9 &&
+          !!user?.id &&
+          !!submitterId &&
+          user.id === submitterId &&
+          rollup?.execution_plan_status === 'SUBMITTED' && (
+            <Button
+              variant="outline"
+              size="sm"
+              data-rm-safe
+              disabled={isRecalling}
+              onClick={() => setRecallConfirmOpen(true)}
+              className={cn('gap-1.5', mutedBtn)}
+              style={{ pointerEvents: 'auto' }}
+            >
+              <Undo2 className="h-4 w-4" />
+              Recall plan
+            </Button>
+          )}
+
       </div>
       {/* RIGHT — forward / decision */}
       <div className="flex items-center gap-2">
@@ -983,7 +987,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
               const ok = await recallPlan(vcr.id, { onSuccess: () => onOpenChange(false) });
               if (ok) setRecallConfirmOpen(false);
             }}
-            className="inline-flex items-center gap-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground"
+            className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground border border-border hover:bg-secondary/80 hover:text-foreground"
           >
             <Undo2 className="h-4 w-4" />
             Recall plan

@@ -383,47 +383,10 @@ export const VCRApprovalStatusPanel: React.FC<VCRApprovalStatusPanelProps> = ({
     return { label: 'Pending approval', cls: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30' };
   })();
 
-  const renderFooter = () => {
-    if (viewerIsSubmitter && onRecall) {
-      return (
-        <div className="flex items-center justify-between gap-3 rounded-md border bg-muted/20 px-3 py-2">
-          <span className="text-sm text-muted-foreground">
-            Awaiting approvals — you can pull the plan back to edit.
-          </span>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={onRecall}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <Undo2 className="h-4 w-4" />
-            Recall plan
-          </Button>
-        </div>
-      );
-    }
-    if (viewerDecided && viewerApproverRow) {
-      const status = (viewerApproverRow.row_status || '').toUpperCase();
-      const verb =
-        status === 'APPROVED'
-          ? 'approved'
-          : status === 'REJECTED' || status === 'CHANGES_REQUESTED'
-            ? 'requested changes'
-            : 'recorded your decision';
-      const dateStr = formatDecisionDate(viewerApproverRow.decided_at);
-      return (
-        <div className="rounded-md border bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
-          You {verb}{dateStr ? ` on ${dateStr}` : ''}.
-        </div>
-      );
-    }
-    return (
-      <div className="rounded-md border bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
-        Viewing only.
-      </div>
-    );
-  };
+  // Viewer-aware footer was removed — Recall now lives in the wizard
+  // footer row, and decided approvers see their decision on their own
+  // approver row. No extra block is rendered here.
+
 
   const renderRows = (group: ApproverRow[], locked: boolean) =>
     group.map((r) => (
@@ -441,19 +404,10 @@ export const VCRApprovalStatusPanel: React.FC<VCRApprovalStatusPanelProps> = ({
     <TooltipProvider delayDuration={150}>
       <div className="max-w-3xl mx-auto p-1 space-y-4">
         {/* Header */}
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h2 className="text-lg font-semibold text-foreground">Approval status</h2>
-            <p className="text-xs text-muted-foreground mt-0.5 tabular-nums">
-              {vcrCode ? `${vcrCode} · ` : ''}
-              {vcrName ? `${vcrName} · ` : ''}
-              VCR Plan
-            </p>
-          </div>
-          <Badge variant="outline" className={cn('shrink-0 font-medium', planPill.cls)}>
-            {planPill.label}
-          </Badge>
+        <div className="min-w-0">
+          <h2 className="text-lg font-semibold text-foreground">Approval status</h2>
         </div>
+
 
         {/* Progress */}
         <div className="space-y-1.5">
@@ -530,8 +484,8 @@ export const VCRApprovalStatusPanel: React.FC<VCRApprovalStatusPanelProps> = ({
           </p>
         )}
 
-        {/* Viewer-aware footer */}
-        {renderFooter()}
+
+
       </div>
     </TooltipProvider>
   );
