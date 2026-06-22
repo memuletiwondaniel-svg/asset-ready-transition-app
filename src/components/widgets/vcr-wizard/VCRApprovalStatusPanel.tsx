@@ -484,8 +484,8 @@ export const VCRApprovalStatusPanel: React.FC<VCRApprovalStatusPanelProps> = ({
           </p>
         )}
 
-        {/* Viewer-aware footer */}
-        {renderFooter()}
+
+
       </div>
     </TooltipProvider>
   );
