@@ -404,19 +404,10 @@ export const VCRApprovalStatusPanel: React.FC<VCRApprovalStatusPanelProps> = ({
     <TooltipProvider delayDuration={150}>
       <div className="max-w-3xl mx-auto p-1 space-y-4">
         {/* Header */}
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h2 className="text-lg font-semibold text-foreground">Approval status</h2>
-            <p className="text-xs text-muted-foreground mt-0.5 tabular-nums">
-              {vcrCode ? `${vcrCode} · ` : ''}
-              {vcrName ? `${vcrName} · ` : ''}
-              VCR Plan
-            </p>
-          </div>
-          <Badge variant="outline" className={cn('shrink-0 font-medium', planPill.cls)}>
-            {planPill.label}
-          </Badge>
+        <div className="min-w-0">
+          <h2 className="text-lg font-semibold text-foreground">Approval status</h2>
         </div>
+
 
         {/* Progress */}
         <div className="space-y-1.5">
