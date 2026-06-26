@@ -110,9 +110,8 @@ const statusBadge = (status: RowDisplayStatus) => {
       return (
         <Badge
           variant="outline"
-          className="bg-muted text-muted-foreground border-border rounded-full px-2.5 py-0.5 text-xs gap-1"
+          className="bg-muted text-muted-foreground border-border rounded-full px-2.5 py-0.5 text-xs"
         >
-          <Lock className="h-3 w-3" />
           Locked
         </Badge>
       );
