@@ -16,6 +16,7 @@ import {
   ChevronRight,
   CircleDashed,
   Lock,
+  LockOpen,
   Undo2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -441,16 +442,14 @@ export const VCRApprovalStatusPanel: React.FC<VCRApprovalStatusPanelProps> = ({
 
         {!rosterLoading && phase1Rows.length > 0 && (
           <section className="space-y-2">
-            <div className="flex items-baseline justify-between">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Phase 1 — ORA Lead
-              </h3>
+            <h3 className="text-sm font-medium text-foreground flex items-center gap-1.5">
+              <span>Phase 1 — ORA Lead gate</span>
               {oraApproved && (
-                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
-                  Gate cleared
+                <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                  · Gate cleared
                 </span>
               )}
-            </div>
+            </h3>
             <div className="rounded-lg border bg-card/30 overflow-hidden">
               {renderRows(phase1Rows, false)}
             </div>
@@ -460,14 +459,16 @@ export const VCRApprovalStatusPanel: React.FC<VCRApprovalStatusPanelProps> = ({
         {/* Phase 2 */}
         {!rosterLoading && phase2Rows.length > 0 && (
           <section className="space-y-2">
-            <div className="flex items-baseline justify-between">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Phase 2
-              </h3>
-              <span className="text-[10px] text-muted-foreground">
-                {oraApproved ? 'In parallel review' : 'Unlocks when ORA Lead approves'}
+            <h3 className="text-sm font-medium text-foreground flex items-center gap-1.5">
+              {oraApproved ? (
+                <LockOpen className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              ) : (
+                <Lock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              )}
+              <span>
+                Phase 2 — {oraApproved ? 'In parallel review' : 'Unlocks when ORA Lead approves'}
               </span>
-            </div>
+            </h3>
             <div className="rounded-lg border bg-card/30 overflow-hidden">
               {renderRows(phase2Rows, !oraApproved)}
             </div>
