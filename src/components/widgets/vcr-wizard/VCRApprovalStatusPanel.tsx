@@ -441,7 +441,7 @@ export const VCRApprovalStatusPanel: React.FC<VCRApprovalStatusPanelProps> = ({
 
         {!rosterLoading && phase1Rows.length > 0 && (
           <section className="space-y-2">
-            <h3 className="text-sm font-medium text-foreground flex items-center gap-1.5">
+            <h3 className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
               <span>Phase 1 — ORA Lead gate</span>
               {oraApproved && (
                 <span className="text-emerald-600 dark:text-emerald-400 font-medium">
@@ -458,11 +458,11 @@ export const VCRApprovalStatusPanel: React.FC<VCRApprovalStatusPanelProps> = ({
         {/* Phase 2 */}
         {!rosterLoading && phase2Rows.length > 0 && (
           <section className="space-y-2">
-            <h3 className="text-sm font-medium text-foreground flex items-center gap-1.5">
+            <h3 className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
               {oraApproved ? (
-                <LockOpen className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                <LockOpen className="h-3 w-3 text-muted-foreground shrink-0" />
               ) : (
-                <Lock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                <Lock className="h-3 w-3 text-muted-foreground shrink-0" />
               )}
               <span>
                 Phase 2 — {oraApproved ? 'In parallel review' : 'Unlocks when ORA Lead approves'}
