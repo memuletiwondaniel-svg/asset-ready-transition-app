@@ -693,26 +693,24 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   const uploadEvidence = useMutation({
     mutationFn: async ({ file, evidence_type }: { file: File; evidence_type: string }) => {
       if (!item?.id || !vcrId || !user?.id) throw new Error('Not ready');
+      if (!item.prerequisite_id) throw new Error('This item has no linked prerequisite — cannot attach evidence yet.');
       const safe = sanitizeFile(file.name);
       const uid = (crypto as any).randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-      const path = `${vcrId}/${item.id}/${uid}-${safe}`;
+      const path = `${item.prerequisite_id}/${uid}-${safe}`;
       const { error: upErr } = await supabase.storage
         .from(EVIDENCE_BUCKET)
         .upload(path, file, { contentType: file.type || undefined, upsert: false });
       if (upErr) throw upErr;
-      const { error: insErr } = await supabase.from('vcr_item_evidence').insert({
-        handover_point_id: vcrId,
-        vcr_item_id: item.id,
-        prerequisite_id: item.prerequisite_id,
+      const { error: insErr } = await supabase.from('p2a_vcr_evidence').insert({
+        vcr_prerequisite_id: item.prerequisite_id,
         file_name: file.name,
-        storage_path: path,
+        file_path: path,
         file_size: file.size,
-        mime_type: file.type || null,
+        file_type: file.type || null,
         evidence_type,
         uploaded_by: user.id,
       });
       if (insErr) {
-        // Best-effort cleanup of orphan object
         await supabase.storage.from(EVIDENCE_BUCKET).remove([path]);
         throw insErr;
       }
@@ -724,7 +722,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   const updateEvidenceType = useMutation({
     mutationFn: async ({ id, evidence_type }: { id: string; evidence_type: string }) => {
       const { error } = await supabase
-        .from('vcr_item_evidence')
+        .from('p2a_vcr_evidence')
         .update({ evidence_type })
         .eq('id', id);
       if (error) throw error;
@@ -735,13 +733,14 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
 
   const deleteEvidence = useMutation({
     mutationFn: async (row: EvidenceRow) => {
-      const { error } = await supabase.from('vcr_item_evidence').delete().eq('id', row.id);
+      const { error } = await supabase.from('p2a_vcr_evidence').delete().eq('id', row.id);
       if (error) throw error;
-      await supabase.storage.from(EVIDENCE_BUCKET).remove([row.storage_path]);
+      await supabase.storage.from(EVIDENCE_BUCKET).remove([row.file_path]);
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: evidenceQueryKey }),
     onError: (e: any) => toast({ title: 'Delete failed', description: e.message, variant: 'destructive' }),
   });
+
 
   const insertComment = useMutation({
     mutationFn: async ({ body, action_tag }: { body: string; action_tag: CommentRow['action_tag'] }) => {
