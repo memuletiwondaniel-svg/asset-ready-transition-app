@@ -34,9 +34,13 @@ const sha = async (s: string) => {
 };
 
 const DB_TIMEOUT_MS = 2_500;
-const STORAGE_TIMEOUT_MS = 5_000;
-const AI_TIMEOUT_MS = 10_000;
-const MAX_PDF_BYTES = 8 * 1024 * 1024;
+const STORAGE_TIMEOUT_MS = 15_000;
+const AI_TIMEOUT_MS = 25_000;
+const MAX_PDF_BYTES = 40 * 1024 * 1024;       // hard download cap (real registers seen at ~32 MB)
+const IVAN_INLINE_BYTE_LIMIT = 15 * 1024 * 1024; // > this → must use windowed path
+const IVAN_PAGE_BUDGET = 60;                  // total pages Ivan will analyse per pass
+const IVAN_WINDOW_PAGES = 20;                 // pages per Gemini call within the budget
+const IVAN_WALL_BUDGET_MS = 60_000;           // hard wall-clock for Ivan's whole pass
 
 function withAbort<T extends { abortSignal?: (signal: AbortSignal) => T }>(query: T, signal: AbortSignal): T {
   return typeof query.abortSignal === "function" ? query.abortSignal(signal) : query;
