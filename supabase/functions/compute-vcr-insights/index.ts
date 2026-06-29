@@ -292,21 +292,28 @@ serve(async (req) => {
       });
     }
 
-    // Resolve item + category
+    // Resolve item + category + display_order (for Ivan's DI-03 gating)
     const { data: itemRow } = await sb
       .from("vcr_items")
-      .select("id, supporting_evidence, category:vcr_item_categories(code, name)")
+      .select("id, supporting_evidence, display_order, category:vcr_item_categories(code, name)")
       .eq("id", vcr_item_id)
       .maybeSingle();
     // VCR item record from prereq side has prerequisite_id; look it up
     const { data: prereq } = await sb
       .from("p2a_vcr_prerequisites")
-      .select("id")
+      .select("id, status")
       .eq("handover_point_id", vcr_id)
       .eq("vcr_item_id", vcr_item_id)
       .maybeSingle();
-    const item = { ...(itemRow || {}), prerequisite_id: prereq?.id || null, handover_point_id: vcr_id };
     const categoryCode = (itemRow as any)?.category?.code || "??";
+    const item = {
+      ...(itemRow || {}),
+      prerequisite_id: prereq?.id || null,
+      handover_point_id: vcr_id,
+      category_code: categoryCode,
+      display_order: (itemRow as any)?.display_order ?? null,
+    };
+    const prereqStatus = prereq?.status || null;
 
     // Routing
     const { data: cfg } = await sb
@@ -319,16 +326,24 @@ serve(async (req) => {
     const configVersion = cfg?.config_version || 0;
 
     // Evidence fingerprint — invalidate when files are added/removed/updated
+    // Reads from p2a_vcr_evidence (the same store the UI writes to).
     const { data: evRows } = await sb
-      .from("vcr_item_evidence")
+      .from("p2a_vcr_evidence")
       .select("id, created_at")
-      .eq("handover_point_id", vcr_id)
-      .eq("vcr_item_id", vcr_item_id)
+      .eq("vcr_prerequisite_id", prereq?.id || "00000000-0000-0000-0000-000000000000")
       .order("id", { ascending: true });
     const evidenceFingerprint = (evRows || []).map((r: any) => `${r.id}:${r.created_at}`).join("|");
 
-    // Cache lookup
-    const hashInput = JSON.stringify({ configVersion, vcr_id, vcr_item_id, categoryCode, day: new Date().toISOString().slice(0, 10), evidenceFingerprint });
+    // Cache lookup — include prereq status so any status change invalidates
+    const hashInput = JSON.stringify({
+      configVersion,
+      vcr_id,
+      vcr_item_id,
+      categoryCode,
+      day: new Date().toISOString().slice(0, 10),
+      evidenceFingerprint,
+      prereqStatus,
+    });
     const inputsHash = await sha(hashInput);
     if (!force) {
       const { data: cached } = await sb
