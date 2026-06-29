@@ -32,21 +32,82 @@ const sha = async (s: string) => {
   return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
 };
 
+const DB_TIMEOUT_MS = 2_500;
+const STORAGE_TIMEOUT_MS = 5_000;
+const AI_TIMEOUT_MS = 10_000;
+const MAX_PDF_BYTES = 8 * 1024 * 1024;
+
+function withAbort<T extends { abortSignal?: (signal: AbortSignal) => T }>(query: T, signal: AbortSignal): T {
+  return typeof query.abortSignal === "function" ? query.abortSignal(signal) : query;
+}
+
+async function bounded<T>(
+  label: string,
+  ms: number,
+  fallback: T,
+  run: (signal: AbortSignal) => PromiseLike<T>,
+): Promise<T> {
+  const controller = new AbortController();
+  let settled = false;
+  const timeout = new Promise<T>((resolve) => {
+    setTimeout(() => {
+      if (!settled) {
+        controller.abort();
+        console.warn(`[compute-vcr-insights] ${label} timed out after ${ms}ms`);
+        resolve(fallback);
+      }
+    }, ms);
+  });
+  try {
+    const work = Promise.resolve(run(controller.signal)).then(
+      (value) => {
+        settled = true;
+        return value;
+      },
+      (error) => {
+        settled = true;
+        throw error;
+      },
+    );
+    return await Promise.race([work, timeout]);
+  } catch (error) {
+    const name = error instanceof Error ? error.name : "unknown";
+    console.warn(`[compute-vcr-insights] ${label} bounded fallback (${name})`);
+    return fallback;
+  }
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+  const chunkSize = 0x8000;
+  const chunks: string[] = [];
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    chunks.push(String.fromCharCode(...bytes.subarray(i, i + chunkSize)));
+  }
+  return btoa(chunks.join(""));
+}
+
 // ─── Fred: TI-* completions aggregator across the FULL system set ──────────
 async function fredCompletionsAggregator(sb: any, vcrId: string): Promise<Fact[]> {
   // Resolve handover_point → systems → external ids → gohub rows
-  const { data: hpsRows } = await sb
-    .from("p2a_handover_point_systems")
-    .select("system_id")
-    .eq("handover_point_id", vcrId);
+  const { data: hpsRows } = await bounded("fred system scope", DB_TIMEOUT_MS, { data: [] }, (signal) =>
+    withAbort(
+      sb.from("p2a_handover_point_systems").select("system_id").eq("handover_point_id", vcrId),
+      signal,
+    ),
+  );
   const systemIds = (hpsRows || []).map((r: any) => r.system_id).filter(Boolean);
   if (systemIds.length === 0) {
     return [{ label: "Completion scope", value: "No systems assigned", confidence: "unavailable" }];
   }
-  const { data: systems } = await sb
-    .from("p2a_systems")
-    .select("id, name, external_id, completion_percentage, itr_a_count, itr_b_count, itr_total_count, punchlist_a_count, gohub_rollup_total_itrs, gohub_rollup_complete_itrs")
-    .in("id", systemIds);
+  const { data: systems } = await bounded("fred system rollups", DB_TIMEOUT_MS, { data: [] }, (signal) =>
+    withAbort(
+      sb
+        .from("p2a_systems")
+        .select("id, name, external_id, completion_percentage, itr_a_count, itr_b_count, itr_total_count, punchlist_a_count, gohub_rollup_total_itrs, gohub_rollup_complete_itrs")
+        .in("id", systemIds),
+      signal,
+    ),
+  );
 
   // Aggregate from cached rollups (verified — fed by gohub-sync-counts)
   let itrTotal = 0, itrComplete = 0, catA = 0, sumPct = 0, pctN = 0;
@@ -92,11 +153,16 @@ async function fredCompletionsAggregator(sb: any, vcrId: string): Promise<Fact[]
 // Shared evidence loader — reads VCR evidence from p2a_vcr_evidence keyed by prerequisite
 async function loadVcrEvidence(sb: any, prereqId: string | null) {
   if (!prereqId) return [];
-  const { data } = await sb
-    .from("p2a_vcr_evidence")
-    .select("id, file_name, file_path, file_type, evidence_type, created_at")
-    .eq("vcr_prerequisite_id", prereqId)
-    .order("created_at", { ascending: true });
+  const { data } = await bounded("load vcr evidence", DB_TIMEOUT_MS, { data: [] }, (signal) =>
+    withAbort(
+      sb
+        .from("p2a_vcr_evidence")
+        .select("id, file_name, file_path, file_type, evidence_type, created_at")
+        .eq("vcr_prerequisite_id", prereqId)
+        .order("created_at", { ascending: true }),
+      signal,
+    ),
+  );
   return data || [];
 }
 
@@ -133,18 +199,26 @@ async function ivanHempReader(sb: any, item: any, lovableKey: string): Promise<F
     ];
   }
 
-  const { data: signed } = await sb.storage.from(EVIDENCE_BUCKET).createSignedUrl(pdf.file_path, 60 * 60);
+  const { data: signed } = await bounded("ivan signed url", DB_TIMEOUT_MS, { data: null }, () =>
+    sb.storage.from(EVIDENCE_BUCKET).createSignedUrl(pdf.file_path, 60 * 60),
+  );
   const sourceHref = signed?.signedUrl;
+  if (!sourceHref) {
+    return [{ label: "HEMP register", value: "Attachment link unavailable", confidence: "unavailable" }];
+  }
 
   let pdfBytesB64 = "";
   try {
-    const { data: blob } = await sb.storage.from(EVIDENCE_BUCKET).download(pdf.file_path);
-    if (blob) {
-      const buf = new Uint8Array(await blob.arrayBuffer());
-      let bin = "";
-      for (let i = 0; i < buf.byteLength; i++) bin += String.fromCharCode(buf[i]);
-      pdfBytesB64 = btoa(bin);
-    }
+    const pdfBytes = await bounded<Uint8Array | null>("ivan pdf download", STORAGE_TIMEOUT_MS, null, async (signal) => {
+      const response = await fetch(sourceHref, { signal });
+      if (!response.ok) return null;
+      const contentLength = Number(response.headers.get("content-length") || 0);
+      if (contentLength > MAX_PDF_BYTES) return null;
+      const buffer = await response.arrayBuffer();
+      if (buffer.byteLength > MAX_PDF_BYTES) return null;
+      return new Uint8Array(buffer);
+    });
+    if (pdfBytes) pdfBytesB64 = bytesToBase64(pdfBytes);
   } catch (_e) {
     return [{ label: "HEMP register", value: "Attachment unreadable", confidence: "unavailable", sourceHref }];
   }
@@ -154,8 +228,12 @@ async function ivanHempReader(sb: any, item: any, lovableKey: string): Promise<F
 
   let extracted: any = null;
   try {
-    const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    if (!lovableKey) {
+      return [{ label: "HEMP register AI read", value: "AI gateway not connected", confidence: "unavailable", sourceHref }];
+    }
+    const r = await bounded<Response | null>("ivan ai read", AI_TIMEOUT_MS, null, (signal) => fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
+      signal,
       headers: {
         "Content-Type": "application/json",
         "Lovable-API-Key": lovableKey,
@@ -179,11 +257,16 @@ async function ivanHempReader(sb: any, item: any, lovableKey: string): Promise<F
           },
         ],
       }),
-    });
+    }));
+    if (!r) {
+      return [{ label: "HEMP register AI read", value: "AI read timed out", confidence: "unavailable", sourceHref }];
+    }
     if (r.ok) {
       const j = await r.json();
       const txt = j.choices?.[0]?.message?.content || "{}";
       extracted = JSON.parse(typeof txt === "string" ? txt : "{}");
+    } else {
+      return [{ label: "HEMP register AI read", value: "AI read unavailable", confidence: "unavailable", sourceHref }];
     }
   } catch (_e) {
     /* fall through */
@@ -224,11 +307,16 @@ async function selmaRevisionPass(sb: any, item: any): Promise<Fact[]> {
   const facts: Fact[] = [];
   for (const a of atts) {
     const stem = (a.file_name || "").replace(/\.[^.]+$/, "");
-    const { data: docs } = await sb
-      .from("dms_external_sync")
-      .select("document_number, revision, status_code, metadata")
-      .ilike("document_number", stem ? `%${stem.slice(0, 30)}%` : "%__none__%")
-      .limit(1);
+    const { data: docs } = await bounded("selma dms revision", DB_TIMEOUT_MS, { data: [] }, (signal) =>
+      withAbort(
+        sb
+          .from("dms_external_sync")
+          .select("document_number, revision, status_code, metadata")
+          .ilike("document_number", stem ? `%${stem.slice(0, 30)}%` : "%__none__%")
+          .limit(1),
+        signal,
+      ),
+    );
     const d = (docs || [])[0];
     if (!d) {
       facts.push({ label: `Doc: ${a.file_name}`, value: "Not tracked in DMS", confidence: "unavailable" });
@@ -293,18 +381,28 @@ serve(async (req) => {
     }
 
     // Resolve item + category + display_order (for Ivan's DI-03 gating)
-    const { data: itemRow } = await sb
-      .from("vcr_items")
-      .select("id, supporting_evidence, display_order, category:vcr_item_categories(code, name)")
-      .eq("id", vcr_item_id)
-      .maybeSingle();
+    const { data: itemRow } = await bounded("item lookup", DB_TIMEOUT_MS, { data: null }, (signal) =>
+      withAbort(
+        sb
+          .from("vcr_items")
+          .select("id, supporting_evidence, display_order, category:vcr_item_categories(code, name)")
+          .eq("id", vcr_item_id)
+          .maybeSingle(),
+        signal,
+      ),
+    );
     // VCR item record from prereq side has prerequisite_id; look it up
-    const { data: prereq } = await sb
-      .from("p2a_vcr_prerequisites")
-      .select("id, status")
-      .eq("handover_point_id", vcr_id)
-      .eq("vcr_item_id", vcr_item_id)
-      .maybeSingle();
+    const { data: prereq } = await bounded("prereq lookup", DB_TIMEOUT_MS, { data: null }, (signal) =>
+      withAbort(
+        sb
+          .from("p2a_vcr_prerequisites")
+          .select("id, status")
+          .eq("handover_point_id", vcr_id)
+          .eq("vcr_item_id", vcr_item_id)
+          .maybeSingle(),
+        signal,
+      ),
+    );
     const categoryCode = (itemRow as any)?.category?.code || "??";
     const item = {
       ...(itemRow || {}),
@@ -316,22 +414,32 @@ serve(async (req) => {
     const prereqStatus = prereq?.status || null;
 
     // Routing
-    const { data: cfg } = await sb
-      .from("vcr_insights_agent_config")
-      .select("lead_agent, contrib_agents, config_version")
-      .eq("category_code", categoryCode)
-      .maybeSingle();
+    const { data: cfg } = await bounded("agent config", DB_TIMEOUT_MS, { data: null }, (signal) =>
+      withAbort(
+        sb
+          .from("vcr_insights_agent_config")
+          .select("lead_agent, contrib_agents, config_version")
+          .eq("category_code", categoryCode)
+          .maybeSingle(),
+        signal,
+      ),
+    );
     const lead = cfg?.lead_agent || "selma";
     const contribs = (cfg?.contrib_agents || []) as string[];
     const configVersion = cfg?.config_version || 0;
 
     // Evidence fingerprint — invalidate when files are added/removed/updated
     // Reads from p2a_vcr_evidence (the same store the UI writes to).
-    const { data: evRows } = await sb
-      .from("p2a_vcr_evidence")
-      .select("id, created_at")
-      .eq("vcr_prerequisite_id", prereq?.id || "00000000-0000-0000-0000-000000000000")
-      .order("id", { ascending: true });
+    const { data: evRows } = await bounded("evidence fingerprint", DB_TIMEOUT_MS, { data: [] }, (signal) =>
+      withAbort(
+        sb
+          .from("p2a_vcr_evidence")
+          .select("id, created_at")
+          .eq("vcr_prerequisite_id", prereq?.id || "00000000-0000-0000-0000-000000000000")
+          .order("id", { ascending: true }),
+        signal,
+      ),
+    );
     const evidenceFingerprint = (evRows || []).map((r: any) => `${r.id}:${r.created_at}`).join("|");
 
     // Cache lookup — include prereq status so any status change invalidates
@@ -346,12 +454,17 @@ serve(async (req) => {
     });
     const inputsHash = await sha(hashInput);
     if (!force) {
-      const { data: cached } = await sb
-        .from("vcr_item_insights")
-        .select("payload, inputs_hash")
-        .eq("vcr_id", vcr_id)
-        .eq("vcr_item_id", vcr_item_id)
-        .maybeSingle();
+      const { data: cached } = await bounded("cache lookup", DB_TIMEOUT_MS, { data: null }, (signal) =>
+        withAbort(
+          sb
+            .from("vcr_item_insights")
+            .select("payload, inputs_hash")
+            .eq("vcr_id", vcr_id)
+            .eq("vcr_item_id", vcr_item_id)
+            .maybeSingle(),
+          signal,
+        ),
+      );
       if (cached?.inputs_hash === inputsHash) {
         return new Response(JSON.stringify({ insights: cached.payload, cached: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -391,10 +504,15 @@ serve(async (req) => {
           };
         })();
 
-    await sb.from("vcr_item_insights").upsert({
-      vcr_id, vcr_item_id, payload: insights, inputs_hash: inputsHash,
-      state: insights.state, severity: insights.severity ?? null, computed_at: new Date().toISOString(),
-    }, { onConflict: "vcr_id,vcr_item_id" });
+    await bounded("cache upsert", DB_TIMEOUT_MS, null, (signal) =>
+      withAbort(
+        sb.from("vcr_item_insights").upsert({
+          vcr_id, vcr_item_id, payload: insights, inputs_hash: inputsHash,
+          state: insights.state, severity: insights.severity ?? null, computed_at: new Date().toISOString(),
+        }, { onConflict: "vcr_id,vcr_item_id" }),
+        signal,
+      ),
+    );
 
     return new Response(JSON.stringify({ insights, cached: false }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
