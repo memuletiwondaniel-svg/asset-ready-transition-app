@@ -313,7 +313,7 @@ serve(async (req) => {
       .eq("handover_point_id", vcr_id)
       .eq("vcr_item_id", vcr_item_id)
       .maybeSingle();
-    const item = { ...(itemRow || {}), prerequisite_id: prereq?.id || null };
+    const item = { ...(itemRow || {}), prerequisite_id: prereq?.id || null, handover_point_id: vcr_id };
     const categoryCode = (itemRow as any)?.category?.code || "??";
 
     // Routing
@@ -326,8 +326,17 @@ serve(async (req) => {
     const contribs = (cfg?.contrib_agents || []) as string[];
     const configVersion = cfg?.config_version || 0;
 
+    // Evidence fingerprint — invalidate when files are added/removed/updated
+    const { data: evRows } = await sb
+      .from("vcr_item_evidence")
+      .select("id, created_at")
+      .eq("handover_point_id", vcr_id)
+      .eq("vcr_item_id", vcr_item_id)
+      .order("id", { ascending: true });
+    const evidenceFingerprint = (evRows || []).map((r: any) => `${r.id}:${r.created_at}`).join("|");
+
     // Cache lookup
-    const hashInput = JSON.stringify({ configVersion, vcr_id, vcr_item_id, categoryCode, day: new Date().toISOString().slice(0, 10) });
+    const hashInput = JSON.stringify({ configVersion, vcr_id, vcr_item_id, categoryCode, day: new Date().toISOString().slice(0, 10), evidenceFingerprint });
     const inputsHash = await sha(hashInput);
     if (!force) {
       const { data: cached } = await sb
