@@ -78,12 +78,12 @@ async function bounded<T>(
 }
 
 function bytesToBase64(bytes: Uint8Array): string {
-  let binary = "";
   const chunkSize = 0x8000;
+  const chunks: string[] = [];
   for (let i = 0; i < bytes.length; i += chunkSize) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+    chunks.push(String.fromCharCode(...bytes.subarray(i, i + chunkSize)));
   }
-  return btoa(binary);
+  return btoa(chunks.join(""));
 }
 
 // ─── Fred: TI-* completions aggregator across the FULL system set ──────────
