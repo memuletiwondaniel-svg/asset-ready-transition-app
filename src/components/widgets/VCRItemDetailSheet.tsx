@@ -1133,6 +1133,36 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                             <span className="text-[11px] text-muted-foreground">
                               {fmtBytes(f.file_size || 0)} · {format(new Date(f.created_at), 'd MMM')}
                             </span>
+                            {f.source === 'assai' && (
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] font-normal border-blue-300 text-blue-700 bg-blue-50 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900"
+                                title={`Assai · ${f.assai_doc_no || ''}${f.assai_rev ? ` rev ${f.assai_rev}` : ''}`}
+                              >
+                                Assai · {f.assai_doc_no}{f.assai_rev ? ` rev ${f.assai_rev}` : ''}
+                              </Badge>
+                            )}
+                            {f.source === 'assai' && !f.confirmed && viewer !== 'delivering' && (
+                              <Badge variant="outline" className={cn('text-[10px] font-normal', pillToneClass.amber)}>
+                                Pending delivering confirmation
+                              </Badge>
+                            )}
+                            {f.source === 'assai' && f.confirmed && (
+                              <Badge variant="outline" className={cn('text-[10px] font-normal', pillToneClass.green)}>
+                                Confirmed as submission
+                              </Badge>
+                            )}
+                            {f.source === 'assai' && !f.confirmed && viewer === 'delivering' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-6 px-2 text-[10px]"
+                                disabled={confirmEvidence.isPending}
+                                onClick={() => confirmEvidence.mutate(f)}
+                              >
+                                Confirm as submission
+                              </Button>
+                            )}
                           </div>
                         </div>
                         {viewer !== 'delivering' ? (
