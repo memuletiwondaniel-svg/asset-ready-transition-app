@@ -409,11 +409,32 @@ async function ivanHempReader(sb: any, item: any, lovableKey: string): Promise<F
     }];
   }
 
-  // Dedupe by action_no (windows can overlap on boundary pages in rare cases)
+  // Dedupe by action_no MERGING field-by-field across windows.
+  // Critical when one action straddles a 20-page window boundary: its
+  // ACTION NO header may land in window N and the step-5 TSE-TA2 date in
+  // window N+1. First-wins would freeze the status as "open" even when
+  // the closeout is present. Rule: a definitive step-5 date wins over
+  // open/indeterminate; the more-complete field set wins on ties.
+  const statusRank: Record<string, number> = { closed: 3, open: 2, indeterminate: 1 };
   const byKey = new Map<string, IvanAction>();
   for (const a of collected) {
     const key = (a.action_no || `${a.source_page ?? "?"}::${a.node ?? ""}`).trim();
-    if (!byKey.has(key)) byKey.set(key, a);
+    const prev = byKey.get(key);
+    if (!prev) { byKey.set(key, { ...a }); continue; }
+    const merged: IvanAction = { ...prev };
+    // Step-5 date is the source of truth: any non-empty wins.
+    if (a.tse_ta2_date && !prev.tse_ta2_date) merged.tse_ta2_date = a.tse_ta2_date;
+    // Status: highest-rank wins (closed > open > indeterminate).
+    const ra = statusRank[a.status || "indeterminate"] || 0;
+    const rp = statusRank[prev.status || "indeterminate"] || 0;
+    if (ra > rp) merged.status = a.status;
+    // Fill any blank scalar field from the other record.
+    for (const k of ["node", "guideword", "discipline", "source_page"] as const) {
+      if (merged[k] == null && a[k] != null) (merged as any)[k] = a[k];
+    }
+    // If we now have a TSE-TA2 date but status is still open/indeterminate, promote to closed.
+    if (merged.tse_ta2_date && merged.status !== "closed") merged.status = "closed";
+    byKey.set(key, merged);
   }
   const actions = Array.from(byKey.values());
 

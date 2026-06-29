@@ -24,6 +24,7 @@ import { runScenario } from "./lib/recorder.ts";
 import type { RunContext, ScenarioResult } from "./lib/types.ts";
 import { ruleScenarios } from "./scenarios/rules.ts";
 import { crossCuttingScenarios } from "./scenarios/cross_cutting.ts";
+import { ivanQaScenarios } from "./scenarios/ivan_qa.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -141,7 +142,7 @@ serve(async (req) => {
       results: new Map(),
     };
 
-    for (const scn of [...ruleScenarios, ...crossCuttingScenarios]) {
+    for (const scn of [...ruleScenarios, ...crossCuttingScenarios, ...ivanQaScenarios]) {
       results.push(await runScenario(scn, ctx));
     }
   } catch (e) {
