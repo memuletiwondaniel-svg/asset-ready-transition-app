@@ -142,7 +142,7 @@ serve(async (req) => {
       results: new Map(),
     };
 
-    for (const scn of [...ruleScenarios, ...crossCuttingScenarios]) {
+    for (const scn of [...ruleScenarios, ...crossCuttingScenarios, ...ivanQaScenarios]) {
       results.push(await runScenario(scn, ctx));
     }
   } catch (e) {
