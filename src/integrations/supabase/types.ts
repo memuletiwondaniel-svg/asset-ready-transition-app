@@ -13685,6 +13685,54 @@ export type Database = {
           },
         ]
       }
+      vcr_item_comments: {
+        Row: {
+          action_tag: string | null
+          author_user_id: string | null
+          body: string
+          created_at: string
+          handover_point_id: string
+          id: string
+          tenant_id: string | null
+          vcr_item_id: string
+        }
+        Insert: {
+          action_tag?: string | null
+          author_user_id?: string | null
+          body: string
+          created_at?: string
+          handover_point_id: string
+          id?: string
+          tenant_id?: string | null
+          vcr_item_id: string
+        }
+        Update: {
+          action_tag?: string | null
+          author_user_id?: string | null
+          body?: string
+          created_at?: string
+          handover_point_id?: string
+          id?: string
+          tenant_id?: string | null
+          vcr_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vcr_item_comments_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_points"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vcr_item_comments_vcr_item_id_fkey"
+            columns: ["vcr_item_id"]
+            isOneToOne: false
+            referencedRelation: "vcr_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vcr_item_delivering_parties: {
         Row: {
           added_by: string | null
@@ -13730,6 +13778,73 @@ export type Database = {
           },
           {
             foreignKeyName: "vcr_item_delivering_parties_vcr_item_id_fkey"
+            columns: ["vcr_item_id"]
+            isOneToOne: false
+            referencedRelation: "vcr_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vcr_item_evidence: {
+        Row: {
+          created_at: string
+          evidence_type: string | null
+          file_name: string
+          file_size: number | null
+          handover_point_id: string
+          id: string
+          mime_type: string | null
+          prerequisite_id: string | null
+          storage_path: string
+          tenant_id: string | null
+          uploaded_by: string | null
+          vcr_item_id: string
+        }
+        Insert: {
+          created_at?: string
+          evidence_type?: string | null
+          file_name: string
+          file_size?: number | null
+          handover_point_id: string
+          id?: string
+          mime_type?: string | null
+          prerequisite_id?: string | null
+          storage_path: string
+          tenant_id?: string | null
+          uploaded_by?: string | null
+          vcr_item_id: string
+        }
+        Update: {
+          created_at?: string
+          evidence_type?: string | null
+          file_name?: string
+          file_size?: number | null
+          handover_point_id?: string
+          id?: string
+          mime_type?: string | null
+          prerequisite_id?: string | null
+          storage_path?: string
+          tenant_id?: string | null
+          uploaded_by?: string | null
+          vcr_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vcr_item_evidence_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_points"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vcr_item_evidence_prerequisite_id_fkey"
+            columns: ["prerequisite_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_vcr_prerequisites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vcr_item_evidence_vcr_item_id_fkey"
             columns: ["vcr_item_id"]
             isOneToOne: false
             referencedRelation: "vcr_items"
@@ -15104,6 +15219,30 @@ export type Database = {
       }
       is_feature_enabled: { Args: { p_feature_key: string }; Returns: boolean }
       is_harness_user: { Args: never; Returns: boolean }
+      is_vcr_item_approving_party: {
+        Args: {
+          _handover_point_id: string
+          _user_id: string
+          _vcr_item_id: string
+        }
+        Returns: boolean
+      }
+      is_vcr_item_delivering_party: {
+        Args: {
+          _handover_point_id: string
+          _user_id: string
+          _vcr_item_id: string
+        }
+        Returns: boolean
+      }
+      is_vcr_item_party: {
+        Args: {
+          _handover_point_id: string
+          _user_id: string
+          _vcr_item_id: string
+        }
+        Returns: boolean
+      }
       move_task_to_column: {
         Args: {
           p_expected_status?: string
