@@ -582,6 +582,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
       queryClient.invalidateQueries({ queryKey: ['vcr-progress-data'] });
       queryClient.invalidateQueries({ queryKey: ['vcr-prerequisites'] });
       queryClient.invalidateQueries({ queryKey: ['vcr-category-items'] });
+      queryClient.invalidateQueries({ queryKey: ['my-vcr-item-tasks'] });
     },
     onError: (e: any) =>
       toast({ title: 'Error', description: e.message, variant: 'destructive' }),
