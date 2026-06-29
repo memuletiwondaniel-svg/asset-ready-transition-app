@@ -61,8 +61,8 @@ async function readCachedInsights(vcrId: string, vcrItemId: string): Promise<Cac
       .select('payload')
       .eq('vcr_id', vcrId)
       .eq('vcr_item_id', vcrItemId)
-      .maybeSingle()
-      .abortSignal(controller.signal);
+      .abortSignal(controller.signal)
+      .maybeSingle();
 
     if (timedOut) return { status: 'timeout' };
     if (error) return { status: 'error' };
@@ -78,7 +78,8 @@ async function readCachedInsights(vcrId: string, vcrItemId: string): Promise<Cac
 }
 
 async function invokeComputeOnce(vcrId: string, vcrItemId: string, force = false) {
-  const result = await withTimeout(
+  type InvokeResult = Awaited<ReturnType<typeof supabase.functions.invoke>>;
+  const result = await withTimeout<InvokeResult | typeof TIMEOUT>(
     supabase.functions.invoke('compute-vcr-insights', {
       body: { vcr_id: vcrId, vcr_item_id: vcrItemId, force },
     }),
