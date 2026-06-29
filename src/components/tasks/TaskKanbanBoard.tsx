@@ -1208,6 +1208,16 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       return;
     }
 
+    // VCR Item task aggregator — open the per-project, per-role item list sheet.
+    if (task.vcrItemTask) {
+      console.log('[TaskKanbanBoard] handleTaskClick:branch', { branch: 'vcr_item_task' });
+      setVcrItemTask(task.vcrItemTask);
+      setVcrItemTaskOpen(true);
+      return;
+    }
+
+
+
     if (task.userTask) {
       const meta = task.userTask.metadata as Record<string, any> | undefined;
       const isReviewTask = meta?.source === 'task_review';
