@@ -486,6 +486,10 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
     handoverPointId: vcrId,
   });
 
+  // AI-1 Readiness — hook drives the block; explicit `insights` prop overrides for tests.
+  const { insights: liveInsights, recompute } = useVCRItemInsights(vcrId, item?.id);
+  const effectiveInsights = insights ?? liveInsights;
+
   // ─── Load authored item + parties ──────────────────────────────
   const { data: vcrItemDetail } = useQuery({
     queryKey: ['vcr-item-detail-v2', item?.id, projectId],
