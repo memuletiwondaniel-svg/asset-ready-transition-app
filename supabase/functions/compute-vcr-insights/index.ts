@@ -40,6 +40,8 @@ const MAX_PDF_BYTES = 40 * 1024 * 1024;       // hard download cap (real registe
 const IVAN_INLINE_BYTE_LIMIT = 15 * 1024 * 1024; // > this → must use windowed path
 const IVAN_PAGE_BUDGET = 60;                  // total pages Ivan will analyse per pass
 const IVAN_WINDOW_PAGES = 20;                 // pages per Gemini call within the budget
+const IVAN_WINDOW_OVERLAP = 2;                // overlap so any action straddling one 20-page
+                                              // boundary is wholly contained in at least one window
 const IVAN_WALL_BUDGET_MS = 60_000;           // hard wall-clock for Ivan's whole pass
 
 function withAbort<T extends { abortSignal?: (signal: AbortSignal) => T }>(query: T, signal: AbortSignal): T {
@@ -222,9 +224,14 @@ Do not invent actions. If the window contains no readable register pages, return
 
 function normaliseDiscipline(raw?: string): string {
   if (!raw) return "";
-  // Strip contractor prefixes and punctuation; keep last meaningful token-ish phrase.
+  // Strip the leading contractor token (CPECC, MCEC, WOOD, VENDOR, …) ONLY.
+  // Split on hyphen / en-dash / em-dash separators with surrounding whitespace,
+  // take the last segment, and keep compound disciplines intact:
+  //   "MCEC - Civil/Structural" → "civil/structural"
+  //   "WOOD – Process"          → "process"
+  // Do NOT split on "/" — that fragments compound disciplines.
   const cleaned = raw.replace(/^[\s\-:/]+|[\s\-:/]+$/g, "");
-  const parts = cleaned.split(/[\/\-,]| - |\s{2,}/).map((p) => p.trim()).filter(Boolean);
+  const parts = cleaned.split(/\s*[-–—]\s*/).map((p) => p.trim()).filter(Boolean);
   const tail = parts[parts.length - 1] || cleaned;
   return tail.toLowerCase();
 }
@@ -392,10 +399,14 @@ async function ivanHempReader(sb: any, item: any, lovableKey: string): Promise<F
   if (!oversized) {
     await runWindow(0, totalPages);
   } else {
-    for (let start = 0; start < pagesToAnalyse; start += IVAN_WINDOW_PAGES) {
+    // Overlap windows so any action straddling a single 20-page boundary is
+    // wholly contained in at least one window. Advance by stride < window size.
+    const stride = Math.max(1, IVAN_WINDOW_PAGES - IVAN_WINDOW_OVERLAP);
+    for (let start = 0; start < pagesToAnalyse; start += stride) {
       const end = Math.min(start + IVAN_WINDOW_PAGES, pagesToAnalyse);
       if (Date.now() - t0 > IVAN_WALL_BUDGET_MS) break;
       await runWindow(start, end);
+      if (end >= pagesToAnalyse) break;
     }
   }
 
@@ -409,6 +420,32 @@ async function ivanHempReader(sb: any, item: any, lovableKey: string): Promise<F
     }];
   }
 
+  // Belt-and-braces orphan-fragment fallback: a fragment with a step-5 TSE-TA2
+  // date but no action_no AND no header fields (node/guideword) is a close-out
+  // continuation page whose header lives on an earlier page. Attach it to the
+  // nearest preceding action_no in page order. Overlapping windows handle the
+  // common case; this catches anything that still slips through.
+  const inPageOrder = [...collected].sort(
+    (a, b) => (a.source_page ?? Number.MAX_SAFE_INTEGER) - (b.source_page ?? Number.MAX_SAFE_INTEGER),
+  );
+  const dropped = new Set<number>();
+  let lastHeaderIdx = -1;
+  for (let i = 0; i < inPageOrder.length; i++) {
+    const a = inPageOrder[i];
+    const isOrphanCloseOut = !a.action_no && !a.node && !a.guideword && !!a.tse_ta2_date;
+    if (!isOrphanCloseOut) {
+      if (a.action_no) lastHeaderIdx = i;
+      continue;
+    }
+    if (lastHeaderIdx >= 0) {
+      const header = inPageOrder[lastHeaderIdx];
+      if (!header.tse_ta2_date) header.tse_ta2_date = a.tse_ta2_date;
+      header.status = "closed";
+      dropped.add(i);
+    }
+  }
+  const cleanedActions = inPageOrder.filter((_, i) => !dropped.has(i));
+
   // Dedupe by action_no MERGING field-by-field across windows.
   // Critical when one action straddles a 20-page window boundary: its
   // ACTION NO header may land in window N and the step-5 TSE-TA2 date in
@@ -417,7 +454,7 @@ async function ivanHempReader(sb: any, item: any, lovableKey: string): Promise<F
   // open/indeterminate; the more-complete field set wins on ties.
   const statusRank: Record<string, number> = { closed: 3, open: 2, indeterminate: 1 };
   const byKey = new Map<string, IvanAction>();
-  for (const a of collected) {
+  for (const a of cleanedActions) {
     const key = (a.action_no || `${a.source_page ?? "?"}::${a.node ?? ""}`).trim();
     const prev = byKey.get(key);
     if (!prev) { byKey.set(key, { ...a }); continue; }
