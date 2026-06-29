@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { TaskDetailSheet } from './TaskDetailSheet';
 import { VCRApprovalBundleSheet } from './VCRApprovalBundleSheet';
 import { VCRPlanReviewLauncher } from './VCRPlanReviewLauncher';
+import { VCRItemTaskListSheet } from '@/components/widgets/VCRItemTaskListSheet';
 import type { VCRBundleTask } from '@/hooks/useUserVCRBundleTasks';
 import { useRecallVcrPlan } from '@/hooks/useRecallVcrPlan';
 import { ORAActivityTaskSheet } from './ORAActivityTaskSheet';
@@ -935,6 +936,8 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   const [approvalBundle, setApprovalBundle] = useState<VCRBundleTask | null>(null);
   const [approvalBundleOpen, setApprovalBundleOpen] = useState(false);
   const [vcrPlanApproval, setVcrPlanApproval] = useState<UnifiedTask['vcrPlanApproval'] | null>(null);
+  const [vcrItemTask, setVcrItemTask] = useState<UnifiedTask['vcrItemTask'] | null>(null);
+  const [vcrItemTaskOpen, setVcrItemTaskOpen] = useState(false);
   const [vcrPlanApprovalOpen, setVcrPlanApprovalOpen] = useState(false);
   const [withdrawState, setWithdrawState] = useState<WithdrawDecisionState | null>(null);
   const [withdrawSubmitting, setWithdrawSubmitting] = useState(false);
@@ -1207,6 +1210,16 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       });
       return;
     }
+
+    // VCR Item task aggregator — open the per-project, per-role item list sheet.
+    if (task.vcrItemTask) {
+      console.log('[TaskKanbanBoard] handleTaskClick:branch', { branch: 'vcr_item_task' });
+      setVcrItemTask(task.vcrItemTask);
+      setVcrItemTaskOpen(true);
+      return;
+    }
+
+
 
     if (task.userTask) {
       const meta = task.userTask.metadata as Record<string, any> | undefined;
@@ -1720,6 +1733,22 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
           if (!o) setApprovalBundle(null);
         }}
       />
+
+      {vcrItemTask && (
+        <VCRItemTaskListSheet
+          open={vcrItemTaskOpen}
+          onOpenChange={(o) => {
+            setVcrItemTaskOpen(o);
+            if (!o) setVcrItemTask(null);
+          }}
+          role={vcrItemTask.role}
+          projectId={vcrItemTask.projectId}
+          projectLabel={vcrItemTask.projectLabel}
+          rows={vcrItemTask.rows as any}
+        />
+      )}
+
+
 
       <VCRPlanReviewLauncher
         payload={vcrPlanApproval}

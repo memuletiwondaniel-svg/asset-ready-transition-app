@@ -83,6 +83,13 @@ interface VCRItemDetailSheetProps {
   onOpenChange: (open: boolean) => void;
   vcrId: string;
   insights?: VCRInsights;
+  /**
+   * Optional projectId override. When the sheet is opened from a context
+   * outside the project route (e.g. My Tasks), useParams cannot resolve
+   * the project context; pass it explicitly so approving-party membership
+   * resolves correctly.
+   */
+  projectIdOverride?: string;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────
@@ -470,8 +477,10 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   onOpenChange,
   vcrId,
   insights,
+  projectIdOverride,
 }) => {
-  const { id: projectId } = useParams<{ id: string }>();
+  const { id: routeProjectId } = useParams<{ id: string }>();
+  const projectId = projectIdOverride || routeProjectId;
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -573,6 +582,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
       queryClient.invalidateQueries({ queryKey: ['vcr-progress-data'] });
       queryClient.invalidateQueries({ queryKey: ['vcr-prerequisites'] });
       queryClient.invalidateQueries({ queryKey: ['vcr-category-items'] });
+      queryClient.invalidateQueries({ queryKey: ['my-vcr-item-tasks'] });
     },
     onError: (e: any) =>
       toast({ title: 'Error', description: e.message, variant: 'destructive' }),

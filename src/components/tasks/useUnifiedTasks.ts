@@ -13,6 +13,7 @@ import { useUserORPActivities } from '@/hooks/useUserORPActivities';
 import { useUserOWLItems } from '@/hooks/useUserOWLItems';
 import { useUserTasks, type UserTask } from '@/hooks/useUserTasks';
 import { useVCRPlanApprovalTasks } from '@/hooks/useVCRPlanApprovalTasks';
+import { useMyVCRItemTasks } from '@/hooks/useMyVCRItemTasks';
 import { useUserLastLogin } from '@/hooks/useUserLastLogin';
 import { computeSmartPriority, smartPriorityToLegacy, type SmartPriorityResult, type SmartPriorityLevel } from './smartPriority';
 import React from 'react';
@@ -111,6 +112,14 @@ export interface UnifiedTask {
   // Generic step-progress payload (e.g. vcr_plan_resubmit). Drives the
   // "N of M steps" label on in-progress kanban cards.
   stepProgress?: { reviewed: number; total: number };
+  // VCR Item task payload — per-project aggregator card. Click opens the
+  // VCRItemTaskListSheet which then opens VCRItemDetailSheet for each item.
+  vcrItemTask?: {
+    role: 'delivering' | 'approving';
+    projectId: string;
+    projectLabel: string;
+    rows: import('@/hooks/useMyVCRItemTasks').MyVCRItemTaskRow[];
+  };
 }
 
 export const FILTER_OPTIONS: { value: CategoryFilter; label: string }[] = [
@@ -157,6 +166,7 @@ export function useUnifiedTasks(userId: string) {
   // Bundle tasks and ORA activity dates now come from the same useUserTasks query (no extra network calls)
   const { tasks: userTasks, bundleTasks, oraActivityDates, p2aActivityProgress, loading: tasksLoading, updateTaskStatus } = useUserTasks();
   const { data: vcrPlanApprovals } = useVCRPlanApprovalTasks();
+  const { data: vcrItemTasks } = useMyVCRItemTasks();
 
   // Show cards incrementally: only block on the primary user_tasks hook for first load.
   // Other hooks (PSSR, P2A approvals, ORA, OWL) add cards as they resolve.
@@ -523,6 +533,72 @@ export function useUnifiedTasks(userId: string) {
 
     });
 
+    // ── VCR Item tasks (delivering + approving) ────────────────────────────
+    // Aggregate per-project so the task list never explodes; clicking the card
+    // opens VCRItemTaskListSheet → VCRItemDetailSheet (single source of truth).
+    {
+      const groups = new Map<string, {
+        role: 'delivering' | 'approving';
+        projectId: string;
+        projectCode: string | null;
+        projectTitle: string | null;
+        rows: typeof vcrItemTasks;
+      }>();
+      (vcrItemTasks || []).forEach((r: any) => {
+        const k = `${r.role}::${r.project_id}`;
+        if (!groups.has(k)) {
+          groups.set(k, {
+            role: r.role,
+            projectId: r.project_id,
+            projectCode: r.project_code,
+            projectTitle: r.project_title,
+            rows: [],
+          });
+        }
+        (groups.get(k)!.rows as any[]).push(r);
+      });
+      groups.forEach((g) => {
+        const isApproving = g.role === 'approving';
+        const projectLabel = normalizeProjectCode(g.projectCode || undefined) || g.projectTitle || 'Project';
+        const createdAt = new Date().toISOString();
+        const due = addBusinessDays(createdAt, slaDaysFor('approval_review'));
+        const sp = computeSmartPriority({
+          category: 'vcr',
+          categoryLabel: isApproving ? 'VCR Item Approval' : 'VCR Items',
+          dueDate: isApproving ? due : undefined,
+          createdAt,
+        });
+        const count = g.rows!.length;
+        tasks.push({
+          id: `vcr-items-${g.role}-${g.projectId}`,
+          category: 'vcr',
+          categoryLabel: isApproving ? 'VCR Item Approval' : 'VCR Items',
+          categoryColor: 'bg-teal-500/10 text-teal-600 border-teal-500/20',
+          icon: isApproving ? ClipboardCheck : ClipboardList,
+          title: `${isApproving ? 'Approve' : 'Complete'} VCR items — ${projectLabel}`,
+          project: normalizeProjectCode(g.projectCode || undefined) || undefined,
+          projectId: g.projectId,
+          status: isApproving
+            ? `${count} awaiting your review`
+            : `${count} ${count === 1 ? 'item' : 'items'} to complete`,
+          dueDate: isApproving ? due : undefined,
+          createdAt,
+          priority: smartPriorityToLegacy(sp.level),
+          smartPriority: sp,
+          isNew: false,
+          kanbanColumn: isApproving ? 'todo' : 'in_progress',
+          vcrItemTask: {
+            role: g.role,
+            projectId: g.projectId,
+            projectLabel,
+            rows: g.rows as any,
+          },
+        });
+      });
+    }
+
+
+
     const openOWL = (owlItems || []).filter(i => i.status === 'OPEN' || i.status === 'IN_PROGRESS');
     openOWL.forEach(item => {
       const projectName = typeof item.project === 'object' && item.project !== null
@@ -670,7 +746,7 @@ export function useUnifiedTasks(userId: string) {
       }
     }
     return topLevel;
-  }, [pssrs, approvals, activities, owlItems, bundleTasks, userTasks, oraActivityDates, p2aActivityProgress, vcrPlanApprovals, isNewSinceLastLogin]);
+  }, [pssrs, approvals, activities, owlItems, bundleTasks, userTasks, oraActivityDates, p2aActivityProgress, vcrPlanApprovals, vcrItemTasks, isNewSinceLastLogin]);
 
   // Stabilization: never return an empty array if we previously had data
   const stableTasksRef = useRef<UnifiedTask[]>([]);
