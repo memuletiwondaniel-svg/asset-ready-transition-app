@@ -2,6 +2,7 @@
 // Advisory only. Never writes to prerequisites / approvers / submit paths.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { PDFDocument } from "npm:pdf-lib@1.17.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -33,9 +34,13 @@ const sha = async (s: string) => {
 };
 
 const DB_TIMEOUT_MS = 2_500;
-const STORAGE_TIMEOUT_MS = 5_000;
-const AI_TIMEOUT_MS = 10_000;
-const MAX_PDF_BYTES = 8 * 1024 * 1024;
+const STORAGE_TIMEOUT_MS = 15_000;
+const AI_TIMEOUT_MS = 25_000;
+const MAX_PDF_BYTES = 40 * 1024 * 1024;       // hard download cap (real registers seen at ~32 MB)
+const IVAN_INLINE_BYTE_LIMIT = 15 * 1024 * 1024; // > this → must use windowed path
+const IVAN_PAGE_BUDGET = 60;                  // total pages Ivan will analyse per pass
+const IVAN_WINDOW_PAGES = 20;                 // pages per Gemini call within the budget
+const IVAN_WALL_BUDGET_MS = 60_000;           // hard wall-clock for Ivan's whole pass
 
 function withAbort<T extends { abortSignal?: (signal: AbortSignal) => T }>(query: T, signal: AbortSignal): T {
   return typeof query.abortSignal === "function" ? query.abortSignal(signal) : query;
@@ -168,10 +173,121 @@ async function loadVcrEvidence(sb: any, prereqId: string | null) {
 
 const EVIDENCE_BUCKET = "p2a-attachments";
 
+// Expected close-out discipline set per category+display_order. Advisory only.
+// Default for DI-03 HEMP/HAZOP close-out: TSE-TA2 sits with Process or HSE.
+const EXPECTED_DISCIPLINES: Record<string, string[]> = {
+  "DI:3": ["process", "hse", "safety"],
+};
+function expectedDisciplineSet(categoryCode: string, displayOrder: number | null): string[] {
+  const key = `${categoryCode}:${displayOrder ?? ""}`;
+  return EXPECTED_DISCIPLINES[key] || [];
+}
+
+interface IvanAction {
+  action_no?: string;
+  node?: string;
+  guideword?: string;
+  discipline?: string;            // from ACTION ON (fallback RESPOND BY)
+  status?: "open" | "closed" | "indeterminate";
+  tse_ta2_date?: string | null;   // step-5 date — single source of truth
+  source_page?: number;           // 1-based page in the attached PDF
+}
+
+const IVAN_SYSTEM_PROMPT = `You are extracting a HEMP/HAZOP action close-out register from a multi-page PDF.
+Each action occupies ONE PAGE (a single close-out sheet). The sheets follow the BGC HAZOP Standard format
+with fields: ACTION NO, NODE, GUIDEWORD, CAUSE, CONSEQUENCES, SAFEGUARDS, ACTION, ACTION ON, RESPOND BY,
+ACTION RESPONSE, and a close-out signature chain in this exact order:
+  1) ACTIONEE NAME & SIGN + DATED
+  2) LEAD NAME & SIGN + DATED
+  3) ACCEPTED BY [ORG] RELEVANT DISCIPLINE TA2 + DATED
+  4) ACCEPTED BY [ORG] PROJECT MANAGER + DATED
+  5) APPROVED CLOSEOUT BY [ORG] TSE TA2 + DATED   ← THIS is the close-out gate.
+
+RULES (read carefully):
+- status = "closed" ONLY when step 5 ("APPROVED CLOSEOUT BY ... TSE TA2") carries a non-empty DATE.
+  If that final date field is blank/absent, status = "open" — even when steps 1–4 are signed/dated.
+- If the step-5 date field is unreadable (smudged, missing, obscured), status = "indeterminate".
+- Match on the role text "TSE TA2"; the org token (BGC, IGC, etc.) varies — ignore the org.
+- "discipline" comes from ACTION ON. The leading contractor token (CPECC, MCEC, WOOD, VENDOR, …) is NOT
+  the discipline; the trailing token IS (Process, Instrument, Electrical, HSE, Civil/Structural,
+  Operations, Mechanical, …). If ACTION ON is empty, fall back to RESPOND BY.
+- source_page = the 1-based page index where you read the action FROM THE PROVIDED WINDOW
+  (the caller will offset it). One action per page.
+
+Return STRICT JSON with this exact shape — no prose, no markdown:
+{"actions":[{"action_no":"string","node":"string","guideword":"string","discipline":"string",
+"status":"open|closed|indeterminate","tse_ta2_date":"string|null","source_page":number}]}
+
+Do not invent actions. If the window contains no readable register pages, return {"actions":[]}.`;
+
+function normaliseDiscipline(raw?: string): string {
+  if (!raw) return "";
+  // Strip contractor prefixes and punctuation; keep last meaningful token-ish phrase.
+  const cleaned = raw.replace(/^[\s\-:/]+|[\s\-:/]+$/g, "");
+  const parts = cleaned.split(/[\/\-,]| - |\s{2,}/).map((p) => p.trim()).filter(Boolean);
+  const tail = parts[parts.length - 1] || cleaned;
+  return tail.toLowerCase();
+}
+function isExpectedDiscipline(disc: string, expected: string[]): boolean {
+  if (expected.length === 0) return true; // no expectation configured → never flag wrong-discipline
+  const d = normaliseDiscipline(disc);
+  if (!d) return true; // unknown discipline → don't flag (honest)
+  return expected.some((e) => d.includes(e) || e.includes(d));
+}
+
+async function ivanExtractWindow(
+  lovableKey: string,
+  pdfBytes: Uint8Array,
+  filename: string,
+  pageOffset: number,
+): Promise<IvanAction[] | null> {
+  const b64 = bytesToBase64(pdfBytes);
+  const r = await bounded<Response | null>("ivan ai window", AI_TIMEOUT_MS, null, (signal) =>
+    fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      signal,
+      headers: {
+        "Content-Type": "application/json",
+        "Lovable-API-Key": lovableKey,
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: IVAN_SYSTEM_PROMPT },
+          {
+            role: "user",
+            content: [
+              { type: "text", text: "Extract every HEMP/HAZOP action sheet visible in this window." },
+              {
+                type: "file",
+                file: { filename, file_data: `data:application/pdf;base64,${b64}` },
+              },
+            ],
+          },
+        ],
+      }),
+    }),
+  );
+  if (!r || !r.ok) return null;
+  try {
+    const j = await r.json();
+    const txt = j.choices?.[0]?.message?.content || "{}";
+    const parsed = JSON.parse(typeof txt === "string" ? txt : "{}");
+    const arr: IvanAction[] = Array.isArray(parsed?.actions) ? parsed.actions : [];
+    return arr.map((a) => ({
+      ...a,
+      source_page: typeof a.source_page === "number" ? a.source_page + pageOffset : undefined,
+    }));
+  } catch (_e) {
+    return null;
+  }
+}
+
 // ─── Ivan: DI-03 HEMP action-register reader (topic-scoped) ───────────────
-// Runs only for DI-03 items (Design Integrity, display_order 3) whose
-// evidence looks like an action register; otherwise returns unavailable so
-// it never misfires on DI-01/02/04 or HS items.
+// Real registers are large compiled PDFs (~32 MB, ~396 pages, one action per
+// page). Ivan is bounded: hard wall-clock, size guard, page cap with windowing
+// via pdf-lib, per-action source-page links, and honest partial counts.
 async function ivanHempReader(sb: any, item: any, lovableKey: string): Promise<Fact[]> {
   const categoryCode = item?.category_code;
   const displayOrder = item?.display_order;
@@ -183,115 +299,196 @@ async function ivanHempReader(sb: any, item: any, lovableKey: string): Promise<F
   const atts = await loadVcrEvidence(sb, item.prerequisite_id);
   const isRegisterLike = (a: any) => {
     const hay = `${a.file_name || ""} ${a.evidence_type || ""}`.toLowerCase();
-    return /(hemp|hazop|action[\s_-]*register)/i.test(hay);
+    return /(hemp|hazop|action[\s_-]*register|close[\s_-]*out)/i.test(hay);
   };
   const pdf = atts.find((a: any) =>
     (/pdf/i.test(a.file_type || "") || /\.pdf$/i.test(a.file_name || "")) && isRegisterLike(a),
   );
   if (!pdf) {
-    return [
-      {
-        label: "HEMP register",
-        value: "No HEMP/HAZOP action register attached",
-        confidence: "unavailable",
-        tone: "amber",
-      },
-    ];
+    return [{
+      label: "HEMP register",
+      value: "No HEMP/HAZOP action register attached",
+      confidence: "unavailable",
+      tone: "amber",
+    }];
   }
 
   const { data: signed } = await bounded("ivan signed url", DB_TIMEOUT_MS, { data: null }, () =>
     sb.storage.from(EVIDENCE_BUCKET).createSignedUrl(pdf.file_path, 60 * 60),
   );
-  const sourceHref = signed?.signedUrl;
+  const sourceHref: string | undefined = signed?.signedUrl;
   if (!sourceHref) {
     return [{ label: "HEMP register", value: "Attachment link unavailable", confidence: "unavailable" }];
   }
+  const pageHref = (page?: number) =>
+    page && Number.isFinite(page) ? `${sourceHref}#page=${page}` : sourceHref;
 
-  let pdfBytesB64 = "";
+  // Bounded download
+  let pdfBytes: Uint8Array | null = null;
   try {
-    const pdfBytes = await bounded<Uint8Array | null>("ivan pdf download", STORAGE_TIMEOUT_MS, null, async (signal) => {
+    pdfBytes = await bounded<Uint8Array | null>("ivan pdf download", STORAGE_TIMEOUT_MS, null, async (signal) => {
       const response = await fetch(sourceHref, { signal });
       if (!response.ok) return null;
       const contentLength = Number(response.headers.get("content-length") || 0);
-      if (contentLength > MAX_PDF_BYTES) return null;
+      if (contentLength && contentLength > MAX_PDF_BYTES) return null;
       const buffer = await response.arrayBuffer();
       if (buffer.byteLength > MAX_PDF_BYTES) return null;
       return new Uint8Array(buffer);
     });
-    if (pdfBytes) pdfBytesB64 = bytesToBase64(pdfBytes);
   } catch (_e) {
     return [{ label: "HEMP register", value: "Attachment unreadable", confidence: "unavailable", sourceHref }];
   }
-  if (!pdfBytesB64) {
-    return [{ label: "HEMP register", value: "Attachment empty", confidence: "unavailable", sourceHref }];
+  if (!pdfBytes) {
+    return [{
+      label: "HEMP register",
+      value: "Attachment too large or unreachable",
+      confidence: "unavailable",
+      tone: "amber",
+      sourceHref,
+    }];
+  }
+  if (!lovableKey) {
+    return [{ label: "HEMP register AI read", value: "AI gateway not connected", confidence: "unavailable", sourceHref }];
   }
 
-  let extracted: any = null;
+  // Page count + window plan
+  let totalPages = 0;
+  let baseDoc: PDFDocument | null = null;
   try {
-    if (!lovableKey) {
-      return [{ label: "HEMP register AI read", value: "AI gateway not connected", confidence: "unavailable", sourceHref }];
-    }
-    const r = await bounded<Response | null>("ivan ai read", AI_TIMEOUT_MS, null, (signal) => fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      signal,
-      headers: {
-        "Content-Type": "application/json",
-        "Lovable-API-Key": lovableKey,
-        "X-Lovable-AIG-SDK": "vercel-ai-sdk",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        response_format: { type: "json_object" },
-        messages: [
-          {
-            role: "system",
-            content:
-              "Extract the HEMP/HAZOP action register from the attached PDF. Return strict JSON: {\"actions\":[{\"action\":string,\"study\":string,\"required_change\":string,\"responsible\":string,\"required_ta_discipline\":string,\"status\":\"open|closed\",\"sign_off\":{\"name\":string,\"discipline\":string|null}}]}. If no register is found, return {\"actions\":[]}. Do not invent items.",
-          },
-          {
-            role: "user",
-            content: [
-              { type: "text", text: "Extract the action register from this document." },
-              { type: "file", file: { filename: pdf.file_name || "hemp.pdf", file_data: `data:application/pdf;base64,${pdfBytesB64}` } },
-            ],
-          },
-        ],
-      }),
-    }));
-    if (!r) {
-      return [{ label: "HEMP register AI read", value: "AI read timed out", confidence: "unavailable", sourceHref }];
-    }
-    if (r.ok) {
-      const j = await r.json();
-      const txt = j.choices?.[0]?.message?.content || "{}";
-      extracted = JSON.parse(typeof txt === "string" ? txt : "{}");
-    } else {
-      return [{ label: "HEMP register AI read", value: "AI read unavailable", confidence: "unavailable", sourceHref }];
-    }
+    baseDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+    totalPages = baseDoc.getPageCount();
   } catch (_e) {
-    /* fall through */
+    return [{ label: "HEMP register", value: "PDF could not be parsed", confidence: "unavailable", sourceHref }];
   }
 
-  const actions: any[] = Array.isArray(extracted?.actions) ? extracted.actions : [];
-  if (actions.length === 0) {
-    return [
-      { label: "HEMP actions found", value: "0", confidence: "ai_read", tone: "amber", sourceHref },
-    ];
-  }
-  const closed = actions.filter((a) => /closed/i.test(a.status || ""));
-  const open = actions.length - closed.length;
-  const discMismatch = closed.filter((a) => {
-    const req = (a.required_ta_discipline || "").toLowerCase().trim();
-    const got = (a.sign_off?.discipline || "").toLowerCase().trim();
-    return req && (!got || (got && !got.includes(req) && !req.includes(got)));
-  }).length;
+  const oversized = pdfBytes.byteLength > IVAN_INLINE_BYTE_LIMIT || totalPages > IVAN_PAGE_BUDGET;
+  const pagesToAnalyse = Math.min(totalPages, IVAN_PAGE_BUDGET);
+  const partial = pagesToAnalyse < totalPages;
 
-  return [
-    { label: "HEMP actions found", value: String(actions.length), confidence: "ai_read", tone: "neutral", sourceHref },
-    { label: "Open / unresolved", value: String(open), confidence: "ai_read", tone: open > 0 ? "red" : "neutral", sourceHref },
-    { label: "Closed w/ wrong-discipline sign-off", value: String(discMismatch), confidence: "ai_read", tone: discMismatch > 0 ? "amber" : "neutral", sourceHref },
-    { label: "P&ID / ITR cross-check", value: "Deferred to later layer", confidence: "unavailable" },
+  const t0 = Date.now();
+  const collected: IvanAction[] = [];
+
+  const runWindow = async (startIdx: number, endIdx: number): Promise<boolean> => {
+    if (Date.now() - t0 > IVAN_WALL_BUDGET_MS) return false;
+    let windowBytes: Uint8Array;
+    if (!oversized && startIdx === 0 && endIdx === totalPages) {
+      windowBytes = pdfBytes!;
+    } else {
+      try {
+        const sub = await PDFDocument.create();
+        const indices = Array.from({ length: endIdx - startIdx }, (_, i) => startIdx + i);
+        const copied = await sub.copyPages(baseDoc!, indices);
+        copied.forEach((p) => sub.addPage(p));
+        windowBytes = await sub.save();
+      } catch (_e) {
+        return false;
+      }
+    }
+    const actions = await ivanExtractWindow(lovableKey, windowBytes, pdf.file_name || "hemp.pdf", startIdx);
+    if (actions && actions.length) collected.push(...actions);
+    return actions !== null;
+  };
+
+  if (!oversized) {
+    await runWindow(0, totalPages);
+  } else {
+    for (let start = 0; start < pagesToAnalyse; start += IVAN_WINDOW_PAGES) {
+      const end = Math.min(start + IVAN_WINDOW_PAGES, pagesToAnalyse);
+      if (Date.now() - t0 > IVAN_WALL_BUDGET_MS) break;
+      await runWindow(start, end);
+    }
+  }
+
+  if (collected.length === 0) {
+    return [{
+      label: "HEMP actions found",
+      value: partial ? `0 (partial — analysed ${pagesToAnalyse} of ${totalPages} pages)` : "0",
+      confidence: "ai_read",
+      tone: "amber",
+      sourceHref,
+    }];
+  }
+
+  // Dedupe by action_no (windows can overlap on boundary pages in rare cases)
+  const byKey = new Map<string, IvanAction>();
+  for (const a of collected) {
+    const key = (a.action_no || `${a.source_page ?? "?"}::${a.node ?? ""}`).trim();
+    if (!byKey.has(key)) byKey.set(key, a);
+  }
+  const actions = Array.from(byKey.values());
+
+  const open = actions.filter((a) => a.status === "open");
+  const closed = actions.filter((a) => a.status === "closed");
+  const indeterminate = actions.filter((a) => a.status === "indeterminate");
+
+  const expected = expectedDisciplineSet(categoryCode, displayOrder);
+  const wrongDiscipline = open.filter((a) => !isExpectedDiscipline(a.discipline || "", expected));
+
+  // Discipline breakdown across all readable actions
+  const disciplineBreakdown = new Map<string, number>();
+  for (const a of actions) {
+    const d = normaliseDiscipline(a.discipline);
+    if (!d) continue;
+    disciplineBreakdown.set(d, (disciplineBreakdown.get(d) || 0) + 1);
+  }
+
+  const partialSuffix = partial ? ` (partial — analysed ${pagesToAnalyse} of ${totalPages} pages)` : "";
+  const partialLowerBound = (n: number) => (partial ? `≥${n}${partialSuffix}` : String(n));
+
+  const firstOpenPage = open[0]?.source_page;
+  const firstWrongPage = wrongDiscipline[0]?.source_page;
+
+  const facts: Fact[] = [
+    {
+      label: "HEMP/HAZOP actions — open",
+      value: partialLowerBound(open.length),
+      confidence: "ai_read",
+      tone: open.length > 0 ? "red" : "neutral",
+      sourceHref: pageHref(firstOpenPage),
+    },
+    {
+      label: "Actions closed (TSE-TA2 approved)",
+      value: partialLowerBound(closed.length),
+      confidence: "ai_read",
+      tone: "neutral",
+      sourceHref,
+    },
   ];
+  if (expected.length > 0) {
+    const openNos = wrongDiscipline.map((a) => a.action_no).filter(Boolean).slice(0, 6).join(", ");
+    facts.push({
+      label: "Open actions outside expected discipline",
+      value: wrongDiscipline.length === 0
+        ? partialLowerBound(0)
+        : `${partialLowerBound(wrongDiscipline.length)}${openNos ? ` — ${openNos}` : ""}`,
+      confidence: "ai_read",
+      tone: wrongDiscipline.length > 0 ? "amber" : "neutral",
+      sourceHref: pageHref(firstWrongPage),
+    });
+  }
+  if (indeterminate.length > 0) {
+    facts.push({
+      label: "Actions with unreadable TSE-TA2 line",
+      value: String(indeterminate.length),
+      confidence: "ai_read",
+      tone: "amber",
+      sourceHref,
+    });
+  }
+  if (disciplineBreakdown.size > 0) {
+    const breakdown = Array.from(disciplineBreakdown.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([d, n]) => `${d}:${n}`)
+      .join(", ");
+    facts.push({
+      label: "Discipline breakdown",
+      value: breakdown,
+      confidence: "ai_read",
+      tone: "neutral",
+    });
+  }
+  return facts;
 }
 
 // ─── Selma: attachment revision pass (runs on EVERY item) ─────────────────
