@@ -27,6 +27,7 @@ const SEED_PATH = "test-fixtures/HAZOP-CloseOut-SEED-FIXTURE.pdf";
 const LARGE_PATH = "test-fixtures/HAZOP-CloseOut-LARGE.pdf";
 const INDETERMINATE_PATH = "test-fixtures/HAZOP-CloseOut-INDETERMINATE.pdf";
 const STRADDLE_PATH = "test-fixtures/HAZOP-CloseOut-STRADDLE.pdf";
+const STRADDLE_NOID_PATH = "test-fixtures/HAZOP-CloseOut-STRADDLE-NOID.pdf";
 
 const svcOf = (ctx: RunContext): SupabaseClient => ctx.serviceClient as SupabaseClient;
 
@@ -321,10 +322,13 @@ const runI4: Scenario["run"] = async (ctx) => {
 };
 
 // ────────────────────────────────── I5 ───────────────────────────────────
-// Window-boundary straddle. Requires staged fixture where one action's
-// ACTION NO header is on page 20 and its TSE-TA2 date is on page 21.
-// Assertion: the straddling action is counted ONCE with status=closed
-// (step-5 date present in later window). Gate the dedup-merge fix.
+// Window-boundary straddle (action number REPEATS on the continuation page).
+// Fixture design: 59 total actions, all closed, one of which straddles the
+// page-20/21 boundary with its TSE-TA2 close-out on the later page AND its
+// action_no reprinted on that continuation page.
+// Tight assertion: parsed open == 0 AND total == 59. The previous
+// closed >= 1 form passed even when the straddler stayed open (58 other
+// closed actions masked the regression).
 const runI5: Scenario["run"] = async (ctx) => {
   const svc = svcOf(ctx);
   if (!(await fixtureExists(svc, STRADDLE_PATH))) {
@@ -340,14 +344,47 @@ const runI5: Scenario["run"] = async (ctx) => {
     const openN = openFact ? extractNumber(openFact.value) : null;
     const closedN = closedFact ? extractNumber(closedFact.value) : null;
     const total = (openN ?? 0) + (closedN ?? 0);
-    // Fixture design (per prompt): straddle fixture has exactly one designed
-    // straddling action which must come out as closed. Padding actions on
-    // other pages are not part of the assertion; we only assert (a) no
-    // double-count of the straddler and (b) at least one closed action exists.
-    const observed = { openN, closedN, total, insights: ins };
-    if (closedN == null || closedN < 1) {
-      return { status: "fail", expected: "straddling action counted once with status=closed", observed };
-    }
+    const observed = { openN, closedN, total, openValue: openFact?.value, closedValue: closedFact?.value };
+    const expected = { open: 0, closed: 59, total: 59 };
+    const fails: string[] = [];
+    if (openN !== 0) fails.push(`open=${openN} expected 0 (straddler must be closed, not open)`);
+    if (total !== 59) fails.push(`total=${total} expected 59 (phantom entry indicates failed merge)`);
+    if (fails.length) return { status: "fail", expected, observed: { ...observed, fails } };
+    return { status: "pass", observed };
+  } finally {
+    await teardownSeed(svc, h);
+  }
+};
+
+// ───────────────────────────────── I5b ───────────────────────────────────
+// Window-boundary straddle, NO ACTION NUMBER on the continuation page.
+// This is the case that actually exercises the overlapping-window fix:
+// the page-21 close-out is an orphan fragment with no action_no, so the
+// non-overlap version keys it by source_page::node and leaves the header
+// in window N as "open" (open==1, total==60). Overlapping windows attribute
+// the close-out to the right action; the orphan-fragment fallback is the
+// belt-and-braces. Tight assertion: parsed open == 0 AND total == 59.
+const runI5b: Scenario["run"] = async (ctx) => {
+  const svc = svcOf(ctx);
+  if (!(await fixtureExists(svc, STRADDLE_NOID_PATH))) {
+    return { status: "fail", expected: `straddle-no-id fixture at ${FIXTURE_BUCKET}/${STRADDLE_NOID_PATH}`, observed: "missing — stage to enable straddle-no-id gate" };
+  }
+  const h = await ensureSeed(svc, ctx, STRADDLE_NOID_PATH);
+  try {
+    const resp = await invokeIvan(ctx, h, true);
+    const ins = resp.insights;
+    if (!ins) return { status: "error" as any, observed: { error: resp.error || "no insights", raw: resp } };
+    const openFact = findFact(ins, /open$/i);
+    const closedFact = findFact(ins, /closed/i);
+    const openN = openFact ? extractNumber(openFact.value) : null;
+    const closedN = closedFact ? extractNumber(closedFact.value) : null;
+    const total = (openN ?? 0) + (closedN ?? 0);
+    const observed = { openN, closedN, total, openValue: openFact?.value, closedValue: closedFact?.value };
+    const expected = { open: 0, closed: 59, total: 59 };
+    const fails: string[] = [];
+    if (openN !== 0) fails.push(`open=${openN} expected 0 (orphan close-out must attach to its header)`);
+    if (total !== 59) fails.push(`total=${total} expected 59 (phantom entry from orphan fragment)`);
+    if (fails.length) return { status: "fail", expected, observed: { ...observed, fails } };
     return { status: "pass", observed };
   } finally {
     await teardownSeed(svc, h);
@@ -412,10 +449,11 @@ const runI6: Scenario["run"] = async (ctx) => {
 };
 
 export const ivanQaScenarios: Scenario[] = [
-  { id: "I1", name: "Ivan known-answer: seed fixture totals + page anchors + partial=false", run: runI1 },
-  { id: "I2", name: "Ivan no-register: unavailable, no fabricated counts",                   run: runI2 },
-  { id: "I3", name: "Ivan partial path: lower-bound string + within wall budget",            run: runI3 },
-  { id: "I4", name: "Ivan indeterminate: step-5 obscured surfaces as own fact",              run: runI4 },
-  { id: "I5", name: "Ivan straddle (dedup-merge): straddler counted once as closed",         run: runI5 },
-  { id: "I6", name: "Ivan standard: advisory-only + idempotent + fingerprint invalidation",  run: runI6 },
+  { id: "I1",  name: "Ivan known-answer: seed fixture totals + page anchors + partial=false", run: runI1 },
+  { id: "I2",  name: "Ivan no-register: unavailable, no fabricated counts",                   run: runI2 },
+  { id: "I3",  name: "Ivan partial path: lower-bound string + within wall budget",            run: runI3 },
+  { id: "I4",  name: "Ivan indeterminate: step-5 obscured surfaces as own fact",              run: runI4 },
+  { id: "I5",  name: "Ivan straddle (action_no repeats): open==0, total==59",                 run: runI5 },
+  { id: "I5b", name: "Ivan straddle (NO action_no on continuation): open==0, total==59",      run: runI5b },
+  { id: "I6",  name: "Ivan standard: advisory-only + idempotent + fingerprint invalidation",  run: runI6 },
 ];
