@@ -21,6 +21,8 @@ import { useCategorizedRoles } from '@/hooks/useCategorizedRoles';
 import { toast } from 'sonner';
 import { writeExcelFile } from '@/utils/excelUtils';
 
+import { formatVcrItemCode } from '@/lib/vcrItemCode';
+
 const categoryColors: Record<string, string> = {
   'DI': 'bg-blue-50 text-blue-700/80 border-blue-200/60 dark:bg-blue-950/30 dark:text-blue-300/80 dark:border-blue-800/40',
   'TI': 'bg-teal-50 text-teal-700/80 border-teal-200/60 dark:bg-teal-950/30 dark:text-teal-300/80 dark:border-teal-800/40',
@@ -32,16 +34,11 @@ const categoryColors: Record<string, string> = {
 
 const getCategoryColor = (code: string | undefined) => {
   if (!code) return '';
-  // Strip trailing numbers for matching (e.g., DI2 -> DI)
-  const baseCode = code.replace(/\d+$/, '');
-  return categoryColors[baseCode] || '';
+  return categoryColors[code] || '';
 };
 
-const generateDisplayId = (categoryCode: string | undefined, displayOrder: number): string => {
-  if (!categoryCode) return `??-${String(displayOrder).padStart(2, '0')}`;
-  const baseCode = categoryCode.replace(/\d+$/, '');
-  return `${baseCode}-${String(displayOrder).padStart(2, '0')}`;
-};
+const generateDisplayId = (categoryCode: string | undefined, displayOrder: number): string =>
+  formatVcrItemCode(categoryCode, displayOrder);
 
 interface ItemFormData {
   category_id: string;

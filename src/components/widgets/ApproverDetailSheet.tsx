@@ -10,6 +10,7 @@ import { Search, CheckCircle2, Clock, AlertCircle, FileText } from 'lucide-react
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { VCRItemDetailSheet, VCRItemBasic } from './VCRItemDetailSheet';
+import { formatVcrItemCode } from '@/lib/vcrItemCode';
 
 interface ApproverDetailSheetProps {
   open: boolean;
@@ -254,7 +255,7 @@ export const ApproverDetailSheet: React.FC<ApproverDetailSheetProps> = ({
                       category_code: item.categoryCode,
                       status: item.prereqStatus,
                       prerequisite_id: item.prerequisiteId,
-                      itemCode: `${item.categoryCode}-${String(item.order + 1).padStart(2, '0')}`,
+                      itemCode: formatVcrItemCode(item.categoryCode, item.order + 1),
                     })}
                     className={cn(
                       "rounded-xl border p-3 transition-colors cursor-pointer hover:shadow-sm",

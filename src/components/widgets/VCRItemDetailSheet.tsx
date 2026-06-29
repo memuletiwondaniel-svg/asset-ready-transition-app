@@ -31,6 +31,7 @@ import {
   Eye,
   X,
   ChevronDown,
+  ChevronRight,
   CheckCircle2,
   AlertTriangle,
   Loader2,
@@ -280,12 +281,12 @@ const ConfirmDialog: React.FC<{
   open: boolean;
   onOpenChange: (v: boolean) => void;
   kind: ConfirmKind | null;
-  itemTitle: string;
+  itemCode: string;
   counterparty: string;
   insights?: VCRInsights;
   busy: boolean;
   onConfirm: (note: string) => void;
-}> = ({ open, onOpenChange, kind, itemTitle, counterparty, insights, busy, onConfirm }) => {
+}> = ({ open, onOpenChange, kind, itemCode, counterparty, insights, busy, onConfirm }) => {
   const [note, setNote] = useState('');
   useEffect(() => {
     if (open) setNote('');
@@ -303,7 +304,7 @@ const ConfirmDialog: React.FC<{
       title: 'Accept this item?',
       body: (
         <>
-          You're accepting <strong>{itemTitle}</strong> as ready for handover. {counterparty} will be notified and the item moves out of review.
+          Accepts <strong>{itemCode}</strong> as ready for handover. {counterparty} will be notified.
         </>
       ),
       noteLabel: 'Acceptance note',
@@ -318,7 +319,7 @@ const ConfirmDialog: React.FC<{
       title: 'Return to delivering party?',
       body: (
         <>
-          Sends <strong>{itemTitle}</strong> back to {counterparty} to complete. It leaves your review queue until they re-submit.
+          Returns <strong>{itemCode}</strong> to {counterparty} to complete.
         </>
       ),
       noteLabel: 'What needs to change?',
@@ -333,7 +334,7 @@ const ConfirmDialog: React.FC<{
       title: 'Mark this item complete?',
       body: (
         <>
-          Submits <strong>{itemTitle}</strong> to {counterparty} for acceptance. They'll review the evidence and either accept it or return it with feedback.
+          Submits <strong>{itemCode}</strong> to {counterparty} for acceptance.
         </>
       ),
       noteLabel: 'Submission note',
@@ -348,7 +349,7 @@ const ConfirmDialog: React.FC<{
       title: 'Raise a qualification?',
       body: (
         <>
-          Flags <strong>{itemTitle}</strong> as carrying a qualification — i.e. it cannot be fully closed at handover, and a documented exception will be carried forward for the approving party to acknowledge.
+          Raises a qualification on <strong>{itemCode}</strong>.
         </>
       ),
       noteLabel: 'Qualification reason',
@@ -446,8 +447,8 @@ const SectionLabel: React.FC<{ children: React.ReactNode; right?: React.ReactNod
   children,
   right,
 }) => (
-  <div className="flex items-center justify-between mb-2">
-    <h3 className="text-[10px] uppercase text-muted-foreground font-medium">{children}</h3>
+  <div className="flex items-center justify-between mb-2.5">
+    <h3 className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground/80 font-semibold">{children}</h3>
     {right && <div className="text-[10px] text-muted-foreground">{right}</div>}
   </div>
 );
@@ -563,7 +564,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
       toast({ title: 'Error', description: e.message, variant: 'destructive' }),
   });
 
-  // ─── Viewer role resolution ────────────────────────────────────
+  // ─── Viewer role resolution (strict — no fallback to delivering) ─
   const deliveringMember = deliveringParties[0] || null;
   const approvingMember = vcrItemDetail?.approving_member || null;
 
@@ -571,9 +572,8 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
     if (!user?.id) return 'observer';
     if (deliveringParties.some((m) => m.user_id === user.id)) return 'delivering';
     if (approvingMember?.user_id === user.id) return 'approving';
-    // Default to delivering when the user could plausibly act as one (no approver match)
-    return deliveringMember ? 'observer' : 'delivering';
-  }, [user?.id, deliveringParties, approvingMember, deliveringMember]);
+    return 'observer';
+  }, [user?.id, deliveringParties, approvingMember]);
 
   // ─── Local autosave: evidence + comments thread ────────────────
   const [evidence, setEvidence] = useState<EvidenceFile[]>([]);
@@ -694,8 +694,10 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
     }
   };
 
-  // Guidance preview / show-more (declared before any early return for hooks-rules safety)
+  // Guidance/Required-evidence collapse state (declared before any early return for hooks-rules safety)
+  // Defaults: Guidance collapsed (verbose reference); Required Evidence expanded (action-relevant).
   const [guidanceOpen, setGuidanceOpenLocal] = useState(false);
+  const [requiredEvidenceOpen, setRequiredEvidenceOpen] = useState(true);
 
   if (!item) return null;
 
@@ -708,7 +710,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent className="sm:max-w-xl overflow-hidden flex flex-col p-0" data-rm-safe>
+        <SheetContent className="sm:max-w-xl overflow-hidden flex flex-col p-0" data-rm-safe hideClose>
           {/* Header */}
           <SheetHeader className="px-6 pt-5 pb-4 border-b shrink-0 space-y-3">
             <div className="flex items-center justify-between gap-2">
@@ -755,57 +757,68 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
               {/* Insights */}
               <InsightsBlock insights={insights} viewer={viewer} />
 
-              {/* Guidance notes */}
+              {/* Guidance notes — collapsed by default; chevron toggle */}
               <section>
-                <SectionLabel right={
+                <button
+                  type="button"
+                  onClick={() => setGuidanceOpenLocal((v) => !v)}
+                  className="w-full flex items-center justify-between mb-2.5 group"
+                  aria-expanded={guidanceOpen}
+                >
+                  <h3 className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground/80 font-semibold">
+                    Guidance notes
+                  </h3>
+                  {guidanceOpen ? (
+                    <ChevronDown className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                  ) : (
+                    <ChevronRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                  )}
+                </button>
+                {guidanceOpen && (
                   vcrItemDetail?.guidance_notes ? (
-                    <button
-                      onClick={() => setGuidanceOpenLocal((v) => !v)}
-                      className="text-primary hover:underline"
-                    >
-                      {guidanceOpen ? 'Hide' : 'Show'}
-                    </button>
-                  ) : null
-                }>
-                  Guidance notes
-                </SectionLabel>
-                {vcrItemDetail?.guidance_notes ? (
-                  <p className="text-[13px] text-foreground/90 leading-relaxed">
-                    {guidanceOpen
-                      ? vcrItemDetail.guidance_notes
-                      : `${(vcrItemDetail.guidance_notes as string).slice(0, 110)}${(vcrItemDetail.guidance_notes as string).length > 110 ? '…' : ''}`}
-                    {!guidanceOpen && (vcrItemDetail.guidance_notes as string).length > 110 && (
-                      <button
-                        onClick={() => setGuidanceOpenLocal(true)}
-                        className="text-primary hover:underline ml-1"
-                      >
-                        Show more
-                      </button>
-                    )}
-                  </p>
-                ) : (
-                  <p className="text-xs text-muted-foreground italic">No guidance notes for this item.</p>
+                    <p className="text-[13px] text-foreground leading-relaxed mt-1">
+                      {vcrItemDetail.guidance_notes}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground italic mt-1">No guidance notes for this item.</p>
+                  )
                 )}
               </section>
 
-              {/* Required evidence */}
+              {/* Required evidence — expanded by default; chevron toggle */}
               <section>
-                <SectionLabel>Required evidence</SectionLabel>
-                <p className="text-[13px] text-foreground/90 leading-relaxed">
-                  {requiredEvidenceText || (
-                    <span className="text-muted-foreground italic">No required evidence specified.</span>
+                <button
+                  type="button"
+                  onClick={() => setRequiredEvidenceOpen((v) => !v)}
+                  className="w-full flex items-center justify-between mb-2.5 group"
+                  aria-expanded={requiredEvidenceOpen}
+                >
+                  <h3 className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground/80 font-semibold">
+                    Required evidence
+                  </h3>
+                  {requiredEvidenceOpen ? (
+                    <ChevronDown className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                  ) : (
+                    <ChevronRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
                   )}
-                </p>
+                </button>
+                {requiredEvidenceOpen && (
+                  <p className="text-[13px] text-foreground leading-relaxed mt-1">
+                    {requiredEvidenceText || (
+                      <span className="text-muted-foreground italic">No required evidence specified.</span>
+                    )}
+                  </p>
+                )}
               </section>
 
               {/* Evidence */}
               <section>
-                <SectionLabel right={viewer === 'approving' && evidence.length > 0 ? 'Submitted by delivering party' : undefined}>
+                <SectionLabel right={viewer !== 'delivering' && evidence.length > 0 ? 'Submitted by delivering party' : undefined}>
                   Evidence
                 </SectionLabel>
 
                 {evidence.length === 0 ? (
-                  viewer === 'approving' ? (
+                  viewer !== 'delivering' ? (
                     <p className="text-xs text-muted-foreground italic">No evidence submitted yet.</p>
                   ) : (
                     <div
@@ -856,7 +869,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                         <div className="flex-1 min-w-0 space-y-1">
                           <div className="text-[13px] font-medium truncate">{f.name}</div>
                           <div className="flex items-center gap-2 flex-wrap">
-                            {viewer === 'approving' ? (
+                            {viewer !== 'delivering' ? (
                               <Badge variant="secondary" className="text-[10px] font-normal">
                                 {f.type_label}
                               </Badge>
@@ -887,7 +900,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                             </span>
                           </div>
                         </div>
-                        {viewer === 'approving' ? (
+                        {viewer !== 'delivering' ? (
                           <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0">
                             <Eye className="h-3.5 w-3.5" />
                           </Button>
@@ -903,7 +916,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                         )}
                       </div>
                     ))}
-                    {viewer !== 'approving' && (
+                    {viewer === 'delivering' && (
                       <button
                         onClick={() => fileInputRef.current?.click()}
                         className="text-xs text-primary hover:underline"
@@ -1003,45 +1016,58 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
             </div>
           </ScrollArea>
 
-          {/* Footer */}
-          <div className="border-t bg-background px-6 py-3 flex items-center justify-between shrink-0">
-            <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <div className="flex items-center gap-2">
-              {viewer === 'approving' && item.status === 'READY_FOR_REVIEW' ? (
-                <>
-                  <Button variant="outline" size="sm" onClick={() => setConfirmKind('return')}>
-                    Return to delivering party
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                    onClick={() => setConfirmKind('accept')}
-                  >
-                    Accept item
-                  </Button>
-                </>
-              ) : viewer === 'observer' || item.status === 'ACCEPTED' || item.status === 'QUALIFICATION_APPROVED' ? (
-                <Button size="sm" variant="outline" disabled>
-                  {pill.label}
+          {/* Footer — strict role × status gating */}
+          {(() => {
+            const isTerminal = item.status === 'ACCEPTED' || item.status === 'QUALIFICATION_APPROVED';
+            const canDeliver =
+              viewer === 'delivering' && !isTerminal && item.status !== 'READY_FOR_REVIEW';
+            const canApprove =
+              viewer === 'approving' && item.status === 'READY_FOR_REVIEW';
+            const showActions = canDeliver || canApprove;
+            return (
+              <div className="border-t bg-background px-6 py-3 flex items-center justify-between shrink-0">
+                <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
+                  {showActions ? 'Cancel' : 'Close'}
                 </Button>
-              ) : (
-                <>
-                  <Button variant="outline" size="sm" onClick={() => setConfirmKind('raise_qualification')}>
-                    Raise qualification
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                    onClick={() => setConfirmKind('mark_complete')}
-                  >
-                    Mark as complete
-                  </Button>
-                </>
-              )}
-            </div>
-          </div>
+                <div className="flex items-center gap-2">
+                  {canApprove ? (
+                    <>
+                      <Button variant="outline" size="sm" onClick={() => setConfirmKind('return')}>
+                        Return to delivering party
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                        onClick={() => setConfirmKind('accept')}
+                      >
+                        Accept item
+                      </Button>
+                    </>
+                  ) : canDeliver ? (
+                    <>
+                      <Button variant="outline" size="sm" onClick={() => setConfirmKind('raise_qualification')}>
+                        Raise qualification
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                        onClick={() => setConfirmKind('mark_complete')}
+                      >
+                        Mark as complete
+                      </Button>
+                    </>
+                  ) : (
+                    <Badge
+                      variant="outline"
+                      className={cn('text-[10px] rounded-full px-2.5 py-0.5 font-normal', pillToneClass[pill.tone])}
+                    >
+                      {pill.label}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
         </SheetContent>
       </Sheet>
 
@@ -1049,7 +1075,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
         open={confirmKind !== null}
         onOpenChange={(v) => !v && setConfirmKind(null)}
         kind={confirmKind}
-        itemTitle={item.vcr_item}
+        itemCode={item.itemCode}
         counterparty={
           confirmKind === 'accept' || confirmKind === 'return'
             ? deliveringName

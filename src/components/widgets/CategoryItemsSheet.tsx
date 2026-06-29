@@ -9,6 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { VCRItemDetailSheet } from './VCRItemDetailSheet';
+import { formatVcrItemCode } from '@/lib/vcrItemCode';
 
 interface CategoryItemsSheetProps {
   open: boolean;
@@ -45,10 +46,11 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; textColor: s
 // Map display labels to category names/codes in the database
 const CATEGORY_MAP: Record<string, string[]> = {
   'Technical Integrity': ['Technical Integrity', 'TI'],
-  'Design Integrity': ['Design Integrity', 'DI', 'DI2'],
+  'Design Integrity': ['Design Integrity', 'DI'],
   'Operating Integrity': ['Operating Integrity', 'OI'],
   'Management Systems': ['Management Systems', 'MS'],
-  'HSE & Environment': ['HSE & Environment', 'HS', 'HSE'],
+  'Health & Safety': ['Health & Safety', 'HS'],
+  'HSE & Environment': ['Health & Safety', 'HS'],
   'Maintenance Readiness': ['Maintenance Readiness', 'MR'],
 };
 
@@ -172,7 +174,7 @@ export const CategoryItemsSheet: React.FC<CategoryItemsSheetProps> = ({
                     className="transition-colors hover:border-primary/30 cursor-pointer"
                     onClick={() => setSelectedItem({
                       ...item,
-                      itemCode: `${item.category_code}-${String(idx + 1).padStart(2, '0')}`,
+                      itemCode: formatVcrItemCode(item.category_code, idx + 1),
                     })}
                   >
                     <CardContent className="p-4">
@@ -186,7 +188,7 @@ export const CategoryItemsSheet: React.FC<CategoryItemsSheetProps> = ({
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="text-[10px] text-muted-foreground font-mono">
-                              {item.category_code}-{String(idx + 1).padStart(2, '0')}
+                              {formatVcrItemCode(item.category_code, idx + 1)}
                             </span>
                             <Badge variant="outline" className={cn("text-[9px] px-1.5", statusCfg.color, statusCfg.textColor)}>
                               {statusCfg.label}
