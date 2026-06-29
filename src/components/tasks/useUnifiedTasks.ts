@@ -746,7 +746,7 @@ export function useUnifiedTasks(userId: string) {
       }
     }
     return topLevel;
-  }, [pssrs, approvals, activities, owlItems, bundleTasks, userTasks, oraActivityDates, p2aActivityProgress, vcrPlanApprovals, isNewSinceLastLogin]);
+  }, [pssrs, approvals, activities, owlItems, bundleTasks, userTasks, oraActivityDates, p2aActivityProgress, vcrPlanApprovals, vcrItemTasks, isNewSinceLastLogin]);
 
   // Stabilization: never return an empty array if we previously had data
   const stableTasksRef = useRef<UnifiedTask[]>([]);
