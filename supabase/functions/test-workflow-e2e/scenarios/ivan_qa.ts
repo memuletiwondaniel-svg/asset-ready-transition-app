@@ -449,10 +449,11 @@ const runI6: Scenario["run"] = async (ctx) => {
 };
 
 export const ivanQaScenarios: Scenario[] = [
-  { id: "I1", name: "Ivan known-answer: seed fixture totals + page anchors + partial=false", run: runI1 },
-  { id: "I2", name: "Ivan no-register: unavailable, no fabricated counts",                   run: runI2 },
-  { id: "I3", name: "Ivan partial path: lower-bound string + within wall budget",            run: runI3 },
-  { id: "I4", name: "Ivan indeterminate: step-5 obscured surfaces as own fact",              run: runI4 },
-  { id: "I5", name: "Ivan straddle (dedup-merge): straddler counted once as closed",         run: runI5 },
-  { id: "I6", name: "Ivan standard: advisory-only + idempotent + fingerprint invalidation",  run: runI6 },
+  { id: "I1",  name: "Ivan known-answer: seed fixture totals + page anchors + partial=false", run: runI1 },
+  { id: "I2",  name: "Ivan no-register: unavailable, no fabricated counts",                   run: runI2 },
+  { id: "I3",  name: "Ivan partial path: lower-bound string + within wall budget",            run: runI3 },
+  { id: "I4",  name: "Ivan indeterminate: step-5 obscured surfaces as own fact",              run: runI4 },
+  { id: "I5",  name: "Ivan straddle (action_no repeats): open==0, total==59",                 run: runI5 },
+  { id: "I5b", name: "Ivan straddle (NO action_no on continuation): open==0, total==59",      run: runI5b },
+  { id: "I6",  name: "Ivan standard: advisory-only + idempotent + fingerprint invalidation",  run: runI6 },
 ];
