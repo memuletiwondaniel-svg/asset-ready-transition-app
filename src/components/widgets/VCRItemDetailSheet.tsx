@@ -150,6 +150,15 @@ type EvidenceRow = {
   evidence_type: string | null;
   uploaded_by: string | null;
   created_at: string;
+  // Provenance — manual uploads default to source='manual', confirmed=true.
+  // Assai-fetched rows are inserted with source='assai', confirmed=false until
+  // the delivering party confirms them as evidence-of-record.
+  source: 'manual' | 'assai' | null;
+  assai_doc_no: string | null;
+  assai_rev: string | null;
+  confirmed: boolean | null;
+  confirmed_by: string | null;
+  confirmed_at: string | null;
 };
 type CommentRow = {
   id: string;
