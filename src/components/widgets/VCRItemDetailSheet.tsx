@@ -636,7 +636,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
       if (!item?.prerequisite_id) return [];
       const { data, error } = await supabase
         .from('p2a_vcr_evidence')
-        .select('id, file_name, file_size, file_type, file_path, evidence_type, uploaded_by, created_at')
+        .select('id, file_name, file_size, file_type, file_path, evidence_type, uploaded_by, created_at, source, assai_doc_no, assai_rev, confirmed, confirmed_by, confirmed_at')
         .eq('vcr_prerequisite_id', item.prerequisite_id)
         .order('created_at', { ascending: true });
       if (error) throw error;
