@@ -13602,6 +13602,33 @@ export type Database = {
           },
         ]
       }
+      vcr_insights_agent_config: {
+        Row: {
+          category_code: string
+          config_version: number
+          contrib_agents: string[]
+          lead_agent: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          category_code: string
+          config_version?: number
+          contrib_agents?: string[]
+          lead_agent: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category_code?: string
+          config_version?: number
+          contrib_agents?: string[]
+          lead_agent?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       vcr_item_categories: {
         Row: {
           code: string
@@ -13709,6 +13736,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vcr_item_insights: {
+        Row: {
+          computed_at: string
+          id: string
+          inputs_hash: string
+          payload: Json
+          severity: string | null
+          state: string
+          vcr_id: string
+          vcr_item_id: string
+        }
+        Insert: {
+          computed_at?: string
+          id?: string
+          inputs_hash: string
+          payload: Json
+          severity?: string | null
+          state: string
+          vcr_id: string
+          vcr_item_id: string
+        }
+        Update: {
+          computed_at?: string
+          id?: string
+          inputs_hash?: string
+          payload?: Json
+          severity?: string | null
+          state?: string
+          vcr_id?: string
+          vcr_item_id?: string
+        }
+        Relationships: []
       }
       vcr_items: {
         Row: {

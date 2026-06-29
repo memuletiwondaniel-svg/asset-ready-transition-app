@@ -45,6 +45,7 @@ import { useParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { useVCRItemDeliveringParties } from '@/hooks/useVCRItemDeliveringParties';
+import { useVCRItemInsights } from '@/hooks/useVCRItemInsights';
 
 // ─── Public contract ─────────────────────────────────────────────────
 export interface VCRItemBasic {
@@ -170,7 +171,9 @@ const saveList = <T,>(key: string, list: T[]) => {
 const InsightsBlock: React.FC<{
   insights?: VCRInsights;
   viewer: 'delivering' | 'approving' | 'observer';
-}> = ({ insights, viewer }) => {
+  onRecompute?: () => void;
+  recomputing?: boolean;
+}> = ({ insights, viewer, onRecompute, recomputing }) => {
   const state = insights?.state ?? 'unavailable';
 
   return (
@@ -179,9 +182,21 @@ const InsightsBlock: React.FC<{
         <h3 className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
           Insights
         </h3>
-        {state === 'ready' && (
-          <span className="text-[10px] text-muted-foreground">Live records · advisory</span>
-        )}
+        <div className="flex items-center gap-2">
+          {state === 'ready' && (
+            <span className="text-[10px] text-muted-foreground">Live records · advisory</span>
+          )}
+          {onRecompute && (
+            <button
+              type="button"
+              onClick={onRecompute}
+              disabled={recomputing}
+              className="text-[10px] text-primary hover:underline disabled:opacity-50"
+            >
+              {recomputing ? 'Recomputing…' : 'Recompute'}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="rounded-lg border border-l-4 border-amber-300/70 border-l-amber-400 bg-amber-50/40 dark:bg-amber-950/10 px-4 py-3 space-y-3">
@@ -471,6 +486,10 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
     handoverPointId: vcrId,
   });
 
+  // AI-1 Readiness — hook drives the block; explicit `insights` prop overrides for tests.
+  const { insights: liveInsights, recompute } = useVCRItemInsights(vcrId, item?.id);
+  const effectiveInsights = insights ?? liveInsights;
+
   // ─── Load authored item + parties ──────────────────────────────
   const { data: vcrItemDetail } = useQuery({
     queryKey: ['vcr-item-detail-v2', item?.id, projectId],
@@ -755,7 +774,12 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
           <ScrollArea className="flex-1 min-h-0">
             <div className="px-6 py-5 space-y-6">
               {/* Insights */}
-              <InsightsBlock insights={insights} viewer={viewer} />
+              <InsightsBlock
+                insights={effectiveInsights}
+                viewer={viewer}
+                onRecompute={insights ? undefined : () => recompute.mutate()}
+                recomputing={recompute.isPending}
+              />
 
               {/* Guidance notes — collapsed by default; chevron toggle */}
               <section>
