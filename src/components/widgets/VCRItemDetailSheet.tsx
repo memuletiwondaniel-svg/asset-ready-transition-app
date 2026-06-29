@@ -947,6 +947,10 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                 {evidence.length === 0 ? (
                   viewer !== 'delivering' ? (
                     <p className="text-xs text-muted-foreground italic">No evidence submitted yet.</p>
+                  ) : !item.prerequisite_id ? (
+                    <p className="text-xs text-muted-foreground italic">
+                      Evidence can't be attached yet — this item isn't linked to a delivery prerequisite.
+                    </p>
                   ) : (
                     <div
                       onDragOver={(e) => {
