@@ -586,14 +586,18 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
 
   // ─── Viewer role resolution (strict — no fallback to delivering) ─
   const deliveringMember = deliveringParties[0] || null;
-  const approvingMember = vcrItemDetail?.approving_member || null;
+  const approvingMembers: Array<{ user_id: string; full_name: string; avatar_url: string | null; role_name: string }> =
+    vcrItemDetail?.approving_members || [];
+  // Representative approver: prefer current user if they're one, else the first.
+  const approvingMember =
+    approvingMembers.find((m) => m.user_id === user?.id) || approvingMembers[0] || null;
 
   const viewer: 'delivering' | 'approving' | 'observer' = useMemo(() => {
     if (!user?.id) return 'observer';
     if (deliveringParties.some((m) => m.user_id === user.id)) return 'delivering';
-    if (approvingMember?.user_id === user.id) return 'approving';
+    if (approvingMembers.some((m) => m.user_id === user.id)) return 'approving';
     return 'observer';
-  }, [user?.id, deliveringParties, approvingMember]);
+  }, [user?.id, deliveringParties, approvingMembers]);
 
   // ─── DB-backed evidence + comments ──────────────────────────────
   const [composerOpen, setComposerOpen] = useState(false);
