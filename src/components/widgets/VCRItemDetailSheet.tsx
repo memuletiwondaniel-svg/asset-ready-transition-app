@@ -760,6 +760,45 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
     onError: (e: any) => toast({ title: 'Delete failed', description: e.message, variant: 'destructive' }),
   });
 
+  // ── Selma → Assai fetch (doc-number-first). Invokes the edge function which
+  //    downloads the binary, uploads to storage, and inserts a provenance-tagged
+  //    evidence row. Idempotent on (prereq, doc_no, rev); failures are honest.
+  const fetchFromAssai = useMutation({
+    mutationFn: async () => {
+      if (!item?.prerequisite_id) throw new Error('No prerequisite linked');
+      const { data, error } = await supabase.functions.invoke('selma-fetch-assai-evidence', {
+        body: { vcr_prerequisite_id: item.prerequisite_id },
+      });
+      if (error) throw error;
+      if (data && data.ok === false) throw new Error(data.reason || 'Fetch failed');
+      return data as { ok: true; cached?: boolean; assai_doc_no: string; assai_rev: string | null };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: evidenceQueryKey });
+      toast({
+        title: data?.cached ? 'Already fetched' : 'Fetched from Assai',
+        description: `${data?.assai_doc_no}${data?.assai_rev ? ` rev ${data.assai_rev}` : ''} — confirm it as your submission.`,
+      });
+    },
+    onError: (e: any) =>
+      toast({ title: 'Assai fetch failed', description: e.message, variant: 'destructive' }),
+  });
+
+  // ── Delivering party confirms an Assai-sourced row as evidence-of-record.
+  const confirmEvidence = useMutation({
+    mutationFn: async (row: EvidenceRow) => {
+      if (!user?.id) throw new Error('Not authenticated');
+      const { error } = await supabase
+        .from('p2a_vcr_evidence')
+        .update({ confirmed: true, confirmed_by: user.id, confirmed_at: new Date().toISOString() })
+        .eq('id', row.id);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: evidenceQueryKey }),
+    onError: (e: any) => toast({ title: 'Confirm failed', description: e.message, variant: 'destructive' }),
+  });
+
+
 
   const insertComment = useMutation({
     mutationFn: async ({ body, action_tag }: { body: string; action_tag: CommentRow['action_tag'] }) => {
