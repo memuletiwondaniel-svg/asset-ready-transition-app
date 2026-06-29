@@ -998,7 +998,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                         <div className="flex-1 min-w-0 space-y-1">
                           <button
                             type="button"
-                            onClick={() => openSignedUrl(f.storage_path)}
+                            onClick={() => openSignedUrl(f.file_path)}
                             className="text-[13px] font-medium truncate text-left hover:underline"
                           >
                             {f.file_name}
@@ -1040,7 +1040,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7 shrink-0"
-                            onClick={() => openSignedUrl(f.storage_path)}
+                            onClick={() => openSignedUrl(f.file_path)}
                           >
                             <Eye className="h-3.5 w-3.5" />
                           </Button>
