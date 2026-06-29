@@ -1002,6 +1002,44 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                   Evidence
                 </SectionLabel>
 
+                {/* Selma → Assai doc-number-first fetch.
+                    Shown to delivering when the requirement names a controlled
+                    document and no Assai-sourced row exists yet. Auto-fetched
+                    rows are advisory until the delivering party confirms them. */}
+                {(() => {
+                  const assaiDocNo: string | null = (prereqDetail as any)?.assai_doc_no || null;
+                  const assaiRev: string | null = (prereqDetail as any)?.assai_rev || null;
+                  const hasAssaiRow = evidence.some((e) => e.source === 'assai' && e.assai_doc_no === assaiDocNo);
+                  if (!assaiDocNo || viewer !== 'delivering' || hasAssaiRow) return null;
+                  return (
+                    <div className="rounded-lg border border-blue-200 dark:border-blue-900 bg-blue-50/60 dark:bg-blue-950/20 px-3 py-2.5 mb-2 flex items-start gap-3">
+                      <ExternalLink className="h-4 w-4 text-blue-700 dark:text-blue-300 mt-0.5 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[12px] font-medium text-blue-900 dark:text-blue-100">
+                          Selma can fetch this from Assai
+                        </div>
+                        <div className="text-[11px] text-blue-800/80 dark:text-blue-200/80 truncate">
+                          {assaiDocNo}{assaiRev ? ` · rev ${assaiRev}` : ''}
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-[11px]"
+                        disabled={fetchFromAssai.isPending}
+                        onClick={() => fetchFromAssai.mutate()}
+                      >
+                        {fetchFromAssai.isPending ? (
+                          <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> Fetching…</>
+                        ) : (
+                          'Fetch from Assai'
+                        )}
+                      </Button>
+                    </div>
+                  );
+                })()}
+
+
                 {evidence.length === 0 ? (
                   viewer !== 'delivering' ? (
                     <p className="text-xs text-muted-foreground italic">No evidence submitted yet.</p>
