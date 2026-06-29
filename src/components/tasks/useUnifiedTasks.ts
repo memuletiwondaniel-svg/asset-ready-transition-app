@@ -111,6 +111,14 @@ export interface UnifiedTask {
   // Generic step-progress payload (e.g. vcr_plan_resubmit). Drives the
   // "N of M steps" label on in-progress kanban cards.
   stepProgress?: { reviewed: number; total: number };
+  // VCR Item task payload — per-project aggregator card. Click opens the
+  // VCRItemTaskListSheet which then opens VCRItemDetailSheet for each item.
+  vcrItemTask?: {
+    role: 'delivering' | 'approving';
+    projectId: string;
+    projectLabel: string;
+    rows: import('@/hooks/useMyVCRItemTasks').MyVCRItemTaskRow[];
+  };
 }
 
 export const FILTER_OPTIONS: { value: CategoryFilter; label: string }[] = [
