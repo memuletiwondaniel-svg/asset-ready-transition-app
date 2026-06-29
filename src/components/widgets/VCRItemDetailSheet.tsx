@@ -83,6 +83,13 @@ interface VCRItemDetailSheetProps {
   onOpenChange: (open: boolean) => void;
   vcrId: string;
   insights?: VCRInsights;
+  /**
+   * Optional projectId override. When the sheet is opened from a context
+   * outside the project route (e.g. My Tasks), useParams cannot resolve
+   * the project context; pass it explicitly so approving-party membership
+   * resolves correctly.
+   */
+  projectIdOverride?: string;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────
