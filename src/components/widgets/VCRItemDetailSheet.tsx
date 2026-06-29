@@ -518,7 +518,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
         approvingRoles = (roles as any[]) || [];
       }
 
-      let approvingMember: { user_id: string; full_name: string; avatar_url: string | null; role_name: string } | null = null;
+      let approvingMembers: Array<{ user_id: string; full_name: string; avatar_url: string | null; role_name: string }> = [];
       if (projectId && appRoleIds.length > 0) {
         const { data: members } = await supabase
           .from('project_team_members')
@@ -531,21 +531,17 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
             .select('user_id, full_name, avatar_url, role')
             .in('user_id', userIds)
             .in('role', appRoleIds)
-            .eq('is_active', true)
-            .limit(1);
-          const p = (profiles || [])[0];
-          if (p) {
-            approvingMember = {
-              user_id: p.user_id,
-              full_name: p.full_name,
-              avatar_url: p.avatar_url,
-              role_name: approvingRoles.find((r) => r.id === (p as any).role)?.name || 'Approving',
-            };
-          }
+            .eq('is_active', true);
+          approvingMembers = (profiles || []).map((p: any) => ({
+            user_id: p.user_id,
+            full_name: p.full_name,
+            avatar_url: p.avatar_url,
+            role_name: approvingRoles.find((r) => r.id === (p as any).role)?.name || 'Approving',
+          }));
         }
       }
 
-      return { ...(data as any), approving_roles: approvingRoles, approving_member: approvingMember };
+      return { ...(data as any), approving_roles: approvingRoles, approving_members: approvingMembers };
     },
     enabled: open && !!item,
   });
@@ -590,14 +586,18 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
 
   // ─── Viewer role resolution (strict — no fallback to delivering) ─
   const deliveringMember = deliveringParties[0] || null;
-  const approvingMember = vcrItemDetail?.approving_member || null;
+  const approvingMembers: Array<{ user_id: string; full_name: string; avatar_url: string | null; role_name: string }> =
+    vcrItemDetail?.approving_members || [];
+  // Representative approver: prefer current user if they're one, else the first.
+  const approvingMember =
+    approvingMembers.find((m) => m.user_id === user?.id) || approvingMembers[0] || null;
 
   const viewer: 'delivering' | 'approving' | 'observer' = useMemo(() => {
     if (!user?.id) return 'observer';
     if (deliveringParties.some((m) => m.user_id === user.id)) return 'delivering';
-    if (approvingMember?.user_id === user.id) return 'approving';
+    if (approvingMembers.some((m) => m.user_id === user.id)) return 'approving';
     return 'observer';
-  }, [user?.id, deliveringParties, approvingMember]);
+  }, [user?.id, deliveringParties, approvingMembers]);
 
   // ─── DB-backed evidence + comments ──────────────────────────────
   const [composerOpen, setComposerOpen] = useState(false);
@@ -1248,7 +1248,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
             ? deliveringName
             : approvingName
         }
-        insights={insights}
+        insights={effectiveInsights}
         busy={updateStatus.isPending}
         onConfirm={onConfirm}
       />
