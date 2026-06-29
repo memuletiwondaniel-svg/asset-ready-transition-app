@@ -91,15 +91,13 @@ async function fredCompletionsAggregator(sb: any, vcrId: string): Promise<Fact[]
 
 // ─── Ivan: DI-03 HEMP action-register reader ──────────────────────────────
 async function ivanHempReader(sb: any, item: any, lovableKey: string): Promise<Fact[]> {
-  if (!item?.prerequisite_id) {
-    return [{ label: "HEMP register", value: "No prerequisite linked", confidence: "unavailable" }];
-  }
   const { data: atts } = await sb
-    .from("p2a_prerequisite_attachments")
-    .select("id, file_name, file_path, file_type")
-    .eq("handover_prerequisite_id", item.prerequisite_id);
+    .from("vcr_item_evidence")
+    .select("id, file_name, storage_path, mime_type")
+    .eq("handover_point_id", item.handover_point_id)
+    .eq("vcr_item_id", item.id);
   const pdf = (atts || []).find((a: any) =>
-    /pdf/i.test(a.file_type || "") || /\.pdf$/i.test(a.file_name || ""),
+    /pdf/i.test(a.mime_type || "") || /\.pdf$/i.test(a.file_name || ""),
   );
   if (!pdf) {
     return [
@@ -112,17 +110,16 @@ async function ivanHempReader(sb: any, item: any, lovableKey: string): Promise<F
     ];
   }
 
-  // Public URL for source links (best effort — bucket policy may force signed URL)
-  const { data: pub } = sb.storage.from("p2a-attachments").getPublicUrl(pdf.file_path);
-  const sourceHref = pub?.publicUrl;
+  // Signed URL for source links (private bucket)
+  const { data: signed } = await sb.storage.from("vcr-evidence").createSignedUrl(pdf.storage_path, 60 * 60);
+  const sourceHref = signed?.signedUrl;
 
   // Download bytes to send to gateway
   let pdfBytesB64 = "";
   try {
-    const { data: blob } = await sb.storage.from("p2a-attachments").download(pdf.file_path);
+    const { data: blob } = await sb.storage.from("vcr-evidence").download(pdf.storage_path);
     if (blob) {
       const buf = new Uint8Array(await blob.arrayBuffer());
-      // base64
       let bin = "";
       for (let i = 0; i < buf.byteLength; i++) bin += String.fromCharCode(buf[i]);
       pdfBytesB64 = btoa(bin);
@@ -220,20 +217,18 @@ async function ivanHempReader(sb: any, item: any, lovableKey: string): Promise<F
 
 // ─── Selma: attachment revision pass (runs on EVERY item) ─────────────────
 async function selmaRevisionPass(sb: any, item: any): Promise<Fact[]> {
-  if (!item?.prerequisite_id) return [];
   const { data: atts } = await sb
-    .from("p2a_prerequisite_attachments")
+    .from("vcr_item_evidence")
     .select("id, file_name")
-    .eq("handover_prerequisite_id", item.prerequisite_id);
+    .eq("handover_point_id", item.handover_point_id)
+    .eq("vcr_item_id", item.id);
   if (!atts || atts.length === 0) {
-    // If the item declares required evidence, flag the absence
     const required = (item.supporting_evidence || "").trim();
     if (required) {
       return [{ label: "Required documents attached", value: "0", tone: "amber", confidence: "verified" }];
     }
     return [];
   }
-  // Best-effort: try matching file_name → dms_external_sync.document_number
   const facts: Fact[] = [];
   for (const a of atts) {
     const stem = (a.file_name || "").replace(/\.[^.]+$/, "");
