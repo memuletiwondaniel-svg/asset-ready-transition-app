@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { TaskDetailSheet } from './TaskDetailSheet';
 import { VCRApprovalBundleSheet } from './VCRApprovalBundleSheet';
 import { VCRPlanReviewLauncher } from './VCRPlanReviewLauncher';
+import { VCRItemTaskListSheet } from '@/components/widgets/VCRItemTaskListSheet';
 import type { VCRBundleTask } from '@/hooks/useUserVCRBundleTasks';
 import { useRecallVcrPlan } from '@/hooks/useRecallVcrPlan';
 import { ORAActivityTaskSheet } from './ORAActivityTaskSheet';
