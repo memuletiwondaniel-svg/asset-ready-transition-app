@@ -11,37 +11,8 @@ import type { VCRInsights } from '@/components/widgets/VCRItemDetailSheet';
  */
 const CACHE_READ_TIMEOUT_MS = 3_000;
 const COMPUTE_TIMEOUT_MS = 15_000;
-const TIMEOUT = Symbol('timeout');
 const SUPABASE_URL = 'https://kgnrjqjbonuvpxxfvfjq.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtnbnJqcWpib251dnB4eGZ2ZmpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMwODgwMjgsImV4cCI6MjA2ODY2NDAyOH0.tj1l_8eFDnHvAJKxEEHjQMid8l9vGG0mNIFlK6b6HKM';
-
-function withTimeout<T>(p: PromiseLike<T>, ms: number, fallback: T): Promise<T> {
-  return new Promise((resolve) => {
-    let done = false;
-    const t = setTimeout(() => {
-      if (!done) {
-        done = true;
-        resolve(fallback);
-      }
-    }, ms);
-    Promise.resolve(p).then(
-      (v) => {
-        if (!done) {
-          done = true;
-          clearTimeout(t);
-          resolve(v);
-        }
-      },
-      () => {
-        if (!done) {
-          done = true;
-          clearTimeout(t);
-          resolve(fallback);
-        }
-      },
-    );
-  });
-}
 
 type CacheReadResult =
   | { status: 'hit'; payload: VCRInsights }
