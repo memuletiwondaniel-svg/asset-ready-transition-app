@@ -609,22 +609,21 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   }, [requiredEvidenceText]);
   const defaultEvidenceType = evidenceTypeOptions[0] || 'Document';
 
-  // ── Evidence query ─────────────────────────────────────────
-  const evidenceQueryKey = ['vcr-item-evidence', vcrId, item?.id];
+  // ── Evidence query (p2a_vcr_evidence keyed by vcr_prerequisite_id) ─
+  const evidenceQueryKey = ['vcr-item-evidence-v2', item?.prerequisite_id];
   const { data: evidence = [] } = useQuery({
     queryKey: evidenceQueryKey,
     queryFn: async (): Promise<EvidenceRow[]> => {
-      if (!item?.id || !vcrId) return [];
+      if (!item?.prerequisite_id) return [];
       const { data, error } = await supabase
-        .from('vcr_item_evidence')
-        .select('id, file_name, file_size, mime_type, storage_path, evidence_type, uploaded_by, created_at')
-        .eq('handover_point_id', vcrId)
-        .eq('vcr_item_id', item.id)
+        .from('p2a_vcr_evidence')
+        .select('id, file_name, file_size, file_type, file_path, evidence_type, uploaded_by, created_at')
+        .eq('vcr_prerequisite_id', item.prerequisite_id)
         .order('created_at', { ascending: true });
       if (error) throw error;
-      return (data || []) as EvidenceRow[];
+      return ((data || []) as unknown) as EvidenceRow[];
     },
-    enabled: open && !!item?.id && !!vcrId,
+    enabled: open && !!item?.prerequisite_id,
   });
 
   // ── Comments query ─────────────────────────────────────────
