@@ -12,6 +12,8 @@ import type { VCRInsights } from '@/components/widgets/VCRItemDetailSheet';
 const CACHE_READ_TIMEOUT_MS = 3_000;
 const COMPUTE_TIMEOUT_MS = 15_000;
 const TIMEOUT = Symbol('timeout');
+const SUPABASE_URL = 'https://kgnrjqjbonuvpxxfvfjq.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtnbnJqcWpib251dnB4eGZ2ZmpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMwODgwMjgsImV4cCI6MjA2ODY2NDAyOH0.tj1l_8eFDnHvAJKxEEHjQMid8l9vGG0mNIFlK6b6HKM';
 
 function withTimeout<T>(p: PromiseLike<T>, ms: number, fallback: T): Promise<T> {
   return new Promise((resolve) => {
@@ -78,19 +80,34 @@ async function readCachedInsights(vcrId: string, vcrItemId: string): Promise<Cac
 }
 
 async function invokeComputeOnce(vcrId: string, vcrItemId: string, force = false) {
-  type InvokeResult = Awaited<ReturnType<typeof supabase.functions.invoke>>;
-  const result = await withTimeout<InvokeResult | typeof TIMEOUT>(
-    supabase.functions.invoke('compute-vcr-insights', {
-      body: { vcr_id: vcrId, vcr_item_id: vcrItemId, force },
-    }),
-    COMPUTE_TIMEOUT_MS,
-    TIMEOUT,
-  );
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  if (!token) throw new Error('Not authenticated');
 
-  if (result === TIMEOUT) throw new Error('Readiness check timed out');
-  const { data, error } = result as Awaited<ReturnType<typeof supabase.functions.invoke>>;
-  if (error) throw error;
-  return data;
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), COMPUTE_TIMEOUT_MS);
+  try {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/compute-vcr-insights`, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: SUPABASE_PUBLISHABLE_KEY,
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ vcr_id: vcrId, vcr_item_id: vcrItemId, force }),
+    });
+    const payload = await response.json().catch(() => null);
+    if (!response.ok) throw new Error(payload?.error || 'Readiness check failed');
+    return payload;
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('Readiness check timed out');
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timer);
+  }
 }
 
 export function useVCRItemInsights(vcrId: string | undefined, vcrItemId: string | undefined) {
