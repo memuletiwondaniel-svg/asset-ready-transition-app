@@ -150,6 +150,15 @@ type EvidenceRow = {
   evidence_type: string | null;
   uploaded_by: string | null;
   created_at: string;
+  // Provenance — manual uploads default to source='manual', confirmed=true.
+  // Assai-fetched rows are inserted with source='assai', confirmed=false until
+  // the delivering party confirms them as evidence-of-record.
+  source: 'manual' | 'assai' | null;
+  assai_doc_no: string | null;
+  assai_rev: string | null;
+  confirmed: boolean | null;
+  confirmed_by: string | null;
+  confirmed_at: string | null;
 };
 type CommentRow = {
   id: string;
@@ -627,7 +636,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
       if (!item?.prerequisite_id) return [];
       const { data, error } = await supabase
         .from('p2a_vcr_evidence')
-        .select('id, file_name, file_size, file_type, file_path, evidence_type, uploaded_by, created_at')
+        .select('id, file_name, file_size, file_type, file_path, evidence_type, uploaded_by, created_at, source, assai_doc_no, assai_rev, confirmed, confirmed_by, confirmed_at')
         .eq('vcr_prerequisite_id', item.prerequisite_id)
         .order('created_at', { ascending: true });
       if (error) throw error;
@@ -750,6 +759,45 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
     onSuccess: () => queryClient.invalidateQueries({ queryKey: evidenceQueryKey }),
     onError: (e: any) => toast({ title: 'Delete failed', description: e.message, variant: 'destructive' }),
   });
+
+  // ── Selma → Assai fetch (doc-number-first). Invokes the edge function which
+  //    downloads the binary, uploads to storage, and inserts a provenance-tagged
+  //    evidence row. Idempotent on (prereq, doc_no, rev); failures are honest.
+  const fetchFromAssai = useMutation({
+    mutationFn: async () => {
+      if (!item?.prerequisite_id) throw new Error('No prerequisite linked');
+      const { data, error } = await supabase.functions.invoke('selma-fetch-assai-evidence', {
+        body: { vcr_prerequisite_id: item.prerequisite_id },
+      });
+      if (error) throw error;
+      if (data && data.ok === false) throw new Error(data.reason || 'Fetch failed');
+      return data as { ok: true; cached?: boolean; assai_doc_no: string; assai_rev: string | null };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: evidenceQueryKey });
+      toast({
+        title: data?.cached ? 'Already fetched' : 'Fetched from Assai',
+        description: `${data?.assai_doc_no}${data?.assai_rev ? ` rev ${data.assai_rev}` : ''} — confirm it as your submission.`,
+      });
+    },
+    onError: (e: any) =>
+      toast({ title: 'Assai fetch failed', description: e.message, variant: 'destructive' }),
+  });
+
+  // ── Delivering party confirms an Assai-sourced row as evidence-of-record.
+  const confirmEvidence = useMutation({
+    mutationFn: async (row: EvidenceRow) => {
+      if (!user?.id) throw new Error('Not authenticated');
+      const { error } = await supabase
+        .from('p2a_vcr_evidence')
+        .update({ confirmed: true, confirmed_by: user.id, confirmed_at: new Date().toISOString() })
+        .eq('id', row.id);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: evidenceQueryKey }),
+    onError: (e: any) => toast({ title: 'Confirm failed', description: e.message, variant: 'destructive' }),
+  });
+
 
 
   const insertComment = useMutation({
@@ -954,6 +1002,44 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                   Evidence
                 </SectionLabel>
 
+                {/* Selma → Assai doc-number-first fetch.
+                    Shown to delivering when the requirement names a controlled
+                    document and no Assai-sourced row exists yet. Auto-fetched
+                    rows are advisory until the delivering party confirms them. */}
+                {(() => {
+                  const assaiDocNo: string | null = (prereqDetail as any)?.assai_doc_no || null;
+                  const assaiRev: string | null = (prereqDetail as any)?.assai_rev || null;
+                  const hasAssaiRow = evidence.some((e) => e.source === 'assai' && e.assai_doc_no === assaiDocNo);
+                  if (!assaiDocNo || viewer !== 'delivering' || hasAssaiRow) return null;
+                  return (
+                    <div className="rounded-lg border border-blue-200 dark:border-blue-900 bg-blue-50/60 dark:bg-blue-950/20 px-3 py-2.5 mb-2 flex items-start gap-3">
+                      <ExternalLink className="h-4 w-4 text-blue-700 dark:text-blue-300 mt-0.5 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[12px] font-medium text-blue-900 dark:text-blue-100">
+                          Selma can fetch this from Assai
+                        </div>
+                        <div className="text-[11px] text-blue-800/80 dark:text-blue-200/80 truncate">
+                          {assaiDocNo}{assaiRev ? ` · rev ${assaiRev}` : ''}
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-[11px]"
+                        disabled={fetchFromAssai.isPending}
+                        onClick={() => fetchFromAssai.mutate()}
+                      >
+                        {fetchFromAssai.isPending ? (
+                          <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> Fetching…</>
+                        ) : (
+                          'Fetch from Assai'
+                        )}
+                      </Button>
+                    </div>
+                  );
+                })()}
+
+
                 {evidence.length === 0 ? (
                   viewer !== 'delivering' ? (
                     <p className="text-xs text-muted-foreground italic">No evidence submitted yet.</p>
@@ -1047,6 +1133,36 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                             <span className="text-[11px] text-muted-foreground">
                               {fmtBytes(f.file_size || 0)} · {format(new Date(f.created_at), 'd MMM')}
                             </span>
+                            {f.source === 'assai' && (
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] font-normal border-blue-300 text-blue-700 bg-blue-50 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900"
+                                title={`Assai · ${f.assai_doc_no || ''}${f.assai_rev ? ` rev ${f.assai_rev}` : ''}`}
+                              >
+                                Assai · {f.assai_doc_no}{f.assai_rev ? ` rev ${f.assai_rev}` : ''}
+                              </Badge>
+                            )}
+                            {f.source === 'assai' && !f.confirmed && viewer !== 'delivering' && (
+                              <Badge variant="outline" className={cn('text-[10px] font-normal', pillToneClass.amber)}>
+                                Pending delivering confirmation
+                              </Badge>
+                            )}
+                            {f.source === 'assai' && f.confirmed && (
+                              <Badge variant="outline" className={cn('text-[10px] font-normal', pillToneClass.green)}>
+                                Confirmed as submission
+                              </Badge>
+                            )}
+                            {f.source === 'assai' && !f.confirmed && viewer === 'delivering' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-6 px-2 text-[10px]"
+                                disabled={confirmEvidence.isPending}
+                                onClick={() => confirmEvidence.mutate(f)}
+                              >
+                                Confirm as submission
+                              </Button>
+                            )}
                           </div>
                         </div>
                         {viewer !== 'delivering' ? (
