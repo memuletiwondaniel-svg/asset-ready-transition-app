@@ -15092,6 +15092,26 @@ export type Database = {
         Args: { _role_id: string }
         Returns: string[]
       }
+      get_my_vcr_item_tasks: {
+        Args: never
+        Returns: {
+          category_code: string
+          category_name: string
+          display_order: number
+          handover_point_id: string
+          prerequisite_id: string
+          project_code: string
+          project_id: string
+          project_title: string
+          role: string
+          status: string
+          topic: string
+          vcr_code: string
+          vcr_item: string
+          vcr_item_id: string
+          vcr_name: string
+        }[]
+      }
       get_public_profile_info: {
         Args: { target_user_id: string }
         Returns: {
