@@ -533,6 +533,72 @@ export function useUnifiedTasks(userId: string) {
 
     });
 
+    // ── VCR Item tasks (delivering + approving) ────────────────────────────
+    // Aggregate per-project so the task list never explodes; clicking the card
+    // opens VCRItemTaskListSheet → VCRItemDetailSheet (single source of truth).
+    {
+      const groups = new Map<string, {
+        role: 'delivering' | 'approving';
+        projectId: string;
+        projectCode: string | null;
+        projectTitle: string | null;
+        rows: typeof vcrItemTasks;
+      }>();
+      (vcrItemTasks || []).forEach((r: any) => {
+        const k = `${r.role}::${r.project_id}`;
+        if (!groups.has(k)) {
+          groups.set(k, {
+            role: r.role,
+            projectId: r.project_id,
+            projectCode: r.project_code,
+            projectTitle: r.project_title,
+            rows: [],
+          });
+        }
+        (groups.get(k)!.rows as any[]).push(r);
+      });
+      groups.forEach((g) => {
+        const isApproving = g.role === 'approving';
+        const projectLabel = normalizeProjectCode(g.projectCode || undefined) || g.projectTitle || 'Project';
+        const createdAt = new Date().toISOString();
+        const due = addBusinessDays(createdAt, slaDaysFor('approval_review'));
+        const sp = computeSmartPriority({
+          category: 'vcr',
+          categoryLabel: isApproving ? 'VCR Item Approval' : 'VCR Items',
+          dueDate: isApproving ? due : undefined,
+          createdAt,
+        });
+        const count = g.rows!.length;
+        tasks.push({
+          id: `vcr-items-${g.role}-${g.projectId}`,
+          category: 'vcr',
+          categoryLabel: isApproving ? 'VCR Item Approval' : 'VCR Items',
+          categoryColor: 'bg-teal-500/10 text-teal-600 border-teal-500/20',
+          icon: isApproving ? ClipboardCheck : ClipboardList,
+          title: `${isApproving ? 'Approve' : 'Complete'} VCR items — ${projectLabel}`,
+          project: normalizeProjectCode(g.projectCode || undefined) || undefined,
+          projectId: g.projectId,
+          status: isApproving
+            ? `${count} awaiting your review`
+            : `${count} ${count === 1 ? 'item' : 'items'} to complete`,
+          dueDate: isApproving ? due : undefined,
+          createdAt,
+          priority: smartPriorityToLegacy(sp.level),
+          smartPriority: sp,
+          isNew: false,
+          kanbanColumn: isApproving ? 'todo' : 'in_progress',
+          vcrItemTask: {
+            role: g.role,
+            projectId: g.projectId,
+            projectLabel,
+            rows: g.rows as any,
+          },
+        });
+      });
+    }
+
+
+
     const openOWL = (owlItems || []).filter(i => i.status === 'OPEN' || i.status === 'IN_PROGRESS');
     openOWL.forEach(item => {
       const projectName = typeof item.project === 'object' && item.project !== null
