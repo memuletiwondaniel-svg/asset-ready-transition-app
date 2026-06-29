@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import {
   Sheet,
   SheetContent,
@@ -6,48 +6,35 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Textarea } from '@/components/ui/textarea';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import { Input } from '@/components/ui/input';
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
 import {
   FileText,
-  MessageSquare,
-  Calendar,
-  CheckCircle2,
-  Clock,
-  XCircle,
-  AlertTriangle,
-  FileCheck,
-  Brain,
-  TrendingUp,
-  ShieldAlert,
+  Eye,
   X,
-  Plus,
-  Search,
-  UserPlus,
   ChevronDown,
-  Info,
-  ArrowRight,
+  CheckCircle2,
+  AlertTriangle,
+  Loader2,
+  ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -55,20 +42,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { useParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { Progress } from '@/components/ui/progress';
-import { useVCRItemDeliveringParties, useProjectTeamSearch } from '@/hooks/useVCRItemDeliveringParties';
-import { useVCRChecklistIntelligence } from '@/hooks/useVCRChecklistIntelligence';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { useAuth } from '@/components/enhanced-auth/AuthProvider';
+import { useVCRItemDeliveringParties } from '@/hooks/useVCRItemDeliveringParties';
 
+// ─── Public contract ─────────────────────────────────────────────────
 export interface VCRItemBasic {
   id: string;
   vcr_item: string;
@@ -80,23 +57,31 @@ export interface VCRItemBasic {
   itemCode: string;
 }
 
+// AI-1 Insights contract (rendered, not computed)
+export interface VCRInsightFact {
+  label: string;
+  value: string;
+  tone?: 'neutral' | 'amber' | 'red';
+  confidence?: 'verified' | 'ai_read' | 'unavailable';
+  sourceHref?: string;
+}
+export interface VCRInsights {
+  state: 'ready' | 'pending' | 'unavailable';
+  severity?: 'green' | 'amber' | 'red';
+  headline?: string;
+  facts?: VCRInsightFact[];
+  delivering_action?: string;
+  approver_check?: string;
+  sources?: { label: string; href: string }[];
+}
+
 interface VCRItemDetailSheetProps {
   item: VCRItemBasic | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   vcrId: string;
+  insights?: VCRInsights;
 }
-
-const STATUS_CONFIG: Record<string, { label: string; color: string; textColor: string; icon: React.ElementType }> = {
-  ACCEPTED: { label: 'Accepted', color: 'bg-emerald-50 border-emerald-200', textColor: 'text-emerald-600', icon: CheckCircle2 },
-  QUALIFICATION_APPROVED: { label: 'Qualified', color: 'bg-purple-50 border-purple-200', textColor: 'text-purple-600', icon: CheckCircle2 },
-  READY_FOR_REVIEW: { label: 'In Review', color: 'bg-blue-50 border-blue-200', textColor: 'text-blue-600', icon: Clock },
-  IN_PROGRESS: { label: 'In Progress', color: 'bg-amber-50 border-amber-200', textColor: 'text-amber-600', icon: Clock },
-  REJECTED: { label: 'Rejected', color: 'bg-red-50 border-red-200', textColor: 'text-red-600', icon: XCircle },
-  QUALIFICATION_REQUESTED: { label: 'Qualification Raised', color: 'bg-purple-50 border-purple-200', textColor: 'text-purple-500', icon: AlertTriangle },
-  NOT_STARTED: { label: 'Not Started', color: 'bg-muted border-border', textColor: 'text-muted-foreground', icon: FileCheck },
-  PENDING: { label: 'Pending', color: 'bg-muted border-border', textColor: 'text-muted-foreground', icon: FileCheck },
-};
 
 // ─── Helpers ────────────────────────────────────────────────────────
 const getAvatarUrl = (avatarPath: string | null | undefined) => {
@@ -104,264 +89,403 @@ const getAvatarUrl = (avatarPath: string | null | undefined) => {
   if (avatarPath.startsWith('http')) return avatarPath;
   return `https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/${avatarPath}`;
 };
-
 const getInitials = (name: string) =>
-  name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+  (name || '?').split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
 
-// ─── Member-management popover (anchored inside the panel) ──────────
-interface MemberManagePopoverProps {
-  trigger: React.ReactNode;
-  existingMembers: { user_id: string; full_name: string; avatar_url?: string | null; role_name?: string | null }[];
-  candidates: { user_id: string; full_name: string; avatar_url?: string | null; role_name?: string | null }[];
-  onAdd: (userId: string) => void;
-  onRemove?: (memberId: string) => void;
-  removeKey?: (m: any) => string;
-  emptyMessage?: string;
-}
-
-const MemberManagePopover: React.FC<MemberManagePopoverProps> = ({
-  trigger, existingMembers, candidates, onAdd, onRemove, removeKey, emptyMessage,
-}) => {
-  const [search, setSearch] = useState('');
-  const filtered = candidates.filter(c =>
-    !existingMembers.some(m => m.user_id === c.user_id) &&
-    (c.full_name?.toLowerCase().includes(search.toLowerCase()) ||
-     c.role_name?.toLowerCase().includes(search.toLowerCase()))
-  );
-
-  return (
-    <Popover>
-      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-      <PopoverContent
-        side="left"
-        align="start"
-        sideOffset={8}
-        collisionPadding={16}
-        className="w-72 p-2"
-      >
-        <div className="space-y-2">
-          {existingMembers.length > 0 && (
-            <div className="space-y-0.5 pb-2 border-b border-border/50">
-              <p className="text-[10px] uppercase tracking-wide text-muted-foreground px-1 pb-1">Current ({existingMembers.length})</p>
-              {existingMembers.map((m, i) => (
-                <div key={m.user_id + i} className="flex items-center gap-2 px-1.5 py-1 rounded hover:bg-muted/40">
-                  <Avatar className="w-6 h-6">
-                    <AvatarImage src={getAvatarUrl(m.avatar_url)} />
-                    <AvatarFallback className="text-[9px]">{getInitials(m.full_name)}</AvatarFallback>
-                  </Avatar>
-                  <span className="text-xs flex-1 truncate">{m.full_name}</span>
-                  {onRemove && removeKey && (
-                    <button
-                      onClick={() => onRemove(removeKey(m))}
-                      className="opacity-60 hover:opacity-100 hover:text-destructive transition"
-                      title={`Remove ${m.full_name}`}
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-          <div className="relative">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Add team member…"
-              className="h-8 pl-7 text-xs"
-            />
-          </div>
-          <ScrollArea className="max-h-48">
-            <div className="space-y-0.5">
-              {filtered.length === 0 ? (
-                <p className="text-[10px] text-muted-foreground text-center py-4 px-2 leading-relaxed">
-                  {emptyMessage || 'No team members assigned to this role yet — invite from Team Settings.'}
-                </p>
-              ) : (
-                filtered.map(m => (
-                  <button
-                    key={m.user_id}
-                    onClick={() => { onAdd(m.user_id); setSearch(''); }}
-                    className="w-full flex items-center gap-2 px-1.5 py-1.5 rounded-md hover:bg-muted/60 transition text-left"
-                  >
-                    <Avatar className="w-6 h-6">
-                      <AvatarImage src={getAvatarUrl(m.avatar_url)} />
-                      <AvatarFallback className="text-[9px]">{getInitials(m.full_name)}</AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-xs font-medium truncate">{m.full_name}</div>
-                      {m.role_name && (
-                        <div className="text-[10px] text-muted-foreground truncate">{m.role_name}</div>
-                      )}
-                    </div>
-                    <Plus className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                  </button>
-                ))
-              )}
-            </div>
-          </ScrollArea>
-        </div>
-      </PopoverContent>
-    </Popover>
-  );
+const fmtBytes = (b: number) => {
+  if (b < 1024) return `${b} B`;
+  if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`;
+  return `${(b / (1024 * 1024)).toFixed(1)} MB`;
 };
 
-// ─── Avatar stack with "+N" overflow + hover tooltip ────────────────
-const AvatarStack: React.FC<{
-  members: { user_id?: string; full_name: string; avatar_url?: string | null }[];
-}> = ({ members }) => {
-  if (members.length === 0) {
-    return (
-      <div className="w-7 h-7 rounded-full border border-dashed border-border bg-muted/30 flex items-center justify-center text-muted-foreground">
-        <UserPlus className="w-3 h-3" />
-      </div>
-    );
+// Status pill copy depends on viewer role
+const statusPill = (status: string, viewer: 'delivering' | 'approving' | 'observer') => {
+  if (viewer === 'approving' && status === 'READY_FOR_REVIEW') {
+    return { label: 'Awaiting your review', tone: 'amber' as const };
   }
-  const first = members[0];
-  const overflow = members.length - 1;
+  switch (status) {
+    case 'ACCEPTED':
+      return { label: 'Accepted', tone: 'green' as const };
+    case 'QUALIFICATION_APPROVED':
+      return { label: 'Qualified', tone: 'green' as const };
+    case 'READY_FOR_REVIEW':
+      return { label: 'Awaiting review', tone: 'amber' as const };
+    case 'IN_PROGRESS':
+      return { label: 'In progress', tone: 'amber' as const };
+    case 'QUALIFICATION_REQUESTED':
+      return { label: 'Qualification raised', tone: 'purple' as const };
+    case 'REJECTED':
+      return { label: 'Returned', tone: 'red' as const };
+    default:
+      return { label: 'Not started', tone: 'neutral' as const };
+  }
+};
+
+const pillToneClass: Record<string, string> = {
+  neutral: 'border-border text-muted-foreground bg-background',
+  amber: 'border-amber-300 text-amber-700 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-800',
+  green: 'border-emerald-300 text-emerald-700 bg-emerald-50 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-800',
+  red: 'border-red-300 text-red-700 bg-red-50 dark:bg-red-950/30 dark:text-red-300 dark:border-red-800',
+  purple: 'border-purple-300 text-purple-700 bg-purple-50 dark:bg-purple-950/30 dark:text-purple-300 dark:border-purple-800',
+};
+
+// ─── Local-only autosave stores (UI demo persistence) ──────────────
+type EvidenceFile = {
+  id: string;
+  name: string;
+  size: number;
+  uploaded_at: string;
+  type_label: string;
+};
+type ThreadEntry = {
+  id: string;
+  author: string;
+  role: string;
+  date: string;
+  text: string;
+  tag?: 'Accepted' | 'Returned' | 'Completed' | 'Qualification raised';
+};
+
+const evidenceKey = (id: string) => `vcr.item.${id}.evidence.v1`;
+const threadKey = (id: string) => `vcr.item.${id}.thread.v1`;
+
+const loadList = <T,>(key: string): T[] => {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T[]) : [];
+  } catch {
+    return [];
+  }
+};
+const saveList = <T,>(key: string, list: T[]) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(list));
+  } catch {
+    /* ignore quota */
+  }
+};
+
+// ─── Insights block ────────────────────────────────────────────────
+const InsightsBlock: React.FC<{
+  insights?: VCRInsights;
+  viewer: 'delivering' | 'approving' | 'observer';
+}> = ({ insights, viewer }) => {
+  const state = insights?.state ?? 'unavailable';
+
   return (
-    <TooltipProvider delayDuration={150}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className="flex items-center -space-x-1.5 cursor-pointer">
-            <Avatar className="w-7 h-7 ring-2 ring-background">
-              <AvatarImage src={getAvatarUrl(first.avatar_url)} />
-              <AvatarFallback className="text-[10px]">{getInitials(first.full_name)}</AvatarFallback>
-            </Avatar>
-            {overflow > 0 && (
-              <div className="w-7 h-7 rounded-full bg-muted ring-2 ring-background flex items-center justify-center text-[10px] font-medium text-muted-foreground">
-                +{overflow}
+    <section className="space-y-2">
+      <div className="flex items-center justify-between">
+        <h3 className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
+          Insights
+        </h3>
+        {state === 'ready' && (
+          <span className="text-[10px] text-muted-foreground">Live records · advisory</span>
+        )}
+      </div>
+
+      <div className="rounded-lg border border-l-4 border-amber-300/70 border-l-amber-400 bg-amber-50/40 dark:bg-amber-950/10 px-4 py-3 space-y-3">
+        {state === 'pending' && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            Readiness check running…
+          </div>
+        )}
+        {state === 'unavailable' && (
+          <p className="text-xs text-muted-foreground">
+            Readiness data not connected for this item yet.
+          </p>
+        )}
+        {state === 'ready' && (
+          <>
+            {insights?.headline && (
+              <p className="text-[13px] leading-relaxed text-foreground/90">
+                {insights.headline}
+              </p>
+            )}
+            {(insights?.facts?.length ?? 0) > 0 && (
+              <div className="divide-y divide-amber-200/60 dark:divide-amber-900/40">
+                {insights!.facts!.map((f, i) => {
+                  const toneClass =
+                    f.tone === 'red'
+                      ? 'text-red-700 dark:text-red-300'
+                      : f.tone === 'amber'
+                      ? 'text-amber-700 dark:text-amber-300'
+                      : 'text-foreground';
+                  const confTag =
+                    f.confidence === 'verified'
+                      ? { label: 'Verified', cls: 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-800' }
+                      : f.confidence === 'ai_read'
+                      ? { label: 'AI-read · confirm', cls: 'text-amber-700 bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-800' }
+                      : f.confidence === 'unavailable'
+                      ? { label: 'Unavailable', cls: 'text-muted-foreground bg-muted border-border' }
+                      : null;
+                  return (
+                    <div key={i} className="flex items-center justify-between gap-3 py-1.5">
+                      <span className="text-xs text-foreground/80">{f.label}</span>
+                      <div className="flex items-center gap-2">
+                        {confTag && (
+                          <span className={cn('text-[9px] px-1.5 py-0.5 rounded border', confTag.cls)}>
+                            {confTag.label}
+                          </span>
+                        )}
+                        {f.sourceHref && (
+                          <a href={f.sourceHref} target="_blank" rel="noreferrer" className="text-[10px] text-primary hover:underline inline-flex items-center gap-0.5">
+                            source <ExternalLink className="h-2.5 w-2.5" />
+                          </a>
+                        )}
+                        <span className={cn('text-xs', toneClass)}>{f.value}</span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
-          </div>
-        </TooltipTrigger>
-        <TooltipContent side="left" className="text-xs">
-          <ul className="space-y-0.5">
-            {members.map((m, i) => (
-              <li key={(m.user_id || '') + i}>{m.full_name}</li>
-            ))}
-          </ul>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+            {(insights?.sources?.length ?? 0) > 0 && (
+              <div className="flex flex-wrap gap-3 pt-1">
+                {insights!.sources!.map((s, i) => (
+                  <a
+                    key={i}
+                    href={s.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+                  >
+                    {s.label}
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                ))}
+              </div>
+            )}
+            {viewer === 'delivering' && insights?.delivering_action && (
+              <p className="text-[12px] text-amber-800 dark:text-amber-200 pt-1 border-t border-amber-200/60 dark:border-amber-900/40">
+                {insights.delivering_action}
+              </p>
+            )}
+            {viewer === 'approving' && insights?.approver_check && (
+              <p className="text-[12px] text-amber-800 dark:text-amber-200 pt-1 border-t border-amber-200/60 dark:border-amber-900/40">
+                {insights.approver_check}
+              </p>
+            )}
+          </>
+        )}
+      </div>
+    </section>
   );
 };
 
+// ─── Confirmation dialog (4 variants share this shell) ────────────
+type ConfirmKind = 'mark_complete' | 'raise_qualification' | 'accept' | 'return';
+
+const ConfirmDialog: React.FC<{
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  kind: ConfirmKind | null;
+  itemTitle: string;
+  counterparty: string;
+  insights?: VCRInsights;
+  busy: boolean;
+  onConfirm: (note: string) => void;
+}> = ({ open, onOpenChange, kind, itemTitle, counterparty, insights, busy, onConfirm }) => {
+  const [note, setNote] = useState('');
+  useEffect(() => {
+    if (open) setNote('');
+  }, [open, kind]);
+
+  if (!kind) return null;
+
+  const advisory =
+    insights?.state === 'ready' && insights.severity && insights.severity !== 'green'
+      ? insights.headline
+      : null;
+
+  const cfg = {
+    accept: {
+      title: 'Accept this item?',
+      body: (
+        <>
+          You're accepting <strong>{itemTitle}</strong> as ready for handover. {counterparty} will be notified and the item moves out of review.
+        </>
+      ),
+      noteLabel: 'Acceptance note',
+      noteRequired: false,
+      placeholder: 'Add a note (optional)…',
+      actionLabel: 'Accept item',
+      actionClass: 'bg-emerald-600 hover:bg-emerald-700 text-white',
+      advisoryTone: 'amber' as const,
+      advisoryWhenGreen: false,
+    },
+    return: {
+      title: 'Return to delivering party?',
+      body: (
+        <>
+          Sends <strong>{itemTitle}</strong> back to {counterparty} to complete. It leaves your review queue until they re-submit.
+        </>
+      ),
+      noteLabel: 'What needs to change?',
+      noteRequired: true,
+      placeholder: 'What should they address?',
+      actionLabel: 'Return item',
+      actionClass: 'bg-foreground text-background hover:bg-foreground/90',
+      advisoryTone: 'info' as const,
+      advisoryWhenGreen: true,
+    },
+    mark_complete: {
+      title: 'Mark this item complete?',
+      body: (
+        <>
+          Submits <strong>{itemTitle}</strong> to {counterparty} for acceptance. They'll review the evidence and either accept it or return it with feedback.
+        </>
+      ),
+      noteLabel: 'Submission note',
+      noteRequired: false,
+      placeholder: 'Add a note for the approving party (optional)…',
+      actionLabel: 'Mark as complete',
+      actionClass: 'bg-emerald-600 hover:bg-emerald-700 text-white',
+      advisoryTone: 'amber' as const,
+      advisoryWhenGreen: false,
+    },
+    raise_qualification: {
+      title: 'Raise a qualification?',
+      body: (
+        <>
+          Flags <strong>{itemTitle}</strong> as carrying a qualification — i.e. it cannot be fully closed at handover, and a documented exception will be carried forward for the approving party to acknowledge.
+        </>
+      ),
+      noteLabel: 'Qualification reason',
+      noteRequired: true,
+      placeholder: 'Describe the residual gap and the agreed mitigation…',
+      actionLabel: 'Raise qualification',
+      actionClass: 'bg-foreground text-background hover:bg-foreground/90',
+      advisoryTone: 'amber' as const,
+      advisoryWhenGreen: false,
+    },
+  }[kind];
+
+  const canConfirm = !busy && (!cfg.noteRequired || note.trim().length > 0);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{cfg.title}</DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground pt-1 leading-relaxed">
+            {cfg.body}
+          </DialogDescription>
+        </DialogHeader>
+
+        {kind === 'return' && (
+          <div className="rounded-md bg-muted/60 px-3 py-2 text-xs text-muted-foreground">
+            Their attached evidence is kept. Your reason goes to them so they know what to fix.
+          </div>
+        )}
+
+        {advisory && cfg.advisoryTone === 'amber' && (
+          <div className="rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 px-3 py-2 text-xs text-amber-800 dark:text-amber-200 leading-relaxed">
+            {advisory}
+          </div>
+        )}
+
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-medium">{cfg.noteLabel}</label>
+            <span className={cn('text-[10px]', cfg.noteRequired ? 'text-red-600' : 'text-muted-foreground')}>
+              {cfg.noteRequired ? 'Required' : 'Optional'}
+            </span>
+          </div>
+          <Textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder={cfg.placeholder}
+            rows={3}
+            className={cn(cfg.noteRequired && note.trim().length === 0 && 'border-red-300 focus-visible:ring-red-300')}
+          />
+          <p className="text-[10px] text-muted-foreground">Added to the comment thread.</p>
+        </div>
+
+        <DialogFooter className="!justify-between sm:!justify-between">
+          <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} disabled={busy}>
+            Cancel
+          </Button>
+          <Button
+            size="sm"
+            disabled={!canConfirm}
+            onClick={() => onConfirm(note.trim())}
+            className={cfg.actionClass}
+          >
+            {busy ? 'Saving…' : cfg.actionLabel}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// ─── Party unit (avatar · name · role · "delivering"/"approving") ──
+const PartyUnit: React.FC<{
+  side: 'delivering' | 'approving';
+  isYou: boolean;
+  name: string;
+  role: string;
+  avatarUrl?: string | null;
+}> = ({ side, isYou, name, role, avatarUrl }) => (
+  <div className="flex items-center gap-2 min-w-0">
+    <Avatar className="h-7 w-7 shrink-0">
+      <AvatarImage src={getAvatarUrl(avatarUrl)} />
+      <AvatarFallback className="text-[10px]">{getInitials(name)}</AvatarFallback>
+    </Avatar>
+    <div className="min-w-0 text-xs leading-tight">
+      <span className={cn('truncate', isYou && 'font-semibold')}>{isYou ? 'You' : name}</span>
+      <span className="text-muted-foreground"> · {side}</span>
+      <span className="text-muted-foreground"> · {role}</span>
+    </div>
+  </div>
+);
+
+// ─── Section label primitive ──────────────────────────────────────
+const SectionLabel: React.FC<{ children: React.ReactNode; right?: React.ReactNode }> = ({
+  children,
+  right,
+}) => (
+  <div className="flex items-center justify-between mb-2">
+    <h3 className="text-[10px] uppercase text-muted-foreground font-medium">{children}</h3>
+    {right && <div className="text-[10px] text-muted-foreground">{right}</div>}
+  </div>
+);
+
+// ─── Main component ───────────────────────────────────────────────
 export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   item,
   open,
   onOpenChange,
   vcrId,
+  insights,
 }) => {
   const { id: projectId } = useParams<{ id: string }>();
-  const [showWarningDialog, setShowWarningDialog] = useState(false);
-  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
-  const [guidanceOpen, setGuidanceOpen] = useState(false);
-
-  const { members: deliveringParties, addMember, removeMember } = useVCRItemDeliveringParties({ vcrItemId: item?.id, handoverPointId: vcrId });
-  const { data: teamMembers = [] } = useProjectTeamSearch(projectId);
-
-  const categoryForIntelligence = item?.category_name?.toLowerCase().includes('training') ? 'training'
-    : item?.category_name?.toLowerCase().includes('procedure') ? 'procedures'
-    : item?.category_name?.toLowerCase().includes('document') ? 'documentation'
-    : item?.category_name?.toLowerCase().includes('register') ? 'registers'
-    : undefined;
-
-  const { data: intelligence } = useVCRChecklistIntelligence(vcrId, projectId, categoryForIntelligence);
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const updateStatus = useMutation({
-    mutationFn: async ({ prerequisiteId, status }: { prerequisiteId: string; status: string }) => {
-      const updateData: any = { status };
-      if (status === 'READY_FOR_REVIEW') updateData.submitted_at = new Date().toISOString();
-      else if (status === 'ACCEPTED' || status === 'REJECTED') updateData.reviewed_at = new Date().toISOString();
-      const { error } = await supabase
-        .from('p2a_vcr_prerequisites')
-        .update(updateData)
-        .eq('id', prerequisiteId);
-      if (error) throw error;
-      return status;
-    },
-    onSuccess: async (completedStatus) => {
-      queryClient.invalidateQueries({ queryKey: ['vcr-prereq-detail'] });
-      queryClient.invalidateQueries({ queryKey: ['vcr-progress-data'] });
-      queryClient.invalidateQueries({ queryKey: ['vcr-prerequisites'] });
-      queryClient.invalidateQueries({ queryKey: ['vcr-category-items'] });
-      toast({ title: 'Status updated' });
-      onOpenChange(false);
-
-      if (completedStatus === 'ACCEPTED' || completedStatus === 'QUALIFICATION_APPROVED') {
-        try {
-          const { checkVCRFinalizationReadiness } = await import('./hooks/useVCRDisciplineAssurance');
-          await checkVCRFinalizationReadiness(vcrId, queryClient);
-        } catch (e) {
-          console.warn('[VCR Item] Finalization check failed:', e);
-        }
-      }
-    },
-    onError: (error) => {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
-    },
+  const { members: deliveringParties } = useVCRItemDeliveringParties({
+    vcrItemId: item?.id,
+    handoverPointId: vcrId,
   });
 
-  const handleStatusChange = (newStatus: string) => {
-    if (!item?.prerequisite_id) {
-      toast({ title: 'Error', description: 'No prerequisite linked to this item', variant: 'destructive' });
-      return;
-    }
-    if ((newStatus === 'ACCEPTED' || newStatus === 'READY_FOR_REVIEW') && intelligence && intelligence.total > 0 && intelligence.completed < intelligence.total) {
-      setPendingStatus(newStatus);
-      setShowWarningDialog(true);
-      return;
-    }
-    updateStatus.mutate({ prerequisiteId: item.prerequisite_id, status: newStatus });
-  };
-
-  const confirmStatusChange = () => {
-    if (!item?.prerequisite_id || !pendingStatus) return;
-    updateStatus.mutate({ prerequisiteId: item.prerequisite_id, status: pendingStatus });
-    setShowWarningDialog(false);
-    setPendingStatus(null);
-  };
-
-  const { data: prereqDetail } = useQuery({
-    queryKey: ['vcr-prereq-detail', item?.prerequisite_id],
-    queryFn: async () => {
-      if (!item?.prerequisite_id) return null;
-      const { data, error } = await supabase
-        .from('p2a_vcr_prerequisites')
-        .select('*')
-        .eq('id', item.prerequisite_id)
-        .maybeSingle();
-      if (error) return null;
-      return data;
-    },
-    enabled: open && !!item?.prerequisite_id,
-  });
-
+  // ─── Load authored item + parties ──────────────────────────────
   const { data: vcrItemDetail } = useQuery({
-    queryKey: ['vcr-item-detail', item?.id, projectId],
+    queryKey: ['vcr-item-detail-v2', item?.id, projectId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      if (!item) return null;
+      const { data } = await supabase
         .from('vcr_items')
         .select(`
           *,
-          delivering_party:roles!vcr_items_delivering_party_role_id_fkey(id, name),
-          vcr_item_categories!vcr_items_category_id_fkey(name, code)
+          delivering_party:roles!vcr_items_delivering_party_role_id_fkey(id, name)
         `)
-        .eq('id', item!.id)
+        .eq('id', item.id)
         .maybeSingle();
-      if (error) return null;
 
-      const allRoleIds: string[] = [];
-      const delRoleId = (data as any)?.delivering_party_role_id;
-      if (delRoleId) allRoleIds.push(delRoleId);
       const appRoleIds: string[] = (data as any)?.approving_party_role_ids || [];
-      allRoleIds.push(...appRoleIds);
-
-      let approvingRoles: { id: string; name: string; is_b2b?: boolean }[] = [];
+      let approvingRoles: { id: string; name: string }[] = [];
       if (appRoleIds.length > 0) {
         const { data: roles } = await supabase
           .from('roles')
@@ -370,460 +494,571 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
         approvingRoles = (roles as any[]) || [];
       }
 
-      let teamMembers: { user_id: string; full_name: string; avatar_url: string | null; role_id: string; role_name: string }[] = [];
-      if (allRoleIds.length > 0) {
-        let candidateProfiles: any[] = [];
-
-        if (projectId) {
-          const { data: members } = await supabase
-            .from('project_team_members')
-            .select('user_id')
-            .eq('project_id', projectId);
-
-          if (members && members.length > 0) {
-            const userIds = members.map((m: any) => m.user_id);
-            const { data: profiles } = await supabase
-              .from('profiles')
-              .select('user_id, full_name, avatar_url, role')
-              .in('user_id', userIds)
-              .in('role', allRoleIds)
-              .eq('is_active', true);
-            candidateProfiles = profiles || [];
-          }
-        }
-
-        const coveredRoleIds = new Set(candidateProfiles.map((p: any) => p.role));
-        const uncoveredRoleIds = allRoleIds.filter(rid => !coveredRoleIds.has(rid));
-
-        if (uncoveredRoleIds.length > 0) {
-          const { data: ta2Profiles } = await supabase
+      let approvingMember: { user_id: string; full_name: string; avatar_url: string | null; role_name: string } | null = null;
+      if (projectId && appRoleIds.length > 0) {
+        const { data: members } = await supabase
+          .from('project_team_members')
+          .select('user_id')
+          .eq('project_id', projectId);
+        const userIds = (members || []).map((m: any) => m.user_id);
+        if (userIds.length > 0) {
+          const { data: profiles } = await supabase
             .from('profiles')
-            .select('user_id, full_name, avatar_url, role, position')
-            .in('role', uncoveredRoleIds)
-            .eq('is_active', true);
-
-          if (ta2Profiles) {
-            const projectTA2s = ta2Profiles.filter((p: any) => {
-              const pos = (p.position || '').toLowerCase();
-              if (pos.includes('- asset') || pos.includes('asset')) return false;
-              return true;
-            });
-            candidateProfiles.push(...projectTA2s);
+            .select('user_id, full_name, avatar_url, role')
+            .in('user_id', userIds)
+            .in('role', appRoleIds)
+            .eq('is_active', true)
+            .limit(1);
+          const p = (profiles || [])[0];
+          if (p) {
+            approvingMember = {
+              user_id: p.user_id,
+              full_name: p.full_name,
+              avatar_url: p.avatar_url,
+              role_name: approvingRoles.find((r) => r.id === (p as any).role)?.name || 'Approving',
+            };
           }
-        }
-
-        if (candidateProfiles.length > 0) {
-          const matchedRoleIds = [...new Set(candidateProfiles.map((p: any) => p.role).filter(Boolean))];
-          let roleMap: Record<string, string> = {};
-          if (matchedRoleIds.length > 0) {
-            const { data: roleNames } = await supabase
-              .from('roles')
-              .select('id, name')
-              .in('id', matchedRoleIds);
-            roleNames?.forEach((r: any) => { roleMap[r.id] = r.name; });
-          }
-          teamMembers = candidateProfiles.map((p: any) => ({
-            user_id: p.user_id,
-            full_name: p.full_name,
-            avatar_url: p.avatar_url,
-            role_id: p.role,
-            role_name: roleMap[p.role] || '',
-          }));
         }
       }
 
-      return { ...(data as any), approving_roles: approvingRoles, team_members: teamMembers };
+      return { ...(data as any), approving_roles: approvingRoles, approving_member: approvingMember };
     },
-    enabled: open && !!item?.id,
+    enabled: open && !!item,
   });
+
+  const { data: prereqDetail } = useQuery({
+    queryKey: ['vcr-prereq-detail', item?.prerequisite_id],
+    queryFn: async () => {
+      if (!item?.prerequisite_id) return null;
+      const { data } = await supabase
+        .from('p2a_vcr_prerequisites')
+        .select('*')
+        .eq('id', item.prerequisite_id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: open && !!item?.prerequisite_id,
+  });
+
+  // ─── Status mutation (reuses existing prereq backing) ──────────
+  const updateStatus = useMutation({
+    mutationFn: async ({ status }: { status: string }) => {
+      if (!item?.prerequisite_id) throw new Error('No prerequisite linked to this item');
+      const updateData: any = { status };
+      if (status === 'READY_FOR_REVIEW') updateData.submitted_at = new Date().toISOString();
+      else if (status === 'ACCEPTED' || status === 'REJECTED') updateData.reviewed_at = new Date().toISOString();
+      const { error } = await supabase
+        .from('p2a_vcr_prerequisites')
+        .update(updateData)
+        .eq('id', item.prerequisite_id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vcr-prereq-detail'] });
+      queryClient.invalidateQueries({ queryKey: ['vcr-progress-data'] });
+      queryClient.invalidateQueries({ queryKey: ['vcr-prerequisites'] });
+      queryClient.invalidateQueries({ queryKey: ['vcr-category-items'] });
+    },
+    onError: (e: any) =>
+      toast({ title: 'Error', description: e.message, variant: 'destructive' }),
+  });
+
+  // ─── Viewer role resolution ────────────────────────────────────
+  const deliveringMember = deliveringParties[0] || null;
+  const approvingMember = vcrItemDetail?.approving_member || null;
+
+  const viewer: 'delivering' | 'approving' | 'observer' = useMemo(() => {
+    if (!user?.id) return 'observer';
+    if (deliveringParties.some((m) => m.user_id === user.id)) return 'delivering';
+    if (approvingMember?.user_id === user.id) return 'approving';
+    // Default to delivering when the user could plausibly act as one (no approver match)
+    return deliveringMember ? 'observer' : 'delivering';
+  }, [user?.id, deliveringParties, approvingMember, deliveringMember]);
+
+  // ─── Local autosave: evidence + comments thread ────────────────
+  const [evidence, setEvidence] = useState<EvidenceFile[]>([]);
+  const [thread, setThread] = useState<ThreadEntry[]>([]);
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [composerText, setComposerText] = useState('');
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Required-evidence labels → AI-suggested dropdown options
+  const requiredEvidenceText: string = vcrItemDetail?.supporting_evidence || '';
+  const evidenceTypeOptions = useMemo(() => {
+    const parsed = requiredEvidenceText
+      .split(/[,;\n]/)
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .map((s) => s.charAt(0).toUpperCase() + s.slice(1));
+    const opts = parsed.length > 0 ? parsed : ['Document'];
+    return [...opts, 'Other / custom'];
+  }, [requiredEvidenceText]);
+
+  useEffect(() => {
+    if (!item?.id) return;
+    setEvidence(loadList<EvidenceFile>(evidenceKey(item.id)));
+    const t = loadList<ThreadEntry>(threadKey(item.id));
+    // Seed with stored prereq comments on first open
+    if (t.length === 0 && prereqDetail?.comments) {
+      const seeded: ThreadEntry[] = [
+        {
+          id: 'seed',
+          author: 'System',
+          role: 'Imported',
+          date: prereqDetail.updated_at || new Date().toISOString(),
+          text: prereqDetail.comments,
+        },
+      ];
+      setThread(seeded);
+    } else {
+      setThread(t);
+    }
+  }, [item?.id, prereqDetail?.comments]);
+
+  const persistEvidence = (next: EvidenceFile[]) => {
+    setEvidence(next);
+    if (item?.id) saveList(evidenceKey(item.id), next);
+  };
+  const persistThread = (next: ThreadEntry[]) => {
+    setThread(next);
+    if (item?.id) saveList(threadKey(item.id), next);
+  };
+
+  const acceptFiles = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const additions: EvidenceFile[] = Array.from(files).map((f) => ({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      name: f.name,
+      size: f.size,
+      uploaded_at: new Date().toISOString(),
+      // "AI suggestion": pick first required-evidence option
+      type_label: evidenceTypeOptions[0] || 'Document',
+    }));
+    persistEvidence([...evidence, ...additions]);
+    toast({ title: 'Evidence added', description: `${additions.length} file${additions.length > 1 ? 's' : ''} attached.` });
+  };
+
+  const setEvidenceType = (id: string, type_label: string) => {
+    persistEvidence(evidence.map((e) => (e.id === id ? { ...e, type_label } : e)));
+  };
+  const removeEvidence = (id: string) => {
+    persistEvidence(evidence.filter((e) => e.id !== id));
+  };
+
+  const postComment = (text: string, tag?: ThreadEntry['tag']) => {
+    if (!text.trim()) return;
+    const entry: ThreadEntry = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      author: viewer === 'approving' ? approvingMember?.full_name || 'You' : deliveringMember?.full_name || 'You',
+      role:
+        viewer === 'approving'
+          ? approvingMember?.role_name || 'Approving'
+          : deliveringMember?.role_name || (vcrItemDetail?.delivering_party?.name ?? 'Delivering'),
+      date: new Date().toISOString(),
+      text: text.trim(),
+      tag,
+    };
+    persistThread([...thread, entry]);
+  };
+
+  // ─── Confirmation dialog state ─────────────────────────────────
+  const [confirmKind, setConfirmKind] = useState<ConfirmKind | null>(null);
+
+  const onConfirm = async (note: string) => {
+    if (!confirmKind) return;
+    const tagMap: Record<ConfirmKind, ThreadEntry['tag']> = {
+      mark_complete: 'Completed',
+      raise_qualification: 'Qualification raised',
+      accept: 'Accepted',
+      return: 'Returned',
+    };
+    const statusMap: Record<ConfirmKind, string> = {
+      mark_complete: 'READY_FOR_REVIEW',
+      raise_qualification: 'QUALIFICATION_REQUESTED',
+      accept: 'ACCEPTED',
+      return: 'IN_PROGRESS',
+    };
+    try {
+      await updateStatus.mutateAsync({ status: statusMap[confirmKind] });
+      if (note) postComment(note, tagMap[confirmKind]);
+      else if (confirmKind === 'mark_complete' || confirmKind === 'accept') {
+        // record audit beat even without note
+        postComment(`(${tagMap[confirmKind]?.toLowerCase()})`, tagMap[confirmKind]);
+      }
+      setConfirmKind(null);
+      onOpenChange(false);
+      toast({ title: 'Done' });
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+    }
+  };
+
+  // Guidance preview / show-more (declared before any early return for hooks-rules safety)
+  const [guidanceOpen, setGuidanceOpenLocal] = useState(false);
 
   if (!item) return null;
 
-  const statusCfg = STATUS_CONFIG[item.status] || STATUS_CONFIG.NOT_STARTED;
-  const StatusIcon = statusCfg.icon;
-
-  const delRoleId = vcrItemDetail?.delivering_party_role_id;
-  const deliveringRoleMembers = vcrItemDetail?.team_members?.filter((m: any) => m.role_id === delRoleId) || [];
-  const deliveringRoleName = vcrItemDetail?.delivering_party?.name || 'Delivering Party';
-
-  const approvingRoles: { id: string; name: string; is_b2b?: boolean }[] = vcrItemDetail?.approving_roles || [];
-  const approvingPartyRoleIds: string[] = vcrItemDetail?.approving_party_role_ids || [];
-
-  const hasGuidance = !!vcrItemDetail?.guidance_notes;
-  const guidancePreview = vcrItemDetail?.guidance_notes
-    ? vcrItemDetail.guidance_notes.slice(0, 90) + (vcrItemDetail.guidance_notes.length > 90 ? '…' : '')
-    : '';
-
-  // Footer action set
-  const renderFooterActions = () => {
-    if (item.status === 'NOT_STARTED') {
-      return (
-        <Button className="flex-1" size="sm" disabled={updateStatus.isPending} onClick={() => handleStatusChange('IN_PROGRESS')}>
-          {updateStatus.isPending ? 'Saving…' : 'Start Progress'}
-        </Button>
-      );
-    }
-    if (item.status === 'IN_PROGRESS') {
-      return (
-        <Button className="flex-1" size="sm" disabled={updateStatus.isPending} onClick={() => handleStatusChange('READY_FOR_REVIEW')}>
-          {updateStatus.isPending ? 'Saving…' : 'Submit for Review'}
-        </Button>
-      );
-    }
-    if (item.status === 'READY_FOR_REVIEW') {
-      return (
-        <>
-          <Button className="flex-1" variant="outline" size="sm" disabled={updateStatus.isPending} onClick={() => handleStatusChange('QUALIFICATION_REQUESTED')}>
-            Request Qualification
-          </Button>
-          <Button className="flex-1" size="sm" disabled={updateStatus.isPending} onClick={() => handleStatusChange('ACCEPTED')}>
-            Approve
-          </Button>
-        </>
-      );
-    }
-    return (
-      <Button className="flex-1" size="sm" disabled>
-        {statusCfg.label}
-      </Button>
-    );
-  };
+  const pill = statusPill(item.status, viewer);
+  const deliveringName = deliveringMember?.full_name || vcrItemDetail?.delivering_party?.name || 'Delivering party';
+  const deliveringRoleName = deliveringMember?.role_name || vcrItemDetail?.delivering_party?.name || 'Delivering';
+  const approvingName = approvingMember?.full_name || (vcrItemDetail?.approving_roles?.[0]?.name) || 'Approving party';
+  const approvingRoleName = approvingMember?.role_name || vcrItemDetail?.approving_roles?.[0]?.name || 'Approving';
 
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent className="sm:max-w-lg overflow-hidden flex flex-col p-0">
-          {/* ─── Header ───────────────────────────────────────────── */}
-          <SheetHeader className="px-6 pt-6 pb-4 border-b shrink-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="outline" className="font-mono text-[10px]">{item.itemCode}</Badge>
-              <Badge className={cn('text-[10px] border', statusCfg.color, statusCfg.textColor)}>
-                <StatusIcon className="w-3 h-3 mr-1" />
-                {statusCfg.label}
+        <SheetContent className="sm:max-w-xl overflow-hidden flex flex-col p-0" data-rm-safe>
+          {/* Header */}
+          <SheetHeader className="px-6 pt-5 pb-4 border-b shrink-0 space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Badge variant="outline" className="text-[10px] rounded-md font-normal">
+                  {item.category_name}
+                </Badge>
+                <Badge variant="outline" className="text-[10px] rounded-md font-normal">
+                  {item.itemCode}
+                </Badge>
+              </div>
+              <Badge
+                variant="outline"
+                className={cn('text-[10px] rounded-full px-2.5 py-0.5 font-normal', pillToneClass[pill.tone])}
+              >
+                {pill.label}
               </Badge>
             </div>
-            <SheetTitle className="text-base mt-1 leading-snug">{item.vcr_item}</SheetTitle>
-            {item.topic && (
-              <p className="text-xs text-muted-foreground">{item.topic}</p>
-            )}
-            <SheetDescription className="sr-only">VCR Item Detail</SheetDescription>
+            <SheetTitle className="text-[15px] leading-snug font-semibold">{item.vcr_item}</SheetTitle>
+            <SheetDescription className="sr-only">VCR item detail</SheetDescription>
+
+            {/* Party row */}
+            <div className="flex items-center gap-6 flex-wrap pt-0.5">
+              <PartyUnit
+                side="delivering"
+                isYou={viewer === 'delivering'}
+                name={deliveringName}
+                role={deliveringRoleName}
+                avatarUrl={deliveringMember?.avatar_url}
+              />
+              <PartyUnit
+                side="approving"
+                isYou={viewer === 'approving'}
+                name={approvingName}
+                role={approvingRoleName}
+                avatarUrl={approvingMember?.avatar_url}
+              />
+            </div>
           </SheetHeader>
 
-          {/* ─── Scrolling Content ────────────────────────────────── */}
+          {/* Body */}
           <ScrollArea className="flex-1 min-h-0">
-            <div className="px-6 py-4 space-y-5">
-              {/* Category */}
-              <div className="flex items-center justify-between">
-                <Badge variant="secondary" className="text-xs">{item.category_name}</Badge>
-              </div>
+            <div className="px-6 py-5 space-y-6">
+              {/* Insights */}
+              <InsightsBlock insights={insights} viewer={viewer} />
 
-              {/* Guidance Notes — collapsible, near top */}
-              {hasGuidance && (
-                <Collapsible open={guidanceOpen} onOpenChange={setGuidanceOpen}>
-                  <CollapsibleTrigger asChild>
-                    <button className="w-full flex items-start gap-2.5 p-3 rounded-lg bg-muted/40 hover:bg-muted/60 transition text-left border border-border/40">
-                      <Info className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-xs font-medium">Guidance Notes</span>
-                          <ChevronDown className={cn(
-                            'w-3.5 h-3.5 text-muted-foreground transition-transform',
-                            guidanceOpen && 'rotate-180'
-                          )} />
+              {/* Guidance notes */}
+              <section>
+                <SectionLabel right={
+                  vcrItemDetail?.guidance_notes ? (
+                    <button
+                      onClick={() => setGuidanceOpenLocal((v) => !v)}
+                      className="text-primary hover:underline"
+                    >
+                      {guidanceOpen ? 'Hide' : 'Show'}
+                    </button>
+                  ) : null
+                }>
+                  Guidance notes
+                </SectionLabel>
+                {vcrItemDetail?.guidance_notes ? (
+                  <p className="text-[13px] text-foreground/90 leading-relaxed">
+                    {guidanceOpen
+                      ? vcrItemDetail.guidance_notes
+                      : `${(vcrItemDetail.guidance_notes as string).slice(0, 110)}${(vcrItemDetail.guidance_notes as string).length > 110 ? '…' : ''}`}
+                    {!guidanceOpen && (vcrItemDetail.guidance_notes as string).length > 110 && (
+                      <button
+                        onClick={() => setGuidanceOpenLocal(true)}
+                        className="text-primary hover:underline ml-1"
+                      >
+                        Show more
+                      </button>
+                    )}
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground italic">No guidance notes for this item.</p>
+                )}
+              </section>
+
+              {/* Required evidence */}
+              <section>
+                <SectionLabel>Required evidence</SectionLabel>
+                <p className="text-[13px] text-foreground/90 leading-relaxed">
+                  {requiredEvidenceText || (
+                    <span className="text-muted-foreground italic">No required evidence specified.</span>
+                  )}
+                </p>
+              </section>
+
+              {/* Evidence */}
+              <section>
+                <SectionLabel right={viewer === 'approving' && evidence.length > 0 ? 'Submitted by delivering party' : undefined}>
+                  Evidence
+                </SectionLabel>
+
+                {evidence.length === 0 ? (
+                  viewer === 'approving' ? (
+                    <p className="text-xs text-muted-foreground italic">No evidence submitted yet.</p>
+                  ) : (
+                    <div
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        setDragOver(true);
+                      }}
+                      onDragLeave={() => setDragOver(false)}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        setDragOver(false);
+                        acceptFiles(e.dataTransfer.files);
+                      }}
+                      onClick={() => fileInputRef.current?.click()}
+                      className={cn(
+                        'rounded-lg border border-dashed px-4 py-8 text-center cursor-pointer transition',
+                        dragOver
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border hover:border-primary/60 hover:bg-muted/40',
+                      )}
+                    >
+                      <div className="text-sm font-medium text-primary">Add evidence — drop files or browse</div>
+                      <div className="text-[11px] text-muted-foreground mt-1">
+                        Saved on upload · type detected automatically
+                      </div>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => {
+                          acceptFiles(e.target.files);
+                          if (fileInputRef.current) fileInputRef.current.value = '';
+                        }}
+                      />
+                    </div>
+                  )
+                ) : (
+                  <div className="space-y-2">
+                    {evidence.map((f) => (
+                      <div
+                        key={f.id}
+                        className="rounded-lg border border-border px-3 py-2.5 flex items-start gap-3"
+                      >
+                        <div className="h-9 w-9 rounded bg-muted/60 shrink-0 flex items-center justify-center">
+                          <FileText className="h-4 w-4 text-muted-foreground" />
                         </div>
-                        {!guidanceOpen && (
-                          <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">{guidancePreview}</p>
+                        <div className="flex-1 min-w-0 space-y-1">
+                          <div className="text-[13px] font-medium truncate">{f.name}</div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {viewer === 'approving' ? (
+                              <Badge variant="secondary" className="text-[10px] font-normal">
+                                {f.type_label}
+                              </Badge>
+                            ) : (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <button className="inline-flex items-center gap-1 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border border-blue-200 dark:border-blue-900 text-[10px] px-2 py-0.5 hover:bg-blue-100 transition">
+                                    <span className="text-[9px] text-blue-600/80 dark:text-blue-400/80">AI:</span>
+                                    {f.type_label}
+                                    <ChevronDown className="h-3 w-3" />
+                                  </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="start" className="w-56">
+                                  {evidenceTypeOptions.map((opt) => (
+                                    <DropdownMenuItem
+                                      key={opt}
+                                      onSelect={() => setEvidenceType(f.id, opt)}
+                                      className={cn(opt === f.type_label && 'font-semibold')}
+                                    >
+                                      {opt}
+                                    </DropdownMenuItem>
+                                  ))}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
+                            <span className="text-[11px] text-muted-foreground">
+                              {fmtBytes(f.size)} · {format(new Date(f.uploaded_at), 'd MMM')}
+                            </span>
+                          </div>
+                        </div>
+                        {viewer === 'approving' ? (
+                          <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0">
+                            <Eye className="h-3.5 w-3.5" />
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                            onClick={() => removeEvidence(f.id)}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
                         )}
                       </div>
-                    </button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <p className="text-xs text-foreground bg-muted/30 p-3 mt-1.5 rounded-lg whitespace-pre-wrap">
-                      {vcrItemDetail?.guidance_notes}
-                    </p>
-                  </CollapsibleContent>
-                </Collapsible>
-              )}
-
-              <Separator />
-
-              {/* ─── Responsible Parties — flat row list ─────────── */}
-              <div className="space-y-1">
-                <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-2">Responsible Parties</div>
-
-                {/* Delivering Party row */}
-                <div className="border border-border/40 rounded-lg overflow-hidden divide-y divide-border/40">
-                  <div className="flex items-center gap-3 px-3 py-2.5 bg-muted/20">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Delivering</span>
-                        <span className="text-xs font-medium truncate">{deliveringRoleName}</span>
-                      </div>
-                    </div>
-                    <AvatarStack members={deliveringParties.length > 0 ? deliveringParties : deliveringRoleMembers} />
-                    <MemberManagePopover
-                      trigger={
-                        <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0">
-                          <Plus className="w-3.5 h-3.5" />
-                        </Button>
-                      }
-                      existingMembers={deliveringParties.map((dp: any) => ({
-                        user_id: dp.user_id, full_name: dp.full_name, avatar_url: dp.avatar_url, role_name: dp.role_name,
-                      }))}
-                      candidates={teamMembers}
-                      onAdd={(uid) => addMember.mutate(uid)}
-                      onRemove={(id) => removeMember.mutate(id)}
-                      removeKey={(m: any) => m.user_id}
+                    ))}
+                    {viewer !== 'approving' && (
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        Add evidence
+                      </button>
+                    )}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => {
+                        acceptFiles(e.target.files);
+                        if (fileInputRef.current) fileInputRef.current.value = '';
+                      }}
                     />
                   </div>
-
-                  {/* Approving Parties: each role = row */}
-                  {approvingRoles.length === 0 ? (
-                    <div className="px-3 py-3 text-[11px] text-muted-foreground italic">No approving parties assigned</div>
-                  ) : (
-                    approvingRoles.map((role) => {
-                      const roleMembers = vcrItemDetail?.team_members?.filter((m: any) => m.role_id === role.id) || [];
-                      const isB2B = approvingPartyRoleIds.includes(role.id) && /b2b|external|client|operator/i.test(role.name);
-                      return (
-                        <div key={role.id} className="flex items-center gap-3 px-3 py-2.5">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Approving</span>
-                              <span className="text-xs font-medium truncate">{role.name}</span>
-                              {isB2B && (
-                                <TooltipProvider delayDuration={150}>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Badge className="text-[9px] h-4 px-1.5 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 border-0 font-semibold cursor-help">
-                                        B2B
-                                      </Badge>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="left" className="text-xs max-w-[200px]">
-                                      Business-to-Business — external delivery party (e.g. operator, client)
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              )}
-                            </div>
-                          </div>
-                          <AvatarStack members={roleMembers} />
-                          <MemberManagePopover
-                            trigger={
-                              <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0">
-                                <Plus className="w-3.5 h-3.5" />
-                              </Button>
-                            }
-                            existingMembers={roleMembers}
-                            candidates={teamMembers as any}
-                            onAdd={() => { /* role-level membership managed in Team Settings */ }}
-                            emptyMessage="No team members assigned to this role yet — invite from Team Settings."
-                          />
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-
-              {/* Supporting Evidence */}
-              {vcrItemDetail?.supporting_evidence && (
-                <>
-                  <Separator />
-                  <div className="space-y-2">
-                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Supporting Evidence Required</div>
-                    <p className="text-xs text-foreground bg-muted/40 p-3 rounded-lg whitespace-pre-wrap">
-                      {vcrItemDetail.supporting_evidence}
-                    </p>
-                  </div>
-                </>
-              )}
-
-              {/* Timeline */}
-              {prereqDetail && (
-                <>
-                  <Separator />
-                  <div className="space-y-3">
-                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Timeline</div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-muted-foreground" />
-                        <div>
-                          <div className="text-[10px] text-muted-foreground">Created</div>
-                          <div className="text-xs">{format(new Date(prereqDetail.created_at), 'dd MMM yyyy')}</div>
-                        </div>
-                      </div>
-                      {prereqDetail.submitted_at && (
-                        <div className="flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-blue-500" />
-                          <div>
-                            <div className="text-[10px] text-muted-foreground">Submitted</div>
-                            <div className="text-xs">{format(new Date(prereqDetail.submitted_at), 'dd MMM yyyy')}</div>
-                          </div>
-                        </div>
-                      )}
-                      {prereqDetail.reviewed_at && (
-                        <div className="flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                          <div>
-                            <div className="text-[10px] text-muted-foreground">Reviewed</div>
-                            <div className="text-xs">{format(new Date(prereqDetail.reviewed_at), 'dd MMM yyyy')}</div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {/* ORA Intelligence */}
-              {intelligence && intelligence.total > 0 && (
-                <>
-                  <Separator />
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-1.5">
-                      <Brain className="w-3.5 h-3.5 text-primary" />
-                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">ORA Activity Intelligence</div>
-                    </div>
-                    <Card className={cn(
-                      'border',
-                      intelligence.percentage === 100 ? 'border-emerald-500/30 bg-emerald-500/5' :
-                      intelligence.percentage > 0 ? 'border-amber-500/30 bg-amber-500/5' :
-                      'border-border bg-muted/30'
-                    )}>
-                      <CardContent className="p-3 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-medium">
-                            {categoryForIntelligence ? `${categoryForIntelligence.charAt(0).toUpperCase() + categoryForIntelligence.slice(1)} Activities` : 'Related Activities'}
-                          </span>
-                          <Badge variant="outline" className={cn('text-[10px]',
-                            intelligence.percentage === 100 ? 'border-emerald-500 text-emerald-600' :
-                            intelligence.percentage > 0 ? 'border-amber-500 text-amber-600' :
-                            'text-muted-foreground'
-                          )}>
-                            {intelligence.completed}/{intelligence.total} completed
-                          </Badge>
-                        </div>
-                        <Progress value={intelligence.percentage} className="h-1.5" />
-                        <div className="flex gap-4 text-[10px] text-muted-foreground">
-                          {intelligence.completed > 0 && (
-                            <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-emerald-500" />{intelligence.completed} done</span>
-                          )}
-                          {intelligence.inProgress > 0 && (
-                            <span className="flex items-center gap-1"><TrendingUp className="w-3 h-3 text-amber-500" />{intelligence.inProgress} in progress</span>
-                          )}
-                          {intelligence.notStarted > 0 && (
-                            <span className="flex items-center gap-1"><Clock className="w-3 h-3 text-muted-foreground" />{intelligence.notStarted} pending</span>
-                          )}
-                        </div>
-                        {intelligence.percentage < 100 && (
-                          <div className="flex items-start gap-2 pt-1 border-t border-border/50">
-                            <ShieldAlert className="w-3.5 h-3.5 text-amber-500 mt-0.5 shrink-0" />
-                            <p className="text-[10px] text-muted-foreground">
-                              ORA data indicates {intelligence.total - intelligence.completed} activit{intelligence.total - intelligence.completed === 1 ? 'y is' : 'ies are'} still outstanding. Confirm status before closing this item.
-                            </p>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </div>
-                </>
-              )}
-
-              {/* Evidence Documents */}
-              <Separator />
-              <div className="space-y-2">
-                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Evidence Documents</div>
-                <Card className="border-dashed">
-                  <CardContent className="py-6 text-center">
-                    <FileText className="w-7 h-7 text-muted-foreground/60 mx-auto mb-2" />
-                    <p className="text-xs text-muted-foreground">No evidence uploaded yet</p>
-                  </CardContent>
-                </Card>
-              </div>
+                )}
+              </section>
 
               {/* Comments */}
-              <Separator />
-              <div className="space-y-2">
-                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Comments</div>
-                {prereqDetail?.comments ? (
-                  <Card>
-                    <CardContent className="p-3">
-                      <div className="flex items-start gap-2">
-                        <MessageSquare className="w-4 h-4 text-muted-foreground mt-0.5" />
-                        <p className="text-xs text-foreground">{prereqDetail.comments}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
+              <section>
+                <SectionLabel>Comments</SectionLabel>
+                {thread.length === 0 ? (
+                  <p className="text-xs text-muted-foreground italic">No comments yet.</p>
                 ) : (
-                  <p className="text-xs text-muted-foreground italic">No comments</p>
-                )}
-              </div>
-
-              {/* Qualification banner */}
-              {item.status === 'QUALIFICATION_REQUESTED' && (
-                <Card className="border-purple-500/50 bg-purple-500/5">
-                  <CardContent className="p-3">
-                    <div className="flex items-start gap-2">
-                      <AlertTriangle className="w-4 h-4 text-purple-500 mt-0.5" />
-                      <div>
-                        <h4 className="font-medium text-purple-600 text-xs">Qualification Raised</h4>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">
-                          A qualification has been requested for this item.
-                        </p>
+                  <div className="space-y-3">
+                    {thread.map((c) => (
+                      <div key={c.id} className="flex items-start gap-2.5">
+                        <Avatar className="h-7 w-7 shrink-0">
+                          <AvatarFallback className="text-[10px]">{getInitials(c.author)}</AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-[11px] text-muted-foreground">
+                            <span className="font-semibold text-foreground">{c.author}</span>
+                            <span> · {c.role}</span>
+                            <span> · {format(new Date(c.date), 'd MMM')}</span>
+                            {c.tag && (
+                              <Badge
+                                variant="outline"
+                                className={cn(
+                                  'ml-2 text-[9px] font-normal',
+                                  c.tag === 'Accepted' && pillToneClass.green,
+                                  c.tag === 'Returned' && pillToneClass.red,
+                                  c.tag === 'Completed' && pillToneClass.amber,
+                                  c.tag === 'Qualification raised' && pillToneClass.purple,
+                                )}
+                              >
+                                {c.tag}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-[13px] text-foreground/90 mt-0.5 leading-relaxed whitespace-pre-wrap">
+                            {c.text}
+                          </p>
+                        </div>
                       </div>
+                    ))}
+                  </div>
+                )}
+
+                {composerOpen ? (
+                  <div className="mt-3 space-y-2">
+                    <Textarea
+                      value={composerText}
+                      onChange={(e) => setComposerText(e.target.value)}
+                      rows={2}
+                      placeholder="Add a comment…"
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button variant="ghost" size="sm" onClick={() => { setComposerOpen(false); setComposerText(''); }}>
+                        Cancel
+                      </Button>
+                      <Button
+                        size="sm"
+                        disabled={!composerText.trim()}
+                        onClick={() => {
+                          postComment(composerText);
+                          setComposerText('');
+                          setComposerOpen(false);
+                        }}
+                      >
+                        Post
+                      </Button>
                     </div>
-                  </CardContent>
-                </Card>
-              )}
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setComposerOpen(true)}
+                    className="mt-3 text-xs text-primary hover:underline"
+                  >
+                    Add comment
+                  </button>
+                )}
+              </section>
             </div>
           </ScrollArea>
 
-          {/* ─── Sticky Footer ────────────────────────────────────── */}
-          <div className="border-t bg-background px-6 py-3 flex gap-2 shrink-0 shadow-[0_-4px_12px_-6px_rgba(0,0,0,0.08)]">
-            {renderFooterActions()}
-            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>Close</Button>
+          {/* Footer */}
+          <div className="border-t bg-background px-6 py-3 flex items-center justify-between shrink-0">
+            <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <div className="flex items-center gap-2">
+              {viewer === 'approving' && item.status === 'READY_FOR_REVIEW' ? (
+                <>
+                  <Button variant="outline" size="sm" onClick={() => setConfirmKind('return')}>
+                    Return to delivering party
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                    onClick={() => setConfirmKind('accept')}
+                  >
+                    Accept item
+                  </Button>
+                </>
+              ) : viewer === 'observer' || item.status === 'ACCEPTED' || item.status === 'QUALIFICATION_APPROVED' ? (
+                <Button size="sm" variant="outline" disabled>
+                  {pill.label}
+                </Button>
+              ) : (
+                <>
+                  <Button variant="outline" size="sm" onClick={() => setConfirmKind('raise_qualification')}>
+                    Raise qualification
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                    onClick={() => setConfirmKind('mark_complete')}
+                  >
+                    Mark as complete
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
         </SheetContent>
       </Sheet>
 
-      {/* Warning dialog for incomplete ORA activities */}
-      <AlertDialog open={showWarningDialog} onOpenChange={setShowWarningDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <ShieldAlert className="w-5 h-5 text-amber-500" />
-              Incomplete Activities Detected
-            </AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <div className="space-y-3">
-                <p>
-                  ORA Activity data shows <strong>{intelligence ? intelligence.total - intelligence.completed : 0}</strong> of <strong>{intelligence?.total || 0}</strong> related activities are still outstanding.
-                </p>
-                {intelligence && intelligence.activities.filter(a => a.status !== 'COMPLETED').length > 0 && (
-                  <div className="bg-muted/50 rounded-lg p-3 max-h-32 overflow-y-auto space-y-1">
-                    {intelligence.activities.filter(a => a.status !== 'COMPLETED').slice(0, 5).map(a => (
-                      <div key={a.id} className="flex items-center justify-between text-xs">
-                        <span className="truncate mr-2">{a.name}</span>
-                        <Badge variant="outline" className="text-[9px] shrink-0">
-                          {a.status === 'IN_PROGRESS' ? 'In Progress' : 'Not Started'}
-                        </Badge>
-                      </div>
-                    ))}
-                    {intelligence.activities.filter(a => a.status !== 'COMPLETED').length > 5 && (
-                      <p className="text-[10px] text-muted-foreground italic">+{intelligence.activities.filter(a => a.status !== 'COMPLETED').length - 5} more</p>
-                    )}
-                  </div>
-                )}
-                <p className="text-xs">Are you sure you want to proceed?</p>
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmStatusChange}>Proceed Anyway</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={confirmKind !== null}
+        onOpenChange={(v) => !v && setConfirmKind(null)}
+        kind={confirmKind}
+        itemTitle={item.vcr_item}
+        counterparty={
+          confirmKind === 'accept' || confirmKind === 'return'
+            ? deliveringName
+            : approvingName
+        }
+        insights={insights}
+        busy={updateStatus.isPending}
+        onConfirm={onConfirm}
+      />
     </>
   );
 };
