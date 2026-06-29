@@ -45,6 +45,7 @@ import { useParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { useVCRItemDeliveringParties } from '@/hooks/useVCRItemDeliveringParties';
+import { useVCRItemInsights } from '@/hooks/useVCRItemInsights';
 
 // ─── Public contract ─────────────────────────────────────────────────
 export interface VCRItemBasic {
