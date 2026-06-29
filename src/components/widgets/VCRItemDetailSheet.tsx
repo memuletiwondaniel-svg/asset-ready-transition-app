@@ -131,41 +131,34 @@ const pillToneClass: Record<string, string> = {
   purple: 'border-purple-300 text-purple-700 bg-purple-50 dark:bg-purple-950/30 dark:text-purple-300 dark:border-purple-800',
 };
 
-// ─── Local-only autosave stores (UI demo persistence) ──────────────
-type EvidenceFile = {
+// ─── DB-backed row shapes ─────────────────────────────────────────
+type EvidenceRow = {
   id: string;
-  name: string;
-  size: number;
-  uploaded_at: string;
-  type_label: string;
+  file_name: string;
+  file_size: number | null;
+  mime_type: string | null;
+  storage_path: string;
+  evidence_type: string | null;
+  uploaded_by: string | null;
+  created_at: string;
 };
-type ThreadEntry = {
+type CommentRow = {
   id: string;
-  author: string;
-  role: string;
-  date: string;
-  text: string;
-  tag?: 'Accepted' | 'Returned' | 'Completed' | 'Qualification raised';
+  author_user_id: string | null;
+  body: string;
+  action_tag: 'Completed' | 'Returned' | 'Accepted' | 'Qualification raised' | null;
+  created_at: string;
+};
+type AuthorProfile = {
+  user_id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  role_name: string | null;
 };
 
-const evidenceKey = (id: string) => `vcr.item.${id}.evidence.v1`;
-const threadKey = (id: string) => `vcr.item.${id}.thread.v1`;
-
-const loadList = <T,>(key: string): T[] => {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T[]) : [];
-  } catch {
-    return [];
-  }
-};
-const saveList = <T,>(key: string, list: T[]) => {
-  try {
-    localStorage.setItem(key, JSON.stringify(list));
-  } catch {
-    /* ignore quota */
-  }
-};
+const EVIDENCE_BUCKET = 'vcr-evidence';
+const sanitizeFile = (name: string) =>
+  name.replace(/[^a-zA-Z0-9._-]+/g, '_').slice(0, 120);
 
 // ─── Insights block ────────────────────────────────────────────────
 const InsightsBlock: React.FC<{
