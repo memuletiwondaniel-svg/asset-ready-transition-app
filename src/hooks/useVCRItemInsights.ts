@@ -47,15 +47,15 @@ export function useVCRItemInsights(vcrId: string | undefined, vcrItemId: string 
 
       // Cache read with an 8s ceiling — if RLS/policy stalls the GET,
       // we fall back to 'unavailable' rather than spinning forever.
-      const result = await withTimeout(
+      const result = await withTimeout<{ data: { payload: unknown } | null }>(
         supabase
           .from('vcr_item_insights')
           .select('payload')
           .eq('vcr_id', vcrId)
           .eq('vcr_item_id', vcrItemId)
-          .maybeSingle(),
+          .maybeSingle() as unknown as PromiseLike<{ data: { payload: unknown } | null }>,
         8000,
-        { data: null as any, error: { message: 'timeout' } as any },
+        { data: null },
       );
 
       const data = (result as any)?.data;
