@@ -1734,6 +1734,22 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         }}
       />
 
+      {vcrItemTask && (
+        <VCRItemTaskListSheet
+          open={vcrItemTaskOpen}
+          onOpenChange={(o) => {
+            setVcrItemTaskOpen(o);
+            if (!o) setVcrItemTask(null);
+          }}
+          role={vcrItemTask.role}
+          projectId={vcrItemTask.projectId}
+          projectLabel={vcrItemTask.projectLabel}
+          rows={vcrItemTask.rows as any}
+        />
+      )}
+
+
+
       <VCRPlanReviewLauncher
         payload={vcrPlanApproval}
         open={vcrPlanApprovalOpen}
