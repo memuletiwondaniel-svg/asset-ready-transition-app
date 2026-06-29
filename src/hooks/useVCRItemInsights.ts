@@ -32,7 +32,7 @@ export function useVCRItemInsights(vcrId: string | undefined, vcrItemId: string 
         }).then(() => qc.invalidateQueries({ queryKey }));
         return { state: 'pending' };
       }
-      return (data.payload as VCRInsights) ?? { state: 'unavailable' };
+      return (data.payload as unknown as VCRInsights) ?? { state: 'unavailable' };
     },
     enabled: !!vcrId && !!vcrItemId,
     staleTime: 60_000,
