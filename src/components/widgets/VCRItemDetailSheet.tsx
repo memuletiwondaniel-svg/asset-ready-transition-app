@@ -694,6 +694,9 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
     }
   };
 
+  // Guidance preview / show-more (declared before any early return for hooks-rules safety)
+  const [guidanceOpen, setGuidanceOpenLocal] = useState(false);
+
   if (!item) return null;
 
   const pill = statusPill(item.status, viewer);
@@ -701,10 +704,6 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   const deliveringRoleName = deliveringMember?.role_name || vcrItemDetail?.delivering_party?.name || 'Delivering';
   const approvingName = approvingMember?.full_name || (vcrItemDetail?.approving_roles?.[0]?.name) || 'Approving party';
   const approvingRoleName = approvingMember?.role_name || vcrItemDetail?.approving_roles?.[0]?.name || 'Approving';
-
-  // Guidance preview / show-more
-  const [guidanceOpen, setGuidanceOpenLocal] = useState(false);
-  // (avoid React hook in conditional — use top-level by declaring above, but for clarity inline)
 
   return (
     <>
