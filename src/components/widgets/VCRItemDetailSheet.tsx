@@ -171,7 +171,9 @@ const saveList = <T,>(key: string, list: T[]) => {
 const InsightsBlock: React.FC<{
   insights?: VCRInsights;
   viewer: 'delivering' | 'approving' | 'observer';
-}> = ({ insights, viewer }) => {
+  onRecompute?: () => void;
+  recomputing?: boolean;
+}> = ({ insights, viewer, onRecompute, recomputing }) => {
   const state = insights?.state ?? 'unavailable';
 
   return (
@@ -180,9 +182,21 @@ const InsightsBlock: React.FC<{
         <h3 className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
           Insights
         </h3>
-        {state === 'ready' && (
-          <span className="text-[10px] text-muted-foreground">Live records · advisory</span>
-        )}
+        <div className="flex items-center gap-2">
+          {state === 'ready' && (
+            <span className="text-[10px] text-muted-foreground">Live records · advisory</span>
+          )}
+          {onRecompute && (
+            <button
+              type="button"
+              onClick={onRecompute}
+              disabled={recomputing}
+              className="text-[10px] text-primary hover:underline disabled:opacity-50"
+            >
+              {recomputing ? 'Recomputing…' : 'Recompute'}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="rounded-lg border border-l-4 border-amber-300/70 border-l-amber-400 bg-amber-50/40 dark:bg-amber-950/10 px-4 py-3 space-y-3">
