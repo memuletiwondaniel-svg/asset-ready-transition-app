@@ -985,7 +985,9 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                   )
                 ) : (
                   <div className="space-y-2">
-                    {evidence.map((f) => (
+                    {evidence.map((f) => {
+                      const typeLabel = f.evidence_type || defaultEvidenceType;
+                      return (
                       <div
                         key={f.id}
                         className="rounded-lg border border-border px-3 py-2.5 flex items-start gap-3"
@@ -994,18 +996,24 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                           <FileText className="h-4 w-4 text-muted-foreground" />
                         </div>
                         <div className="flex-1 min-w-0 space-y-1">
-                          <div className="text-[13px] font-medium truncate">{f.name}</div>
+                          <button
+                            type="button"
+                            onClick={() => openSignedUrl(f.storage_path)}
+                            className="text-[13px] font-medium truncate text-left hover:underline"
+                          >
+                            {f.file_name}
+                          </button>
                           <div className="flex items-center gap-2 flex-wrap">
                             {viewer !== 'delivering' ? (
                               <Badge variant="secondary" className="text-[10px] font-normal">
-                                {f.type_label}
+                                {typeLabel}
                               </Badge>
                             ) : (
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <button className="inline-flex items-center gap-1 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border border-blue-200 dark:border-blue-900 text-[10px] px-2 py-0.5 hover:bg-blue-100 transition">
                                     <span className="text-[9px] text-blue-600/80 dark:text-blue-400/80">AI:</span>
-                                    {f.type_label}
+                                    {typeLabel}
                                     <ChevronDown className="h-3 w-3" />
                                   </button>
                                 </DropdownMenuTrigger>
@@ -1013,8 +1021,8 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                                   {evidenceTypeOptions.map((opt) => (
                                     <DropdownMenuItem
                                       key={opt}
-                                      onSelect={() => setEvidenceType(f.id, opt)}
-                                      className={cn(opt === f.type_label && 'font-semibold')}
+                                      onSelect={() => updateEvidenceType.mutate({ id: f.id, evidence_type: opt })}
+                                      className={cn(opt === typeLabel && 'font-semibold')}
                                     >
                                       {opt}
                                     </DropdownMenuItem>
@@ -1023,12 +1031,17 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                               </DropdownMenu>
                             )}
                             <span className="text-[11px] text-muted-foreground">
-                              {fmtBytes(f.size)} · {format(new Date(f.uploaded_at), 'd MMM')}
+                              {fmtBytes(f.file_size || 0)} · {format(new Date(f.created_at), 'd MMM')}
                             </span>
                           </div>
                         </div>
                         {viewer !== 'delivering' ? (
-                          <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 shrink-0"
+                            onClick={() => openSignedUrl(f.storage_path)}
+                          >
                             <Eye className="h-3.5 w-3.5" />
                           </Button>
                         ) : (
@@ -1036,13 +1049,14 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
-                            onClick={() => removeEvidence(f.id)}
+                            onClick={() => deleteEvidence.mutate(f)}
                           >
                             <X className="h-3.5 w-3.5" />
                           </Button>
                         )}
                       </div>
-                    ))}
+                      );
+                    })}
                     {viewer === 'delivering' && (
                       <button
                         onClick={() => fileInputRef.current?.click()}
