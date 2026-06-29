@@ -587,13 +587,12 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
     return 'observer';
   }, [user?.id, deliveringParties, approvingMember]);
 
-  // ─── Local autosave: evidence + comments thread ────────────────
-  const [evidence, setEvidence] = useState<EvidenceFile[]>([]);
-  const [thread, setThread] = useState<ThreadEntry[]>([]);
+  // ─── DB-backed evidence + comments ──────────────────────────────
   const [composerOpen, setComposerOpen] = useState(false);
   const [composerText, setComposerText] = useState('');
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pendingTypeFor, setPendingTypeFor] = useState<string | null>(null);
 
   // Required-evidence labels → AI-suggested dropdown options
   const requiredEvidenceText: string = vcrItemDetail?.supporting_evidence || '';
@@ -606,72 +605,182 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
     const opts = parsed.length > 0 ? parsed : ['Document'];
     return [...opts, 'Other / custom'];
   }, [requiredEvidenceText]);
+  const defaultEvidenceType = evidenceTypeOptions[0] || 'Document';
 
-  useEffect(() => {
-    if (!item?.id) return;
-    setEvidence(loadList<EvidenceFile>(evidenceKey(item.id)));
-    const t = loadList<ThreadEntry>(threadKey(item.id));
-    // Seed with stored prereq comments on first open
-    if (t.length === 0 && prereqDetail?.comments) {
-      const seeded: ThreadEntry[] = [
-        {
-          id: 'seed',
-          author: 'System',
-          role: 'Imported',
-          date: prereqDetail.updated_at || new Date().toISOString(),
-          text: prereqDetail.comments,
-        },
-      ];
-      setThread(seeded);
-    } else {
-      setThread(t);
+  // ── Evidence query ─────────────────────────────────────────
+  const evidenceQueryKey = ['vcr-item-evidence', vcrId, item?.id];
+  const { data: evidence = [] } = useQuery({
+    queryKey: evidenceQueryKey,
+    queryFn: async (): Promise<EvidenceRow[]> => {
+      if (!item?.id || !vcrId) return [];
+      const { data, error } = await supabase
+        .from('vcr_item_evidence')
+        .select('id, file_name, file_size, mime_type, storage_path, evidence_type, uploaded_by, created_at')
+        .eq('handover_point_id', vcrId)
+        .eq('vcr_item_id', item.id)
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      return (data || []) as EvidenceRow[];
+    },
+    enabled: open && !!item?.id && !!vcrId,
+  });
+
+  // ── Comments query ─────────────────────────────────────────
+  const commentsQueryKey = ['vcr-item-comments', vcrId, item?.id];
+  const { data: thread = [] } = useQuery({
+    queryKey: commentsQueryKey,
+    queryFn: async (): Promise<CommentRow[]> => {
+      if (!item?.id || !vcrId) return [];
+      const { data, error } = await supabase
+        .from('vcr_item_comments')
+        .select('id, author_user_id, body, action_tag, created_at')
+        .eq('handover_point_id', vcrId)
+        .eq('vcr_item_id', item.id)
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      return (data || []) as CommentRow[];
+    },
+    enabled: open && !!item?.id && !!vcrId,
+  });
+
+  // ── Author profiles for thread avatars ─────────────────────
+  const authorIds = useMemo(
+    () => Array.from(new Set(thread.map((c) => c.author_user_id).filter(Boolean))) as string[],
+    [thread],
+  );
+  const { data: authorProfiles = [] } = useQuery({
+    queryKey: ['vcr-item-comment-authors', authorIds.join(',')],
+    queryFn: async (): Promise<AuthorProfile[]> => {
+      if (authorIds.length === 0) return [];
+      const { data } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, avatar_url, role')
+        .in('user_id', authorIds);
+      const roleIds = Array.from(new Set((data || []).map((p: any) => p.role).filter(Boolean))) as string[];
+      let roleMap: Record<string, string> = {};
+      if (roleIds.length > 0) {
+        const { data: roles } = await supabase.from('roles').select('id, name').in('id', roleIds);
+        roleMap = Object.fromEntries((roles || []).map((r: any) => [r.id, r.name]));
+      }
+      return (data || []).map((p: any) => ({
+        user_id: p.user_id,
+        full_name: p.full_name,
+        avatar_url: p.avatar_url,
+        role_name: p.role ? roleMap[p.role] || null : null,
+      }));
+    },
+    enabled: authorIds.length > 0,
+  });
+  const authorById = useMemo(
+    () => Object.fromEntries(authorProfiles.map((p) => [p.user_id, p])),
+    [authorProfiles],
+  );
+
+  // ── Signed-URL viewer ──────────────────────────────────────
+  const openSignedUrl = async (path: string) => {
+    const { data, error } = await supabase.storage
+      .from(EVIDENCE_BUCKET)
+      .createSignedUrl(path, 60 * 5);
+    if (error || !data?.signedUrl) {
+      toast({ title: 'Could not open file', description: error?.message, variant: 'destructive' });
+      return;
     }
-  }, [item?.id, prereqDetail?.comments]);
-
-  const persistEvidence = (next: EvidenceFile[]) => {
-    setEvidence(next);
-    if (item?.id) saveList(evidenceKey(item.id), next);
-  };
-  const persistThread = (next: ThreadEntry[]) => {
-    setThread(next);
-    if (item?.id) saveList(threadKey(item.id), next);
+    window.open(data.signedUrl, '_blank', 'noopener');
   };
 
-  const acceptFiles = (files: FileList | null) => {
+  // ── Mutations ──────────────────────────────────────────────
+  const uploadEvidence = useMutation({
+    mutationFn: async ({ file, evidence_type }: { file: File; evidence_type: string }) => {
+      if (!item?.id || !vcrId || !user?.id) throw new Error('Not ready');
+      const safe = sanitizeFile(file.name);
+      const uid = (crypto as any).randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const path = `${vcrId}/${item.id}/${uid}-${safe}`;
+      const { error: upErr } = await supabase.storage
+        .from(EVIDENCE_BUCKET)
+        .upload(path, file, { contentType: file.type || undefined, upsert: false });
+      if (upErr) throw upErr;
+      const { error: insErr } = await supabase.from('vcr_item_evidence').insert({
+        handover_point_id: vcrId,
+        vcr_item_id: item.id,
+        prerequisite_id: item.prerequisite_id,
+        file_name: file.name,
+        storage_path: path,
+        file_size: file.size,
+        mime_type: file.type || null,
+        evidence_type,
+        uploaded_by: user.id,
+      });
+      if (insErr) {
+        // Best-effort cleanup of orphan object
+        await supabase.storage.from(EVIDENCE_BUCKET).remove([path]);
+        throw insErr;
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: evidenceQueryKey }),
+    onError: (e: any) => toast({ title: 'Upload failed', description: e.message, variant: 'destructive' }),
+  });
+
+  const updateEvidenceType = useMutation({
+    mutationFn: async ({ id, evidence_type }: { id: string; evidence_type: string }) => {
+      const { error } = await supabase
+        .from('vcr_item_evidence')
+        .update({ evidence_type })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: evidenceQueryKey }),
+    onError: (e: any) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
+  });
+
+  const deleteEvidence = useMutation({
+    mutationFn: async (row: EvidenceRow) => {
+      const { error } = await supabase.from('vcr_item_evidence').delete().eq('id', row.id);
+      if (error) throw error;
+      await supabase.storage.from(EVIDENCE_BUCKET).remove([row.storage_path]);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: evidenceQueryKey }),
+    onError: (e: any) => toast({ title: 'Delete failed', description: e.message, variant: 'destructive' }),
+  });
+
+  const insertComment = useMutation({
+    mutationFn: async ({ body, action_tag }: { body: string; action_tag: CommentRow['action_tag'] }) => {
+      if (!item?.id || !vcrId || !user?.id) throw new Error('Not ready');
+      const { error } = await supabase.from('vcr_item_comments').insert({
+        handover_point_id: vcrId,
+        vcr_item_id: item.id,
+        author_user_id: user.id,
+        body,
+        action_tag,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: commentsQueryKey }),
+    onError: (e: any) => toast({ title: 'Comment failed', description: e.message, variant: 'destructive' }),
+  });
+
+  // One-time seed from legacy prereq.comments if thread is empty
+  const seededRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!item?.id || !vcrId || !user?.id) return;
+    if (seededRef.current === item.id) return;
+    if (thread.length > 0) {
+      seededRef.current = item.id;
+      return;
+    }
+    const legacy = prereqDetail?.comments?.trim();
+    if (legacy) {
+      seededRef.current = item.id;
+      insertComment.mutate({ body: `[Imported] ${legacy}`, action_tag: null });
+    }
+  }, [item?.id, vcrId, user?.id, thread.length, prereqDetail?.comments]);
+
+  const acceptFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
-    const additions: EvidenceFile[] = Array.from(files).map((f) => ({
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      name: f.name,
-      size: f.size,
-      uploaded_at: new Date().toISOString(),
-      // "AI suggestion": pick first required-evidence option
-      type_label: evidenceTypeOptions[0] || 'Document',
-    }));
-    persistEvidence([...evidence, ...additions]);
-    toast({ title: 'Evidence added', description: `${additions.length} file${additions.length > 1 ? 's' : ''} attached.` });
-  };
-
-  const setEvidenceType = (id: string, type_label: string) => {
-    persistEvidence(evidence.map((e) => (e.id === id ? { ...e, type_label } : e)));
-  };
-  const removeEvidence = (id: string) => {
-    persistEvidence(evidence.filter((e) => e.id !== id));
-  };
-
-  const postComment = (text: string, tag?: ThreadEntry['tag']) => {
-    if (!text.trim()) return;
-    const entry: ThreadEntry = {
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      author: viewer === 'approving' ? approvingMember?.full_name || 'You' : deliveringMember?.full_name || 'You',
-      role:
-        viewer === 'approving'
-          ? approvingMember?.role_name || 'Approving'
-          : deliveringMember?.role_name || (vcrItemDetail?.delivering_party?.name ?? 'Delivering'),
-      date: new Date().toISOString(),
-      text: text.trim(),
-      tag,
-    };
-    persistThread([...thread, entry]);
+    const arr = Array.from(files);
+    for (const f of arr) {
+      await uploadEvidence.mutateAsync({ file: f, evidence_type: defaultEvidenceType });
+    }
+    toast({ title: 'Evidence added', description: `${arr.length} file${arr.length > 1 ? 's' : ''} attached.` });
   };
 
   // ─── Confirmation dialog state ─────────────────────────────────
@@ -679,7 +788,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
 
   const onConfirm = async (note: string) => {
     if (!confirmKind) return;
-    const tagMap: Record<ConfirmKind, ThreadEntry['tag']> = {
+    const tagMap: Record<ConfirmKind, CommentRow['action_tag']> = {
       mark_complete: 'Completed',
       raise_qualification: 'Qualification raised',
       accept: 'Accepted',
@@ -693,11 +802,11 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
     };
     try {
       await updateStatus.mutateAsync({ status: statusMap[confirmKind] });
-      if (note) postComment(note, tagMap[confirmKind]);
-      else if (confirmKind === 'mark_complete' || confirmKind === 'accept') {
-        // record audit beat even without note
-        postComment(`(${tagMap[confirmKind]?.toLowerCase()})`, tagMap[confirmKind]);
-      }
+      const tag = tagMap[confirmKind];
+      const body = note?.trim()
+        ? note.trim()
+        : `(${(tag || '').toLowerCase()})`;
+      await insertComment.mutateAsync({ body, action_tag: tag });
       setConfirmKind(null);
       onOpenChange(false);
       toast({ title: 'Done' });
@@ -705,6 +814,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
       toast({ title: 'Error', description: e.message, variant: 'destructive' });
     }
   };
+
 
   // Guidance/Required-evidence collapse state (declared before any early return for hooks-rules safety)
   // Defaults: Guidance collapsed (verbose reference); Required Evidence expanded (action-relevant).
