@@ -89,35 +89,56 @@ async function fredCompletionsAggregator(sb: any, vcrId: string): Promise<Fact[]
   return facts;
 }
 
-// ─── Ivan: DI-03 HEMP action-register reader ──────────────────────────────
+// Shared evidence loader — reads VCR evidence from p2a_vcr_evidence keyed by prerequisite
+async function loadVcrEvidence(sb: any, prereqId: string | null) {
+  if (!prereqId) return [];
+  const { data } = await sb
+    .from("p2a_vcr_evidence")
+    .select("id, file_name, file_path, file_type, evidence_type, created_at")
+    .eq("vcr_prerequisite_id", prereqId)
+    .order("created_at", { ascending: true });
+  return data || [];
+}
+
+const EVIDENCE_BUCKET = "p2a-attachments";
+
+// ─── Ivan: DI-03 HEMP action-register reader (topic-scoped) ───────────────
+// Runs only for DI-03 items (Design Integrity, display_order 3) whose
+// evidence looks like an action register; otherwise returns unavailable so
+// it never misfires on DI-01/02/04 or HS items.
 async function ivanHempReader(sb: any, item: any, lovableKey: string): Promise<Fact[]> {
-  const { data: atts } = await sb
-    .from("vcr_item_evidence")
-    .select("id, file_name, storage_path, mime_type")
-    .eq("handover_point_id", item.handover_point_id)
-    .eq("vcr_item_id", item.id);
-  const pdf = (atts || []).find((a: any) =>
-    /pdf/i.test(a.mime_type || "") || /\.pdf$/i.test(a.file_name || ""),
+  const categoryCode = item?.category_code;
+  const displayOrder = item?.display_order;
+  const isDi03 = categoryCode === "DI" && displayOrder === 3;
+  if (!isDi03) {
+    return [{ label: "HEMP register check", value: "Not applicable for this item", confidence: "unavailable" }];
+  }
+
+  const atts = await loadVcrEvidence(sb, item.prerequisite_id);
+  const isRegisterLike = (a: any) => {
+    const hay = `${a.file_name || ""} ${a.evidence_type || ""}`.toLowerCase();
+    return /(hemp|hazop|action[\s_-]*register)/i.test(hay);
+  };
+  const pdf = atts.find((a: any) =>
+    (/pdf/i.test(a.file_type || "") || /\.pdf$/i.test(a.file_name || "")) && isRegisterLike(a),
   );
   if (!pdf) {
     return [
       {
         label: "HEMP register",
-        value: "No HEMP/HAZOP PDF attached",
+        value: "No HEMP/HAZOP action register attached",
         confidence: "unavailable",
         tone: "amber",
       },
     ];
   }
 
-  // Signed URL for source links (private bucket)
-  const { data: signed } = await sb.storage.from("vcr-evidence").createSignedUrl(pdf.storage_path, 60 * 60);
+  const { data: signed } = await sb.storage.from(EVIDENCE_BUCKET).createSignedUrl(pdf.file_path, 60 * 60);
   const sourceHref = signed?.signedUrl;
 
-  // Download bytes to send to gateway
   let pdfBytesB64 = "";
   try {
-    const { data: blob } = await sb.storage.from("vcr-evidence").download(pdf.storage_path);
+    const { data: blob } = await sb.storage.from(EVIDENCE_BUCKET).download(pdf.file_path);
     if (blob) {
       const buf = new Uint8Array(await blob.arrayBuffer());
       let bin = "";
@@ -131,7 +152,6 @@ async function ivanHempReader(sb: any, item: any, lovableKey: string): Promise<F
     return [{ label: "HEMP register", value: "Attachment empty", confidence: "unavailable", sourceHref }];
   }
 
-  // Ask Gemini to extract the register, structured
   let extracted: any = null;
   try {
     const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -166,19 +186,13 @@ async function ivanHempReader(sb: any, item: any, lovableKey: string): Promise<F
       extracted = JSON.parse(typeof txt === "string" ? txt : "{}");
     }
   } catch (_e) {
-    /* fall through to unavailable */
+    /* fall through */
   }
 
   const actions: any[] = Array.isArray(extracted?.actions) ? extracted.actions : [];
   if (actions.length === 0) {
     return [
-      {
-        label: "HEMP actions found",
-        value: "0",
-        confidence: "ai_read",
-        tone: "amber",
-        sourceHref,
-      },
+      { label: "HEMP actions found", value: "0", confidence: "ai_read", tone: "amber", sourceHref },
     ];
   }
   const closed = actions.filter((a) => /closed/i.test(a.status || ""));
@@ -189,40 +203,18 @@ async function ivanHempReader(sb: any, item: any, lovableKey: string): Promise<F
     return req && (!got || (got && !got.includes(req) && !req.includes(got)));
   }).length;
 
-  const facts: Fact[] = [
+  return [
     { label: "HEMP actions found", value: String(actions.length), confidence: "ai_read", tone: "neutral", sourceHref },
-    {
-      label: "Open / unresolved",
-      value: String(open),
-      confidence: "ai_read",
-      tone: open > 0 ? "red" : "neutral",
-      sourceHref,
-    },
-    {
-      label: "Closed w/ wrong-discipline sign-off",
-      value: String(discMismatch),
-      confidence: "ai_read",
-      tone: discMismatch > 0 ? "amber" : "neutral",
-      sourceHref,
-    },
+    { label: "Open / unresolved", value: String(open), confidence: "ai_read", tone: open > 0 ? "red" : "neutral", sourceHref },
+    { label: "Closed w/ wrong-discipline sign-off", value: String(discMismatch), confidence: "ai_read", tone: discMismatch > 0 ? "amber" : "neutral", sourceHref },
+    { label: "P&ID / ITR cross-check", value: "Deferred to later layer", confidence: "unavailable" },
   ];
-  // Explicitly deferred — declare absence rather than imply check ran
-  facts.push({
-    label: "P&ID / ITR cross-check",
-    value: "Deferred to later layer",
-    confidence: "unavailable",
-  });
-  return facts;
 }
 
 // ─── Selma: attachment revision pass (runs on EVERY item) ─────────────────
 async function selmaRevisionPass(sb: any, item: any): Promise<Fact[]> {
-  const { data: atts } = await sb
-    .from("vcr_item_evidence")
-    .select("id, file_name")
-    .eq("handover_point_id", item.handover_point_id)
-    .eq("vcr_item_id", item.id);
-  if (!atts || atts.length === 0) {
+  const atts = await loadVcrEvidence(sb, item.prerequisite_id);
+  if (atts.length === 0) {
     const required = (item.supporting_evidence || "").trim();
     if (required) {
       return [{ label: "Required documents attached", value: "0", tone: "amber", confidence: "verified" }];
@@ -300,21 +292,28 @@ serve(async (req) => {
       });
     }
 
-    // Resolve item + category
+    // Resolve item + category + display_order (for Ivan's DI-03 gating)
     const { data: itemRow } = await sb
       .from("vcr_items")
-      .select("id, supporting_evidence, category:vcr_item_categories(code, name)")
+      .select("id, supporting_evidence, display_order, category:vcr_item_categories(code, name)")
       .eq("id", vcr_item_id)
       .maybeSingle();
     // VCR item record from prereq side has prerequisite_id; look it up
     const { data: prereq } = await sb
       .from("p2a_vcr_prerequisites")
-      .select("id")
+      .select("id, status")
       .eq("handover_point_id", vcr_id)
       .eq("vcr_item_id", vcr_item_id)
       .maybeSingle();
-    const item = { ...(itemRow || {}), prerequisite_id: prereq?.id || null, handover_point_id: vcr_id };
     const categoryCode = (itemRow as any)?.category?.code || "??";
+    const item = {
+      ...(itemRow || {}),
+      prerequisite_id: prereq?.id || null,
+      handover_point_id: vcr_id,
+      category_code: categoryCode,
+      display_order: (itemRow as any)?.display_order ?? null,
+    };
+    const prereqStatus = prereq?.status || null;
 
     // Routing
     const { data: cfg } = await sb
@@ -327,16 +326,24 @@ serve(async (req) => {
     const configVersion = cfg?.config_version || 0;
 
     // Evidence fingerprint — invalidate when files are added/removed/updated
+    // Reads from p2a_vcr_evidence (the same store the UI writes to).
     const { data: evRows } = await sb
-      .from("vcr_item_evidence")
+      .from("p2a_vcr_evidence")
       .select("id, created_at")
-      .eq("handover_point_id", vcr_id)
-      .eq("vcr_item_id", vcr_item_id)
+      .eq("vcr_prerequisite_id", prereq?.id || "00000000-0000-0000-0000-000000000000")
       .order("id", { ascending: true });
     const evidenceFingerprint = (evRows || []).map((r: any) => `${r.id}:${r.created_at}`).join("|");
 
-    // Cache lookup
-    const hashInput = JSON.stringify({ configVersion, vcr_id, vcr_item_id, categoryCode, day: new Date().toISOString().slice(0, 10), evidenceFingerprint });
+    // Cache lookup — include prereq status so any status change invalidates
+    const hashInput = JSON.stringify({
+      configVersion,
+      vcr_id,
+      vcr_item_id,
+      categoryCode,
+      day: new Date().toISOString().slice(0, 10),
+      evidenceFingerprint,
+      prereqStatus,
+    });
     const inputsHash = await sha(hashInput);
     if (!force) {
       const { data: cached } = await sb

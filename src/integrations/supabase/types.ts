@@ -7649,6 +7649,7 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
+          evidence_type: string | null
           file_name: string
           file_path: string
           file_size: number | null
@@ -7660,6 +7661,7 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
+          evidence_type?: string | null
           file_name: string
           file_path: string
           file_size?: number | null
@@ -7671,6 +7673,7 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
+          evidence_type?: string | null
           file_name?: string
           file_path?: string
           file_size?: number | null
@@ -15219,6 +15222,10 @@ export type Database = {
       }
       is_feature_enabled: { Args: { p_feature_key: string }; Returns: boolean }
       is_harness_user: { Args: never; Returns: boolean }
+      is_p2a_vcr_evidence_delivering_party: {
+        Args: { _prereq_id: string }
+        Returns: boolean
+      }
       is_vcr_item_approving_party: {
         Args: {
           _handover_point_id: string

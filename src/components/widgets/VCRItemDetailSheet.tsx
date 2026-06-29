@@ -132,12 +132,14 @@ const pillToneClass: Record<string, string> = {
 };
 
 // ─── DB-backed row shapes ─────────────────────────────────────────
+// Evidence persists to p2a_vcr_evidence (the same store the insights
+// engine reads), keyed by the item's vcr_prerequisite_id.
 type EvidenceRow = {
   id: string;
   file_name: string;
   file_size: number | null;
-  mime_type: string | null;
-  storage_path: string;
+  file_type: string | null;
+  file_path: string;
   evidence_type: string | null;
   uploaded_by: string | null;
   created_at: string;
@@ -156,7 +158,7 @@ type AuthorProfile = {
   role_name: string | null;
 };
 
-const EVIDENCE_BUCKET = 'vcr-evidence';
+const EVIDENCE_BUCKET = 'p2a-attachments';
 const sanitizeFile = (name: string) =>
   name.replace(/[^a-zA-Z0-9._-]+/g, '_').slice(0, 120);
 
@@ -607,22 +609,21 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   }, [requiredEvidenceText]);
   const defaultEvidenceType = evidenceTypeOptions[0] || 'Document';
 
-  // ── Evidence query ─────────────────────────────────────────
-  const evidenceQueryKey = ['vcr-item-evidence', vcrId, item?.id];
+  // ── Evidence query (p2a_vcr_evidence keyed by vcr_prerequisite_id) ─
+  const evidenceQueryKey = ['vcr-item-evidence-v2', item?.prerequisite_id];
   const { data: evidence = [] } = useQuery({
     queryKey: evidenceQueryKey,
     queryFn: async (): Promise<EvidenceRow[]> => {
-      if (!item?.id || !vcrId) return [];
+      if (!item?.prerequisite_id) return [];
       const { data, error } = await supabase
-        .from('vcr_item_evidence')
-        .select('id, file_name, file_size, mime_type, storage_path, evidence_type, uploaded_by, created_at')
-        .eq('handover_point_id', vcrId)
-        .eq('vcr_item_id', item.id)
+        .from('p2a_vcr_evidence')
+        .select('id, file_name, file_size, file_type, file_path, evidence_type, uploaded_by, created_at')
+        .eq('vcr_prerequisite_id', item.prerequisite_id)
         .order('created_at', { ascending: true });
       if (error) throw error;
-      return (data || []) as EvidenceRow[];
+      return ((data || []) as unknown) as EvidenceRow[];
     },
-    enabled: open && !!item?.id && !!vcrId,
+    enabled: open && !!item?.prerequisite_id,
   });
 
   // ── Comments query ─────────────────────────────────────────
@@ -692,26 +693,24 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   const uploadEvidence = useMutation({
     mutationFn: async ({ file, evidence_type }: { file: File; evidence_type: string }) => {
       if (!item?.id || !vcrId || !user?.id) throw new Error('Not ready');
+      if (!item.prerequisite_id) throw new Error('This item has no linked prerequisite — cannot attach evidence yet.');
       const safe = sanitizeFile(file.name);
       const uid = (crypto as any).randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-      const path = `${vcrId}/${item.id}/${uid}-${safe}`;
+      const path = `${item.prerequisite_id}/${uid}-${safe}`;
       const { error: upErr } = await supabase.storage
         .from(EVIDENCE_BUCKET)
         .upload(path, file, { contentType: file.type || undefined, upsert: false });
       if (upErr) throw upErr;
-      const { error: insErr } = await supabase.from('vcr_item_evidence').insert({
-        handover_point_id: vcrId,
-        vcr_item_id: item.id,
-        prerequisite_id: item.prerequisite_id,
+      const { error: insErr } = await supabase.from('p2a_vcr_evidence').insert({
+        vcr_prerequisite_id: item.prerequisite_id,
         file_name: file.name,
-        storage_path: path,
+        file_path: path,
         file_size: file.size,
-        mime_type: file.type || null,
+        file_type: file.type || null,
         evidence_type,
         uploaded_by: user.id,
       });
       if (insErr) {
-        // Best-effort cleanup of orphan object
         await supabase.storage.from(EVIDENCE_BUCKET).remove([path]);
         throw insErr;
       }
@@ -723,7 +722,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   const updateEvidenceType = useMutation({
     mutationFn: async ({ id, evidence_type }: { id: string; evidence_type: string }) => {
       const { error } = await supabase
-        .from('vcr_item_evidence')
+        .from('p2a_vcr_evidence')
         .update({ evidence_type })
         .eq('id', id);
       if (error) throw error;
@@ -734,13 +733,14 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
 
   const deleteEvidence = useMutation({
     mutationFn: async (row: EvidenceRow) => {
-      const { error } = await supabase.from('vcr_item_evidence').delete().eq('id', row.id);
+      const { error } = await supabase.from('p2a_vcr_evidence').delete().eq('id', row.id);
       if (error) throw error;
-      await supabase.storage.from(EVIDENCE_BUCKET).remove([row.storage_path]);
+      await supabase.storage.from(EVIDENCE_BUCKET).remove([row.file_path]);
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: evidenceQueryKey }),
     onError: (e: any) => toast({ title: 'Delete failed', description: e.message, variant: 'destructive' }),
   });
+
 
   const insertComment = useMutation({
     mutationFn: async ({ body, action_tag }: { body: string; action_tag: CommentRow['action_tag'] }) => {
@@ -947,6 +947,10 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                 {evidence.length === 0 ? (
                   viewer !== 'delivering' ? (
                     <p className="text-xs text-muted-foreground italic">No evidence submitted yet.</p>
+                  ) : !item.prerequisite_id ? (
+                    <p className="text-xs text-muted-foreground italic">
+                      Evidence can't be attached yet — this item isn't linked to a delivery prerequisite.
+                    </p>
                   ) : (
                     <div
                       onDragOver={(e) => {
@@ -998,7 +1002,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                         <div className="flex-1 min-w-0 space-y-1">
                           <button
                             type="button"
-                            onClick={() => openSignedUrl(f.storage_path)}
+                            onClick={() => openSignedUrl(f.file_path)}
                             className="text-[13px] font-medium truncate text-left hover:underline"
                           >
                             {f.file_name}
@@ -1040,7 +1044,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7 shrink-0"
-                            onClick={() => openSignedUrl(f.storage_path)}
+                            onClick={() => openSignedUrl(f.file_path)}
                           >
                             <Eye className="h-3.5 w-3.5" />
                           </Button>
