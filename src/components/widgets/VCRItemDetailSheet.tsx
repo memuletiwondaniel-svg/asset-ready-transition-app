@@ -131,41 +131,34 @@ const pillToneClass: Record<string, string> = {
   purple: 'border-purple-300 text-purple-700 bg-purple-50 dark:bg-purple-950/30 dark:text-purple-300 dark:border-purple-800',
 };
 
-// ─── Local-only autosave stores (UI demo persistence) ──────────────
-type EvidenceFile = {
+// ─── DB-backed row shapes ─────────────────────────────────────────
+type EvidenceRow = {
   id: string;
-  name: string;
-  size: number;
-  uploaded_at: string;
-  type_label: string;
+  file_name: string;
+  file_size: number | null;
+  mime_type: string | null;
+  storage_path: string;
+  evidence_type: string | null;
+  uploaded_by: string | null;
+  created_at: string;
 };
-type ThreadEntry = {
+type CommentRow = {
   id: string;
-  author: string;
-  role: string;
-  date: string;
-  text: string;
-  tag?: 'Accepted' | 'Returned' | 'Completed' | 'Qualification raised';
+  author_user_id: string | null;
+  body: string;
+  action_tag: 'Completed' | 'Returned' | 'Accepted' | 'Qualification raised' | null;
+  created_at: string;
+};
+type AuthorProfile = {
+  user_id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  role_name: string | null;
 };
 
-const evidenceKey = (id: string) => `vcr.item.${id}.evidence.v1`;
-const threadKey = (id: string) => `vcr.item.${id}.thread.v1`;
-
-const loadList = <T,>(key: string): T[] => {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T[]) : [];
-  } catch {
-    return [];
-  }
-};
-const saveList = <T,>(key: string, list: T[]) => {
-  try {
-    localStorage.setItem(key, JSON.stringify(list));
-  } catch {
-    /* ignore quota */
-  }
-};
+const EVIDENCE_BUCKET = 'vcr-evidence';
+const sanitizeFile = (name: string) =>
+  name.replace(/[^a-zA-Z0-9._-]+/g, '_').slice(0, 120);
 
 // ─── Insights block ────────────────────────────────────────────────
 const InsightsBlock: React.FC<{
@@ -594,13 +587,12 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
     return 'observer';
   }, [user?.id, deliveringParties, approvingMember]);
 
-  // ─── Local autosave: evidence + comments thread ────────────────
-  const [evidence, setEvidence] = useState<EvidenceFile[]>([]);
-  const [thread, setThread] = useState<ThreadEntry[]>([]);
+  // ─── DB-backed evidence + comments ──────────────────────────────
   const [composerOpen, setComposerOpen] = useState(false);
   const [composerText, setComposerText] = useState('');
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pendingTypeFor, setPendingTypeFor] = useState<string | null>(null);
 
   // Required-evidence labels → AI-suggested dropdown options
   const requiredEvidenceText: string = vcrItemDetail?.supporting_evidence || '';
@@ -613,72 +605,182 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
     const opts = parsed.length > 0 ? parsed : ['Document'];
     return [...opts, 'Other / custom'];
   }, [requiredEvidenceText]);
+  const defaultEvidenceType = evidenceTypeOptions[0] || 'Document';
 
-  useEffect(() => {
-    if (!item?.id) return;
-    setEvidence(loadList<EvidenceFile>(evidenceKey(item.id)));
-    const t = loadList<ThreadEntry>(threadKey(item.id));
-    // Seed with stored prereq comments on first open
-    if (t.length === 0 && prereqDetail?.comments) {
-      const seeded: ThreadEntry[] = [
-        {
-          id: 'seed',
-          author: 'System',
-          role: 'Imported',
-          date: prereqDetail.updated_at || new Date().toISOString(),
-          text: prereqDetail.comments,
-        },
-      ];
-      setThread(seeded);
-    } else {
-      setThread(t);
+  // ── Evidence query ─────────────────────────────────────────
+  const evidenceQueryKey = ['vcr-item-evidence', vcrId, item?.id];
+  const { data: evidence = [] } = useQuery({
+    queryKey: evidenceQueryKey,
+    queryFn: async (): Promise<EvidenceRow[]> => {
+      if (!item?.id || !vcrId) return [];
+      const { data, error } = await supabase
+        .from('vcr_item_evidence')
+        .select('id, file_name, file_size, mime_type, storage_path, evidence_type, uploaded_by, created_at')
+        .eq('handover_point_id', vcrId)
+        .eq('vcr_item_id', item.id)
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      return (data || []) as EvidenceRow[];
+    },
+    enabled: open && !!item?.id && !!vcrId,
+  });
+
+  // ── Comments query ─────────────────────────────────────────
+  const commentsQueryKey = ['vcr-item-comments', vcrId, item?.id];
+  const { data: thread = [] } = useQuery({
+    queryKey: commentsQueryKey,
+    queryFn: async (): Promise<CommentRow[]> => {
+      if (!item?.id || !vcrId) return [];
+      const { data, error } = await supabase
+        .from('vcr_item_comments')
+        .select('id, author_user_id, body, action_tag, created_at')
+        .eq('handover_point_id', vcrId)
+        .eq('vcr_item_id', item.id)
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      return (data || []) as CommentRow[];
+    },
+    enabled: open && !!item?.id && !!vcrId,
+  });
+
+  // ── Author profiles for thread avatars ─────────────────────
+  const authorIds = useMemo(
+    () => Array.from(new Set(thread.map((c) => c.author_user_id).filter(Boolean))) as string[],
+    [thread],
+  );
+  const { data: authorProfiles = [] } = useQuery({
+    queryKey: ['vcr-item-comment-authors', authorIds.join(',')],
+    queryFn: async (): Promise<AuthorProfile[]> => {
+      if (authorIds.length === 0) return [];
+      const { data } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, avatar_url, role')
+        .in('user_id', authorIds);
+      const roleIds = Array.from(new Set((data || []).map((p: any) => p.role).filter(Boolean))) as string[];
+      let roleMap: Record<string, string> = {};
+      if (roleIds.length > 0) {
+        const { data: roles } = await supabase.from('roles').select('id, name').in('id', roleIds);
+        roleMap = Object.fromEntries((roles || []).map((r: any) => [r.id, r.name]));
+      }
+      return (data || []).map((p: any) => ({
+        user_id: p.user_id,
+        full_name: p.full_name,
+        avatar_url: p.avatar_url,
+        role_name: p.role ? roleMap[p.role] || null : null,
+      }));
+    },
+    enabled: authorIds.length > 0,
+  });
+  const authorById = useMemo(
+    () => Object.fromEntries(authorProfiles.map((p) => [p.user_id, p])),
+    [authorProfiles],
+  );
+
+  // ── Signed-URL viewer ──────────────────────────────────────
+  const openSignedUrl = async (path: string) => {
+    const { data, error } = await supabase.storage
+      .from(EVIDENCE_BUCKET)
+      .createSignedUrl(path, 60 * 5);
+    if (error || !data?.signedUrl) {
+      toast({ title: 'Could not open file', description: error?.message, variant: 'destructive' });
+      return;
     }
-  }, [item?.id, prereqDetail?.comments]);
-
-  const persistEvidence = (next: EvidenceFile[]) => {
-    setEvidence(next);
-    if (item?.id) saveList(evidenceKey(item.id), next);
-  };
-  const persistThread = (next: ThreadEntry[]) => {
-    setThread(next);
-    if (item?.id) saveList(threadKey(item.id), next);
+    window.open(data.signedUrl, '_blank', 'noopener');
   };
 
-  const acceptFiles = (files: FileList | null) => {
+  // ── Mutations ──────────────────────────────────────────────
+  const uploadEvidence = useMutation({
+    mutationFn: async ({ file, evidence_type }: { file: File; evidence_type: string }) => {
+      if (!item?.id || !vcrId || !user?.id) throw new Error('Not ready');
+      const safe = sanitizeFile(file.name);
+      const uid = (crypto as any).randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const path = `${vcrId}/${item.id}/${uid}-${safe}`;
+      const { error: upErr } = await supabase.storage
+        .from(EVIDENCE_BUCKET)
+        .upload(path, file, { contentType: file.type || undefined, upsert: false });
+      if (upErr) throw upErr;
+      const { error: insErr } = await supabase.from('vcr_item_evidence').insert({
+        handover_point_id: vcrId,
+        vcr_item_id: item.id,
+        prerequisite_id: item.prerequisite_id,
+        file_name: file.name,
+        storage_path: path,
+        file_size: file.size,
+        mime_type: file.type || null,
+        evidence_type,
+        uploaded_by: user.id,
+      });
+      if (insErr) {
+        // Best-effort cleanup of orphan object
+        await supabase.storage.from(EVIDENCE_BUCKET).remove([path]);
+        throw insErr;
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: evidenceQueryKey }),
+    onError: (e: any) => toast({ title: 'Upload failed', description: e.message, variant: 'destructive' }),
+  });
+
+  const updateEvidenceType = useMutation({
+    mutationFn: async ({ id, evidence_type }: { id: string; evidence_type: string }) => {
+      const { error } = await supabase
+        .from('vcr_item_evidence')
+        .update({ evidence_type })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: evidenceQueryKey }),
+    onError: (e: any) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
+  });
+
+  const deleteEvidence = useMutation({
+    mutationFn: async (row: EvidenceRow) => {
+      const { error } = await supabase.from('vcr_item_evidence').delete().eq('id', row.id);
+      if (error) throw error;
+      await supabase.storage.from(EVIDENCE_BUCKET).remove([row.storage_path]);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: evidenceQueryKey }),
+    onError: (e: any) => toast({ title: 'Delete failed', description: e.message, variant: 'destructive' }),
+  });
+
+  const insertComment = useMutation({
+    mutationFn: async ({ body, action_tag }: { body: string; action_tag: CommentRow['action_tag'] }) => {
+      if (!item?.id || !vcrId || !user?.id) throw new Error('Not ready');
+      const { error } = await supabase.from('vcr_item_comments').insert({
+        handover_point_id: vcrId,
+        vcr_item_id: item.id,
+        author_user_id: user.id,
+        body,
+        action_tag,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: commentsQueryKey }),
+    onError: (e: any) => toast({ title: 'Comment failed', description: e.message, variant: 'destructive' }),
+  });
+
+  // One-time seed from legacy prereq.comments if thread is empty
+  const seededRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!item?.id || !vcrId || !user?.id) return;
+    if (seededRef.current === item.id) return;
+    if (thread.length > 0) {
+      seededRef.current = item.id;
+      return;
+    }
+    const legacy = prereqDetail?.comments?.trim();
+    if (legacy) {
+      seededRef.current = item.id;
+      insertComment.mutate({ body: `[Imported] ${legacy}`, action_tag: null });
+    }
+  }, [item?.id, vcrId, user?.id, thread.length, prereqDetail?.comments]);
+
+  const acceptFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
-    const additions: EvidenceFile[] = Array.from(files).map((f) => ({
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      name: f.name,
-      size: f.size,
-      uploaded_at: new Date().toISOString(),
-      // "AI suggestion": pick first required-evidence option
-      type_label: evidenceTypeOptions[0] || 'Document',
-    }));
-    persistEvidence([...evidence, ...additions]);
-    toast({ title: 'Evidence added', description: `${additions.length} file${additions.length > 1 ? 's' : ''} attached.` });
-  };
-
-  const setEvidenceType = (id: string, type_label: string) => {
-    persistEvidence(evidence.map((e) => (e.id === id ? { ...e, type_label } : e)));
-  };
-  const removeEvidence = (id: string) => {
-    persistEvidence(evidence.filter((e) => e.id !== id));
-  };
-
-  const postComment = (text: string, tag?: ThreadEntry['tag']) => {
-    if (!text.trim()) return;
-    const entry: ThreadEntry = {
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      author: viewer === 'approving' ? approvingMember?.full_name || 'You' : deliveringMember?.full_name || 'You',
-      role:
-        viewer === 'approving'
-          ? approvingMember?.role_name || 'Approving'
-          : deliveringMember?.role_name || (vcrItemDetail?.delivering_party?.name ?? 'Delivering'),
-      date: new Date().toISOString(),
-      text: text.trim(),
-      tag,
-    };
-    persistThread([...thread, entry]);
+    const arr = Array.from(files);
+    for (const f of arr) {
+      await uploadEvidence.mutateAsync({ file: f, evidence_type: defaultEvidenceType });
+    }
+    toast({ title: 'Evidence added', description: `${arr.length} file${arr.length > 1 ? 's' : ''} attached.` });
   };
 
   // ─── Confirmation dialog state ─────────────────────────────────
@@ -686,7 +788,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
 
   const onConfirm = async (note: string) => {
     if (!confirmKind) return;
-    const tagMap: Record<ConfirmKind, ThreadEntry['tag']> = {
+    const tagMap: Record<ConfirmKind, CommentRow['action_tag']> = {
       mark_complete: 'Completed',
       raise_qualification: 'Qualification raised',
       accept: 'Accepted',
@@ -700,11 +802,11 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
     };
     try {
       await updateStatus.mutateAsync({ status: statusMap[confirmKind] });
-      if (note) postComment(note, tagMap[confirmKind]);
-      else if (confirmKind === 'mark_complete' || confirmKind === 'accept') {
-        // record audit beat even without note
-        postComment(`(${tagMap[confirmKind]?.toLowerCase()})`, tagMap[confirmKind]);
-      }
+      const tag = tagMap[confirmKind];
+      const body = note?.trim()
+        ? note.trim()
+        : `(${(tag || '').toLowerCase()})`;
+      await insertComment.mutateAsync({ body, action_tag: tag });
       setConfirmKind(null);
       onOpenChange(false);
       toast({ title: 'Done' });
@@ -712,6 +814,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
       toast({ title: 'Error', description: e.message, variant: 'destructive' });
     }
   };
+
 
   // Guidance/Required-evidence collapse state (declared before any early return for hooks-rules safety)
   // Defaults: Guidance collapsed (verbose reference); Required Evidence expanded (action-relevant).
@@ -882,7 +985,9 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                   )
                 ) : (
                   <div className="space-y-2">
-                    {evidence.map((f) => (
+                    {evidence.map((f) => {
+                      const typeLabel = f.evidence_type || defaultEvidenceType;
+                      return (
                       <div
                         key={f.id}
                         className="rounded-lg border border-border px-3 py-2.5 flex items-start gap-3"
@@ -891,18 +996,24 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                           <FileText className="h-4 w-4 text-muted-foreground" />
                         </div>
                         <div className="flex-1 min-w-0 space-y-1">
-                          <div className="text-[13px] font-medium truncate">{f.name}</div>
+                          <button
+                            type="button"
+                            onClick={() => openSignedUrl(f.storage_path)}
+                            className="text-[13px] font-medium truncate text-left hover:underline"
+                          >
+                            {f.file_name}
+                          </button>
                           <div className="flex items-center gap-2 flex-wrap">
                             {viewer !== 'delivering' ? (
                               <Badge variant="secondary" className="text-[10px] font-normal">
-                                {f.type_label}
+                                {typeLabel}
                               </Badge>
                             ) : (
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <button className="inline-flex items-center gap-1 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border border-blue-200 dark:border-blue-900 text-[10px] px-2 py-0.5 hover:bg-blue-100 transition">
                                     <span className="text-[9px] text-blue-600/80 dark:text-blue-400/80">AI:</span>
-                                    {f.type_label}
+                                    {typeLabel}
                                     <ChevronDown className="h-3 w-3" />
                                   </button>
                                 </DropdownMenuTrigger>
@@ -910,8 +1021,8 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                                   {evidenceTypeOptions.map((opt) => (
                                     <DropdownMenuItem
                                       key={opt}
-                                      onSelect={() => setEvidenceType(f.id, opt)}
-                                      className={cn(opt === f.type_label && 'font-semibold')}
+                                      onSelect={() => updateEvidenceType.mutate({ id: f.id, evidence_type: opt })}
+                                      className={cn(opt === typeLabel && 'font-semibold')}
                                     >
                                       {opt}
                                     </DropdownMenuItem>
@@ -920,12 +1031,17 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                               </DropdownMenu>
                             )}
                             <span className="text-[11px] text-muted-foreground">
-                              {fmtBytes(f.size)} · {format(new Date(f.uploaded_at), 'd MMM')}
+                              {fmtBytes(f.file_size || 0)} · {format(new Date(f.created_at), 'd MMM')}
                             </span>
                           </div>
                         </div>
                         {viewer !== 'delivering' ? (
-                          <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 shrink-0"
+                            onClick={() => openSignedUrl(f.storage_path)}
+                          >
                             <Eye className="h-3.5 w-3.5" />
                           </Button>
                         ) : (
@@ -933,13 +1049,14 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
-                            onClick={() => removeEvidence(f.id)}
+                            onClick={() => deleteEvidence.mutate(f)}
                           >
                             <X className="h-3.5 w-3.5" />
                           </Button>
                         )}
                       </div>
-                    ))}
+                      );
+                    })}
                     {viewer === 'delivering' && (
                       <button
                         onClick={() => fileInputRef.current?.click()}
@@ -969,37 +1086,47 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                   <p className="text-xs text-muted-foreground italic">No comments yet.</p>
                 ) : (
                   <div className="space-y-3">
-                    {thread.map((c) => (
-                      <div key={c.id} className="flex items-start gap-2.5">
-                        <Avatar className="h-7 w-7 shrink-0">
-                          <AvatarFallback className="text-[10px]">{getInitials(c.author)}</AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0 flex-1">
-                          <div className="text-[11px] text-muted-foreground">
-                            <span className="font-semibold text-foreground">{c.author}</span>
-                            <span> · {c.role}</span>
-                            <span> · {format(new Date(c.date), 'd MMM')}</span>
-                            {c.tag && (
-                              <Badge
-                                variant="outline"
-                                className={cn(
-                                  'ml-2 text-[9px] font-normal',
-                                  c.tag === 'Accepted' && pillToneClass.green,
-                                  c.tag === 'Returned' && pillToneClass.red,
-                                  c.tag === 'Completed' && pillToneClass.amber,
-                                  c.tag === 'Qualification raised' && pillToneClass.purple,
-                                )}
-                              >
-                                {c.tag}
-                              </Badge>
-                            )}
+                    {thread.map((c) => {
+                      const prof = c.author_user_id ? authorById[c.author_user_id] : undefined;
+                      const isYou = c.author_user_id && user?.id && c.author_user_id === user.id;
+                      const authorName = isYou
+                        ? prof?.full_name || 'You'
+                        : prof?.full_name || 'Unknown';
+                      const roleName = prof?.role_name || '';
+                      const tag = c.action_tag;
+                      return (
+                        <div key={c.id} className="flex items-start gap-2.5">
+                          <Avatar className="h-7 w-7 shrink-0">
+                            <AvatarImage src={getAvatarUrl(prof?.avatar_url)} />
+                            <AvatarFallback className="text-[10px]">{getInitials(authorName)}</AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-[11px] text-muted-foreground">
+                              <span className="font-semibold text-foreground">{authorName}</span>
+                              {roleName && <span> · {roleName}</span>}
+                              <span> · {format(new Date(c.created_at), 'd MMM')}</span>
+                              {tag && (
+                                <Badge
+                                  variant="outline"
+                                  className={cn(
+                                    'ml-2 text-[9px] font-normal',
+                                    tag === 'Accepted' && pillToneClass.green,
+                                    tag === 'Returned' && pillToneClass.red,
+                                    tag === 'Completed' && pillToneClass.amber,
+                                    tag === 'Qualification raised' && pillToneClass.purple,
+                                  )}
+                                >
+                                  {tag}
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-[13px] text-foreground/90 mt-0.5 leading-relaxed whitespace-pre-wrap">
+                              {c.body}
+                            </p>
                           </div>
-                          <p className="text-[13px] text-foreground/90 mt-0.5 leading-relaxed whitespace-pre-wrap">
-                            {c.text}
-                          </p>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
 
@@ -1017,9 +1144,11 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                       </Button>
                       <Button
                         size="sm"
-                        disabled={!composerText.trim()}
-                        onClick={() => {
-                          postComment(composerText);
+                        disabled={!composerText.trim() || insertComment.isPending}
+                        onClick={async () => {
+                          const text = composerText.trim();
+                          if (!text) return;
+                          await insertComment.mutateAsync({ body: text, action_tag: null });
                           setComposerText('');
                           setComposerOpen(false);
                         }}
