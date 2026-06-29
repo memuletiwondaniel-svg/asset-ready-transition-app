@@ -1086,37 +1086,47 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                   <p className="text-xs text-muted-foreground italic">No comments yet.</p>
                 ) : (
                   <div className="space-y-3">
-                    {thread.map((c) => (
-                      <div key={c.id} className="flex items-start gap-2.5">
-                        <Avatar className="h-7 w-7 shrink-0">
-                          <AvatarFallback className="text-[10px]">{getInitials(c.author)}</AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0 flex-1">
-                          <div className="text-[11px] text-muted-foreground">
-                            <span className="font-semibold text-foreground">{c.author}</span>
-                            <span> · {c.role}</span>
-                            <span> · {format(new Date(c.date), 'd MMM')}</span>
-                            {c.tag && (
-                              <Badge
-                                variant="outline"
-                                className={cn(
-                                  'ml-2 text-[9px] font-normal',
-                                  c.tag === 'Accepted' && pillToneClass.green,
-                                  c.tag === 'Returned' && pillToneClass.red,
-                                  c.tag === 'Completed' && pillToneClass.amber,
-                                  c.tag === 'Qualification raised' && pillToneClass.purple,
-                                )}
-                              >
-                                {c.tag}
-                              </Badge>
-                            )}
+                    {thread.map((c) => {
+                      const prof = c.author_user_id ? authorById[c.author_user_id] : undefined;
+                      const isYou = c.author_user_id && user?.id && c.author_user_id === user.id;
+                      const authorName = isYou
+                        ? prof?.full_name || 'You'
+                        : prof?.full_name || 'Unknown';
+                      const roleName = prof?.role_name || '';
+                      const tag = c.action_tag;
+                      return (
+                        <div key={c.id} className="flex items-start gap-2.5">
+                          <Avatar className="h-7 w-7 shrink-0">
+                            <AvatarImage src={getAvatarUrl(prof?.avatar_url)} />
+                            <AvatarFallback className="text-[10px]">{getInitials(authorName)}</AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-[11px] text-muted-foreground">
+                              <span className="font-semibold text-foreground">{authorName}</span>
+                              {roleName && <span> · {roleName}</span>}
+                              <span> · {format(new Date(c.created_at), 'd MMM')}</span>
+                              {tag && (
+                                <Badge
+                                  variant="outline"
+                                  className={cn(
+                                    'ml-2 text-[9px] font-normal',
+                                    tag === 'Accepted' && pillToneClass.green,
+                                    tag === 'Returned' && pillToneClass.red,
+                                    tag === 'Completed' && pillToneClass.amber,
+                                    tag === 'Qualification raised' && pillToneClass.purple,
+                                  )}
+                                >
+                                  {tag}
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-[13px] text-foreground/90 mt-0.5 leading-relaxed whitespace-pre-wrap">
+                              {c.body}
+                            </p>
                           </div>
-                          <p className="text-[13px] text-foreground/90 mt-0.5 leading-relaxed whitespace-pre-wrap">
-                            {c.text}
-                          </p>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
 
@@ -1134,9 +1144,11 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                       </Button>
                       <Button
                         size="sm"
-                        disabled={!composerText.trim()}
-                        onClick={() => {
-                          postComment(composerText);
+                        disabled={!composerText.trim() || insertComment.isPending}
+                        onClick={async () => {
+                          const text = composerText.trim();
+                          if (!text) return;
+                          await insertComment.mutateAsync({ body: text, action_tag: null });
                           setComposerText('');
                           setComposerOpen(false);
                         }}
