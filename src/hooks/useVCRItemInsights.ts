@@ -3,14 +3,39 @@ import { supabase } from '@/integrations/supabase/client';
 import type { VCRInsights } from '@/components/widgets/VCRItemDetailSheet';
 
 /**
- * AI-1 Readiness Insights hook — cache-then-compute.
+ * AI-1 Readiness Insights hook — cache-then-compute, with a hard timeout
+ * so a hung cache read can never leave the UI stuck on "pending".
  *
- * `useQuery` reads the cached `vcr_item_insights` row immediately so the UI
- * paints fast. The `recompute` mutation calls the `compute-vcr-insights` edge
- * function to refresh on demand (e.g. user clicks "Recompute").
- * Engine is advisory only — it never mutates prereqs, approvers, or submit
- * paths.
+ * Engine is advisory only — it never mutates prereqs, approvers, or submit paths.
  */
+function withTimeout<T>(p: PromiseLike<T>, ms: number, fallback: T): Promise<T> {
+  return new Promise((resolve) => {
+    let done = false;
+    const t = setTimeout(() => {
+      if (!done) {
+        done = true;
+        resolve(fallback);
+      }
+    }, ms);
+    Promise.resolve(p).then(
+      (v) => {
+        if (!done) {
+          done = true;
+          clearTimeout(t);
+          resolve(v);
+        }
+      },
+      () => {
+        if (!done) {
+          done = true;
+          clearTimeout(t);
+          resolve(fallback);
+        }
+      },
+    );
+  });
+}
+
 export function useVCRItemInsights(vcrId: string | undefined, vcrItemId: string | undefined) {
   const qc = useQueryClient();
   const queryKey = ['vcr-item-insights', vcrId, vcrItemId];
@@ -19,17 +44,31 @@ export function useVCRItemInsights(vcrId: string | undefined, vcrItemId: string 
     queryKey,
     queryFn: async (): Promise<VCRInsights> => {
       if (!vcrId || !vcrItemId) return { state: 'unavailable' };
-      const { data } = await supabase
-        .from('vcr_item_insights')
-        .select('payload')
-        .eq('vcr_id', vcrId)
-        .eq('vcr_item_id', vcrItemId)
-        .maybeSingle();
+
+      // Cache read with an 8s ceiling — if RLS/policy stalls the GET,
+      // we fall back to 'unavailable' rather than spinning forever.
+      const result = await withTimeout(
+        supabase
+          .from('vcr_item_insights')
+          .select('payload')
+          .eq('vcr_id', vcrId)
+          .eq('vcr_item_id', vcrItemId)
+          .maybeSingle(),
+        8000,
+        { data: null as any, error: { message: 'timeout' } as any },
+      );
+
+      const data = (result as any)?.data;
       if (!data) {
-        // No cache yet — trigger compute and return pending
-        supabase.functions.invoke('compute-vcr-insights', {
-          body: { vcr_id: vcrId, vcr_item_id: vcrItemId },
-        }).then(() => qc.invalidateQueries({ queryKey }));
+        // No cache yet (or timeout) — kick compute, return pending.
+        // Compute itself is bounded so we don't leak invokes.
+        withTimeout(
+          supabase.functions.invoke('compute-vcr-insights', {
+            body: { vcr_id: vcrId, vcr_item_id: vcrItemId },
+          }),
+          15000,
+          null,
+        ).then(() => qc.invalidateQueries({ queryKey }));
         return { state: 'pending' };
       }
       return (data.payload as unknown as VCRInsights) ?? { state: 'unavailable' };

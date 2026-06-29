@@ -80,48 +80,53 @@ export const CategoryItemsSheet: React.FC<CategoryItemsSheetProps> = ({
       const { data: vcrItems } = await supabase
         .from('vcr_items')
         .select(`
-          id, vcr_item, topic,
+          id, vcr_item, topic, display_order,
           vcr_item_categories!vcr_items_category_id_fkey (name, code)
         `)
         .eq('is_active', true);
 
       if (!vcrItems) return [];
 
-      // Filter items by category
-      const filtered = (vcrItems as any[]).filter(item => {
-        const cat = item.vcr_item_categories;
-        if (!cat) return false;
-        return categoryKeys.some(key => 
-          cat.name?.toLowerCase() === key.toLowerCase() || 
-          cat.code?.toLowerCase() === key.toLowerCase()
-        );
-      });
+      // Filter items by category, then sort by display_order so the codes
+      // and ordering match the admin Items table + VCRItemTaskListSheet.
+      const filtered = (vcrItems as any[])
+        .filter(item => {
+          const cat = item.vcr_item_categories;
+          if (!cat) return false;
+          return categoryKeys.some(key =>
+            cat.name?.toLowerCase() === key.toLowerCase() ||
+            cat.code?.toLowerCase() === key.toLowerCase()
+          );
+        })
+        .sort((a, b) => (a.display_order ?? 999) - (b.display_order ?? 999));
 
-      // Indices (0-based) within a category that should show as Approved Qualification
+      // display_order values that should show as Approved Qualification
       // instead of Accepted when the VCR is handed over.
-      const QUALIFIED_INDEX_MAP: Record<string, number[]> = {
-        'Technical Integrity': [2, 4], // TI-03, TI-05
-        'Design Integrity': [1, 3],    // DI-02, DI-04
+      const QUALIFIED_ORDER_MAP: Record<string, number[]> = {
+        'Technical Integrity': [3, 5], // TI-03, TI-05
+        'Design Integrity': [2, 4],    // DI-02, DI-04
       };
-      const qualifiedIndices = new Set(QUALIFIED_INDEX_MAP[categoryLabel] || []);
+      const qualifiedOrders = new Set(QUALIFIED_ORDER_MAP[categoryLabel] || []);
 
       // Map items with their prerequisite status
-      return filtered.map((item, idx) => {
+      return filtered.map((item) => {
         const matchedPrereq = prereqs?.find(p => p.vcr_item_id === item.id);
+        const order = item.display_order ?? 0;
 
         const baseStatus = matchedPrereq?.status || 'NOT_STARTED';
         const forcedStatus = forceCompleted
-          ? (qualifiedIndices.has(idx) ? 'QUALIFICATION_APPROVED' : 'ACCEPTED')
+          ? (qualifiedOrders.has(order) ? 'QUALIFICATION_APPROVED' : 'ACCEPTED')
           : baseStatus;
         return {
           id: item.id,
           vcr_item: item.vcr_item,
           topic: item.topic,
+          display_order: order,
           category_name: item.vcr_item_categories?.name || '',
           category_code: item.vcr_item_categories?.code || '',
           status: forcedStatus,
           prerequisite_id: matchedPrereq?.id || null,
-        } as VCRItemWithStatus;
+        } as VCRItemWithStatus & { display_order: number };
       });
     },
     enabled: open && !!vcrId,
@@ -165,16 +170,18 @@ export const CategoryItemsSheet: React.FC<CategoryItemsSheetProps> = ({
             </div>
           ) : (
             <div className="space-y-2">
-              {items.map((item, idx) => {
+              {items.map((item) => {
                 const statusCfg = STATUS_CONFIG[item.status] || STATUS_CONFIG.NOT_STARTED;
                 const StatusIcon = statusCfg.icon;
+                const order = (item as any).display_order ?? 0;
+                const code = formatVcrItemCode(item.category_code, order);
                 return (
                   <Card
                     key={item.id}
                     className="transition-colors hover:border-primary/30 cursor-pointer"
                     onClick={() => setSelectedItem({
                       ...item,
-                      itemCode: formatVcrItemCode(item.category_code, idx + 1),
+                      itemCode: code,
                     })}
                   >
                     <CardContent className="p-4">
@@ -188,7 +195,7 @@ export const CategoryItemsSheet: React.FC<CategoryItemsSheetProps> = ({
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="text-[10px] text-muted-foreground font-mono">
-                              {formatVcrItemCode(item.category_code, idx + 1)}
+                              {code}
                             </span>
                             <Badge variant="outline" className={cn("text-[9px] px-1.5", statusCfg.color, statusCfg.textColor)}>
                               {statusCfg.label}
