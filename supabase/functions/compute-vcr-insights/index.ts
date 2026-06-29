@@ -48,15 +48,32 @@ async function bounded<T>(
   run: (signal: AbortSignal) => PromiseLike<T>,
 ): Promise<T> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), ms);
+  let settled = false;
+  const timeout = new Promise<T>((resolve) => {
+    setTimeout(() => {
+      if (!settled) {
+        controller.abort();
+        console.warn(`[compute-vcr-insights] ${label} timed out after ${ms}ms`);
+        resolve(fallback);
+      }
+    }, ms);
+  });
   try {
-    return await Promise.resolve(run(controller.signal));
+    const work = Promise.resolve(run(controller.signal)).then(
+      (value) => {
+        settled = true;
+        return value;
+      },
+      (error) => {
+        settled = true;
+        throw error;
+      },
+    );
+    return await Promise.race([work, timeout]);
   } catch (error) {
     const name = error instanceof Error ? error.name : "unknown";
     console.warn(`[compute-vcr-insights] ${label} bounded fallback (${name})`);
     return fallback;
-  } finally {
-    clearTimeout(timer);
   }
 }
 
@@ -241,10 +258,15 @@ async function ivanHempReader(sb: any, item: any, lovableKey: string): Promise<F
         ],
       }),
     }));
+    if (!r) {
+      return [{ label: "HEMP register AI read", value: "AI read timed out", confidence: "unavailable", sourceHref }];
+    }
     if (r.ok) {
       const j = await r.json();
       const txt = j.choices?.[0]?.message?.content || "{}";
       extracted = JSON.parse(typeof txt === "string" ? txt : "{}");
+    } else {
+      return [{ label: "HEMP register AI read", value: "AI read unavailable", confidence: "unavailable", sourceHref }];
     }
   } catch (_e) {
     /* fall through */
