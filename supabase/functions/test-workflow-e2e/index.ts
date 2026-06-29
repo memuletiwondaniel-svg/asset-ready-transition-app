@@ -24,6 +24,7 @@ import { runScenario } from "./lib/recorder.ts";
 import type { RunContext, ScenarioResult } from "./lib/types.ts";
 import { ruleScenarios } from "./scenarios/rules.ts";
 import { crossCuttingScenarios } from "./scenarios/cross_cutting.ts";
+import { ivanQaScenarios } from "./scenarios/ivan_qa.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
