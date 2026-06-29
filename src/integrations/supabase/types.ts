@@ -7647,6 +7647,11 @@ export type Database = {
       }
       p2a_vcr_evidence: {
         Row: {
+          assai_doc_no: string | null
+          assai_rev: string | null
+          confirmed: boolean
+          confirmed_at: string | null
+          confirmed_by: string | null
           created_at: string
           description: string | null
           evidence_type: string | null
@@ -7655,10 +7660,16 @@ export type Database = {
           file_size: number | null
           file_type: string | null
           id: string
+          source: string
           uploaded_by: string | null
           vcr_prerequisite_id: string
         }
         Insert: {
+          assai_doc_no?: string | null
+          assai_rev?: string | null
+          confirmed?: boolean
+          confirmed_at?: string | null
+          confirmed_by?: string | null
           created_at?: string
           description?: string | null
           evidence_type?: string | null
@@ -7667,10 +7678,16 @@ export type Database = {
           file_size?: number | null
           file_type?: string | null
           id?: string
+          source?: string
           uploaded_by?: string | null
           vcr_prerequisite_id: string
         }
         Update: {
+          assai_doc_no?: string | null
+          assai_rev?: string | null
+          confirmed?: boolean
+          confirmed_at?: string | null
+          confirmed_by?: string | null
           created_at?: string
           description?: string | null
           evidence_type?: string | null
@@ -7679,6 +7696,7 @@ export type Database = {
           file_size?: number | null
           file_type?: string | null
           id?: string
+          source?: string
           uploaded_by?: string | null
           vcr_prerequisite_id?: string
         }
@@ -7918,6 +7936,8 @@ export type Database = {
       }
       p2a_vcr_prerequisites: {
         Row: {
+          assai_doc_no: string | null
+          assai_rev: string | null
           comments: string | null
           created_at: string
           delivering_party_id: string | null
@@ -7938,6 +7958,8 @@ export type Database = {
           vcr_item_id: string | null
         }
         Insert: {
+          assai_doc_no?: string | null
+          assai_rev?: string | null
           comments?: string | null
           created_at?: string
           delivering_party_id?: string | null
@@ -7958,6 +7980,8 @@ export type Database = {
           vcr_item_id?: string | null
         }
         Update: {
+          assai_doc_no?: string | null
+          assai_rev?: string | null
           comments?: string | null
           created_at?: string
           delivering_party_id?: string | null
