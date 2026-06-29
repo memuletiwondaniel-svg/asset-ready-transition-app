@@ -132,12 +132,14 @@ const pillToneClass: Record<string, string> = {
 };
 
 // ─── DB-backed row shapes ─────────────────────────────────────────
+// Evidence persists to p2a_vcr_evidence (the same store the insights
+// engine reads), keyed by the item's vcr_prerequisite_id.
 type EvidenceRow = {
   id: string;
   file_name: string;
   file_size: number | null;
-  mime_type: string | null;
-  storage_path: string;
+  file_type: string | null;
+  file_path: string;
   evidence_type: string | null;
   uploaded_by: string | null;
   created_at: string;
@@ -156,7 +158,7 @@ type AuthorProfile = {
   role_name: string | null;
 };
 
-const EVIDENCE_BUCKET = 'vcr-evidence';
+const EVIDENCE_BUCKET = 'p2a-attachments';
 const sanitizeFile = (name: string) =>
   name.replace(/[^a-zA-Z0-9._-]+/g, '_').slice(0, 120);
 
