@@ -1248,7 +1248,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
             ? deliveringName
             : approvingName
         }
-        insights={insights}
+        insights={effectiveInsights}
         busy={updateStatus.isPending}
         onConfirm={onConfirm}
       />
