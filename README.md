@@ -57,6 +57,10 @@ npm run dev
 - Click on "New codespace" to launch a new Codespace environment.
 - Edit files directly within the Codespace and commit and push your changes once you're done.
 
+## What lives in this repo
+
+This is the Lovable frontend + Supabase backend for the P2A / VCR readiness workflow. The active engineering plan — VCR plan submission lifecycle (submit / recall / scope-change re-baseline / resubmit tasks), AI-1 item detail sheet, and the Fred / Ivan / Selma readiness insights engine — lives in [.lovable/plan.md](.lovable/plan.md). Operational guide for the P2A approval reminder cron is in [SETUP_P2A_REMINDERS.md](SETUP_P2A_REMINDERS.md).
+
 ## What technologies are used for this project?
 
 This project is built with:
