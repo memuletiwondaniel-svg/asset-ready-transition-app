@@ -21,6 +21,9 @@ export interface ProjectVCR {
   updated_at?: string | null;
   submitted_at?: string | null;
   approved_at?: string | null;
+  execution_plan_status?: string | null;
+  sof_signed_at?: string | null;
+  pac_signed_at?: string | null;
   progress: number;
   closed_items?: number;
   total_items?: number;
@@ -191,6 +194,9 @@ export function useProjectVCRs(projectId: string) {
             updated_at: vcr.updated_at ?? null,
             submitted_at: submittedAt,
             approved_at: approvedAt,
+            execution_plan_status: vcr.execution_plan_status ?? null,
+            sof_signed_at: vcr.sof_signed_at ?? null,
+            pac_signed_at: vcr.pac_signed_at ?? null,
             progress,
             closed_items: lifecycle === 'handed_over' ? total : closed,
             total_items: total,

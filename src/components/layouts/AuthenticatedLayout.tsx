@@ -10,6 +10,7 @@ import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import { MobileBottomNav } from '@/components/mobile/MobileBottomNav';
 import { hasSessionEpochMismatch, performHardReset, syncTabSessionEpoch } from '@/lib/app-reset';
 import { shouldSkipSelfReload } from '@/lib/runtime-env';
+import { VisibleErrorBoundary } from '@/components/errors/VisibleErrorBoundary';
 
 /**
  * Persistent layout for authenticated pages.
@@ -95,7 +96,9 @@ export const AuthenticatedLayout: React.FC = () => {
       />
       <AnimatedBackground className="flex-1 flex flex-col overflow-auto pb-16 md:pb-0">
         <div key={session.user.id} className="content-max flex-1 flex flex-col">
-          <Outlet />
+          <VisibleErrorBoundary label="Project page" resetKey={location.pathname}>
+            <Outlet />
+          </VisibleErrorBoundary>
         </div>
       </AnimatedBackground>
     </div>
