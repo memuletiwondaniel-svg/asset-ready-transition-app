@@ -41,6 +41,7 @@ import { VCRCMMSTab } from './VCRCMMSTab';
 import { VCRRegistersTab } from './VCRRegistersTab';
 import { DeleteVCRDialog } from './DeleteVCRDialog';
 import { VCRStandardView } from './vcr-standard/VCRStandardView';
+import { resolveVCRMode } from './vcr-standard/vcrMode';
 import { cn } from '@/lib/utils';
 
 // Placeholder for tabs not yet implemented
@@ -115,13 +116,31 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
   const { systems } = useHandoverPointSystems(handoverPoint.id);
   const statusConfig = getStatusConfig(handoverPoint.status);
 
-  const isExecutionPlanApproved = (handoverPoint as any).execution_plan_status === 'APPROVED';
+  const hpAny = handoverPoint as any;
+  const vcrMode = resolveVCRMode({
+    execution_plan_status: hpAny.execution_plan_status,
+    status: handoverPoint.status,
+    sof_signed_at: hpAny.sof_signed_at,
+    pac_signed_at: hpAny.pac_signed_at,
+  });
+  const isExecutionPlanApproved = vcrMode === 'execution';
   const lockedTabIds = buildingBlockTabs.map(t => t.id);
 
-  // OWL 5.1 — standardized VCR view (Phase 1). Once the plan is approved,
-  // this overlay defers entirely to VCRStandardView so every in-execution VCR
-  // renders through the single canonical frame.
-  if (isExecutionPlanApproved) {
+  // TEMP LOG — OWL 5.1 mode routing (remove after verification)
+  if (open) {
+    // eslint-disable-next-line no-console
+    console.log('[VCR overlay:p2a-workspace]', {
+      vcr: handoverPoint.vcr_code,
+      execution_plan_status: hpAny.execution_plan_status ?? null,
+      status: handoverPoint.status,
+      mode: vcrMode,
+      renders: vcrMode === 'execution' ? 'VCRStandardView' : 'LegacyOverlay',
+    });
+  }
+
+  // OWL 5.1 — standardized VCR view. In execution mode (approved plan OR
+  // legacy/post-handover VCR), defer entirely to VCRStandardView.
+  if (vcrMode === 'execution') {
     return (
       <VCRStandardView
         handoverPoint={handoverPoint}
