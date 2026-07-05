@@ -41,6 +41,7 @@ import { VCRCMMSTab } from './VCRCMMSTab';
 import { VCRRegistersTab } from './VCRRegistersTab';
 import { DeleteVCRDialog } from './DeleteVCRDialog';
 import { VCRStandardView } from './vcr-standard/VCRStandardView';
+import { resolveVCRMode } from './vcr-standard/vcrMode';
 import { cn } from '@/lib/utils';
 
 // Placeholder for tabs not yet implemented
