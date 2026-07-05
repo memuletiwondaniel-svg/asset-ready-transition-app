@@ -117,6 +117,22 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
   const isExecutionPlanApproved = (handoverPoint as any).execution_plan_status === 'APPROVED';
   const lockedTabIds = buildingBlockTabs.map(t => t.id);
 
+  // OWL 5.1 — standardized VCR view (Phase 1). Once the plan is approved,
+  // this overlay defers entirely to VCRStandardView so every in-execution VCR
+  // renders through the single canonical frame.
+  if (isExecutionPlanApproved) {
+    return (
+      <VCRStandardView
+        handoverPoint={handoverPoint}
+        open={open}
+        onOpenChange={onOpenChange}
+        onDelete={onDelete}
+        isDeleting={isDeleting}
+        projectId={projectId}
+      />
+    );
+  }
+
   const handleTabChange = (tabId: string) => {
     if (!isExecutionPlanApproved && lockedTabIds.includes(tabId)) return;
     setActiveTab(tabId);
