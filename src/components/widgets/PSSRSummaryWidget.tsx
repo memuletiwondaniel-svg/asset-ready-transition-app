@@ -211,6 +211,14 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
       lifecycle === 'not_started' ||
       lifecycle === 'draft' ||
       (!lifecycle && (found.status || '').toUpperCase() !== 'SIGNED');
+    // TEMP LOG — OWL 5.1 click routing (remove after verification)
+    // eslint-disable-next-line no-console
+    console.log('[PSSRSummaryWidget onClick]', {
+      vcr: found.vcr_code,
+      lifecycle,
+      status: found.status,
+      opens: stillEditable ? 'wizard' : lifecycle === 'in_approval' ? 'plan-review-launcher' : 'detail-overlay',
+    });
     if (stillEditable) {
       setWizardVCR(found);
       return;
