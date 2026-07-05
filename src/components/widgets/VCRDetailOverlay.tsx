@@ -72,6 +72,8 @@ import { CategoryItemsSheet } from './CategoryItemsSheet';
 import { ApproverDetailSheet } from './ApproverDetailSheet';
 import { getVCRCategoryConfig } from '@/lib/vcrCategoryConfig';
 import { useVCRPlanRollup, vcrPlanPillLabel } from '@/hooks/useVCRPlanApprovalTasks';
+import { VCRStandardView } from '@/components/p2a-workspace/handover-points/vcr-standard/VCRStandardView';
+import { resolveVCRMode } from '@/components/p2a-workspace/handover-points/vcr-standard/vcrMode';
 interface VCRDetailOverlayProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
