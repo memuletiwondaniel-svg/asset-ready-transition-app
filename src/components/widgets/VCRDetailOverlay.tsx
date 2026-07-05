@@ -1465,6 +1465,51 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
   initialTab,
 }) => {
   const { id: projectId } = useParams<{ id: string }>();
+
+  // OWL 5.1 — mode routing. Fetch canonical handover-point row so we can
+  // delegate to VCRStandardView on the same terms as the p2a-workspace overlay.
+  const { data: hpRow } = useQuery({
+    queryKey: ['vcr-detail-overlay-hp', vcr.id],
+    enabled: open && !!vcr.id,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from('p2a_handover_points')
+        .select('*')
+        .eq('id', vcr.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+  const vcrMode = resolveVCRMode({
+    execution_plan_status: hpRow?.execution_plan_status ?? (vcr as any).execution_plan_status,
+    status: hpRow?.status ?? vcr.status,
+    sof_signed_at: hpRow?.sof_signed_at ?? (vcr as any).sof_signed_at,
+    pac_signed_at: hpRow?.pac_signed_at ?? (vcr as any).pac_signed_at,
+  });
+  if (open) {
+    // TEMP LOG — OWL 5.1 mode routing (remove after verification)
+    // eslint-disable-next-line no-console
+    console.log('[VCR overlay:widget]', {
+      vcr: vcr.vcr_code,
+      execution_plan_status: hpRow?.execution_plan_status ?? null,
+      status: hpRow?.status ?? vcr.status,
+      mode: vcrMode,
+      renders: vcrMode === 'execution' && hpRow ? 'VCRStandardView' : 'LegacyWidgetOverlay',
+    });
+  }
+  if (open && vcrMode === 'execution' && hpRow) {
+    return (
+      <VCRStandardView
+        handoverPoint={hpRow as P2AHandoverPoint}
+        open={open}
+        onOpenChange={onOpenChange}
+        projectId={projectId}
+        projectCode={projectCode}
+      />
+    );
+  }
+
   const [activeNav, setActiveNav] = useState(initialTab || 'overview');
   React.useEffect(() => {
     if (initialTab) setActiveNav(initialTab);
