@@ -23,13 +23,21 @@ export function resolveVCRMode(v: VCRModeInput): VCRMode {
   const status = (v.status || '').toUpperCase();
   const gateSigned = !!v.sof_signed_at || !!v.pac_signed_at;
 
+  // Terminal / handed-over always wins.
   if (eps === 'APPROVED') return 'execution';
   if (status === 'SIGNED' || gateSigned) return 'execution';
-  // Legacy VCRs pre-date the plan wizard — no plan row, but items in execution.
-  if (!eps && (status === 'IN_PROGRESS' || status === 'READY')) return 'execution';
 
+  // A plan actively in the approval workflow.
   if (eps === 'SUBMITTED' || eps === 'CHANGES_REQUESTED' || eps === 'IN_APPROVAL' || eps === 'PENDING_APPROVAL') {
     return 'plan_review';
   }
+
+  // Execution reality outranks a stale DRAFT plan row: if the VCR's items are
+  // already in flight (or ready to close), render the standard execution view
+  // regardless of what the plan record says. This is the legacy-VCR reality
+  // across DP-300 where plans were never routed through the wizard.
+  if (status === 'IN_PROGRESS' || status === 'READY') return 'execution';
+
+  // No plan, no execution activity → wizard entry / legacy overlay.
   return 'plan_draft';
 }
