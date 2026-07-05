@@ -16,12 +16,19 @@ export interface VCRModeInput {
   status?: string | null;
   sof_signed_at?: string | null;
   pac_signed_at?: string | null;
+  prerequisites_count?: number | null;
+  total_items?: number | null;
+  closed_items?: number | null;
 }
 
-export function resolveVCRMode(v: VCRModeInput): VCRMode {
-  const eps = (v.execution_plan_status || '').toUpperCase();
-  const status = (v.status || '').toUpperCase();
-  const gateSigned = !!v.sof_signed_at || !!v.pac_signed_at;
+const normalize = (value: unknown) => String(value ?? '').toUpperCase();
+const positive = (value: unknown) => Number(value ?? 0) > 0;
+
+export function resolveVCRMode(v?: VCRModeInput | null): VCRMode {
+  const eps = normalize(v?.execution_plan_status);
+  const status = normalize(v?.status);
+  const gateSigned = !!v?.sof_signed_at || !!v?.pac_signed_at;
+  const hasExecutionActivity = positive(v?.prerequisites_count) || positive(v?.total_items) || positive(v?.closed_items);
 
   // Terminal / handed-over always wins.
   if (eps === 'APPROVED') return 'execution';
@@ -36,7 +43,7 @@ export function resolveVCRMode(v: VCRModeInput): VCRMode {
   // already in flight (or ready to close), render the standard execution view
   // regardless of what the plan record says. This is the legacy-VCR reality
   // across DP-300 where plans were never routed through the wizard.
-  if (status === 'IN_PROGRESS' || status === 'READY') return 'execution';
+  if (status === 'IN_PROGRESS' || status === 'READY' || hasExecutionActivity) return 'execution';
 
   // No plan, no execution activity → wizard entry / legacy overlay.
   return 'plan_draft';

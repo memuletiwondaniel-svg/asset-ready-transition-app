@@ -1465,7 +1465,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = (props) =
   const { open, vcr, onOpenChange, projectCode = '' } = props;
   const { id: projectId } = useParams<{ id: string }>();
 
-  const { data: hpRow } = useQuery({
+  const { data: hpRow, error: hpError } = useQuery({
     queryKey: ['vcr-detail-overlay-hp', vcr.id],
     enabled: open && !!vcr.id,
     queryFn: async () => {
@@ -1484,6 +1484,9 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = (props) =
     status: hpRow?.status ?? vcr.status,
     sof_signed_at: hpRow?.sof_signed_at ?? (vcr as any).sof_signed_at,
     pac_signed_at: hpRow?.pac_signed_at ?? (vcr as any).pac_signed_at,
+    prerequisites_count: (hpRow as any)?.prerequisites_count,
+    total_items: vcr.total_items,
+    closed_items: vcr.closed_items,
   });
 
   if (open) {
@@ -1498,6 +1501,39 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = (props) =
     });
   }
 
+  if (open && hpError) {
+    console.error('[VCR overlay:widget] canonical handover point failed', hpError);
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>VCR failed to load</DialogTitle>
+            <DialogDescription>{vcr.vcr_code}: {vcr.name}</DialogDescription>
+          </DialogHeader>
+          <pre className="whitespace-pre-wrap break-words rounded-md border bg-muted/40 p-3 text-xs text-foreground">
+            {(hpError as Error).message}
+          </pre>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  if (open && vcrMode === 'execution' && !hpRow) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>{vcr.vcr_code}: {vcr.name}</DialogTitle>
+            <DialogDescription>Loading VCR execution view…</DialogDescription>
+          </DialogHeader>
+          <div data-testid="vcr-mode-badge" className="inline-flex w-fit rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+            mode: {vcrMode}
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   if (open && vcrMode === 'execution' && hpRow) {
     return (
       <VCRStandardView
@@ -1506,6 +1542,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = (props) =
         onOpenChange={onOpenChange}
         projectId={projectId}
         projectCode={projectCode}
+        debugMode={vcrMode}
       />
     );
   }

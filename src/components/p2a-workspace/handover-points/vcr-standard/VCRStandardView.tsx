@@ -46,6 +46,7 @@ interface Props {
   isDeleting?: boolean;
   projectId?: string;
   projectCode?: string;
+  debugMode?: string;
 }
 
 /** Single segmented progress bar (green terminal · blue pipeline · grey remaining) */
@@ -105,7 +106,7 @@ const NavItem: React.FC<{
 );
 
 export const VCRStandardView: React.FC<Props> = ({
-  handoverPoint, open, onOpenChange, onDelete, isDeleting, projectId, projectCode,
+  handoverPoint, open, onOpenChange, onDelete, isDeleting, projectId, projectCode, debugMode = 'execution',
 }) => {
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [showDelete, setShowDelete] = useState(false);
@@ -174,6 +175,9 @@ export const VCRStandardView: React.FC<Props> = ({
                 <HeaderProgress done={counts.terminal} pipe={counts.pipeline} total={counts.total} />
                 <span className={cn('text-[11px] font-semibold border rounded-full px-2.5 py-0.5', lifecycle.className)}>
                   {lifecycle.label}
+                </span>
+                <span data-testid="vcr-mode-badge" className="text-[10px] font-semibold border border-border rounded-full px-2 py-0.5 text-muted-foreground bg-muted/40">
+                  mode: {debugMode}
                 </span>
               </div>
               {onDelete && (
