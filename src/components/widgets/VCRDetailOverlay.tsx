@@ -1522,14 +1522,6 @@ const VCRDetailOverlayWidgetLegacy: React.FC<VCRDetailOverlayProps> = ({
   initialTab,
 }) => {
   const { id: projectId } = useParams<{ id: string }>();
-  const [activeNav, setActiveNav] = useState(initialTab || 'overview');
-  React.useEffect(() => {
-    if (initialTab) setActiveNav(initialTab);
-  }, [initialTab]);
-  const vcrColor = getVCRColor(vcr.vcr_code);
-
-  const displayCode = shortCode(vcr.vcr_code);
-  const isComplete = vcr.progress === 100;
 
   const [activeNav, setActiveNav] = useState(initialTab || 'overview');
   React.useEffect(() => {
