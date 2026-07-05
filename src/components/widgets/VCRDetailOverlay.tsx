@@ -1456,18 +1456,15 @@ const SortableCard: React.FC<{ id: string; children: React.ReactNode }> = ({ id,
 };
 
 // ── Main Overlay ─────────────────────────────────────────────────
-export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
-  open,
-  onOpenChange,
-  vcr,
-  projectName = '',
-  projectCode = '',
-  initialTab,
-}) => {
+/**
+ * OWL 5.1 — routing wrapper. Fetches the canonical handover-point row and
+ * either delegates to VCRStandardView (execution mode) or falls through to
+ * the legacy widget overlay (plan-review / plan-draft modes).
+ */
+export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = (props) => {
+  const { open, vcr, onOpenChange, projectCode = '' } = props;
   const { id: projectId } = useParams<{ id: string }>();
 
-  // OWL 5.1 — mode routing. Fetch canonical handover-point row so we can
-  // delegate to VCRStandardView on the same terms as the p2a-workspace overlay.
   const { data: hpRow } = useQuery({
     queryKey: ['vcr-detail-overlay-hp', vcr.id],
     enabled: open && !!vcr.id,
@@ -1481,12 +1478,14 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
       return data;
     },
   });
+
   const vcrMode = resolveVCRMode({
     execution_plan_status: hpRow?.execution_plan_status ?? (vcr as any).execution_plan_status,
     status: hpRow?.status ?? vcr.status,
     sof_signed_at: hpRow?.sof_signed_at ?? (vcr as any).sof_signed_at,
     pac_signed_at: hpRow?.pac_signed_at ?? (vcr as any).pac_signed_at,
   });
+
   if (open) {
     // TEMP LOG — OWL 5.1 mode routing (remove after verification)
     // eslint-disable-next-line no-console
@@ -1498,6 +1497,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
       renders: vcrMode === 'execution' && hpRow ? 'VCRStandardView' : 'LegacyWidgetOverlay',
     });
   }
+
   if (open && vcrMode === 'execution' && hpRow) {
     return (
       <VCRStandardView
@@ -1509,6 +1509,27 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
       />
     );
   }
+
+  return <VCRDetailOverlayWidgetLegacy {...props} />;
+};
+
+const VCRDetailOverlayWidgetLegacy: React.FC<VCRDetailOverlayProps> = ({
+  open,
+  onOpenChange,
+  vcr,
+  projectName = '',
+  projectCode = '',
+  initialTab,
+}) => {
+  const { id: projectId } = useParams<{ id: string }>();
+  const [activeNav, setActiveNav] = useState(initialTab || 'overview');
+  React.useEffect(() => {
+    if (initialTab) setActiveNav(initialTab);
+  }, [initialTab]);
+  const vcrColor = getVCRColor(vcr.vcr_code);
+
+  const displayCode = shortCode(vcr.vcr_code);
+  const isComplete = vcr.progress === 100;
 
   const [activeNav, setActiveNav] = useState(initialTab || 'overview');
   React.useEffect(() => {
