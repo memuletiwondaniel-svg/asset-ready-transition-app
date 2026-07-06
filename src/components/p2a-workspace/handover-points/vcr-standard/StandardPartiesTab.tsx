@@ -168,7 +168,7 @@ const Group: React.FC<GroupProps> = ({
  *    to Approving-only expanded (delivering collapses).
  *  - SoF/PAC collapsed while locked, default-expanded once unlocked.
  */
-export const StandardPartiesTab: React.FC<Props> = ({ handoverPoint }) => {
+export const StandardPartiesTab: React.FC<Props> = ({ handoverPoint, lifecyclePhase }) => {
   const { data: hc } = useVCRHydrocarbonStatus(handoverPoint.id);
   const { prerequisites } = useVCRPrerequisites(handoverPoint.id);
   const { data: rollup, isLoading } = useVCRPartiesRollup(handoverPoint.id);
@@ -184,9 +184,14 @@ export const StandardPartiesTab: React.FC<Props> = ({ handoverPoint }) => {
 
   const data = rollup || { delivering: [], approving: [], sof: [], pac: [] };
 
-  const deliveringAllDone =
-    data.delivering.length > 0 &&
-    data.delivering.every((p) => p.assigned > 0 && p.completed === p.assigned);
+  // D7 — expansion is driven by the D3 chip phase (single source of truth).
+  // Groups still lock at their gates; user can manually expand.
+  const openDelivery = lifecyclePhase
+    ? lifecyclePhase === 'IN_EXECUTION' || lifecyclePhase === 'DRAFT' || lifecyclePhase === 'AWAITING_SUMMARY'
+    : true;
+  const openApprover = lifecyclePhase === 'AWAITING_SUMMARY';
+  const openSof = lifecyclePhase === 'AWAITING_SOF';
+  const openPac = lifecyclePhase === 'AWAITING_PAC';
 
   // B2B pair detector — collapse when two approvers share the same normalized
   // position string (mirrors the useApprovingPartyHolders rule).
@@ -211,23 +216,23 @@ export const StandardPartiesTab: React.FC<Props> = ({ handoverPoint }) => {
       <Group
         title="VCR Delivery"
         count={data.delivering.length}
-        defaultOpen={!deliveringAllDone}
+        defaultOpen={openDelivery}
         emptyText="No delivering parties assigned yet."
         people={data.delivering}
       />
       <Group
         title="VCR Approver"
         count={data.approving.length}
-        defaultOpen={deliveringAllDone}
+        defaultOpen={openApprover}
         emptyText="No approving parties assigned yet."
         people={data.approving}
         b2bPositions={b2bPositions}
       />
       {isHC && (
         <Group
-          title="SoF approver"
+          title="SoF Approver"
           count={data.sof.length}
-          defaultOpen={gateUnlocked}
+          defaultOpen={openSof && gateUnlocked}
           locked={!gateUnlocked}
           lockCaption="— unlocks once all VCR items are approved"
           lockTooltip="Statement of Fitness applies to hydrocarbon VCRs. Unlocks once every VCR item reaches terminal status."
@@ -236,9 +241,9 @@ export const StandardPartiesTab: React.FC<Props> = ({ handoverPoint }) => {
         />
       )}
       <Group
-        title="PAC approver"
+        title="PAC Approver"
         count={data.pac.length}
-        defaultOpen={gateUnlocked}
+        defaultOpen={openPac && gateUnlocked}
         locked={!gateUnlocked}
         lockCaption="— unlocks once all VCR items are approved"
         lockTooltip="Provisional Acceptance Certificate signature. Unlocks once every VCR item reaches terminal status."
