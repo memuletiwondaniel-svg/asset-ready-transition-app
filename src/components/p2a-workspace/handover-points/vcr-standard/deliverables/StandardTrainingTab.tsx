@@ -40,8 +40,8 @@ export const StandardTrainingTab: React.FC<{ handoverPoint: P2AHandoverPoint }> 
             { label: 'Provider', value: selected.training_provider || null },
             { label: 'Duration', value: selected.duration_hours ? `${selected.duration_hours} h` : null },
             { label: 'Responsible', value: selected.responsible_person || null },
-            { label: 'ORA status', value: (selected.ora?.ora_status || 'NOT_STARTED').replaceAll('_', ' ') },
-            { label: 'ORA %', value: `${Math.round(selected.ora?.ora_completion_percentage || 0)}%` },
+            { label: 'Status', value: (selected.status || 'to_deliver').replaceAll('_', ' ') },
+            { label: 'Execution %', value: `${Math.round(selected.ora?.ora_completion_percentage || 0)}%` },
             { label: 'Description', value: selected.description || null, full: true },
           ]}
         />
