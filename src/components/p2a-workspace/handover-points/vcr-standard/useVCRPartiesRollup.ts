@@ -112,7 +112,7 @@ export function useVCRPartiesRollup(handoverPointId: string | null | undefined) 
       if (prereqIds.length > 0) {
         const { data } = await client
           .from('vcr_prerequisite_approvals')
-          .select('approver_id, prerequisite_id, status')
+          .select('approver_user_id, prerequisite_id, status')
           .in('prerequisite_id', prereqIds);
         approvingRows = data || [];
       }
