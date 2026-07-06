@@ -8,6 +8,9 @@ import jsPDF from 'jspdf';
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+// PREVIEW CANDIDATE — Gulf Gas Company anonymized brand mark.
+// Rolled only onto PAC preview for Daniel's approval before cascading to SoF/FAC.
+import gulfGasLogo from '@/assets/gulf-gas-company-logo.png';
 
 interface PACApprover {
   id: string;
@@ -245,10 +248,13 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
         <CardContent className="p-8" ref={certificateRef}>
           {/* Header */}
           <div className="text-center mb-6">
-            <img 
-              src="/images/bgc-logo.png" 
-              alt="Company Logo" 
-              className="h-16 mx-auto mb-4"
+            <img
+              src={gulfGasLogo}
+              alt="Gulf Gas Company"
+              className="h-20 mx-auto mb-4"
+              width={1024}
+              height={1024}
+              loading="lazy"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
               }}
