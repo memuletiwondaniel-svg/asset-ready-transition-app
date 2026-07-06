@@ -32,8 +32,9 @@ export const DeliverableRow: React.FC<DeliverableRowProps> = ({
     <Tag
       onClick={onClick}
       className={cn(
-        'w-full flex items-start gap-3 px-4 py-2.5 text-left transition',
-        onClick && 'hover:bg-muted/40 cursor-pointer',
+        'w-full flex items-start gap-3 px-4 py-2.5 text-left transition-colors',
+        'hover:bg-muted/40',
+        onClick && 'cursor-pointer',
       )}
     >
       <div className="flex-1 min-w-0">
