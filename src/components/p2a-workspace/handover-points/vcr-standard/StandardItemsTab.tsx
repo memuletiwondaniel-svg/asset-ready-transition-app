@@ -25,15 +25,10 @@ const matchesFilter = (bucket: StandardBucket, f: Filter): boolean => {
   return bucket === f;
 };
 
-/** Server-truth REV counter: derived from qualification history / rejection cycles.
- *  Advisory display. Real counter should come from p2a_vcr_prerequisites metadata
- *  or an approval-events join in a follow-up; today only render if status === REJECTED
- *  so the pinned Rework row shows something honest without fabricating a number. */
-const revCounter = (p: VCRPrerequisite): number | null => {
-  if (p.status !== 'REJECTED') return null;
-  // If a submitted_at exists AND a reviewed_at earlier than latest update, we're on rev 2+.
-  return 2;
-};
+/** Per-row Rev annotation was removed with the heuristic. Row-level rev is not
+ *  a real concept — the whole VCR carries a single Rev number sourced from
+ *  vcr_plan_approval_events (see `useVCRRev` in the header). Rework rows show
+ *  their status pill; anything more would fabricate a number. */
 
 export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) => {
   const { prerequisites, isLoading } = useVCRPrerequisites(handoverPoint.id);
@@ -50,7 +45,6 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
         catCode: code,
         itemCode: formatVcrItemCode(code, p.display_order),
         pill,
-        rev: revCounter(p),
       };
     });
     // Filter
@@ -119,9 +113,6 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
             >
               <div className="w-[52px] flex-none font-mono text-[11px] text-muted-foreground leading-tight">
                 {r.itemCode}
-                {r.rev !== null && (
-                  <div className="text-[10px] text-red-600 font-bold">Rev {r.rev}</div>
-                )}
               </div>
               <div className="flex-1 text-[13px] font-normal leading-snug">{r.prereq.summary}</div>
               <div
