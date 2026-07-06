@@ -21,6 +21,8 @@ import { StandardOverviewTab } from './StandardOverviewTab';
 import { StandardItemsTab } from './StandardItemsTab';
 import { StandardQualificationsTab } from './StandardQualificationsTab';
 import { StandardPACTab } from './StandardPACTab';
+import { StandardPartiesTab } from './StandardPartiesTab';
+import { useVCRRev } from './useVCRRev';
 
 // Re-parented existing components (no visual changes, no phase banners)
 import { VCRAssuranceTab } from '@/components/widgets/VCRAssuranceTab';
@@ -30,7 +32,6 @@ import { VCRProceduresTab } from '../VCRProceduresTab';
 import { VCRDocumentationTab } from '../VCRDocumentationTab';
 import { VCRCMMSTab } from '../VCRCMMSTab';
 import { VCRRegistersTab } from '../VCRRegistersTab';
-import { VCRQualificationsTab as LegacyPartiesFallback } from '../VCRQualificationsTab';
 
 import { DeleteVCRDialog } from '../DeleteVCRDialog';
 
@@ -115,6 +116,7 @@ export const VCRStandardView: React.FC<Props> = ({
   const { qualifications } = useVCRQualifications(handoverPoint.id);
   const { systems } = useHandoverPointSystems(handoverPoint.id);
   const { data: hc } = useVCRHydrocarbonStatus(handoverPoint.id);
+  const { data: revValue } = useVCRRev(handoverPoint.id);
 
   const counts = rollup(prerequisites.map(p => p.status as PrereqStatus));
   const openQuals = qualifications.filter(q => q.status === 'PENDING').length;
@@ -139,7 +141,7 @@ export const VCRStandardView: React.FC<Props> = ({
       case 'items':          return <StandardItemsTab handoverPoint={handoverPoint} projectId={projectId} />;
       case 'qualifications': return <StandardQualificationsTab handoverPointId={handoverPoint.id} />;
       case 'comments':       return <VCRAssuranceTab handoverPointId={handoverPoint.id} />;
-      case 'parties':        return <LegacyPartiesFallback handoverPoint={handoverPoint} />;
+      case 'parties':        return <StandardPartiesTab handoverPoint={handoverPoint} />;
       case 'pac':            return <StandardPACTab handoverPoint={handoverPoint} projectCode={projectCode} />;
       case 'systems':        return <VCRSystemsTab handoverPoint={handoverPoint} />;
       case 'witnessholds':   return <VCRSystemsTab handoverPoint={handoverPoint} />;
@@ -167,6 +169,11 @@ export const VCRStandardView: React.FC<Props> = ({
                 </DialogTitle>
                 <DialogDescription className="text-[11.5px] text-muted-foreground truncate">
                   Verification Certificate of Readiness{projectCode ? ` · ${projectCode}` : ''}
+                  {revValue !== undefined && (
+                    <span className="ml-2 font-mono text-[10px] text-muted-foreground/80">
+                      · Rev {revValue > 0 ? revValue : '—'}
+                    </span>
+                  )}
                 </DialogDescription>
               </div>
             </div>
