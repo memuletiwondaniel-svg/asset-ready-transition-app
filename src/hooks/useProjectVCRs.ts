@@ -180,17 +180,26 @@ export function useProjectVCRs(projectId: string) {
           const planProgress = Math.max(0, Math.min(100, Math.round((planRaw / DRAFT_COMPLETE_PROGRESS) * 100)));
           const planStep = Math.max(1, Math.min(10, Math.round((planRaw / DRAFT_COMPLETE_PROGRESS) * 10)));
 
-          // Lifecycle derivation (precedence)
+          // Lifecycle derivation (precedence).
+          //
+          // NOTE (2026-07-06): plan-approval status (`execution_plan_status='APPROVED'`
+          // or `handover_points.status='SIGNED'`) reflects that the *plan* has been
+          // signed off — it does NOT mean the item checklist is closed. A VCR whose
+          // plan is approved but whose items are still being worked reads as
+          // "In execution" on the card. The card only shows "Approved" when the
+          // checklist is fully terminal (or the gate is signed → handed_over).
+          const allItemsTerminal = total > 0 && closed === total;
           let lifecycle: VCRLifecycle;
           if (gateSigned) {
             lifecycle = 'handed_over';
-          } else if (status === 'SIGNED' || execStatus === 'APPROVED') {
+          } else if (allItemsTerminal && (status === 'SIGNED' || execStatus === 'APPROVED')) {
             lifecycle = 'approved';
           } else if (
-            submittedAt ||
-            execStatus === 'SUBMITTED' ||
-            execStatus === 'IN_APPROVAL' ||
-            execStatus === 'PENDING_APPROVAL'
+            total === 0 &&
+            (submittedAt ||
+              execStatus === 'SUBMITTED' ||
+              execStatus === 'IN_APPROVAL' ||
+              execStatus === 'PENDING_APPROVAL')
           ) {
             lifecycle = 'in_approval';
           } else if (total > 0) {
