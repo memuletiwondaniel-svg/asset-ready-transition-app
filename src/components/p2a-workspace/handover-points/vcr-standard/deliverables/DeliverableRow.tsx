@@ -8,6 +8,7 @@ export interface DeliverableRowProps {
   context?: string | null;
   chipLabel: string;
   chipTone: ChipTone;
+  nameBadge?: React.ReactNode;
   onClick?: () => void;
 }
 
@@ -25,19 +26,23 @@ const CHIP_TONES: Record<ChipTone, string> = {
  * Row is a button when onClick is provided; otherwise a plain <div>.
  */
 export const DeliverableRow: React.FC<DeliverableRowProps> = ({
-  name, context, chipLabel, chipTone, onClick,
+  name, context, chipLabel, chipTone, nameBadge, onClick,
 }) => {
   const Tag = onClick ? 'button' : 'div';
   return (
     <Tag
       onClick={onClick}
       className={cn(
-        'w-full flex items-start gap-3 px-4 py-2.5 text-left transition',
-        onClick && 'hover:bg-muted/40 cursor-pointer',
+        'w-full flex items-start gap-3 px-4 py-2.5 text-left transition-colors',
+        'hover:bg-muted/40',
+        onClick && 'cursor-pointer',
       )}
     >
       <div className="flex-1 min-w-0">
-        <div className="text-[13px] font-medium leading-snug truncate">{name}</div>
+        <div className="text-[13px] font-medium leading-snug truncate flex items-center gap-1.5">
+          <span className="truncate">{name}</span>
+          {nameBadge}
+        </div>
         {context && (
           <div className="text-[11px] text-muted-foreground truncate mt-0.5">
             {context}

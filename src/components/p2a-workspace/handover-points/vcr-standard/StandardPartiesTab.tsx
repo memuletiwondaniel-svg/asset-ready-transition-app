@@ -115,7 +115,7 @@ const Group: React.FC<GroupProps> = ({
         <span className="text-[10.5px] font-extrabold tracking-[.14em] uppercase text-foreground">
           {title}
         </span>
-        <span className="text-[10.5px] font-semibold text-muted-foreground">
+        <span className="text-[10.5px] font-medium text-muted-foreground/60">
           {count}
         </span>
         {locked && lockCaption && (
@@ -204,14 +204,14 @@ export const StandardPartiesTab: React.FC<Props> = ({ handoverPoint }) => {
   return (
     <div className="space-y-3">
       <Group
-        title="Delivering parties"
+        title="VCR Delivery"
         count={data.delivering.length}
         defaultOpen={!deliveringAllDone}
         emptyText="No delivering parties assigned yet."
         people={data.delivering}
       />
       <Group
-        title="Approving parties"
+        title="VCR Approver"
         count={data.approving.length}
         defaultOpen={deliveringAllDone}
         emptyText="No approving parties assigned yet."

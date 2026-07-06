@@ -105,7 +105,10 @@ export const PrerequisiteDetailSheet: React.FC<PrerequisiteDetailSheetProps> = (
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-lg overflow-hidden flex flex-col">
+      <SheetContent
+        overlayClassName="z-overlay-critical"
+        className="sm:max-w-lg overflow-hidden flex flex-col !z-modal-critical"
+      >
         <SheetHeader className="pb-4">
           <div className="flex items-center gap-2">
             <Badge className={statusConfig.color}>{statusConfig.label}</Badge>

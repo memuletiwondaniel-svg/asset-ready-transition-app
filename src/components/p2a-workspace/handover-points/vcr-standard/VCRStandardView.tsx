@@ -255,7 +255,7 @@ export const VCRStandardView: React.FC<Props> = ({
                   <NavItem id="witnessholds" label="Witness & Holds"         icon={Eye}           active={activeTab==='witnessholds'} onClick={() => setActiveTab('witnessholds')} />
                   <NavItem id="training"     label="Training"                icon={GraduationCap} active={activeTab==='training'}     onClick={() => setActiveTab('training')} />
                   <NavItem id="procedures"   label="Procedures"              icon={Book}          active={activeTab==='procedures'}   onClick={() => setActiveTab('procedures')} />
-                  <NavItem id="critdocs"     label="Critical Documents"      icon={FileText}      active={activeTab==='critdocs'}     onClick={() => setActiveTab('critdocs')} />
+                  <NavItem id="critdocs"     label="Documentation"           icon={FileText}      active={activeTab==='critdocs'}     onClick={() => setActiveTab('critdocs')} />
                   <NavItem id="registers"    label="Registers & Logsheets"   icon={ClipboardList} active={activeTab==='registers'}    onClick={() => setActiveTab('registers')} />
                   <NavItem id="maintenance"  label="Maintenance Systems"     icon={Wrench}        active={activeTab==='maintenance'}  onClick={() => setActiveTab('maintenance')} />
                 </div>
