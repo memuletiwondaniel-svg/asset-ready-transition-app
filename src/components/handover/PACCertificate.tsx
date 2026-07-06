@@ -251,7 +251,7 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
             <img
               src={gulfGasLogo}
               alt="Gulf Gas Company"
-              className="h-20 w-auto max-w-[320px] mx-auto mb-6 object-contain"
+              className="h-28 w-auto max-w-[448px] mx-auto mb-6 object-contain"
               loading="lazy"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
