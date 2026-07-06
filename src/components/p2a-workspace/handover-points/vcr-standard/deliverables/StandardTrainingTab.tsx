@@ -14,13 +14,13 @@ export const StandardTrainingTab: React.FC<{ handoverPoint: P2AHandoverPoint }> 
   if (!rows.length)
     return <EmptyDeliverable label="No training deliverables planned yet." hint="Add training items during plan definition." />;
 
-  const chip = selected ? oraStatusChip(selected.ora?.ora_status, selected.ora?.ora_completion_percentage) : null;
+  const chip = selected ? trainingStatusChip(selected.status) : null;
 
   return (
     <>
       <DeliverableList>
         {rows.map((r) => {
-          const c = oraStatusChip(r.ora.ora_status, r.ora.ora_completion_percentage);
+          const c = trainingStatusChip(r.status);
           const ctx = [r.training_provider, r.duration_hours ? `${r.duration_hours} h` : null].filter(Boolean).join(' · ');
           return (
             <DeliverableRow key={r.id} name={r.title} context={ctx || null} chipLabel={c.label} chipTone={c.tone} onClick={() => setSelected(r)} />
