@@ -139,7 +139,10 @@ export const VCRStandardView: React.FC<Props> = ({
 
   const counts = rollup(prerequisites.map(p => p.status as PrereqStatus));
   const openQuals = qualifications.filter(q => q.status === 'PENDING').length;
-  const commentsCount = 0; // TODO: wire real comment count in follow-up
+  // Comments = discipline statements in + interdisciplinary summary (if present).
+  const commentsCount =
+    (lifecycleSignals?.disciplineStatementsIn ?? 0) +
+    (lifecycleSignals?.interdisciplinarySignedAt ? 1 : 0);
   const isHC = hc?.status === 'HC';
 
   // D3 — single-source-of-truth lifecycle. Drives D1 colour + D7 expansion.
