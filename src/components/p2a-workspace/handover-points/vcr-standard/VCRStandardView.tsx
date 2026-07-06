@@ -7,7 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import {
   BarChart3, List, AlertTriangle, MessageSquare, Users, Award,
   Layers, Eye, GraduationCap, Book, FileText, ClipboardList, Wrench,
-  X, Trash2, Check, Lock,
+  X, Trash2, Check, Lock, ShieldCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { P2AHandoverPoint, useHandoverPointSystems } from '../../hooks/useP2AHandoverPoints';
@@ -21,8 +21,11 @@ import { StandardOverviewTab } from './StandardOverviewTab';
 import { StandardItemsTab } from './StandardItemsTab';
 import { StandardQualificationsTab } from './StandardQualificationsTab';
 import { StandardPACTab } from './StandardPACTab';
+import { StandardSOFTab } from './StandardSOFTab';
 import { StandardPartiesTab } from './StandardPartiesTab';
 import { useVCRRev } from './useVCRRev';
+import { computeLifecycle, useVCRLifecycleSignals } from './useVCRLifecycle';
+import { useVCRProjectContext } from './useVCRProjectContext';
 
 // Re-parented existing components (no visual changes, no phase banners)
 import { VCRAssuranceTab } from '@/components/widgets/VCRAssuranceTab';
@@ -39,7 +42,7 @@ import { StandardMaintenanceTab } from './deliverables/StandardMaintenanceTab';
 import { DeleteVCRDialog } from '../DeleteVCRDialog';
 
 type TabId =
-  | 'overview' | 'items' | 'qualifications' | 'comments' | 'parties' | 'pac'
+  | 'overview' | 'items' | 'qualifications' | 'comments' | 'parties' | 'sof' | 'pac'
   | 'systems' | 'witnessholds' | 'training' | 'procedures' | 'critdocs' | 'registers' | 'maintenance';
 
 interface Props {
@@ -50,6 +53,7 @@ interface Props {
   isDeleting?: boolean;
   projectId?: string;
   projectCode?: string;
+  /** Retained but no longer surfaced in the header — mode badge was QA-only. */
   debugMode?: string;
 }
 
@@ -65,6 +69,8 @@ const HeaderProgress: React.FC<{ done: number; pipe: number; total: number }> = 
   );
 };
 
+/** D6 — nav row: muted icon, near-black label, soft-blue pill on active.
+ *  No right-side vertical bar (that reads as noise); active row is the pill. */
 const NavItem: React.FC<{
   id: TabId;
   label: string;
@@ -80,15 +86,15 @@ const NavItem: React.FC<{
     onClick={onClick}
     disabled={locked}
     className={cn(
-      'w-full flex items-center justify-between gap-2 px-4 py-1.5 text-[12.5px] text-left transition',
+      'w-full flex items-center justify-between gap-2 px-3 py-2 mx-1.5 rounded-md text-[12.5px] text-left transition',
       active
-        ? 'bg-blue-50 text-blue-700 font-semibold border-r-2 border-blue-600'
-        : 'text-muted-foreground hover:text-foreground hover:bg-muted/40',
+        ? 'bg-blue-100/70 text-blue-800 font-semibold'
+        : 'text-slate-800 hover:bg-muted/50',
       locked && 'opacity-50 cursor-not-allowed'
     )}
   >
-    <span className="flex items-center gap-2 min-w-0">
-      <Icon className={cn('w-3.5 h-3.5 flex-none', active ? 'text-blue-600' : 'text-muted-foreground/70')} />
+    <span className="flex items-center gap-2.5 min-w-0">
+      <Icon className={cn('w-3.5 h-3.5 flex-none', active ? 'text-blue-700' : 'text-slate-400')} />
       <span className="truncate">{label}</span>
       {locked && <Lock className="w-3 h-3 flex-none text-muted-foreground/60" />}
     </span>
@@ -104,13 +110,21 @@ const NavItem: React.FC<{
       </span>
     )}
     {!liveCount && !tick && count !== undefined && count > 0 && (
-      <span className="text-[10px] bg-slate-100 text-muted-foreground rounded-full px-1.5">{count}</span>
+      <span className="text-[10px] bg-slate-100 text-muted-foreground/70 rounded-full px-1.5">{count}</span>
     )}
   </button>
 );
 
+/** D2 — strip the project prefix from vcr_code so the title reads "VCR-02: OSBL",
+ *  not "VCR-DP300-02: OSBL". Preserves the raw code when it's already short. */
+const shortVcrCode = (raw: string): string => {
+  // "VCR-DP300-02" → "VCR-02"; "VCR-02" → "VCR-02"
+  const m = raw.match(/^(VCR)-.+-(\d+[A-Za-z]?)$/i);
+  return m ? `${m[1]}-${m[2]}` : raw;
+};
+
 export const VCRStandardView: React.FC<Props> = ({
-  handoverPoint, open, onOpenChange, onDelete, isDeleting, projectId, projectCode, debugMode = 'execution',
+  handoverPoint, open, onOpenChange, onDelete, isDeleting, projectId, projectCode,
 }) => {
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [showDelete, setShowDelete] = useState(false);
@@ -120,23 +134,32 @@ export const VCRStandardView: React.FC<Props> = ({
   const { systems } = useHandoverPointSystems(handoverPoint.id);
   const { data: hc } = useVCRHydrocarbonStatus(handoverPoint.id);
   const { data: revValue } = useVCRRev(handoverPoint.id);
+  const { data: lifecycleSignals } = useVCRLifecycleSignals(handoverPoint.id);
+  const { data: projectCtx } = useVCRProjectContext(handoverPoint.handover_plan_id);
 
   const counts = rollup(prerequisites.map(p => p.status as PrereqStatus));
   const openQuals = qualifications.filter(q => q.status === 'PENDING').length;
   const commentsCount = 0; // TODO: wire real comment count in follow-up
   const isHC = hc?.status === 'HC';
 
-  // Lifecycle chip (advisory: full lifecycle state machine lives in the plan/approval layer)
-  const lifecycle = counts.total > 0 && counts.terminal === counts.total
-    ? { label: 'VCR approved', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' }
-    : { label: 'In execution', className: 'bg-blue-50 text-blue-700 border-blue-200' };
+  // D3 — single-source-of-truth lifecycle. Drives D1 colour + D7 expansion.
+  const lifecycle = computeLifecycle({
+    counts,
+    isHC,
+    execution_plan_status: handoverPoint.execution_plan_status,
+    sof_signed_at: handoverPoint.sof_signed_at,
+    pac_signed_at: handoverPoint.pac_signed_at,
+    interdisciplinarySignedAt: lifecycleSignals?.interdisciplinarySignedAt,
+    disciplineStatementsIn: lifecycleSignals?.disciplineStatementsIn ?? 0,
+    disciplineStatementsExpected: lifecycleSignals?.disciplineStatementsExpected ?? 0,
+  });
 
-  const contextBits: string[] = [];
-  contextBits.push(`${counts.terminal} of ${counts.total} items closed`);
-  if (counts.pipeline) contextBits.push(`${counts.pipeline} in review`);
-  if (counts.rework) contextBits.push(`${counts.rework} in rework`);
-  if (counts.qualification) contextBits.push(`${counts.qualification} qualification`);
-  if (counts.todeliver) contextBits.push(`${counts.todeliver} to deliver`);
+  const shortCode = shortVcrCode(handoverPoint.vcr_code);
+  const effectiveProjectCode = projectCode || projectCtx?.project_code || undefined;
+  const projectTitle = projectCtx?.project_title || null;
+  const subtitle = effectiveProjectCode && projectTitle
+    ? `${effectiveProjectCode}: ${projectTitle} — Verification Certificate of Readiness`
+    : `Verification Certificate of Readiness${effectiveProjectCode ? ` · ${effectiveProjectCode}` : ''}`;
 
   const renderContent = () => {
     switch (activeTab) {
@@ -144,8 +167,9 @@ export const VCRStandardView: React.FC<Props> = ({
       case 'items':          return <StandardItemsTab handoverPoint={handoverPoint} projectId={projectId} />;
       case 'qualifications': return <StandardQualificationsTab handoverPointId={handoverPoint.id} />;
       case 'comments':       return <VCRAssuranceTab handoverPointId={handoverPoint.id} />;
-      case 'parties':        return <StandardPartiesTab handoverPoint={handoverPoint} />;
-      case 'pac':            return <StandardPACTab handoverPoint={handoverPoint} projectCode={projectCode} />;
+      case 'parties':        return <StandardPartiesTab handoverPoint={handoverPoint} lifecyclePhase={lifecycle.phase} />;
+      case 'sof':            return <StandardSOFTab handoverPoint={handoverPoint} projectCode={effectiveProjectCode} />;
+      case 'pac':            return <StandardPACTab handoverPoint={handoverPoint} projectCode={effectiveProjectCode} />;
       case 'systems':        return <StandardSystemsTab handoverPoint={handoverPoint} />;
       case 'witnessholds':   return <StandardWitnessHoldsTab handoverPoint={handoverPoint} />;
       case 'training':       return <StandardTrainingTab handoverPoint={handoverPoint} />;
@@ -156,26 +180,6 @@ export const VCRStandardView: React.FC<Props> = ({
     }
   };
 
-  // TEMP instrumentation: prove sizing against the actual window, not a
-  // constrained ancestor. Removed once both entry points verify.
-  React.useEffect(() => {
-    if (!open) return;
-    const id = requestAnimationFrame(() => {
-      const el = document.querySelector('[data-testid="vcr-standard-content"]') as HTMLElement | null;
-      const r = el?.getBoundingClientRect();
-      // eslint-disable-next-line no-console
-      console.log('[VCR overlay:sizing]', {
-        vcr: handoverPoint.vcr_code,
-        innerWidth: window.innerWidth,
-        innerHeight: window.innerHeight,
-        matchesMd: window.matchMedia('(min-width: 768px)').matches,
-        portalParent: el?.parentElement?.tagName,
-        rect: r ? { top: Math.round(r.top), left: Math.round(r.left), w: Math.round(r.width), h: Math.round(r.height) } : null,
-      });
-    });
-    return () => cancelAnimationFrame(id);
-  }, [open, handoverPoint.vcr_code]);
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogPortal>
@@ -184,22 +188,18 @@ export const VCRStandardView: React.FC<Props> = ({
           data-testid="vcr-standard-content"
           className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-modal-viewer w-[95vw] max-w-[1400px] h-[95vh] min-h-[600px] max-h-[calc(100dvh-16px)] flex flex-col p-0 gap-0 overflow-hidden border bg-background shadow-lg rounded-lg focus:outline-none"
         >
-
-
-          {/* Header band: gold accent bar · title · lifecycle chip · close */}
+          {/* D1/D2 — Header: accent bar + chip share one lifecycle colour. */}
           <div className="flex items-center justify-between px-4 md:px-5 py-3 border-b shrink-0">
             <div className="flex items-center gap-3 min-w-0 flex-1">
-              <div className="w-1.5 h-9 rounded bg-amber-500 shrink-0" />
+              <div className={cn('w-1.5 h-10 rounded shrink-0', lifecycle.barClass)} />
               <div className="min-w-0 flex-1">
                 <DialogTitle className="text-base md:text-lg font-bold truncate">
-                  {handoverPoint.vcr_code}: {handoverPoint.name}
+                  {shortCode}: {handoverPoint.name}
                 </DialogTitle>
                 <DialogDescription className="text-[11.5px] text-muted-foreground truncate">
-                  Verification Certificate of Readiness{projectCode ? ` · ${projectCode}` : ''}
-                  {revValue !== undefined && (
-                    <span className="ml-2 font-mono text-[10px] text-muted-foreground/80">
-                      · Rev {revValue > 0 ? revValue : '—'}
-                    </span>
+                  {subtitle}
+                  {typeof revValue === 'number' && revValue > 0 && (
+                    <span className="ml-2 font-mono text-[10px] text-muted-foreground/80">· Rev {revValue}</span>
                   )}
                 </DialogDescription>
               </div>
@@ -207,12 +207,14 @@ export const VCRStandardView: React.FC<Props> = ({
             <div className="flex items-center gap-3 shrink-0">
               <div className="hidden md:flex items-center gap-2">
                 <HeaderProgress done={counts.terminal} pipe={counts.pipeline} total={counts.total} />
-                <span className={cn('text-[11px] font-semibold border rounded-full px-2.5 py-0.5', lifecycle.className)}>
-                  {lifecycle.label}
-                </span>
-                <span data-testid="vcr-mode-badge" className="text-[10px] font-semibold border border-border rounded-full px-2 py-0.5 text-muted-foreground bg-muted/40">
-                  mode: {debugMode}
-                </span>
+                <div className="flex flex-col items-end leading-tight" data-testid="vcr-lifecycle-chip" data-phase={lifecycle.phase}>
+                  <span className={cn('text-[11px] font-semibold border rounded-full px-2.5 py-0.5', lifecycle.chipClass)}>
+                    {lifecycle.label}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground mt-0.5 max-w-[280px] truncate">
+                    {lifecycle.subline}
+                  </span>
+                </div>
               </div>
               {onDelete && (
                 <Button
@@ -236,20 +238,28 @@ export const VCRStandardView: React.FC<Props> = ({
 
           {/* Body */}
           <div className="flex flex-1 min-h-0">
-            {/* Left nav */}
-            <div className="w-[210px] shrink-0 border-r bg-muted/20 flex flex-col">
+            {/* D6 — Left nav: pill-active rows, muted icons, generous spacing */}
+            <div className="w-[220px] shrink-0 border-r bg-muted/20 flex flex-col">
               <ScrollArea className="flex-1">
                 <div className="py-3">
-                  <div className="text-[9.5px] font-bold tracking-wider text-muted-foreground px-4 pt-2 pb-1">NAVIGATE</div>
+                  <div className="text-[9.5px] font-bold tracking-[.14em] text-muted-foreground/70 px-4 pt-2 pb-2">NAVIGATE</div>
                   <NavItem id="overview"       label="Overview"       icon={BarChart3}     active={activeTab==='overview'}       onClick={() => setActiveTab('overview')} />
                   <NavItem id="items"          label="VCR Items"      icon={List}          active={activeTab==='items'}          count={counts.total} onClick={() => setActiveTab('items')} />
                   <NavItem id="qualifications" label="Qualifications" icon={AlertTriangle} active={activeTab==='qualifications'} liveCount={openQuals ? { value: openQuals, tone: 'amber' } : undefined} onClick={() => setActiveTab('qualifications')} />
                   <NavItem id="comments"       label="Comments"       icon={MessageSquare} active={activeTab==='comments'}       count={commentsCount} onClick={() => setActiveTab('comments')} />
                   <NavItem id="parties"        label="Parties"        icon={Users}         active={activeTab==='parties'}        onClick={() => setActiveTab('parties')} />
+                  {isHC && (
+                    <NavItem
+                      id="sof" label="SoF" icon={ShieldCheck}
+                      active={activeTab==='sof'}
+                      locked={!(counts.total>0 && counts.terminal===counts.total)}
+                      onClick={() => setActiveTab('sof')}
+                    />
+                  )}
                   <NavItem id="pac"            label="PAC"            icon={Award}         active={activeTab==='pac'}            locked={!(counts.total>0 && counts.terminal===counts.total)} onClick={() => setActiveTab('pac')} />
 
-                  <Separator className="mx-3 my-3" />
-                  <div className="text-[9px] font-extrabold tracking-[.12em] text-slate-400 px-4 pb-1.5 font-mono">DELIVERABLES</div>
+                  <Separator className="mx-3 my-5" />
+                  <div className="text-[9px] font-extrabold tracking-[.14em] text-slate-400 px-4 pb-2 font-mono">DELIVERABLES</div>
 
                   <NavItem id="systems"      label="Systems"                 icon={Layers}        active={activeTab==='systems'}      tick={systems.length>0} onClick={() => setActiveTab('systems')} />
                   <NavItem id="witnessholds" label="Witness & Holds"         icon={Eye}           active={activeTab==='witnessholds'} onClick={() => setActiveTab('witnessholds')} />
@@ -264,10 +274,15 @@ export const VCRStandardView: React.FC<Props> = ({
 
             {/* Right content */}
             <div className="flex-1 min-w-0 min-h-0 flex flex-col">
-              {/* Execution mode context line (mobile visibility of the progress bar) */}
+              {/* Mobile visibility of the progress bar + subline */}
               <div className="md:hidden px-4 py-2 border-b bg-muted/20">
                 <HeaderProgress done={counts.terminal} pipe={counts.pipeline} total={counts.total} />
-                <div className="text-[11px] text-muted-foreground mt-1">{contextBits.join(' · ')}</div>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className={cn('text-[10.5px] font-semibold border rounded-full px-2 py-0.5', lifecycle.chipClass)}>
+                    {lifecycle.label}
+                  </span>
+                  <span className="text-[10.5px] text-muted-foreground truncate">{lifecycle.subline}</span>
+                </div>
               </div>
 
               <ScrollArea className="flex-1">
