@@ -38,13 +38,12 @@ const bucketPriority = (bucket: StandardBucket, status: PrereqStatus): number =>
   if (bucket === 'pipeline') return 3;
   if (bucket === 'terminal') return 4;
   // Everything else → treat as "to deliver"
-  if (status === 'NOT_STARTED' || status === 'PENDING') return 1;
+  if (status === 'NOT_STARTED') return 1;
   return 5;
 };
 
 export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) => {
   const { prerequisites, isLoading } = useVCRPrerequisites(handoverPoint.id);
-  const { data: partiesByItem } = useVCRItemDeliveringParties(handoverPoint.id);
   const [filter, setFilter] = useState<Filter>('all');
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<{ col: SortCol; dir: SortDir } | null>(null);
@@ -55,16 +54,11 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
       const cat = normalizeCategoryCode(p.category);
       const pill = standardPill(p.status as PrereqStatus);
       const code = cat === 'XX' ? '??' : cat;
-      const partyNames = (partiesByItem?.[p.id] || [])
-        .map((x: any) => x.delivering_party_name || x.approving_party_name || '')
-        .filter(Boolean)
-        .join(' ');
       return {
         prereq: p,
         catCode: code,
         itemCode: formatVcrItemCode(code, p.display_order),
         pill,
-        partyNames,
       };
     });
 
@@ -74,8 +68,7 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
       if (!q) return true;
       return (
         r.itemCode.toLowerCase().includes(q) ||
-        (r.prereq.summary || '').toLowerCase().includes(q) ||
-        r.partyNames.toLowerCase().includes(q)
+        (r.prereq.summary || '').toLowerCase().includes(q)
       );
     });
 
