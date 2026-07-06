@@ -57,17 +57,8 @@ interface Props {
   debugMode?: string;
 }
 
-/** Single segmented progress bar (green terminal · blue pipeline · grey remaining) */
-const HeaderProgress: React.FC<{ done: number; pipe: number; total: number }> = ({ done, pipe, total }) => {
-  const donePct = total ? (done / total) * 100 : 0;
-  const pipePct = total ? (pipe / total) * 100 : 0;
-  return (
-    <div className="w-40 h-2 bg-slate-100 rounded-full overflow-hidden flex" title={`${done}/${total} closed`}>
-      <div className="h-full bg-emerald-600" style={{ width: `${donePct}%` }} />
-      <div className="h-full" style={{ width: `${pipePct}%`, background: '#A8C3EE' }} />
-    </div>
-  );
-};
+/** Header progress bar removed per design — the sole progress bar lives on the
+ *  Overview Progress card. Keeping counts here would duplicate that surface. */
 
 /** D6 — nav row: muted icon, near-black label, soft-blue pill on active.
  *  No right-side vertical bar (that reads as noise); active row is the pill. */
@@ -84,14 +75,13 @@ const NavItem: React.FC<{
 }> = ({ label, icon: Icon, active, count, liveCount, tick, locked, onClick }) => (
   <button
     onClick={onClick}
-    disabled={locked}
     className={cn(
       'w-full flex items-center justify-between gap-2 px-3 py-2 mx-1.5 rounded-md text-[12.5px] text-left transition',
       active
         ? 'bg-blue-100/70 text-blue-800 font-semibold'
         : 'text-slate-800 hover:bg-muted/50',
-      locked && 'opacity-50 cursor-not-allowed'
     )}
+    title={locked ? 'Read-only preview — signing unlocks at VCR approval' : undefined}
   >
     <span className="flex items-center gap-2.5 min-w-0">
       <Icon className={cn('w-3.5 h-3.5 flex-none', active ? 'text-blue-700' : 'text-slate-400')} />
@@ -161,8 +151,8 @@ export const VCRStandardView: React.FC<Props> = ({
   const effectiveProjectCode = projectCode || projectCtx?.project_code || undefined;
   const projectTitle = projectCtx?.project_title || null;
   const subtitle = effectiveProjectCode && projectTitle
-    ? `${effectiveProjectCode}: ${projectTitle} — Verification Certificate of Readiness`
-    : `Verification Certificate of Readiness${effectiveProjectCode ? ` · ${effectiveProjectCode}` : ''}`;
+    ? `${effectiveProjectCode}: ${projectTitle}`
+    : (effectiveProjectCode || '');
 
   const renderContent = () => {
     switch (activeTab) {
@@ -208,16 +198,13 @@ export const VCRStandardView: React.FC<Props> = ({
               </div>
             </div>
             <div className="flex items-center gap-3 shrink-0">
-              <div className="hidden md:flex items-center gap-2">
-                <HeaderProgress done={counts.terminal} pipe={counts.pipeline} total={counts.total} />
-                <div className="flex flex-col items-end leading-tight">
-                  <span className={cn('text-[11px] font-semibold border rounded-full px-2.5 py-0.5', lifecycle.chipClass)}>
-                    {lifecycle.label}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground mt-0.5 max-w-[280px] truncate">
-                    {lifecycle.subline}
-                  </span>
-                </div>
+              <div className="hidden md:flex flex-col items-end leading-tight">
+                <span className={cn('text-[11px] font-semibold border rounded-full px-2.5 py-0.5', lifecycle.chipClass)}>
+                  {lifecycle.label}
+                </span>
+                <span className="text-[10px] text-muted-foreground mt-0.5 max-w-[280px] truncate">
+                  {lifecycle.subline}
+                </span>
               </div>
               {onDelete && (
                 <Button
@@ -277,10 +264,9 @@ export const VCRStandardView: React.FC<Props> = ({
 
             {/* Right content */}
             <div className="flex-1 min-w-0 min-h-0 flex flex-col">
-              {/* Mobile visibility of the progress bar + subline */}
+              {/* Mobile visibility of lifecycle + subline (progress bar lives on Overview card only) */}
               <div className="md:hidden px-4 py-2 border-b bg-muted/20">
-                <HeaderProgress done={counts.terminal} pipe={counts.pipeline} total={counts.total} />
-                <div className="flex items-center gap-2 mt-1">
+                <div className="flex items-center gap-2">
                   <span className={cn('text-[10.5px] font-semibold border rounded-full px-2 py-0.5', lifecycle.chipClass)}>
                     {lifecycle.label}
                   </span>

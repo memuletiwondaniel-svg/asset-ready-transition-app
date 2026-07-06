@@ -21,22 +21,21 @@ export const StandardSOFTab: React.FC<Props> = ({ handoverPoint, projectCode }) 
   ).length;
   const allApproved = total > 0 && terminal === total;
 
-  if (!allApproved) {
-    return (
-      <Card className="p-4">
+  return (
+    <div className="space-y-3">
+      {!allApproved && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground bg-slate-100 border border-border rounded-lg px-3 py-2">
           <Lock className="w-3.5 h-3.5" />
-          <span>Locked · unlocks at VCR approval ({terminal}/{total} items closed)</span>
+          <span>Read-only preview · signing unlocks at VCR approval ({terminal}/{total} items closed)</span>
         </div>
-      </Card>
-    );
-  }
-
-  return (
-    <SOFCertificate
-      certificateNumber={`SOF-${projectCode || 'DP-300'}-${handoverPoint.vcr_code}`}
-      projectName={projectCode}
-      sourceType="VCR"
-    />
+      )}
+      <div className={!allApproved ? 'pointer-events-none opacity-90' : undefined} aria-disabled={!allApproved}>
+        <SOFCertificate
+          certificateNumber={`SOF-${projectCode || 'DP-300'}-${handoverPoint.vcr_code}`}
+          projectName={projectCode}
+          sourceType="VCR"
+        />
+      </div>
+    </div>
   );
 };

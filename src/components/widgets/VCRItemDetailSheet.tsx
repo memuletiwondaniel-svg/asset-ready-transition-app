@@ -890,7 +890,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent className="sm:max-w-xl overflow-hidden flex flex-col p-0" data-rm-safe hideClose>
+        <SheetContent className="sm:max-w-xl overflow-hidden flex flex-col p-0 !z-modal-critical" data-rm-safe hideClose>
           {/* Header */}
           <SheetHeader className="px-6 pt-5 pb-4 border-b shrink-0 space-y-3">
             <div className="flex items-center justify-between gap-2">

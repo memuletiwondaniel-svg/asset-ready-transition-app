@@ -138,18 +138,18 @@ export const StandardOverviewTab: React.FC<Props> = ({ handoverPoint }) => {
         </div>
         <div className="flex gap-6 flex-wrap text-xs">
           <div>
-            <div className="text-[9.5px] uppercase tracking-wide font-bold text-muted-foreground">Target</div>
-            <div className="font-medium text-foreground">
+            <div className="text-[9.5px] uppercase tracking-wide font-medium text-muted-foreground/70">Target</div>
+            <div className="text-[12px] text-muted-foreground">
               {handoverPoint.target_date ? format(new Date(handoverPoint.target_date), 'dd-MMM-yyyy') : '—'}
             </div>
           </div>
           <div>
-            <div className="text-[9.5px] uppercase tracking-wide font-bold text-muted-foreground">Systems</div>
-            <div className="font-medium text-foreground">{systems.length}</div>
+            <div className="text-[9.5px] uppercase tracking-wide font-medium text-muted-foreground/70">Systems</div>
+            <div className="text-[12px] text-muted-foreground">{systems.length}</div>
           </div>
           <div>
-            <div className="text-[9.5px] uppercase tracking-wide font-bold text-muted-foreground">Hydrocarbon</div>
-            <div className="font-medium text-foreground">
+            <div className="text-[9.5px] uppercase tracking-wide font-medium text-muted-foreground/70">Hydrocarbon</div>
+            <div className="text-[12px] text-muted-foreground">
               {hc?.status === 'HC' ? 'Yes' : hc?.status === 'NON_HC' ? 'No' : '—'}
             </div>
           </div>

@@ -1,8 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { Search, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { P2AHandoverPoint } from '../../hooks/useP2AHandoverPoints';
-import { useVCRPrerequisites, VCRPrerequisite } from '../../hooks/useVCRPrerequisites';
+import { useVCRPrerequisites } from '../../hooks/useVCRPrerequisites';
+// Party search is deferred — per-item delivering parties require a per-row query.
 import { VCRItemDetailSheet, VCRItemBasic } from '@/components/widgets/VCRItemDetailSheet';
 import { formatVcrItemCode } from '@/lib/vcrItemCode';
 import { standardPill, normalizeCategoryCode, CATEGORY_META, PrereqStatus, StandardBucket } from './standardStatus';
@@ -10,6 +13,8 @@ import { standardPill, normalizeCategoryCode, CATEGORY_META, PrereqStatus, Stand
 interface Props { handoverPoint: P2AHandoverPoint; projectId?: string }
 
 type Filter = 'all' | 'rework' | 'pipeline' | 'qualification' | 'terminal';
+type SortCol = 'id' | 'description' | 'status';
+type SortDir = 'asc' | 'desc';
 
 const FILTERS: { id: Filter; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -25,14 +30,23 @@ const matchesFilter = (bucket: StandardBucket, f: Filter): boolean => {
   return bucket === f;
 };
 
-/** Per-row Rev annotation was removed with the heuristic. Row-level rev is not
- *  a real concept — the whole VCR carries a single Rev number sourced from
- *  vcr_plan_approval_events (see `useVCRRev` in the header). Rework rows show
- *  their status pill; anything more would fabricate a number. */
+/** Bucket-order priority when no user sort applied.
+ *  Rework → To deliver → Qualification → In review → Accepted (terminal). */
+const bucketPriority = (bucket: StandardBucket, status: PrereqStatus): number => {
+  if (bucket === 'rework') return 0;
+  if (bucket === 'qualification') return 2;
+  if (bucket === 'pipeline') return 3;
+  if (bucket === 'terminal') return 4;
+  // Everything else → treat as "to deliver"
+  if (status === 'NOT_STARTED') return 1;
+  return 5;
+};
 
 export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) => {
   const { prerequisites, isLoading } = useVCRPrerequisites(handoverPoint.id);
   const [filter, setFilter] = useState<Filter>('all');
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState<{ col: SortCol; dir: SortDir } | null>(null);
   const [openItem, setOpenItem] = useState<VCRItemBasic | null>(null);
 
   const rows = useMemo(() => {
@@ -47,17 +61,34 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
         pill,
       };
     });
-    // Filter
-    const filtered = withPill.filter(r => matchesFilter(r.pill.bucket, filter));
-    // Rework pinned first, then original order
+
+    const q = search.trim().toLowerCase();
+    const filtered = withPill.filter(r => {
+      if (!matchesFilter(r.pill.bucket, filter)) return false;
+      if (!q) return true;
+      return (
+        r.itemCode.toLowerCase().includes(q) ||
+        (r.prereq.summary || '').toLowerCase().includes(q)
+      );
+    });
+
     filtered.sort((a, b) => {
-      const ar = a.pill.bucket === 'rework' ? 0 : 1;
-      const br = b.pill.bucket === 'rework' ? 0 : 1;
-      if (ar !== br) return ar - br;
+      if (sort) {
+        let cmp = 0;
+        if (sort.col === 'id') cmp = a.itemCode.localeCompare(b.itemCode);
+        else if (sort.col === 'description')
+          cmp = (a.prereq.summary || '').localeCompare(b.prereq.summary || '');
+        else cmp = a.pill.label.localeCompare(b.pill.label);
+        return sort.dir === 'asc' ? cmp : -cmp;
+      }
+      // Default: bucket priority, then display order
+      const pa = bucketPriority(a.pill.bucket, a.prereq.status as PrereqStatus);
+      const pb = bucketPriority(b.pill.bucket, b.prereq.status as PrereqStatus);
+      if (pa !== pb) return pa - pb;
       return (a.prereq.display_order ?? 0) - (b.prereq.display_order ?? 0);
     });
     return filtered;
-  }, [prerequisites, filter]);
+  }, [prerequisites, filter, search, sort]);
 
   const openRow = (r: typeof rows[number]) => {
     setOpenItem({
@@ -74,24 +105,63 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
     });
   };
 
+  const toggleSort = (col: SortCol) => {
+    setSort(prev => {
+      if (!prev || prev.col !== col) return { col, dir: 'asc' };
+      if (prev.dir === 'asc') return { col, dir: 'desc' };
+      return null; // third click clears sort → back to default order
+    });
+  };
+
+  const sortIcon = (col: SortCol) => {
+    if (!sort || sort.col !== col) return <ArrowUpDown className="w-3 h-3 opacity-40" />;
+    return sort.dir === 'asc'
+      ? <ArrowUp className="w-3 h-3" />
+      : <ArrowDown className="w-3 h-3" />;
+  };
+
   return (
     <Card className="overflow-hidden">
-      {/* Filter chips */}
-      <div className="flex gap-1.5 p-2.5 border-b border-border bg-muted/30 flex-wrap">
-        {FILTERS.map(f => (
-          <button
-            key={f.id}
-            onClick={() => setFilter(f.id)}
-            className={cn(
-              'text-[11px] font-semibold px-3 py-0.5 rounded-full border transition',
-              filter === f.id
-                ? 'bg-foreground text-background border-foreground'
-                : 'bg-background text-muted-foreground border-border hover:text-foreground'
-            )}
-          >
-            {f.label}
-          </button>
-        ))}
+      {/* Filter chips + search on same row */}
+      <div className="flex items-center gap-2 p-2.5 border-b border-border bg-muted/30 flex-wrap">
+        <div className="flex gap-1.5 flex-wrap flex-1 min-w-0">
+          {FILTERS.map(f => (
+            <button
+              key={f.id}
+              onClick={() => setFilter(f.id)}
+              className={cn(
+                'text-[11px] font-semibold px-3 py-0.5 rounded-full border transition',
+                filter === f.id
+                  ? 'bg-foreground text-background border-foreground'
+                  : 'bg-background text-muted-foreground border-border hover:text-foreground'
+              )}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+        <div className="relative w-56 flex-none">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/60" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search ID, description, party…"
+            className="h-7 pl-7 text-[11.5px]"
+          />
+        </div>
+      </div>
+
+      {/* Sortable header row */}
+      <div className="flex items-center gap-3 px-4 py-2 border-b border-border/60 bg-muted/20 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+        <button onClick={() => toggleSort('id')} className="w-[52px] flex-none flex items-center gap-1 hover:text-foreground">
+          ID {sortIcon('id')}
+        </button>
+        <button onClick={() => toggleSort('description')} className="flex-1 flex items-center gap-1 hover:text-foreground text-left">
+          Description {sortIcon('description')}
+        </button>
+        <button onClick={() => toggleSort('status')} className="w-[92px] flex-none flex items-center justify-center gap-1 hover:text-foreground">
+          Status {sortIcon('status')}
+        </button>
       </div>
 
       {isLoading ? (
@@ -107,8 +177,8 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
               className={cn(
                 'w-full flex items-baseline gap-3 px-4 py-2.5 text-left transition',
                 r.pill.bucket === 'rework'
-                  ? 'bg-red-50/70 hover:bg-red-50'
-                  : 'hover:bg-muted/40'
+                  ? 'bg-red-50/70 hover:bg-red-100'
+                  : 'hover:bg-blue-50/60'
               )}
             >
               <div className="w-[52px] flex-none font-mono text-[11px] text-muted-foreground leading-tight">
