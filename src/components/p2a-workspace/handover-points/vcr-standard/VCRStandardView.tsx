@@ -152,8 +152,8 @@ export const VCRStandardView: React.FC<Props> = ({
   const effectiveProjectCode = projectCode || projectCtx?.project_code || undefined;
   const projectTitle = projectCtx?.project_title || null;
   const subtitle = effectiveProjectCode && projectTitle
-    ? `${effectiveProjectCode}: ${projectTitle} — Verification Certificate of Readiness`
-    : `Verification Certificate of Readiness${effectiveProjectCode ? ` · ${effectiveProjectCode}` : ''}`;
+    ? `${effectiveProjectCode}: ${projectTitle}`
+    : (effectiveProjectCode || '');
 
   const renderContent = () => {
     switch (activeTab) {
