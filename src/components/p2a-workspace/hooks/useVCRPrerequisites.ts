@@ -44,24 +44,49 @@ export const useVCRPrerequisites = (handoverPointId: string) => {
   const { data: prerequisites, isLoading } = useQuery({
     queryKey: ['vcr-prerequisites', handoverPointId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Category lives on the catalog row (vcr_items.category_id → vcr_item_categories.code),
+      // NOT on p2a_vcr_prerequisites — the table has no `category` column. We resolve it via
+      // a nested select so the Overview per-category donuts and the Items tab codes agree.
+      const { data, error } = await (supabase as any)
         .from('p2a_vcr_prerequisites')
         .select(`
           *,
-          p2a_vcr_evidence (*)
+          p2a_vcr_evidence (*),
+          vcr_items:vcr_item_id (
+            category:category_id ( code )
+          )
         `)
         .eq('handover_point_id', handoverPointId)
         .order('display_order', { ascending: true });
 
       if (error) throw error;
-      
-      return (data || []).map((prereq: any) => ({
+
+      const mapped = (data || []).map((prereq: any) => ({
         ...prereq,
         evidence: prereq.p2a_vcr_evidence || [],
+        category: prereq.vcr_items?.category?.code ?? null,
       })) as VCRPrerequisite[];
+
+      // TEMP diag: prove per-category resolution end-to-end for VCR-02 rollup parity.
+      if (typeof window !== 'undefined') {
+        const catCounts: Record<string, number> = {};
+        for (const r of mapped) {
+          const k = r.category || 'NULL';
+          catCounts[k] = (catCounts[k] || 0) + 1;
+        }
+        // eslint-disable-next-line no-console
+        console.log('[useVCRPrerequisites diag]', {
+          handoverPointId,
+          total: mapped.length,
+          byCategory: catCounts,
+        });
+      }
+
+      return mapped;
     },
     enabled: !!handoverPointId,
   });
+
 
   const updatePrerequisiteStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: VCRPrerequisite['status'] }) => {
