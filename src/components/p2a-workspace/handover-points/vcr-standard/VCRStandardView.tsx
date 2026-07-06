@@ -75,14 +75,13 @@ const NavItem: React.FC<{
 }> = ({ label, icon: Icon, active, count, liveCount, tick, locked, onClick }) => (
   <button
     onClick={onClick}
-    disabled={locked}
     className={cn(
       'w-full flex items-center justify-between gap-2 px-3 py-2 mx-1.5 rounded-md text-[12.5px] text-left transition',
       active
         ? 'bg-blue-100/70 text-blue-800 font-semibold'
         : 'text-slate-800 hover:bg-muted/50',
-      locked && 'opacity-50 cursor-not-allowed'
     )}
+    title={locked ? 'Read-only preview — signing unlocks at VCR approval' : undefined}
   >
     <span className="flex items-center gap-2.5 min-w-0">
       <Icon className={cn('w-3.5 h-3.5 flex-none', active ? 'text-blue-700' : 'text-slate-400')} />
