@@ -8,6 +8,7 @@ import jsPDF from 'jspdf';
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import gulfGasLogo from '@/assets/gulf-gas-company-logo.png';
 
 interface SOFApprover {
   id: string;
