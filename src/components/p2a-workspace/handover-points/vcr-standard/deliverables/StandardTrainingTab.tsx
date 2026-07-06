@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { P2AHandoverPoint } from '../../../hooks/useP2AHandoverPoints';
 import { useVCRTrainingDeliverables } from '../../../hooks/useVCRDeliverables';
-import { DeliverableList, DeliverableRow, EmptyDeliverable, oraStatusChip } from './DeliverableRow';
+import { DeliverableList, DeliverableRow, EmptyDeliverable, trainingStatusChip } from './DeliverableRow';
 import { StandardDeliverableSheet } from './StandardDeliverableSheet';
 
 export const StandardTrainingTab: React.FC<{ handoverPoint: P2AHandoverPoint }> = ({ handoverPoint }) => {
@@ -14,13 +14,13 @@ export const StandardTrainingTab: React.FC<{ handoverPoint: P2AHandoverPoint }> 
   if (!rows.length)
     return <EmptyDeliverable label="No training deliverables planned yet." hint="Add training items during plan definition." />;
 
-  const chip = selected ? oraStatusChip(selected.ora?.ora_status, selected.ora?.ora_completion_percentage) : null;
+  const chip = selected ? trainingStatusChip(selected.status) : null;
 
   return (
     <>
       <DeliverableList>
         {rows.map((r) => {
-          const c = oraStatusChip(r.ora.ora_status, r.ora.ora_completion_percentage);
+          const c = trainingStatusChip(r.status);
           const ctx = [r.training_provider, r.duration_hours ? `${r.duration_hours} h` : null].filter(Boolean).join(' · ');
           return (
             <DeliverableRow key={r.id} name={r.title} context={ctx || null} chipLabel={c.label} chipTone={c.tone} onClick={() => setSelected(r)} />
@@ -40,8 +40,8 @@ export const StandardTrainingTab: React.FC<{ handoverPoint: P2AHandoverPoint }> 
             { label: 'Provider', value: selected.training_provider || null },
             { label: 'Duration', value: selected.duration_hours ? `${selected.duration_hours} h` : null },
             { label: 'Responsible', value: selected.responsible_person || null },
-            { label: 'ORA status', value: (selected.ora?.ora_status || 'NOT_STARTED').replaceAll('_', ' ') },
-            { label: 'ORA %', value: `${Math.round(selected.ora?.ora_completion_percentage || 0)}%` },
+            { label: 'Status', value: (selected.status || 'to_deliver').replaceAll('_', ' ') },
+            { label: 'Execution %', value: `${Math.round(selected.ora?.ora_completion_percentage || 0)}%` },
             { label: 'Description', value: selected.description || null, full: true },
           ]}
         />
