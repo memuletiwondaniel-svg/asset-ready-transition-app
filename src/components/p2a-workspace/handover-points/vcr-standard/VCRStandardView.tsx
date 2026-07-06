@@ -26,12 +26,15 @@ import { useVCRRev } from './useVCRRev';
 
 // Re-parented existing components (no visual changes, no phase banners)
 import { VCRAssuranceTab } from '@/components/widgets/VCRAssuranceTab';
-import { VCRSystemsTab } from '../VCRSystemsTab';
-import { VCRTrainingTab } from '../VCRTrainingTab';
-import { VCRProceduresTab } from '../VCRProceduresTab';
-import { VCRDocumentationTab } from '../VCRDocumentationTab';
-import { VCRCMMSTab } from '../VCRCMMSTab';
-import { VCRRegistersTab } from '../VCRRegistersTab';
+
+// Phase-2.3 deliverable tabs — shared row template, real data only.
+import { StandardSystemsTab } from './deliverables/StandardSystemsTab';
+import { StandardWitnessHoldsTab } from './deliverables/StandardWitnessHoldsTab';
+import { StandardTrainingTab } from './deliverables/StandardTrainingTab';
+import { StandardProceduresTab } from './deliverables/StandardProceduresTab';
+import { StandardCritDocsTab } from './deliverables/StandardCritDocsTab';
+import { StandardRegistersTab } from './deliverables/StandardRegistersTab';
+import { StandardMaintenanceTab } from './deliverables/StandardMaintenanceTab';
 
 import { DeleteVCRDialog } from '../DeleteVCRDialog';
 
@@ -143,13 +146,13 @@ export const VCRStandardView: React.FC<Props> = ({
       case 'comments':       return <VCRAssuranceTab handoverPointId={handoverPoint.id} />;
       case 'parties':        return <StandardPartiesTab handoverPoint={handoverPoint} />;
       case 'pac':            return <StandardPACTab handoverPoint={handoverPoint} projectCode={projectCode} />;
-      case 'systems':        return <VCRSystemsTab handoverPoint={handoverPoint} />;
-      case 'witnessholds':   return <VCRSystemsTab handoverPoint={handoverPoint} />;
-      case 'training':       return <VCRTrainingTab handoverPoint={handoverPoint} />;
-      case 'procedures':     return <VCRProceduresTab handoverPoint={handoverPoint} />;
-      case 'critdocs':       return <VCRDocumentationTab handoverPoint={handoverPoint} />;
-      case 'registers':      return <VCRRegistersTab handoverPoint={handoverPoint} />;
-      case 'maintenance':    return <VCRCMMSTab handoverPoint={handoverPoint} />;
+      case 'systems':        return <StandardSystemsTab handoverPoint={handoverPoint} />;
+      case 'witnessholds':   return <StandardWitnessHoldsTab handoverPoint={handoverPoint} />;
+      case 'training':       return <StandardTrainingTab handoverPoint={handoverPoint} />;
+      case 'procedures':     return <StandardProceduresTab handoverPoint={handoverPoint} />;
+      case 'critdocs':       return <StandardCritDocsTab handoverPoint={handoverPoint} />;
+      case 'registers':      return <StandardRegistersTab handoverPoint={handoverPoint} />;
+      case 'maintenance':    return <StandardMaintenanceTab handoverPoint={handoverPoint} />;
     }
   };
 
