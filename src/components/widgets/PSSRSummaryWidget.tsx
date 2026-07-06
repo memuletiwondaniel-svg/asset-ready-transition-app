@@ -34,7 +34,7 @@ import { useCanCreateVCRPermission } from '@/hooks/usePermissions';
 import { useP2AHandoverPlan } from '@/components/p2a-workspace/hooks/useP2AHandoverPlan';
 import { useP2APlanByProject } from '@/hooks/useP2APlanByProject';
 import { getP2APlanUIState } from '@/lib/p2aPlanStatus';
-import { resolveVCRMode } from '@/components/p2a-workspace/handover-points/vcr-standard/vcrMode';
+
 
 interface PSSRSummaryWidgetProps {
   projectId: string;
