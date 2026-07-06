@@ -57,17 +57,8 @@ interface Props {
   debugMode?: string;
 }
 
-/** Single segmented progress bar (green terminal · blue pipeline · grey remaining) */
-const HeaderProgress: React.FC<{ done: number; pipe: number; total: number }> = ({ done, pipe, total }) => {
-  const donePct = total ? (done / total) * 100 : 0;
-  const pipePct = total ? (pipe / total) * 100 : 0;
-  return (
-    <div className="w-40 h-2 bg-slate-100 rounded-full overflow-hidden flex" title={`${done}/${total} closed`}>
-      <div className="h-full bg-emerald-600" style={{ width: `${donePct}%` }} />
-      <div className="h-full" style={{ width: `${pipePct}%`, background: '#A8C3EE' }} />
-    </div>
-  );
-};
+/** Header progress bar removed per design — the sole progress bar lives on the
+ *  Overview Progress card. Keeping counts here would duplicate that surface. */
 
 /** D6 — nav row: muted icon, near-black label, soft-blue pill on active.
  *  No right-side vertical bar (that reads as noise); active row is the pill. */
