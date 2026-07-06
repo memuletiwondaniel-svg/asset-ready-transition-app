@@ -1,0 +1,100 @@
+import React, { useMemo, useState } from 'react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { cn } from '@/lib/utils';
+import { useVCRPrerequisites } from '../../hooks/useVCRPrerequisites';
+import { VCRItemDetailSheet, VCRItemBasic } from '@/components/widgets/VCRItemDetailSheet';
+import { formatVcrItemCode } from '@/lib/vcrItemCode';
+import {
+  standardPill, normalizeCategoryCode, CATEGORY_META, PrereqStatus,
+} from './standardStatus';
+
+interface Props {
+  handoverPointId: string;
+  categoryCode: 'DI' | 'TI' | 'OI' | 'MS' | 'HS' | null;
+  projectId?: string;
+  onOpenChange: (open: boolean) => void;
+}
+
+/**
+ * D5 — Category items drawer.
+ * Opened by clicking a donut on the Overview tab; lists that category's items
+ * with status pills; each row opens the shared VCRItemDetailSheet.
+ */
+export const CategoryItemsDrawer: React.FC<Props> = ({
+  handoverPointId, categoryCode, projectId, onOpenChange,
+}) => {
+  const open = !!categoryCode;
+  const { prerequisites } = useVCRPrerequisites(handoverPointId);
+  const [openItem, setOpenItem] = useState<VCRItemBasic | null>(null);
+
+  const rows = useMemo(() => {
+    if (!categoryCode) return [];
+    return prerequisites
+      .filter(p => normalizeCategoryCode(p.category) === categoryCode)
+      .map(p => ({ ...p, pill: standardPill(p.status as PrereqStatus) }));
+  }, [prerequisites, categoryCode]);
+
+  const closed = rows.filter(r => r.pill.bucket === 'terminal').length;
+  const meta = categoryCode ? CATEGORY_META[categoryCode] : null;
+
+  return (
+    <>
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col">
+          <SheetHeader className="px-4 py-3 border-b">
+            <SheetTitle className="text-sm font-semibold">
+              {meta?.name || 'Category'} — {closed} of {rows.length}
+            </SheetTitle>
+            <SheetDescription className="text-[11px] text-muted-foreground">
+              Click an item for full detail.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto divide-y divide-border/50">
+            {rows.length === 0 && (
+              <div className="p-6 text-center text-sm text-muted-foreground">
+                No items in this category.
+              </div>
+            )}
+            {rows.map(r => (
+              <button
+                key={r.id}
+                className="w-full text-left px-4 py-2.5 hover:bg-muted/40 flex items-center gap-3"
+                onClick={() => setOpenItem({
+                  id: r.id,
+                  category: r.category || '',
+                  discipline: (r as any).discipline || '',
+                  name: r.name || '',
+                  code: formatVcrItemCode(r as any),
+                  status: r.status as any,
+                } as VCRItemBasic)}
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="text-[12.5px] font-medium text-foreground truncate">
+                    {r.name}
+                  </div>
+                  <div className="text-[10.5px] text-muted-foreground font-mono truncate">
+                    {formatVcrItemCode(r as any)}
+                  </div>
+                </div>
+                <span className={cn(
+                  'text-[10.5px] font-semibold rounded-full px-2 py-0.5 flex-none',
+                  r.pill.className,
+                )}>
+                  {r.pill.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <VCRItemDetailSheet
+        item={openItem}
+        open={!!openItem}
+        onOpenChange={(v) => { if (!v) setOpenItem(null); }}
+        handoverPointId={handoverPointId}
+        projectId={projectId}
+      />
+    </>
+  );
+};
