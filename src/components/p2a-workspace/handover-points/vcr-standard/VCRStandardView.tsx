@@ -265,10 +265,9 @@ export const VCRStandardView: React.FC<Props> = ({
 
             {/* Right content */}
             <div className="flex-1 min-w-0 min-h-0 flex flex-col">
-              {/* Mobile visibility of the progress bar + subline */}
+              {/* Mobile visibility of lifecycle + subline (progress bar lives on Overview card only) */}
               <div className="md:hidden px-4 py-2 border-b bg-muted/20">
-                <HeaderProgress done={counts.terminal} pipe={counts.pipeline} total={counts.total} />
-                <div className="flex items-center gap-2 mt-1">
+                <div className="flex items-center gap-2">
                   <span className={cn('text-[10.5px] font-semibold border rounded-full px-2 py-0.5', lifecycle.chipClass)}>
                     {lifecycle.label}
                   </span>
