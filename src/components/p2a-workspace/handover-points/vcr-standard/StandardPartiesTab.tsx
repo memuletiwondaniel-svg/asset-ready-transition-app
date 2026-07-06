@@ -15,8 +15,13 @@ import { useVCRHydrocarbonStatus } from '@/hooks/useVCRHydrocarbonStatus';
 import { PrereqStatus, standardPill } from './standardStatus';
 import { PartyPerson, useVCRPartiesRollup } from './useVCRPartiesRollup';
 
+import type { LifecyclePhase } from './useVCRLifecycle';
+
 interface Props {
   handoverPoint: P2AHandoverPoint;
+  /** D7 — chip phase drives default group expansion. Falls back to
+   *  behaviour if omitted (kept for callers that don't pass it yet). */
+  lifecyclePhase?: LifecyclePhase;
 }
 
 const initials = (name: string) =>
