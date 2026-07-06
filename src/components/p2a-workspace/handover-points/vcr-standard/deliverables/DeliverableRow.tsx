@@ -8,6 +8,7 @@ export interface DeliverableRowProps {
   context?: string | null;
   chipLabel: string;
   chipTone: ChipTone;
+  nameBadge?: React.ReactNode;
   onClick?: () => void;
 }
 
@@ -25,7 +26,7 @@ const CHIP_TONES: Record<ChipTone, string> = {
  * Row is a button when onClick is provided; otherwise a plain <div>.
  */
 export const DeliverableRow: React.FC<DeliverableRowProps> = ({
-  name, context, chipLabel, chipTone, onClick,
+  name, context, chipLabel, chipTone, nameBadge, onClick,
 }) => {
   const Tag = onClick ? 'button' : 'div';
   return (
