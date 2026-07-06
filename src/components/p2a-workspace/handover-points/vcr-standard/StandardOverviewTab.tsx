@@ -155,6 +155,12 @@ export const StandardOverviewTab: React.FC<Props> = ({ handoverPoint }) => {
           </div>
         </div>
       </Card>
+
+      <CategoryItemsDrawer
+        handoverPointId={handoverPoint.id}
+        categoryCode={drawerCategory}
+        onOpenChange={(o) => { if (!o) setDrawerCategory(null); }}
+      />
     </div>
   );
 };
