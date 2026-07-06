@@ -22,6 +22,12 @@ export interface P2AHandoverPoint {
   execution_plan_status?: 'DRAFT' | 'SUBMITTED' | 'CHANGES_REQUESTED' | 'APPROVED';
   execution_plan_submitted_at?: string;
   execution_plan_approved_at?: string;
+  // Gate signatures (D3 lifecycle chip)
+  sof_signed_at?: string | null;
+  sof_signed_by?: string | null;
+  pac_signed_at?: string | null;
+  pac_signed_by?: string | null;
+  gate_model?: string | null;
   // Computed/joined data
   systems_count?: number;
   prerequisites_count?: number;
