@@ -251,15 +251,13 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
             <img
               src={gulfGasLogo}
               alt="Gulf Gas Company"
-              className="h-20 mx-auto mb-4"
-              width={1024}
-              height={1024}
+              className="h-24 w-auto mx-auto mb-6 object-contain"
               loading="lazy"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
               }}
             />
-            <div className="h-1 bg-gradient-to-r from-primary/20 via-primary to-primary/20 mb-4" />
+
             <h1 className="text-2xl font-bold text-foreground tracking-wide mb-2">
               PROVISIONAL ACCEPTANCE CERTIFICATE (PAC)
             </h1>
