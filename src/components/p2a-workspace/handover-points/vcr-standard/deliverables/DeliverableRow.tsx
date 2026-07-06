@@ -33,8 +33,8 @@ export const DeliverableRow: React.FC<DeliverableRowProps> = ({
     <Tag
       onClick={onClick}
       className={cn(
-        'w-full flex items-start gap-3 px-4 py-2.5 text-left transition-colors',
-        'hover:bg-muted/40',
+        'w-full flex items-start gap-3 px-4 py-3.5 text-left transition-colors',
+        'hover:bg-blue-50/60',
         onClick && 'cursor-pointer',
       )}
     >
@@ -44,7 +44,7 @@ export const DeliverableRow: React.FC<DeliverableRowProps> = ({
           {nameBadge}
         </div>
         {context && (
-          <div className="text-[11px] text-muted-foreground truncate mt-0.5">
+          <div className="text-[11px] text-muted-foreground truncate mt-1">
             {context}
           </div>
         )}
