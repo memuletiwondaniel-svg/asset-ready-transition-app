@@ -55,12 +55,27 @@ interface SheetContentProps
   hideClose?: boolean
 }
 
+/**
+ * Auto-elevate the backdrop so a sheet opened on top of a viewer/critical
+ * layer (e.g. inside the VCR overlay at z-modal-viewer=1410) always shows its
+ * dark scrim ABOVE the parent overlay content, not behind it. Explicit
+ * overlayClassName still wins.
+ */
+const overlayZFromContentClass = (contentClass?: string): string | null => {
+  if (!contentClass) return null;
+  if (contentClass.includes("z-modal-critical")) return "!z-overlay-critical";
+  if (contentClass.includes("z-modal-viewer")) return "!z-overlay-viewer";
+  return null;
+};
+
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
->(({ side = "right", className, children, overlayClassName, hideClose, ...props }, ref) => (
+>(({ side = "right", className, children, overlayClassName, hideClose, ...props }, ref) => {
+  const autoOverlayZ = overlayZFromContentClass(className);
+  return (
   <SheetPortal>
-    <SheetOverlay className={overlayClassName} />
+    <SheetOverlay className={cn(autoOverlayZ, overlayClassName)} />
     <SheetPrimitive.Content
       ref={ref}
       className={cn(sheetVariants({ side }), className)}
@@ -75,7 +90,8 @@ const SheetContent = React.forwardRef<
       )}
     </SheetPrimitive.Content>
   </SheetPortal>
-))
+  );
+})
 SheetContent.displayName = SheetPrimitive.Content.displayName
 
 const SheetHeader = ({
