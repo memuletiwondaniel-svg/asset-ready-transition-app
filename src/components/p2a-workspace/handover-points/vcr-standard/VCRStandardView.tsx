@@ -199,16 +199,13 @@ export const VCRStandardView: React.FC<Props> = ({
               </div>
             </div>
             <div className="flex items-center gap-3 shrink-0">
-              <div className="hidden md:flex items-center gap-2">
-                <HeaderProgress done={counts.terminal} pipe={counts.pipeline} total={counts.total} />
-                <div className="flex flex-col items-end leading-tight">
-                  <span className={cn('text-[11px] font-semibold border rounded-full px-2.5 py-0.5', lifecycle.chipClass)}>
-                    {lifecycle.label}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground mt-0.5 max-w-[280px] truncate">
-                    {lifecycle.subline}
-                  </span>
-                </div>
+              <div className="hidden md:flex flex-col items-end leading-tight">
+                <span className={cn('text-[11px] font-semibold border rounded-full px-2.5 py-0.5', lifecycle.chipClass)}>
+                  {lifecycle.label}
+                </span>
+                <span className="text-[10px] text-muted-foreground mt-0.5 max-w-[280px] truncate">
+                  {lifecycle.subline}
+                </span>
               </div>
               {onDelete && (
                 <Button
