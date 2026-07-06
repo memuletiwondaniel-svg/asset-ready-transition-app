@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { P2AHandoverPoint } from '../../../hooks/useP2AHandoverPoints';
 import { useVCRTrainingDeliverables } from '../../../hooks/useVCRDeliverables';
-import { DeliverableList, DeliverableRow, EmptyDeliverable, oraStatusChip } from './DeliverableRow';
+import { DeliverableList, DeliverableRow, EmptyDeliverable, trainingStatusChip } from './DeliverableRow';
 import { StandardDeliverableSheet } from './StandardDeliverableSheet';
 
 export const StandardTrainingTab: React.FC<{ handoverPoint: P2AHandoverPoint }> = ({ handoverPoint }) => {
