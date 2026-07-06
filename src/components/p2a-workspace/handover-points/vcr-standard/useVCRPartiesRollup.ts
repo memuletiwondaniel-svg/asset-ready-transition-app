@@ -26,6 +26,11 @@ const TERMINAL_STATUSES = new Set([
   'QUALIFICATION_APPROVED',
 ]);
 
+/** Approval-row statuses that count as "approved" for the Approving-parties
+ *  fraction. Enum on `vcr_prerequisite_approvals` is PENDING / ACCEPTED /
+ *  REJECTED / QUALIFIED — ACCEPTED and QUALIFIED both close the approval. */
+const APPROVED_APPROVAL_STATUSES = new Set(['ACCEPTED', 'QUALIFIED', 'APPROVED']);
+
 export interface PartyPerson {
   user_id: string;
   full_name: string;
@@ -107,7 +112,7 @@ export function useVCRPartiesRollup(handoverPointId: string | null | undefined) 
       if (prereqIds.length > 0) {
         const { data } = await client
           .from('vcr_prerequisite_approvals')
-          .select('approver_id, prerequisite_id, status')
+          .select('approver_user_id, prerequisite_id, status')
           .in('prerequisite_id', prereqIds);
         approvingRows = data || [];
       }
@@ -121,13 +126,13 @@ export function useVCRPartiesRollup(handoverPointId: string | null | undefined) 
       // Collect user_ids across all sources for a single profile resolution.
       const allUserIds = new Set<string>();
       deliveringRows.forEach((r) => r.user_id && allUserIds.add(r.user_id));
-      approvingRows.forEach((r) => r.approver_id && allUserIds.add(r.approver_id));
+      approvingRows.forEach((r) => r.approver_user_id && allUserIds.add(r.approver_user_id));
       (sofRows || []).forEach((r: any) => r.user_id && allUserIds.add(r.user_id));
 
       const profileMap = await resolveProfiles([...allUserIds]);
 
       const buildRollup = (
-        rows: Array<{ user_id: string; prereq_id: string | null }>,
+        rows: Array<{ user_id: string; prereq_id: string | null; status?: string }>,
         completionCheck: (row: any) => boolean,
       ): PartyPerson[] => {
         const byUser = new Map<
@@ -172,11 +177,11 @@ export function useVCRPartiesRollup(handoverPointId: string | null | undefined) 
 
       const approving = buildRollup(
         approvingRows.map((r) => ({
-          user_id: r.approver_id,
+          user_id: r.approver_user_id,
           prereq_id: r.prerequisite_id,
           status: r.status,
         })),
-        (row) => row.status === 'APPROVED',
+        (row) => APPROVED_APPROVAL_STATUSES.has(row.status || ''),
       );
 
       const sofPeople: PartyPerson[] = (sofRows || [])
