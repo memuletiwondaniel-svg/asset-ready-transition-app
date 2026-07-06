@@ -39,8 +39,8 @@ export const StandardProceduresTab: React.FC<{ handoverPoint: P2AHandoverPoint }
           fields={[
             { label: 'Type', value: selected.procedure_type || null },
             { label: 'Responsible', value: selected.responsible_person || null },
-            { label: 'ORA status', value: (selected.ora?.ora_status || 'NOT_STARTED').replaceAll('_', ' ') },
-            { label: 'ORA %', value: `${Math.round(selected.ora?.ora_completion_percentage || 0)}%` },
+            { label: 'Status', value: (selected.status || 'to_deliver').replaceAll('_', ' ') },
+            { label: 'Execution %', value: `${Math.round(selected.ora?.ora_completion_percentage || 0)}%` },
             { label: 'Description', value: selected.description || null, full: true },
           ]}
         />
