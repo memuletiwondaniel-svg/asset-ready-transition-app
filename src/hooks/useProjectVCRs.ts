@@ -158,8 +158,12 @@ export function useProjectVCRs(projectId: string) {
           }
 
           const total = prereqs.length;
+          // Terminal-only close rule — matches the standardized VCR overlay's
+          // `standardStatus.ts` (ACCEPTED + QUALIFICATION_APPROVED). Previously
+          // this also counted READY_FOR_REVIEW, which drifted the card off the
+          // overlay's headline (e.g. 42/57 vs 31/57 on VCR-DP300-02).
           const closed = prereqs.filter(
-            (p: any) => p.status === 'ACCEPTED' || p.status === 'READY_FOR_REVIEW' || p.status === 'QUALIFICATION_APPROVED'
+            (p: any) => p.status === 'ACCEPTED' || p.status === 'QUALIFICATION_APPROVED'
           ).length;
 
           const status = (vcr.status || '').toString().toUpperCase();
