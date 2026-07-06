@@ -29,15 +29,24 @@ const SegmentedBar: React.FC<{ done: number; pipe: number; total: number }> = ({
   );
 };
 
-/** Conic donut per category */
-const Donut: React.FC<{ done: number; pipe: number; total: number; label: string }> = ({ done, pipe, total, label }) => {
+/** Conic donut per category — clickable to open the category items drawer (D5). */
+const Donut: React.FC<{
+  done: number; pipe: number; total: number; label: string;
+  onClick?: () => void; disabled?: boolean;
+}> = ({ done, pipe, total, label, onClick, disabled }) => {
   const donePct = total ? (done / total) * 100 : 0;
   const pipePct = total ? (pipe / total) * 100 : 0;
   const bg = total
     ? `conic-gradient(#059669 0 ${donePct}%, #A8C3EE ${donePct}% ${donePct + pipePct}%, #E5E9EF ${donePct + pipePct}% 100%)`
     : '#F1F5F9';
   return (
-    <div className="flex flex-col items-center gap-1.5 flex-1 min-w-[104px]">
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled || !total}
+      className="flex flex-col items-center gap-1.5 flex-1 min-w-[104px] rounded-md p-1 hover:bg-muted/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 disabled:opacity-60 disabled:cursor-default"
+      aria-label={`Open ${label} items`}
+    >
       <div className="relative w-16 h-16 rounded-full flex items-center justify-center" style={{ background: bg }}>
         <div className="absolute inset-1.5 rounded-full bg-background flex items-center justify-center text-xs font-bold text-foreground">
           {done}/{total || 0}
@@ -46,7 +55,7 @@ const Donut: React.FC<{ done: number; pipe: number; total: number; label: string
       <span className="text-[9.5px] font-bold tracking-wide text-muted-foreground text-center leading-tight">
         {label}
       </span>
-    </div>
+    </button>
   );
 };
 
