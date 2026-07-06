@@ -26,6 +26,11 @@ const TERMINAL_STATUSES = new Set([
   'QUALIFICATION_APPROVED',
 ]);
 
+/** Approval-row statuses that count as "approved" for the Approving-parties
+ *  fraction. Enum on `vcr_prerequisite_approvals` is PENDING / ACCEPTED /
+ *  REJECTED / QUALIFIED — ACCEPTED and QUALIFIED both close the approval. */
+const APPROVED_APPROVAL_STATUSES = new Set(['ACCEPTED', 'QUALIFIED', 'APPROVED']);
+
 export interface PartyPerson {
   user_id: string;
   full_name: string;
