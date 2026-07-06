@@ -83,3 +83,31 @@ export const oraStatusChip = (
   if (s === 'IN_PROGRESS') return { label: `${Math.round(pct || 0)}%`, tone: 'blue' };
   return { label: 'To deliver', tone: 'slate' };
 };
+
+/** Chip for p2a_vcr_procedures.status */
+export const procedureStatusChip = (status: string | null | undefined): { label: string; tone: ChipTone } => {
+  const s = (status || '').toLowerCase();
+  switch (s) {
+    case 'approved': return { label: 'Approved', tone: 'emerald' };
+    case 'issued': return { label: 'Issued', tone: 'blue' };
+    case 'in_review': return { label: 'In review', tone: 'amber' };
+    case 'draft': return { label: 'Draft', tone: 'slate' };
+    case 'superseded': return { label: 'Superseded', tone: 'red' };
+    default: return { label: 'To deliver', tone: 'slate' };
+  }
+};
+
+/** Chip for p2a_vcr_training.status */
+export const trainingStatusChip = (status: string | null | undefined): { label: string; tone: ChipTone } => {
+  const s = (status || '').toLowerCase();
+  switch (s) {
+    case 'competency_verified': return { label: 'Competency verified', tone: 'emerald' };
+    case 'delivered': return { label: 'Delivered', tone: 'emerald' };
+    case 'scheduled': return { label: 'Scheduled', tone: 'blue' };
+    case 'in_progress': return { label: 'In progress', tone: 'blue' };
+    case 'planned': return { label: 'Planned', tone: 'amber' };
+    case 'cancelled': return { label: 'Cancelled', tone: 'red' };
+    default: return { label: 'To deliver', tone: 'slate' };
+  }
+};
+
