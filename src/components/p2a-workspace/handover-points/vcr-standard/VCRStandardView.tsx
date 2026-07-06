@@ -156,11 +156,35 @@ export const VCRStandardView: React.FC<Props> = ({
     }
   };
 
+  // TEMP instrumentation: prove sizing against the actual window, not a
+  // constrained ancestor. Removed once both entry points verify.
+  React.useEffect(() => {
+    if (!open) return;
+    const id = requestAnimationFrame(() => {
+      const el = document.querySelector('[data-testid="vcr-standard-content"]') as HTMLElement | null;
+      const r = el?.getBoundingClientRect();
+      // eslint-disable-next-line no-console
+      console.log('[VCR overlay:sizing]', {
+        vcr: handoverPoint.vcr_code,
+        innerWidth: window.innerWidth,
+        innerHeight: window.innerHeight,
+        matchesMd: window.matchMedia('(min-width: 768px)').matches,
+        portalParent: el?.parentElement?.tagName,
+        rect: r ? { top: Math.round(r.top), left: Math.round(r.left), w: Math.round(r.width), h: Math.round(r.height) } : null,
+      });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [open, handoverPoint.vcr_code]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogPortal>
         <DialogOverlay className="z-overlay-viewer" />
-        <DialogPrimitive.Content className="fixed z-modal-viewer !inset-0 md:inset-auto md:left-[50%] md:top-[50%] md:translate-x-[-50%] md:translate-y-[-50%] !max-w-none md:!max-w-[95vw] md:!w-[95vw] !w-full h-[100dvh] md:h-[95vh] p-0 gap-0 overflow-hidden border-0 md:border bg-background shadow-lg md:rounded-lg rounded-none">
+        <DialogPrimitive.Content
+          data-testid="vcr-standard-content"
+          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-modal-viewer w-[95vw] max-w-[1400px] h-[95vh] min-h-[600px] max-h-[calc(100dvh-16px)] flex flex-col p-0 gap-0 overflow-hidden border bg-background shadow-lg rounded-lg focus:outline-none"
+        >
+
 
           {/* Header band: gold accent bar · title · lifecycle chip · close */}
           <div className="flex items-center justify-between px-4 md:px-5 py-3 border-b shrink-0">
