@@ -117,7 +117,14 @@ export const StandardOverviewTab: React.FC<Props> = ({ handoverPoint }) => {
         {showCategories && (
           <div className="flex gap-2 mt-3 flex-wrap">
             {perCat.map(c => (
-              <Donut key={c.code} done={c.terminal} pipe={c.pipeline} total={c.total} label={c.label} />
+              <Donut
+                key={c.code}
+                done={c.terminal}
+                pipe={c.pipeline}
+                total={c.total}
+                label={c.label}
+                onClick={() => setDrawerCategory(c.code)}
+              />
             ))}
           </div>
         )}
