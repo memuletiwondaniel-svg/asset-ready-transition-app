@@ -2,21 +2,13 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { P2AHandoverPoint } from '../../../hooks/useP2AHandoverPoints';
-import { DeliverableList, DeliverableRow, EmptyDeliverable, ChipTone } from './DeliverableRow';
-
-const cmmsChip = (
-  status: string | null | undefined,
-  pct: number | null | undefined,
-): { label: string; tone: ChipTone } => {
-  const s = (status || 'NOT_STARTED').toString().toUpperCase();
-  if (s === 'COMPLETED') return { label: 'Complete', tone: 'emerald' };
-  if (s === 'IN_PROGRESS') return { label: `${Math.round(pct || 0)}%`, tone: 'blue' };
-  return { label: 'To deliver', tone: 'slate' };
-};
+import { DeliverableList, DeliverableRow, EmptyDeliverable } from './DeliverableRow';
 
 /**
- * Maintenance-systems deliverables (ARB / PMs / spares / criticality etc.)
- * source from p2a_vcr_maintenance_deliverables. Real rows only.
+ * Maintenance-systems deliverables source from p2a_vcr_maintenance_deliverables.
+ * That table currently carries applicability + comments only (no rollup
+ * status yet). Render the applicable set as info rows; add a real progress
+ * chip once the CMMS rollup lands.
  */
 export const StandardMaintenanceTab: React.FC<{ handoverPoint: P2AHandoverPoint }> = ({ handoverPoint }) => {
   const { data, isLoading } = useQuery({
@@ -27,9 +19,9 @@ export const StandardMaintenanceTab: React.FC<{ handoverPoint: P2AHandoverPoint 
       const client = supabase as any;
       const { data: rows, error } = await client
         .from('p2a_vcr_maintenance_deliverables')
-        .select('id, component_code, component_name, status, completion_percentage, target_date')
+        .select('id, deliverable_type, is_applicable, comments')
         .eq('handover_point_id', handoverPoint.id)
-        .order('display_order', { ascending: true, nullsFirst: false });
+        .eq('is_applicable', true);
       if (error) throw error;
       return rows || [];
     },
@@ -38,22 +30,24 @@ export const StandardMaintenanceTab: React.FC<{ handoverPoint: P2AHandoverPoint 
   if (isLoading) return <div className="p-6 text-sm text-muted-foreground">Loading maintenance systems…</div>;
   const rows = data || [];
   if (!rows.length)
-    return <EmptyDeliverable label="No maintenance-system deliverables configured yet." hint="ARB, PMs, spares and criticality items are added during plan definition." />;
+    return (
+      <EmptyDeliverable
+        label="No maintenance-system deliverables marked applicable yet."
+        hint="ARB, PMs, spares and criticality items are flagged during plan definition."
+      />
+    );
 
   return (
     <DeliverableList>
-      {rows.map((r: any) => {
-        const chip = cmmsChip(r.status, r.completion_percentage);
-        return (
-          <DeliverableRow
-            key={r.id}
-            name={r.component_name || r.component_code || 'Unnamed'}
-            context={r.component_code || null}
-            chipLabel={chip.label}
-            chipTone={chip.tone}
-          />
-        );
-      })}
+      {rows.map((r: any) => (
+        <DeliverableRow
+          key={r.id}
+          name={r.deliverable_type}
+          context={r.comments || null}
+          chipLabel="Applicable"
+          chipTone="blue"
+        />
+      ))}
     </DeliverableList>
   );
 };
