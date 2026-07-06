@@ -88,7 +88,7 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
       return (a.prereq.display_order ?? 0) - (b.prereq.display_order ?? 0);
     });
     return filtered;
-  }, [prerequisites, partiesByItem, filter, search, sort]);
+  }, [prerequisites, filter, search, sort]);
 
   const openRow = (r: typeof rows[number]) => {
     setOpenItem({
