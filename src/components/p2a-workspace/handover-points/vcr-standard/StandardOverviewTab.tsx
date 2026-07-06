@@ -5,6 +5,7 @@ import { P2AHandoverPoint } from '../../hooks/useP2AHandoverPoints';
 import { useVCRPrerequisites } from '../../hooks/useVCRPrerequisites';
 import { useHandoverPointSystems } from '../../hooks/useP2AHandoverPoints';
 import { useVCRHydrocarbonStatus } from '@/hooks/useVCRHydrocarbonStatus';
+import { CategoryItemsDrawer } from './CategoryItemsDrawer';
 import { format } from 'date-fns';
 import {
   PrereqStatus,
