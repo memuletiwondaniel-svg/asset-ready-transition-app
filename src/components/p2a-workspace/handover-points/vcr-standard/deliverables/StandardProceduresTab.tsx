@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { P2AHandoverPoint } from '../../../hooks/useP2AHandoverPoints';
 import { useVCRProcedureDeliverables } from '../../../hooks/useVCRDeliverables';
-import { DeliverableList, DeliverableRow, EmptyDeliverable, oraStatusChip } from './DeliverableRow';
+import { DeliverableList, DeliverableRow, EmptyDeliverable, procedureStatusChip } from './DeliverableRow';
 import { StandardDeliverableSheet } from './StandardDeliverableSheet';
 
 export const StandardProceduresTab: React.FC<{ handoverPoint: P2AHandoverPoint }> = ({ handoverPoint }) => {
