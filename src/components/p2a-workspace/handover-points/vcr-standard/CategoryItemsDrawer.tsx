@@ -31,7 +31,16 @@ export const CategoryItemsDrawer: React.FC<Props> = ({
     if (!categoryCode) return [];
     return prerequisites
       .filter(p => normalizeCategoryCode(p.category) === categoryCode)
-      .map(p => ({ ...p, pill: standardPill(p.status as PrereqStatus) }));
+      .map(p => {
+        const catCode = normalizeCategoryCode(p.category);
+        const code = catCode === 'XX' ? '??' : catCode;
+        return {
+          prereq: p,
+          catCode: code,
+          itemCode: formatVcrItemCode(code, p.display_order),
+          pill: standardPill(p.status as PrereqStatus),
+        };
+      });
   }, [prerequisites, categoryCode]);
 
   const closed = rows.filter(r => r.pill.bucket === 'terminal').length;
@@ -57,23 +66,27 @@ export const CategoryItemsDrawer: React.FC<Props> = ({
             )}
             {rows.map(r => (
               <button
-                key={r.id}
+                key={r.prereq.id}
                 className="w-full text-left px-4 py-2.5 hover:bg-muted/40 flex items-center gap-3"
                 onClick={() => setOpenItem({
-                  id: r.id,
-                  category: r.category || '',
-                  discipline: (r as any).discipline || '',
-                  name: r.name || '',
-                  code: formatVcrItemCode(r as any),
-                  status: r.status as any,
-                } as VCRItemBasic)}
+                  id: r.prereq.id,
+                  vcr_item: r.prereq.summary,
+                  topic: null,
+                  category_name: r.catCode !== '??' && r.catCode in CATEGORY_META
+                    ? CATEGORY_META[r.catCode as keyof typeof CATEGORY_META].name
+                    : (r.prereq.category || 'Uncategorized'),
+                  category_code: r.catCode,
+                  status: r.prereq.status,
+                  prerequisite_id: r.prereq.id,
+                  itemCode: r.itemCode,
+                } as unknown as VCRItemBasic)}
               >
                 <div className="min-w-0 flex-1">
                   <div className="text-[12.5px] font-medium text-foreground truncate">
-                    {r.name}
+                    {r.prereq.summary}
                   </div>
                   <div className="text-[10.5px] text-muted-foreground font-mono truncate">
-                    {formatVcrItemCode(r as any)}
+                    {r.itemCode}
                   </div>
                 </div>
                 <span className={cn(
@@ -91,9 +104,9 @@ export const CategoryItemsDrawer: React.FC<Props> = ({
       <VCRItemDetailSheet
         item={openItem}
         open={!!openItem}
-        onOpenChange={(v) => { if (!v) setOpenItem(null); }}
-        handoverPointId={handoverPointId}
-        projectId={projectId}
+        onOpenChange={(o) => !o && setOpenItem(null)}
+        vcrId={handoverPointId}
+        projectIdOverride={projectId}
       />
     </>
   );
