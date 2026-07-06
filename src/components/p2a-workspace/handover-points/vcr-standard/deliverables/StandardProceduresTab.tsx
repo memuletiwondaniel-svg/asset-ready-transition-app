@@ -14,13 +14,13 @@ export const StandardProceduresTab: React.FC<{ handoverPoint: P2AHandoverPoint }
   if (!rows.length)
     return <EmptyDeliverable label="No procedures planned yet." hint="Add procedures during plan definition." />;
 
-  const chip = selected ? oraStatusChip(selected.ora?.ora_status, selected.ora?.ora_completion_percentage) : null;
+  const chip = selected ? procedureStatusChip(selected.status) : null;
 
   return (
     <>
       <DeliverableList>
         {rows.map((r) => {
-          const c = oraStatusChip(r.ora.ora_status, r.ora.ora_completion_percentage);
+          const c = procedureStatusChip(r.status);
           const ctx = [r.procedure_type, r.responsible_person].filter(Boolean).join(' · ');
           return (
             <DeliverableRow key={r.id} name={r.title} context={ctx || null} chipLabel={c.label} chipTone={c.tone} onClick={() => setSelected(r)} />
