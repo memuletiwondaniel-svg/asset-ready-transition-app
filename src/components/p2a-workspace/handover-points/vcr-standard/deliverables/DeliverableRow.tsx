@@ -39,7 +39,10 @@ export const DeliverableRow: React.FC<DeliverableRowProps> = ({
       )}
     >
       <div className="flex-1 min-w-0">
-        <div className="text-[13px] font-medium leading-snug truncate">{name}</div>
+        <div className="text-[13px] font-medium leading-snug truncate flex items-center gap-1.5">
+          <span className="truncate">{name}</span>
+          {nameBadge}
+        </div>
         {context && (
           <div className="text-[11px] text-muted-foreground truncate mt-0.5">
             {context}
