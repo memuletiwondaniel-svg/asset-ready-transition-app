@@ -210,7 +210,7 @@ export const VCRStandardView: React.FC<Props> = ({
             <div className="flex items-center gap-3 shrink-0">
               <div className="hidden md:flex items-center gap-2">
                 <HeaderProgress done={counts.terminal} pipe={counts.pipeline} total={counts.total} />
-                <div className="flex flex-col items-end leading-tight" data-testid="vcr-lifecycle-chip" data-phase={lifecycle.phase}>
+                <div className="flex flex-col items-end leading-tight">
                   <span className={cn('text-[11px] font-semibold border rounded-full px-2.5 py-0.5', lifecycle.chipClass)}>
                     {lifecycle.label}
                   </span>

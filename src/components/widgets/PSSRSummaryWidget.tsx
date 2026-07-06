@@ -34,7 +34,7 @@ import { useCanCreateVCRPermission } from '@/hooks/usePermissions';
 import { useP2AHandoverPlan } from '@/components/p2a-workspace/hooks/useP2AHandoverPlan';
 import { useP2APlanByProject } from '@/hooks/useP2APlanByProject';
 import { getP2APlanUIState } from '@/lib/p2aPlanStatus';
-import { resolveVCRMode } from '@/components/p2a-workspace/handover-points/vcr-standard/vcrMode';
+
 
 interface PSSRSummaryWidgetProps {
   projectId: string;
@@ -197,54 +197,6 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allVCRs.length, searchParams]);
 
-  // TEMP SELF-TEST — OWL 5.1 mode routing for DP-300. Remove after Claude verifies click-through.
-  useEffect(() => {
-    if (projectCode !== 'DP-300') return;
-    let cancelled = false;
-    const runSelfTest = async () => {
-      const client = supabase as any;
-      const { data: rows, error } = await client
-        .from('p2a_handover_points')
-        .select('id, vcr_code, name, status, execution_plan_status, sof_signed_at, pac_signed_at')
-        .like('vcr_code', 'VCR-DP300-%')
-        .order('vcr_code', { ascending: true });
-      if (error) {
-        console.error('[VCR mode self-test] failed', error);
-        return;
-      }
-
-      const ids = (rows || []).map((row: any) => row.id);
-      const prereqCounts = new Map<string, number>();
-      if (ids.length > 0) {
-        const { data: prereqs, error: prereqError } = await client
-          .from('p2a_vcr_prerequisites')
-          .select('handover_point_id')
-          .in('handover_point_id', ids);
-        if (prereqError) {
-          console.error('[VCR mode self-test] prerequisites failed', prereqError);
-          return;
-        }
-        for (const prereq of prereqs || []) {
-          prereqCounts.set(prereq.handover_point_id, (prereqCounts.get(prereq.handover_point_id) || 0) + 1);
-        }
-      }
-
-      if (cancelled) return;
-      console.log('[VCR mode self-test]', (rows || []).map((row: any) => {
-        const prerequisites_count = prereqCounts.get(row.id) || 0;
-        return {
-          vcr: row.vcr_code,
-          name: row.name,
-          status: row.status,
-          execution_plan_status: row.execution_plan_status,
-          prerequisites_count,
-          mode: resolveVCRMode({ ...row, prerequisites_count }),
-        };
-      }));
-    };
-    void runSelfTest();
-    return () => { cancelled = true; };
-  }, [projectCode]);
 
 
 
@@ -253,35 +205,14 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
   };
 
   const handleVCRClick = async (vcrId: string) => {
-    // TEMP LOG — OWL 5.1 click routing (literal first statement; remove after verification)
-    console.log('[PSSRSummaryWidget onClick]', { stage: 'entered', vcrId });
     const found = allVCRs.find(v => v.id === vcrId);
-    if (!found) {
-      console.log('[PSSRSummaryWidget onClick]', { stage: 'not-found', vcrId });
-      return;
-    }
+    if (!found) return;
     const lifecycle = found.lifecycle;
     // Wizard for editable states: not_started, draft (plan setup), in_progress (checklist work).
     const stillEditable =
       lifecycle === 'not_started' ||
       lifecycle === 'draft' ||
       (!lifecycle && (found.status || '').toUpperCase() !== 'SIGNED');
-    console.log('[PSSRSummaryWidget onClick]', {
-      stage: 'resolved',
-      vcr: found.vcr_code,
-      lifecycle,
-      status: found.status,
-      execution_plan_status: found.execution_plan_status ?? null,
-      mode: resolveVCRMode({
-        execution_plan_status: found.execution_plan_status,
-        status: found.status,
-        sof_signed_at: found.sof_signed_at,
-        pac_signed_at: found.pac_signed_at,
-        total_items: found.total_items,
-        closed_items: found.closed_items,
-      }),
-      opens: stillEditable ? 'wizard' : lifecycle === 'in_approval' ? 'plan-review-launcher' : 'detail-overlay',
-    });
     if (stillEditable) {
       setWizardVCR(found);
       return;
