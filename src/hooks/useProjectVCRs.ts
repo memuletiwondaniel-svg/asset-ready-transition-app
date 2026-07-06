@@ -123,19 +123,6 @@ export function useProjectVCRs(projectId: string) {
             return true;
           });
 
-          // TEMP diagnostic — leave in place until Claude confirms card/detail
-          // parity for VCR-02 in the live click-through.
-          if (vcr.vcr_code === 'VCR-02') {
-            // eslint-disable-next-line no-console
-            console.log('[useProjectVCRs rollup diag]', {
-              vcr: vcr.vcr_code,
-              prereqRowsRaw: prereqsResult.data?.length ?? 0,
-              prereqRowsDistinct: prereqs.length,
-              closedByRule: prereqs.filter((p: any) =>
-                ['ACCEPTED', 'READY_FOR_REVIEW', 'QUALIFICATION_APPROVED'].includes(p.status),
-              ).length,
-            });
-          }
 
           const systemsResult = await client
             .from('p2a_handover_point_systems')

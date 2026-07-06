@@ -126,17 +126,6 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
   const isExecutionPlanApproved = vcrMode === 'execution';
   const lockedTabIds = buildingBlockTabs.map(t => t.id);
 
-  // TEMP LOG — OWL 5.1 mode routing (remove after verification)
-  if (open) {
-    // eslint-disable-next-line no-console
-    console.log('[VCR overlay:p2a-workspace]', {
-      vcr: handoverPoint.vcr_code,
-      execution_plan_status: hpAny.execution_plan_status ?? null,
-      status: handoverPoint.status,
-      mode: vcrMode,
-      renders: vcrMode === 'execution' ? 'VCRStandardView' : 'LegacyOverlay',
-    });
-  }
 
   // OWL 5.1 — standardized VCR view. In execution mode (approved plan OR
   // legacy/post-handover VCR), defer entirely to VCRStandardView.

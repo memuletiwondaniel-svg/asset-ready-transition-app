@@ -1489,20 +1489,7 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = (props) =
     closed_items: vcr.closed_items,
   });
 
-  if (open) {
-    // TEMP LOG — OWL 5.1 mode routing (remove after verification)
-    // eslint-disable-next-line no-console
-    console.log('[VCR overlay:widget]', {
-      vcr: vcr.vcr_code,
-      execution_plan_status: hpRow?.execution_plan_status ?? null,
-      status: hpRow?.status ?? vcr.status,
-      mode: vcrMode,
-      renders: vcrMode === 'execution' && hpRow ? 'VCRStandardView' : 'LegacyWidgetOverlay',
-    });
-  }
-
   if (open && hpError) {
-    console.error('[VCR overlay:widget] canonical handover point failed', hpError);
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-xl">
