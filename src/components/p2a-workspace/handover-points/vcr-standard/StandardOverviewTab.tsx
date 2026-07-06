@@ -65,6 +65,7 @@ export const StandardOverviewTab: React.FC<Props> = ({ handoverPoint }) => {
   const { systems } = useHandoverPointSystems(handoverPoint.id);
   const { data: hc } = useVCRHydrocarbonStatus(handoverPoint.id);
   const [showCategories, setShowCategories] = React.useState(true);
+  const [drawerCategory, setDrawerCategory] = React.useState<'DI'|'TI'|'OI'|'MS'|'HS'|null>(null);
 
   const overall = rollup(prerequisites.map(p => p.status as PrereqStatus));
 
