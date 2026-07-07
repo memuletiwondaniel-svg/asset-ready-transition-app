@@ -44,6 +44,7 @@ const bucketPriority = (bucket: StandardBucket, status: PrereqStatus): number =>
 
 export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) => {
   const { prerequisites, isLoading } = useVCRPrerequisites(handoverPoint.id);
+  const { data: partiesRollup } = useVCRPartiesRollup(handoverPoint.id, projectId || null);
   const [filter, setFilter] = useState<Filter>('all');
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<{ col: SortCol; dir: SortDir } | null>(null);
@@ -54,11 +55,14 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
       const cat = normalizeCategoryCode(p.category);
       const pill = standardPill(p.status as PrereqStatus);
       const code = cat === 'XX' ? '??' : cat;
+      const delivering = partiesRollup?.deliveringByPrereq[p.id] || [];
+      const approving = partiesRollup?.approvingByPrereq[p.id] || [];
       return {
         prereq: p,
         catCode: code,
         itemCode: formatVcrItemCode(code, p.display_order),
         pill,
+        partyNames: [...delivering, ...approving].join(' '),
       };
     });
 
@@ -68,7 +72,8 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
       if (!q) return true;
       return (
         r.itemCode.toLowerCase().includes(q) ||
-        (r.prereq.summary || '').toLowerCase().includes(q)
+        (r.prereq.summary || '').toLowerCase().includes(q) ||
+        r.partyNames.toLowerCase().includes(q)
       );
     });
 
