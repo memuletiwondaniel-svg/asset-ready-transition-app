@@ -97,15 +97,15 @@ export const CategoryItemsDrawer: React.FC<Props> = ({
               {meta?.name || 'Category'}
             </SheetTitle>
             <SheetDescription className="text-xs text-muted-foreground mt-0.5">
-              {closed} of {rows.length} approved
+              {closed} of {rows.length} items approved
             </SheetDescription>
-            <div className="relative mt-3">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/60" />
+            <div className="relative mt-2.5">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground/50" />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search ID, description, party…"
-                className="h-7 pl-7 text-[11.5px]"
+                className="h-6 pl-6 text-[10.5px] bg-muted/30 border-border/60 placeholder:text-muted-foreground/60 placeholder:text-[10.5px] focus-visible:ring-1"
               />
             </div>
           </SheetHeader>
