@@ -953,17 +953,60 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   if (!item) return null;
 
   const pill = statusPill(item.status, viewer);
-  const deliveringName = deliveringMember?.full_name || vcrItemDetail?.delivering_party?.name || 'Delivering party';
-  const deliveringRoleName = deliveringMember?.role_name || vcrItemDetail?.delivering_party?.name || 'Delivering';
+  const deliveringName = deliveringMember?.full_name || vcrItemDetail?.delivering_role?.name || 'Delivering party';
   const approvingName = approvingMember?.full_name || (vcrItemDetail?.approving_roles?.[0]?.name) || 'Approving party';
-  const approvingRoleName = approvingMember?.role_name || vcrItemDetail?.approving_roles?.[0]?.name || 'Approving';
+
+  // Delivering-party edit lock (B1-LOCK): the delivering party may add
+  // evidence / comments only while the item is not yet submitted for
+  // review. On submit (READY_FOR_REVIEW) the record freezes; a Return
+  // sets it back to IN_PROGRESS and re-opens edits.
+  const isTerminalStatus =
+    item.status === 'ACCEPTED' || item.status === 'QUALIFICATION_APPROVED' || item.status === 'REJECTED';
+  const deliveringCanEdit =
+    viewer === 'delivering' && !isTerminalStatus && item.status !== 'READY_FOR_REVIEW';
+  const approverAwaitingSubmission =
+    viewer === 'approving' && item.status !== 'READY_FOR_REVIEW' && !isTerminalStatus;
+
+  // Party rows for the DELIVERING PARTY / APPROVING PARTIES sections
+  const deliveringRoleName: string =
+    vcrItemDetail?.delivering_role?.name || deliveringMember?.role_name || 'Delivering party';
+  const partyRow = (
+    role: string,
+    holder: { user_id: string; full_name: string; avatar_url: string | null } | null,
+    isYou: boolean,
+    trailing?: React.ReactNode,
+  ) => (
+    <div
+      key={`${role}-${holder?.user_id ?? 'unassigned'}`}
+      className="grid grid-cols-[minmax(140px,180px)_28px_minmax(0,1fr)_auto] items-center gap-x-2 py-1.5"
+    >
+      <span className="text-[11px] font-medium text-foreground/80 truncate" title={role}>{role}</span>
+      {holder ? (
+        <>
+          <Avatar className="h-6 w-6 justify-self-start">
+            <AvatarImage src={getAvatarUrl(holder.avatar_url)} />
+            <AvatarFallback className="text-[9px]">{getInitials(holder.full_name)}</AvatarFallback>
+          </Avatar>
+          <span className={cn('text-xs truncate min-w-0', isYou && 'font-semibold')}>
+            {isYou ? `${holder.full_name} (you)` : holder.full_name}
+          </span>
+        </>
+      ) : (
+        <>
+          <span className="w-6 h-6" />
+          <span className="text-[11px] italic text-muted-foreground truncate min-w-0">No holder assigned</span>
+        </>
+      )}
+      <div className="justify-self-end">{trailing}</div>
+    </div>
+  );
 
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent className="sm:max-w-xl overflow-hidden flex flex-col p-0 !z-modal-critical" data-rm-safe hideClose>
-          {/* Header */}
-          <SheetHeader className="px-6 pt-5 pb-4 border-b shrink-0 space-y-3">
+          {/* Header — single status chip (A1) */}
+          <SheetHeader className="px-6 pt-5 pb-4 border-b shrink-0 space-y-2">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 flex-wrap">
                 <Badge variant="outline" className="text-[10px] rounded-md font-normal">
@@ -982,32 +1025,79 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
             </div>
             <SheetTitle className="text-[15px] leading-snug font-semibold">{item.vcr_item}</SheetTitle>
             <SheetDescription className="sr-only">VCR item detail</SheetDescription>
-
-            {/* Party row */}
-            <div className="flex items-center gap-6 flex-wrap pt-0.5">
-              <PartyUnit
-                side="delivering"
-                isYou={viewer === 'delivering'}
-                name={deliveringName}
-                role={deliveringRoleName}
-                avatarUrl={deliveringMember?.avatar_url}
-              />
-              <PartyUnit
-                side="approving"
-                isYou={viewer === 'approving'}
-                name={approvingName}
-                role={approvingRoleName}
-                avatarUrl={approvingMember?.avatar_url}
-              />
-            </div>
+            {/* TOPIC (A2) */}
+            {vcrItemDetail?.effective_topic && (
+              <div className="flex items-center gap-2 pt-0.5">
+                <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Topic:</span>
+                <span className="text-xs font-medium text-foreground">{vcrItemDetail.effective_topic}</span>
+              </div>
+            )}
           </SheetHeader>
 
           {/* Body */}
           <ScrollArea className="flex-1 min-h-0">
             <div className="px-6 py-5 space-y-6">
-              {/* Insights */}
-              <InsightsBlock
-                insights={effectiveInsights}
+              {/* Delivering party (A3) */}
+              <section>
+                <SectionLabel>Delivering party ({deliveringParties.length || (vcrItemDetail?.delivering_role ? 1 : 0)})</SectionLabel>
+                <div className="rounded-lg border border-border/60 divide-y divide-border/40 px-3">
+                  {deliveringParties.length > 0
+                    ? deliveringParties.map((m) =>
+                        partyRow(deliveringRoleName, m, user?.id === m.user_id),
+                      )
+                    : partyRow(deliveringRoleName, null, false)}
+                </div>
+              </section>
+
+              {/* Approving parties (A3 + A4 B2B chip) */}
+              <section>
+                <SectionLabel>
+                  Approving parties ({(vcrItemDetail?.approving_roles || []).length})
+                </SectionLabel>
+                <div className="rounded-lg border border-border/60 divide-y divide-border/40 px-3">
+                  {(vcrItemDetail?.approving_roles || []).length === 0 ? (
+                    <p className="text-[11px] italic text-muted-foreground py-2">No approving parties configured.</p>
+                  ) : (
+                    (vcrItemDetail?.approving_roles || []).map((role: { id: string; name: string }) => {
+                      const holders = (approvingHoldersById as any)[role.id] || [];
+                      const isB2B = holders.length === 2;
+                      const showPartner = b2bExpandedRoleIds.has(role.id) && isB2B;
+                      const shown = showPartner ? holders[1] : holders[0];
+                      const isYou = !!(user?.id && shown?.user_id === user.id);
+                      const chip = isB2B ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setB2bExpandedRoleIds((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(role.id)) next.delete(role.id);
+                              else next.add(role.id);
+                              return next;
+                            })
+                          }
+                          aria-pressed={showPartner}
+                          title={showPartner ? 'Show delivering-side holder' : 'Show B2B partner holder'}
+                          className={cn(
+                            'inline-flex items-center justify-center text-[9px] font-semibold tracking-wider px-1.5 h-4 rounded-md border transition-colors',
+                            showPartner
+                              ? 'bg-amber-200 text-amber-900 border-amber-400 ring-1 ring-amber-400 dark:bg-amber-800/60 dark:text-amber-100 dark:border-amber-600'
+                              : 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-800',
+                          )}
+                        >
+                          B2B
+                        </button>
+                      ) : null;
+                      return partyRow(role.name, shown || null, isYou, chip);
+                    })
+                  )}
+                </div>
+              </section>
+
+              {/* Insights — execution-only (Part 0) */}
+              {isExecutionMode && (
+                <InsightsBlock
+                  insights={effectiveInsights}
+
                 viewer={viewer}
                 onRecompute={insights ? undefined : () => recompute.mutate()}
                 recomputing={recompute.isPending}
