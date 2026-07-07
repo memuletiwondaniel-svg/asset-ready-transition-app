@@ -1431,40 +1431,51 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                   </div>
                 )}
 
-                {composerOpen ? (
-                  <div className="mt-3 space-y-2">
-                    <Textarea
-                      value={composerText}
-                      onChange={(e) => setComposerText(e.target.value)}
-                      rows={2}
-                      placeholder="Add a comment…"
-                    />
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => { setComposerOpen(false); setComposerText(''); }}>
-                        Cancel
-                      </Button>
-                      <Button
-                        size="sm"
-                        disabled={!composerText.trim() || insertComment.isPending}
-                        onClick={async () => {
-                          const text = composerText.trim();
-                          if (!text) return;
-                          await insertComment.mutateAsync({ body: text, action_tag: null });
-                          setComposerText('');
-                          setComposerOpen(false);
-                        }}
-                      >
-                        Post
-                      </Button>
+                {/* Composer: approvers may always comment (append-only,
+                    audit-logged — useful for early flagging even before the
+                    delivering party has submitted). Delivering party may
+                    comment only while unlocked (B1-LOCK). Observers: never. */}
+                {(viewer === 'approving' || deliveringCanEdit) && (
+                  composerOpen ? (
+                    <div className="mt-3 space-y-2">
+                      <Textarea
+                        value={composerText}
+                        onChange={(e) => setComposerText(e.target.value)}
+                        rows={2}
+                        placeholder="Add a comment…"
+                      />
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="sm" onClick={() => { setComposerOpen(false); setComposerText(''); }}>
+                          Cancel
+                        </Button>
+                        <Button
+                          size="sm"
+                          disabled={!composerText.trim() || insertComment.isPending}
+                          onClick={async () => {
+                            const text = composerText.trim();
+                            if (!text) return;
+                            await insertComment.mutateAsync({ body: text, action_tag: null });
+                            setComposerText('');
+                            setComposerOpen(false);
+                          }}
+                        >
+                          Post
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setComposerOpen(true)}
-                    className="mt-3 text-xs text-primary hover:underline"
-                  >
-                    Add comment
-                  </button>
+                  ) : (
+                    <button
+                      onClick={() => setComposerOpen(true)}
+                      className="mt-3 text-xs text-primary hover:underline"
+                    >
+                      Add comment
+                    </button>
+                  )
+                )}
+                {viewer === 'delivering' && !deliveringCanEdit && !isTerminalStatus && (
+                  <p className="mt-3 text-[11px] text-muted-foreground italic">
+                    Comments are locked while the item is awaiting approver review.
+                  </p>
                 )}
               </section>
               )}
