@@ -99,7 +99,7 @@ export const CategoryItemsDrawer: React.FC<Props> = ({
             <SheetDescription className="text-xs text-muted-foreground mt-0.5">
               {closed} of {rows.length} items approved
             </SheetDescription>
-            <div className="relative mt-4">
+            <div className="relative mt-6">
               <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground/50" />
               <Input
                 value={search}
