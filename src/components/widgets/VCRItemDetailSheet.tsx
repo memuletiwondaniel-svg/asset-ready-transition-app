@@ -505,57 +505,111 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   const { insights: liveInsights, recompute } = useVCRItemInsights(vcrId, item?.id);
   const effectiveInsights = insights ?? liveInsights;
 
-  // ─── Load authored item + parties ──────────────────────────────
+  // ─── Load authored item + per-VCR overrides + approving-roles catalog ──
   const { data: vcrItemDetail } = useQuery({
-    queryKey: ['vcr-item-detail-v2', item?.id, projectId],
+    queryKey: ['vcr-item-detail-v3', item?.id, vcrId],
     queryFn: async () => {
       if (!item) return null;
       const { data } = await supabase
         .from('vcr_items')
-        .select(`
-          *,
-          delivering_party:roles!vcr_items_delivering_party_role_id_fkey(id, name)
-        `)
+        .select(`*, delivering_party:roles!vcr_items_delivering_party_role_id_fkey(id, name)`)
         .eq('id', item.id)
         .maybeSingle();
 
-      const appRoleIds: string[] = (data as any)?.approving_party_role_ids || [];
-      let approvingRoles: { id: string; name: string }[] = [];
-      if (appRoleIds.length > 0) {
-        const { data: roles } = await supabase
-          .from('roles')
-          .select('id, name')
-          .in('id', appRoleIds);
-        approvingRoles = (roles as any[]) || [];
+      // Per-VCR override row (guidance / required-evidence / topic / party roles / N/A)
+      let override: any = null;
+      if (vcrId) {
+        const { data: ov } = await (supabase as any)
+          .from('p2a_vcr_item_overrides')
+          .select('vcr_item_override, topic_override, delivering_party_role_id_override, approving_party_role_ids_override, guidance_notes_override, supporting_evidence_override, is_na, na_reason')
+          .eq('handover_point_id', vcrId)
+          .eq('vcr_item_id', item.id)
+          .maybeSingle();
+        override = ov;
       }
 
-      let approvingMembers: Array<{ user_id: string; full_name: string; avatar_url: string | null; role_name: string }> = [];
-      if (projectId && appRoleIds.length > 0) {
-        const { data: members } = await supabase
-          .from('project_team_members')
-          .select('user_id')
-          .eq('project_id', projectId);
-        const userIds = (members || []).map((m: any) => m.user_id);
-        if (userIds.length > 0) {
-          const { data: profiles } = await supabase
-            .from('profiles')
-            .select('user_id, full_name, avatar_url, role')
-            .in('user_id', userIds)
-            .in('role', appRoleIds)
-            .eq('is_active', true);
-          approvingMembers = (profiles || []).map((p: any) => ({
-            user_id: p.user_id,
-            full_name: p.full_name,
-            avatar_url: p.avatar_url,
-            role_name: approvingRoles.find((r) => r.id === (p as any).role)?.name || 'Approving',
-          }));
-        }
+      const effectiveDeliveringRoleId: string | null =
+        override?.delivering_party_role_id_override ?? (data as any)?.delivering_party_role_id ?? null;
+      const effectiveApprovingRoleIds: string[] =
+        (override?.approving_party_role_ids_override as string[] | null) ??
+        ((data as any)?.approving_party_role_ids || []);
+
+      const roleIdsToFetch = Array.from(
+        new Set([...(effectiveApprovingRoleIds || []), effectiveDeliveringRoleId].filter(Boolean) as string[]),
+      );
+      let rolesCatalog: { id: string; name: string }[] = [];
+      if (roleIdsToFetch.length > 0) {
+        const { data: roles } = await supabase.from('roles').select('id, name').in('id', roleIdsToFetch);
+        rolesCatalog = (roles as any[]) || [];
       }
 
-      return { ...(data as any), approving_roles: approvingRoles, approving_members: approvingMembers };
+      const approving_roles = effectiveApprovingRoleIds
+        .map((id) => rolesCatalog.find((r) => r.id === id))
+        .filter(Boolean) as { id: string; name: string }[];
+      const delivering_role = effectiveDeliveringRoleId
+        ? rolesCatalog.find((r) => r.id === effectiveDeliveringRoleId) || (data as any)?.delivering_party
+        : (data as any)?.delivering_party || null;
+
+      return {
+        ...(data as any),
+        override,
+        effective_topic: override?.topic_override ?? (data as any)?.topic ?? item.topic ?? null,
+        effective_guidance: override?.guidance_notes_override ?? (data as any)?.guidance_notes ?? null,
+        effective_required_evidence: override?.supporting_evidence_override ?? (data as any)?.supporting_evidence ?? null,
+        effective_delivering_role_id: effectiveDeliveringRoleId,
+        effective_approving_role_ids: effectiveApprovingRoleIds,
+        delivering_role,
+        approving_roles,
+      };
     },
     enabled: open && !!item,
   });
+
+  // Lifecycle mode (plan vs execution) — derived from the VCR row itself,
+  // never from a caller prop that could be stale. resolveVCRMode is the
+  // shared boundary used by both overlay entry points.
+  const { data: hpRow } = useQuery({
+    queryKey: ['vcr-item-drawer-hp', vcrId],
+    queryFn: async () => {
+      if (!vcrId) return null;
+      const { data } = await (supabase as any)
+        .from('p2a_handover_points')
+        .select('id, execution_plan_status, status, sof_signed_at, pac_signed_at')
+        .eq('id', vcrId)
+        .maybeSingle();
+      return data;
+    },
+    enabled: open && !!vcrId,
+  });
+  const vcrMode = useMemo(
+    () => resolveVCRMode({
+      execution_plan_status: hpRow?.execution_plan_status,
+      status: hpRow?.status,
+      sof_signed_at: hpRow?.sof_signed_at,
+      pac_signed_at: hpRow?.pac_signed_at,
+      total_items: 1, // presence of an item row is execution activity
+    }),
+    [hpRow?.execution_plan_status, hpRow?.status, hpRow?.sof_signed_at, hpRow?.pac_signed_at],
+  );
+  const isExecutionMode = vcrMode === 'execution';
+
+  // Resolve approving-party holders (PTM → scoped roster → org_role_holders)
+  const approvingRoleIdsForHook = vcrItemDetail?.effective_approving_role_ids || [];
+  const rolesCatalogForHook = useMemo(() => {
+    const arr: { id: string; name: string }[] = [...(vcrItemDetail?.approving_roles || [])];
+    if (vcrItemDetail?.delivering_role?.id) {
+      arr.push({ id: vcrItemDetail.delivering_role.id, name: vcrItemDetail.delivering_role.name });
+    }
+    return arr;
+  }, [vcrItemDetail?.approving_roles, vcrItemDetail?.delivering_role]);
+  const { data: approvingHoldersById = {} } = useApprovingPartyHoldersByIds({
+    roles: rolesCatalogForHook,
+    roleIds: approvingRoleIdsForHook,
+    expandFamily: true,
+    scopeKey: projectId ?? '',
+    enabled: open && approvingRoleIdsForHook.length > 0,
+  });
+
 
   const { data: prereqDetail } = useQuery({
     queryKey: ['vcr-prereq-detail', item?.prerequisite_id],
