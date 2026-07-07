@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { Search, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { P2AHandoverPoint } from '../../hooks/useP2AHandoverPoints';
 import { useVCRPrerequisites } from '../../hooks/useVCRPrerequisites';
-// Party search is deferred — per-item delivering parties require a per-row query.
+import { useVCRPartiesRollup } from './useVCRPartiesRollup';
 import { VCRItemDetailSheet, VCRItemBasic } from '@/components/widgets/VCRItemDetailSheet';
 import { formatVcrItemCode } from '@/lib/vcrItemCode';
 import { standardPill, normalizeCategoryCode, CATEGORY_META, PrereqStatus, StandardBucket } from './standardStatus';
