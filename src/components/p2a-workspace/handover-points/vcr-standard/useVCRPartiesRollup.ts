@@ -32,7 +32,7 @@ const SOF_ROLE_LABELS = [
   'Plant Director',
   'P&M Director',
   'P&E Director',
-  'HSSE Director',
+  'HSE Director', // roles.name is 'HSE Director' (not 'HSSE') — align with SoF certificate block.
 ] as const;
 
 const PAC_ROLE_LABELS = ['Project Hub Lead', 'Plant Director'] as const;
