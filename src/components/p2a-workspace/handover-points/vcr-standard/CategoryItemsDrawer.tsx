@@ -118,7 +118,7 @@ export const CategoryItemsDrawer: React.FC<Props> = ({
             {rows.map(r => (
               <button
                 key={r.prereq.id}
-                className="w-full text-left px-4 py-3 cursor-pointer flex items-start gap-3 group transition-all duration-[120ms] hover:bg-[#F8FAFD] hover:shadow-[inset_3px_0_0_0_#1D4ED8]"
+                className="w-full text-left px-4 py-3 cursor-pointer flex items-start gap-3 rounded-[10px] transition-colors duration-[120ms] hover:bg-[#EEF4FE] group"
                 onClick={() => setOpenItem({
                   id: r.prereq.id,
                   vcr_item: r.prereq.summary,
