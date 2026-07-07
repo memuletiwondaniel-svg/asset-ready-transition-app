@@ -24,6 +24,8 @@ export interface VCRQualification {
     id: string;
     summary: string;
     handover_point_id: string;
+    display_order?: number;
+    category?: string | null;
   };
   evidence?: QualificationEvidence[];
 }
