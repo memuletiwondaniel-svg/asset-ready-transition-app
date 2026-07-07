@@ -44,9 +44,8 @@ import { format } from 'date-fns';
 import { useParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
-import { useVCRItemDeliveringParties } from '@/hooks/useVCRItemDeliveringParties';
 import { useVCRItemInsights } from '@/hooks/useVCRItemInsights';
-import { useApprovingPartyHoldersByIds } from '@/hooks/useApprovingPartyHolders';
+import { useProjectRoleHolders } from '@/hooks/useProjectRoleHolders';
 import { resolveVCRMode } from '@/components/p2a-workspace/handover-points/vcr-standard/vcrMode';
 
 // ─── Public contract ─────────────────────────────────────────────────
