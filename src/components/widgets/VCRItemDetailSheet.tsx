@@ -1160,7 +1160,8 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                 )}
               </section>
 
-              {/* Evidence */}
+              {/* Evidence — execution-only (Part 0) */}
+              {isExecutionMode && (
               <section>
                 <SectionLabel right={viewer !== 'delivering' && evidence.length > 0 ? 'Submitted by delivering party' : undefined}>
                   Evidence
