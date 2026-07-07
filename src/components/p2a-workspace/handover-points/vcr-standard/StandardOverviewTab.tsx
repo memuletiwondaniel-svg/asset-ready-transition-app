@@ -86,12 +86,6 @@ const LegendSwatch: React.FC<{ color: string; label: string }> = ({ color, label
   </span>
 );
 
-/** Inline muted scope metadata — short caption under the description. */
-const ScopeMeta: React.FC<{ value: string; unit: string; }> = ({ value, unit }) => (
-  <span className="text-xs font-normal text-muted-foreground/70">
-    {value} {unit}
-  </span>
-);
 
 export const StandardOverviewTab: React.FC<Props> = ({ handoverPoint }) => {
   const { prerequisites } = useVCRPrerequisites(handoverPoint.id);
