@@ -103,13 +103,19 @@ export const StandardOverviewTab: React.FC<Props> = ({ handoverPoint }) => {
     }));
   }, [prerequisites]);
 
+  // DC1: qualification-requested rides along with "in review"; approved fraction
+  // drives the headline % and the emerald arc.
+  const approvedN  = overall.terminal;
+  const inReviewN  = overall.pipeline + overall.qualification;
+  const reworkN    = overall.rework;
+  const toDeliverN = overall.todeliver;
+
   const contextBits: string[] = [];
-  contextBits.push(`${overall.terminal} of ${overall.total} items closed`);
-  if (overall.pipeline) contextBits.push(`${overall.pipeline} in review`);
-  if (overall.rework) contextBits.push(`${overall.rework} in rework`);
-  if (overall.qualification) contextBits.push(`${overall.qualification} qualification`);
-  if (overall.todeliver) contextBits.push(`${overall.todeliver} to deliver`);
-  const pct = overall.total ? Math.round(((overall.terminal) / overall.total) * 100) : 0;
+  contextBits.push(`${approvedN} of ${overall.total} items approved`);
+  if (inReviewN)  contextBits.push(`${inReviewN} in review`);
+  if (reworkN)    contextBits.push(`${reworkN} in rework`);
+  if (toDeliverN) contextBits.push(`${toDeliverN} to deliver`);
+  const pct = overall.total ? Math.round((approvedN / overall.total) * 100) : 0;
 
   return (
     <div className="space-y-4">
@@ -118,10 +124,16 @@ export const StandardOverviewTab: React.FC<Props> = ({ handoverPoint }) => {
         <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-3">Progress</div>
         <div className="flex justify-between items-baseline mb-2">
           <div className="text-base font-bold">
-            {pct}%<span className="text-[10.5px] font-semibold text-muted-foreground ml-1 tracking-wide">COMPLETE</span>
+            {pct}%<span className="text-[10.5px] font-semibold text-muted-foreground ml-1 tracking-wide">APPROVED</span>
           </div>
         </div>
-        <SegmentedBar done={overall.terminal} pipe={overall.pipeline} total={overall.total} />
+        <SegmentedBar
+          approved={approvedN}
+          inReview={inReviewN}
+          rework={reworkN}
+          toDeliver={toDeliverN}
+          total={overall.total}
+        />
         <div className="text-xs text-muted-foreground mt-2">
           {contextBits.join(' · ')}
         </div>
@@ -138,8 +150,10 @@ export const StandardOverviewTab: React.FC<Props> = ({ handoverPoint }) => {
             {perCat.map(c => (
               <Donut
                 key={c.code}
-                done={c.terminal}
-                pipe={c.pipeline}
+                approved={c.terminal}
+                inReview={c.pipeline + c.qualification}
+                rework={c.rework}
+                toDeliver={c.todeliver}
                 total={c.total}
                 label={c.label}
                 onClick={() => setDrawerCategory(c.code)}
@@ -148,6 +162,7 @@ export const StandardOverviewTab: React.FC<Props> = ({ handoverPoint }) => {
           </div>
         )}
       </Card>
+
 
       {/* Scope card */}
       <Card className="p-4">
