@@ -612,22 +612,55 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   );
   const isExecutionMode = vcrMode === 'execution';
 
-  // Resolve approving-party holders (PTM → scoped roster → org_role_holders)
-  const approvingRoleIdsForHook = vcrItemDetail?.effective_approving_role_ids || [];
-  const rolesCatalogForHook = useMemo(() => {
-    const arr: { id: string; name: string }[] = [...(vcrItemDetail?.approving_roles || [])];
-    if (vcrItemDetail?.delivering_role?.id) {
-      arr.push({ id: vcrItemDetail.delivering_role.id, name: vcrItemDetail.delivering_role.name });
-    }
-    return arr;
-  }, [vcrItemDetail?.approving_roles, vcrItemDetail?.delivering_role]);
-  const { data: approvingHoldersById = {} } = useApprovingPartyHoldersByIds({
-    roles: rolesCatalogForHook,
-    roleIds: approvingRoleIdsForHook,
-    expandFamily: true,
-    scopeKey: projectId ?? '',
-    enabled: open && approvingRoleIdsForHook.length > 0,
-  });
+  // ─── Party resolution — SAME precedence as the Parties tab ─────
+  //   Delivering: item's `delivering_party_role_id` role name → holders
+  //     via PTM override → scoped roster (portfolio/hub/plant) → org.
+  //   Approving:  each `approving_party_role_ids[i]` role name → same
+  //     precedence. This replaces the previous split between
+  //     `vcr_item_delivering_parties` (always empty for role-driven
+  //     items) and `useApprovingPartyHoldersByIds` (org-only fallback),
+  //     which produced "(0)" empty states in the drawer even though the
+  //     Parties tab resolved the same roles correctly.
+  const partyRoleLabels = useMemo(() => {
+    const labels: string[] = [];
+    if (vcrItemDetail?.delivering_role?.name) labels.push(vcrItemDetail.delivering_role.name);
+    (vcrItemDetail?.approving_roles || []).forEach((r: any) => {
+      if (r?.name && !labels.includes(r.name)) labels.push(r.name);
+    });
+    return labels;
+  }, [vcrItemDetail?.delivering_role, vcrItemDetail?.approving_roles]);
+
+  const { data: holdersByLabel = {} } = useProjectRoleHolders(
+    projectId || undefined,
+    partyRoleLabels,
+  );
+
+  // Delivering — role holders for the item's delivering role.
+  const deliveringParties = useMemo(() => {
+    const label = vcrItemDetail?.delivering_role?.name;
+    if (!label) return [] as Array<{ user_id: string; full_name: string; avatar_url: string | null; role_name: string }>;
+    return (holdersByLabel[label] || []).map((h: any) => ({
+      user_id: h.user_id,
+      full_name: h.full_name,
+      avatar_url: h.avatar_url,
+      role_name: label,
+    }));
+  }, [holdersByLabel, vcrItemDetail?.delivering_role]);
+
+  // Approving-holder map keyed by role id (drives the B2B chip below).
+  const approvingHoldersById: Record<string, Array<{ user_id: string; full_name: string; avatar_url: string | null; role_name: string }>> =
+    useMemo(() => {
+      const out: Record<string, any[]> = {};
+      (vcrItemDetail?.approving_roles || []).forEach((role: any) => {
+        out[role.id] = (holdersByLabel[role.name] || []).map((h: any) => ({
+          user_id: h.user_id,
+          full_name: h.full_name,
+          avatar_url: h.avatar_url,
+          role_name: role.name,
+        }));
+      });
+      return out;
+    }, [holdersByLabel, vcrItemDetail?.approving_roles]);
 
 
   const { data: prereqDetail } = useQuery({
@@ -670,23 +703,13 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
 
   // ─── Viewer role resolution (strict — no fallback to delivering) ─
   const deliveringMember = deliveringParties[0] || null;
-  // Flatten approving-holders map (role_id → ResolvedHolder[]) into a single
-  // list used for viewer-role detection + representative approver.
-  const approvingMembers: Array<{ user_id: string; full_name: string; avatar_url: string | null; role_name: string }> =
-    useMemo(() => {
-      const out: Array<{ user_id: string; full_name: string; avatar_url: string | null; role_name: string }> = [];
-      Object.values(approvingHoldersById || {}).forEach((holders: any) => {
-        (holders || []).forEach((h: any) => {
-          out.push({
-            user_id: h.user_id,
-            full_name: h.full_name,
-            avatar_url: h.avatar_url,
-            role_name: h.role_name,
-          });
-        });
-      });
-      return out;
-    }, [approvingHoldersById]);
+  const approvingMembers = useMemo(() => {
+    const out: Array<{ user_id: string; full_name: string; avatar_url: string | null; role_name: string }> = [];
+    Object.values(approvingHoldersById).forEach((holders) => {
+      holders.forEach((h) => out.push(h));
+    });
+    return out;
+  }, [approvingHoldersById]);
   const approvingMember =
     approvingMembers.find((m) => m.user_id === user?.id) || approvingMembers[0] || null;
 
@@ -696,6 +719,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
     if (approvingMembers.some((m) => m.user_id === user.id)) return 'approving';
     return 'observer';
   }, [user?.id, deliveringParties, approvingMembers]);
+
 
 
   // ─── DB-backed evidence + comments ──────────────────────────────
