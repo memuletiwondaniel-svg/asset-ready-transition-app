@@ -14,7 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
  * APPROVING: unchanged — `vcr_prerequisite_approvals` (TA2 per discipline).
  *
  * SoF: hardcoded to the four SoF-certificate signatories:
- *     Plant Director · P&M Director · P&E Director · HSSE Director
+ *     Plant Director · P&M Director · P&E Director · HSE Director
  * PAC: hardcoded to Project Hub Lead + Plant Director.
  * Both are resolved per project via the same PTM/roster/org precedence.
  * Signed status (if any) is overlaid from `vcr_sof_approvers`.
