@@ -1,10 +1,17 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { P2AHandoverPoint } from '../../../hooks/useP2AHandoverPoints';
 import { DeliverableList, DeliverableRow, EmptyDeliverable, ChipTone } from './DeliverableRow';
-import { StandardDeliverableSheet } from './StandardDeliverableSheet';
+import {
+  DeliverableDetailShell,
+  Section,
+  FieldGrid,
+  LabeledField,
+  InlineChip,
+  AssaiLink,
+  DrawerDivider,
+} from '../../shared/deliverableDrawer';
 
 interface CritDoc {
   id: string;
@@ -19,13 +26,6 @@ interface CritDoc {
   target_date: string | null;
   notes: string | null;
 }
-
-// Build a deep link into Assai for a given document number.
-// Matches the Assai instance URL pattern used elsewhere in Admin Tools.
-const assaiDeepLink = (docCode: string | null) => {
-  if (!docCode) return null;
-  return `https://client.assaisoftware.com/documents/${encodeURIComponent(docCode)}`;
-};
 
 const statusChip = (status: string): { label: string; tone: ChipTone } => {
   if (status === 'complete')     return { label: 'Complete',    tone: 'emerald' };
@@ -69,7 +69,7 @@ export const StandardCritDocsTab: React.FC<{ handoverPoint: P2AHandoverPoint }> 
   }
 
   const selChip = selected ? statusChip(selected.status) : null;
-  const selAssai = selected ? assaiDeepLink(selected.doc_code) : null;
+  const selRlmu = selected ? rlmuChip(selected.rlmu_required, selected.rlmu_status) : null;
 
   return (
     <>
@@ -92,7 +92,7 @@ export const StandardCritDocsTab: React.FC<{ handoverPoint: P2AHandoverPoint }> 
       </DeliverableList>
 
       {selected && selChip && (
-        <StandardDeliverableSheet
+        <DeliverableDetailShell
           open={!!selected}
           onOpenChange={(o) => !o && setSelected(null)}
           kind="Document"
@@ -100,32 +100,55 @@ export const StandardCritDocsTab: React.FC<{ handoverPoint: P2AHandoverPoint }> 
           subtitle={selected.doc_code || selected.discipline}
           chipLabel={selChip.label}
           chipTone={selChip.tone}
-          fields={[
-            { label: 'Document no.', value: selected.doc_code || null },
-            { label: 'Discipline',   value: selected.discipline || null },
-            { label: 'Tier',         value: selected.tier ? selected.tier.replace('_', ' ') : null },
-            { label: 'Responsible',  value: selected.responsible_person || null },
-            { label: 'Target date',  value: selected.target_date || null },
-            { label: 'RLMU required', value: selected.rlmu_required ? (selected.rlmu_status || 'pending').replace('_', ' ') : 'No' },
-            { label: 'Notes',        value: selected.notes || null, full: true },
-            selAssai
-              ? {
-                  label: 'Assai',
-                  full: true,
-                  value: (
-                    <a
-                      href={selAssai}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-[12px] font-medium text-primary hover:underline"
-                    >
-                      Open in Assai <ExternalLink className="w-3 h-3" />
-                    </a>
-                  ),
-                }
-              : { label: 'Assai', value: 'Not linked' },
-          ]}
-        />
+        >
+          <Section title="Document">
+            <FieldGrid>
+              <LabeledField
+                label="Document no."
+                value={selected.doc_code ? <span className="font-mono">{selected.doc_code}</span> : null}
+              />
+              <LabeledField label="Discipline" value={selected.discipline || null} />
+              <LabeledField
+                label="Tier"
+                value={selected.tier ? selected.tier.replace('_', ' ') : null}
+              />
+              <LabeledField
+                label="Status"
+                value={<InlineChip tone={selChip.tone}>{selChip.label}</InlineChip>}
+              />
+              <LabeledField label="Responsible" value={selected.responsible_person || null} />
+              <LabeledField label="Target date" value={selected.target_date || null} />
+              {selected.notes && (
+                <LabeledField label="Notes" value={selected.notes} full />
+              )}
+            </FieldGrid>
+          </Section>
+
+          <DrawerDivider />
+
+          <Section title="RLMU / regulatory">
+            <FieldGrid>
+              <LabeledField
+                label="RLMU required"
+                value={selected.rlmu_required ? 'Yes' : 'No'}
+              />
+              {selected.rlmu_required && selRlmu && (
+                <LabeledField
+                  label="RLMU status"
+                  value={<InlineChip tone={selRlmu.tone}>{selRlmu.label}</InlineChip>}
+                />
+              )}
+            </FieldGrid>
+          </Section>
+
+          <DrawerDivider />
+
+          <Section title="Assai">
+            <div className="text-[12.5px]">
+              <AssaiLink docCode={selected.doc_code} />
+            </div>
+          </Section>
+        </DeliverableDetailShell>
       )}
     </>
   );

@@ -1,8 +1,14 @@
 import React, { useState } from 'react';
-import { Flame } from 'lucide-react';
+import { Flame, Snowflake } from 'lucide-react';
 import { P2AHandoverPoint, useHandoverPointSystems } from '../../../hooks/useP2AHandoverPoints';
 import { DeliverableList, DeliverableRow, EmptyDeliverable, ChipTone } from './DeliverableRow';
-import { StandardDeliverableSheet } from './StandardDeliverableSheet';
+import {
+  DeliverableDetailShell,
+  Section,
+  FieldGrid,
+  LabeledField,
+  InlineChip,
+} from '../../shared/deliverableDrawer';
 
 const systemChip = (
   status: string | null | undefined,
@@ -34,6 +40,9 @@ export const StandardSystemsTab: React.FC<{ handoverPoint: P2AHandoverPoint }> =
     return <EmptyDeliverable label="No systems linked to this VCR yet." />;
 
   const chip = selected ? systemChip(selected.completion_status, selected.completion_percentage) : null;
+  const pct = Math.round(selected?.completion_percentage || 0);
+  const itrTotal = selected?.itr_total_count ?? 0;
+  const itrComplete = selected?.itr_complete_count ?? 0;
 
   return (
     <>
@@ -58,7 +67,7 @@ export const StandardSystemsTab: React.FC<{ handoverPoint: P2AHandoverPoint }> =
       </DeliverableList>
 
       {selected && chip && (
-        <StandardDeliverableSheet
+        <DeliverableDetailShell
           open={!!selected}
           onOpenChange={(o) => !o && setSelected(null)}
           kind="System"
@@ -66,16 +75,52 @@ export const StandardSystemsTab: React.FC<{ handoverPoint: P2AHandoverPoint }> =
           subtitle={selected.system_id || null}
           chipLabel={chip.label}
           chipTone={chip.tone}
-          fields={[
-            { label: 'System ID', value: selected.system_id || null },
-            { label: 'Hydrocarbon', value: selected.is_hydrocarbon ? 'Yes — HC service' : 'No' },
-            { label: 'Completion status', value: (selected.completion_status || 'NOT_STARTED').replaceAll('_', ' ') },
-            { label: 'Completion %', value: `${Math.round(selected.completion_percentage || 0)}%` },
-            { label: 'ITR total', value: selected.itr_total_count ?? 0 },
-            { label: 'ITR complete', value: selected.itr_complete_count ?? 0 },
-            { label: 'Description', value: selected.description || null, full: true },
-          ]}
-        />
+        >
+          <Section title="Identification">
+            <FieldGrid>
+              <LabeledField label="System ID" value={selected.system_id ? <span className="font-mono">{selected.system_id}</span> : null} />
+              <LabeledField
+                label="Service"
+                value={
+                  selected.is_hydrocarbon ? (
+                    <span className="inline-flex items-center gap-1 text-orange-700">
+                      <Flame className="w-3.5 h-3.5" /> Hydrocarbon
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-blue-700">
+                      <Snowflake className="w-3.5 h-3.5" /> Utility
+                    </span>
+                  )
+                }
+              />
+              {selected.description && (
+                <LabeledField label="Description" value={selected.description} full />
+              )}
+            </FieldGrid>
+          </Section>
+
+          <Section title="Completion">
+            <FieldGrid>
+              <LabeledField
+                label="Status"
+                value={<InlineChip tone={chip.tone}>{chip.label}</InlineChip>}
+              />
+              <LabeledField label="Completion" value={`${pct}%`} />
+              <LabeledField label="ITRs complete" value={`${itrComplete} / ${itrTotal}`} />
+              <LabeledField
+                label="ITR progress"
+                value={
+                  <div className="h-1.5 w-full rounded-full bg-slate-200 overflow-hidden">
+                    <div
+                      className="h-full bg-blue-500"
+                      style={{ width: `${itrTotal ? (itrComplete / itrTotal) * 100 : 0}%` }}
+                    />
+                  </div>
+                }
+              />
+            </FieldGrid>
+          </Section>
+        </DeliverableDetailShell>
       )}
     </>
   );
