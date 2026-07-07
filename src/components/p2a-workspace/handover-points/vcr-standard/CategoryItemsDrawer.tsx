@@ -1,7 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { Search } from 'lucide-react';
 import { useVCRPrerequisites } from '../../hooks/useVCRPrerequisites';
+import { useVCRPartiesRollup } from './useVCRPartiesRollup';
 import { VCRItemDetailSheet, VCRItemBasic } from '@/components/widgets/VCRItemDetailSheet';
 import { formatVcrItemCode } from '@/lib/vcrItemCode';
 import {
@@ -25,21 +28,36 @@ export const CategoryItemsDrawer: React.FC<Props> = ({
 }) => {
   const open = !!categoryCode;
   const { prerequisites } = useVCRPrerequisites(handoverPointId);
+  const { data: partiesRollup } = useVCRPartiesRollup(handoverPointId, projectId || null);
   const [openItem, setOpenItem] = useState<VCRItemBasic | null>(null);
+  const [search, setSearch] = useState('');
 
   const rows = useMemo(() => {
     if (!categoryCode) return [];
+    const q = search.trim().toLowerCase();
     const mapped = prerequisites
       .filter(p => normalizeCategoryCode(p.category) === categoryCode)
       .map(p => {
         const catCode = normalizeCategoryCode(p.category);
         const code = catCode === 'XX' ? '??' : catCode;
+        const delivering = partiesRollup?.deliveringByPrereq[p.id] || [];
+        const approving = partiesRollup?.approvingByPrereq[p.id] || [];
+        const partyNames = [...delivering, ...approving].join(' ');
         return {
           prereq: p,
           catCode: code,
           itemCode: formatVcrItemCode(code, p.display_order),
           pill: standardPill(p.status as PrereqStatus),
+          partyNames,
         };
+      })
+      .filter(r => {
+        if (!q) return true;
+        return (
+          r.itemCode.toLowerCase().includes(q) ||
+          (r.prereq.summary || '').toLowerCase().includes(q) ||
+          r.partyNames.toLowerCase().includes(q)
+        );
       });
 
     // Default sort: Rejected → To do → Under review → Accepted.
@@ -57,7 +75,7 @@ export const CategoryItemsDrawer: React.FC<Props> = ({
       if (ra !== rb) return ra - rb;
       return (a.prereq.display_order ?? 0) - (b.prereq.display_order ?? 0);
     });
-  }, [prerequisites, categoryCode]);
+  }, [prerequisites, categoryCode, partiesRollup, search]);
 
   const closed = rows.filter(r => r.pill.bucket === 'terminal').length;
   const meta = categoryCode ? CATEGORY_META[categoryCode] : null;
@@ -73,6 +91,15 @@ export const CategoryItemsDrawer: React.FC<Props> = ({
             <SheetDescription className="text-[11px] text-muted-foreground">
               Click an item for full detail.
             </SheetDescription>
+            <div className="relative mt-2">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/60" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search ID, description, party…"
+                className="h-7 pl-7 text-[11.5px]"
+              />
+            </div>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto divide-y divide-border/50">
             {rows.length === 0 && (
