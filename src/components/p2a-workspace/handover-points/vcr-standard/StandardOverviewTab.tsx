@@ -79,6 +79,22 @@ const Donut: React.FC<{
   );
 };
 
+/** Small muted colour swatch + label pair for the progress-bar legend. */
+const LegendSwatch: React.FC<{ color: string; label: string }> = ({ color, label }) => (
+  <span className="inline-flex items-center gap-1.5">
+    <span className="inline-block w-2 h-2 rounded-sm" style={{ background: color }} />
+    {label}
+  </span>
+);
+
+/** Quiet metadata pair for the VCR Scope card. */
+const ScopeMeta: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+  <div>
+    <div className="text-[9.5px] uppercase tracking-wide text-muted-foreground/60">{label}</div>
+    <div className="text-[12px] text-muted-foreground">{value}</div>
+  </div>
+);
+
 export const StandardOverviewTab: React.FC<Props> = ({ handoverPoint }) => {
   const { prerequisites } = useVCRPrerequisites(handoverPoint.id);
   const { systems } = useHandoverPointSystems(handoverPoint.id);
