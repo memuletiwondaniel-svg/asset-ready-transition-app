@@ -1273,7 +1273,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                             {f.file_name}
                           </button>
                           <div className="flex items-center gap-2 flex-wrap">
-                            {viewer !== 'delivering' ? (
+                            {!deliveringCanEdit ? (
                               <Badge variant="secondary" className="text-[10px] font-normal">
                                 {typeLabel}
                               </Badge>
@@ -1334,7 +1334,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                             )}
                           </div>
                         </div>
-                        {viewer !== 'delivering' ? (
+                        {!deliveringCanEdit ? (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -1356,7 +1356,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                       </div>
                       );
                     })}
-                    {viewer === 'delivering' && (
+                    {deliveringCanEdit && (
                       <button
                         onClick={() => fileInputRef.current?.click()}
                         className="text-xs text-primary hover:underline"
