@@ -1031,9 +1031,9 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                   )}
                 </button>
                 {guidanceOpen && (
-                  vcrItemDetail?.guidance_notes ? (
-                    <p className="text-[13px] text-foreground leading-relaxed mt-1">
-                      {vcrItemDetail.guidance_notes}
+                  vcrItemDetail?.effective_guidance ? (
+                    <p className="text-[13px] text-foreground leading-relaxed mt-1 whitespace-pre-wrap">
+                      {vcrItemDetail.effective_guidance}
                     </p>
                   ) : (
                     <p className="text-xs text-muted-foreground italic mt-1">No guidance notes for this item.</p>
