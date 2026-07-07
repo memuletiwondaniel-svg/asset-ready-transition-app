@@ -24,6 +24,8 @@ export interface VCRQualification {
     id: string;
     summary: string;
     handover_point_id: string;
+    display_order?: number;
+    category?: string | null;
   };
   evidence?: QualificationEvidence[];
 }
@@ -48,16 +50,23 @@ export const useVCRQualifications = (handoverPointId: string) => {
   const { data: qualifications, isLoading } = useQuery({
     queryKey: ['vcr-qualifications', handoverPointId],
     queryFn: async () => {
-      // Get all prerequisites for this VCR first
-      const { data: prerequisites, error: prereqError } = await supabase
+      // Get all prerequisites for this VCR first — include category + display_order
+      // so the Qualifications tab can render the item-ID chip (e.g. TI-112).
+      const { data: prerequisites, error: prereqError } = await (supabase as any)
         .from('p2a_vcr_prerequisites')
-        .select('id, summary')
+        .select(`
+          id,
+          summary,
+          display_order,
+          handover_point_id,
+          vcr_items:vcr_item_id ( category:category_id ( code ) )
+        `)
         .eq('handover_point_id', handoverPointId);
 
       if (prereqError) throw prereqError;
       if (!prerequisites?.length) return [];
 
-      const prereqIds = prerequisites.map(p => p.id);
+      const prereqIds = prerequisites.map((p: any) => p.id);
 
       // Get all qualifications for these prerequisites
       const { data: quals, error } = await supabase
@@ -69,8 +78,16 @@ export const useVCRQualifications = (handoverPointId: string) => {
       if (error) throw error;
 
       // Map prerequisite info to each qualification
-      const prereqMap = new Map(prerequisites.map(p => [p.id, p]));
-      
+      const prereqMap = new Map(
+        (prerequisites as any[]).map(p => [p.id, {
+          id: p.id,
+          summary: p.summary,
+          handover_point_id: p.handover_point_id,
+          display_order: p.display_order,
+          category: p.vcr_items?.category?.code ?? null,
+        }]),
+      );
+
       return (quals || []).map((qual: any) => ({
         ...qual,
         prerequisite: prereqMap.get(qual.vcr_prerequisite_id),

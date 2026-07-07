@@ -17,28 +17,47 @@ import {
 
 interface Props { handoverPoint: P2AHandoverPoint }
 
-/** Segmented progress bar: green (terminal) · blue (pipeline) · grey (remainder) */
-const SegmentedBar: React.FC<{ done: number; pipe: number; total: number }> = ({ done, pipe, total }) => {
+/**
+ * Progress colour model (DC1, mockup v14.2):
+ *   Approved (terminal)  → existing emerald  (#059669)
+ *   In review (pipeline + qualification requested) → slate-400  (#94A3B8)
+ *   Rework   (rejected)  → slate-300  (#CBD5E1)
+ *   To deliver (not started / other) → slate-200  (#E2E8F0)
+ * A qualified-but-not-yet-approved item is NOT its own colour; it rides on
+ * the underlying state (we surface it here under "in review").
+ */
+const CLR_APPROVED  = '#059669';
+const CLR_INREVIEW  = '#94A3B8';
+const CLR_REWORK    = '#CBD5E1';
+const CLR_TODELIVER = '#E2E8F0';
+
+/** Segmented progress bar: emerald approved + grey ramp remainder. */
+const SegmentedBar: React.FC<{ approved: number; inReview: number; rework: number; toDeliver: number; total: number }> = ({
+  approved, inReview, rework, toDeliver, total,
+}) => {
   if (total === 0) return <div className="h-2 bg-slate-100 rounded-full" />;
-  const donePct = (done / total) * 100;
-  const pipePct = (pipe / total) * 100;
+  const pct = (n: number) => (n / total) * 100;
   return (
     <div className="h-2 bg-slate-100 rounded-full overflow-hidden flex">
-      <div className="h-full bg-emerald-600" style={{ width: `${donePct}%` }} />
-      <div className="h-full" style={{ width: `${pipePct}%`, background: '#A8C3EE' }} />
+      <div className="h-full" style={{ width: `${pct(approved)}%`,  background: CLR_APPROVED }} />
+      <div className="h-full" style={{ width: `${pct(inReview)}%`,  background: CLR_INREVIEW }} />
+      <div className="h-full" style={{ width: `${pct(rework)}%`,    background: CLR_REWORK }} />
+      <div className="h-full" style={{ width: `${pct(toDeliver)}%`, background: CLR_TODELIVER }} />
     </div>
   );
 };
 
-/** Conic donut per category — clickable to open the category items drawer (D5). */
+/** Conic donut per category — emerald approved arc, grey ramp for the rest. */
 const Donut: React.FC<{
-  done: number; pipe: number; total: number; label: string;
-  onClick?: () => void; disabled?: boolean;
-}> = ({ done, pipe, total, label, onClick, disabled }) => {
-  const donePct = total ? (done / total) * 100 : 0;
-  const pipePct = total ? (pipe / total) * 100 : 0;
+  approved: number; inReview: number; rework: number; toDeliver: number; total: number;
+  label: string; onClick?: () => void; disabled?: boolean;
+}> = ({ approved, inReview, rework, toDeliver, total, label, onClick, disabled }) => {
+  const p = (n: number) => (total ? (n / total) * 100 : 0);
+  const a = p(approved);
+  const b = a + p(inReview);
+  const c = b + p(rework);
   const bg = total
-    ? `conic-gradient(#059669 0 ${donePct}%, #A8C3EE ${donePct}% ${donePct + pipePct}%, #E5E9EF ${donePct + pipePct}% 100%)`
+    ? `conic-gradient(${CLR_APPROVED} 0 ${a}%, ${CLR_INREVIEW} ${a}% ${b}%, ${CLR_REWORK} ${b}% ${c}%, ${CLR_TODELIVER} ${c}% 100%)`
     : '#F1F5F9';
   return (
     <button
@@ -50,7 +69,7 @@ const Donut: React.FC<{
     >
       <div className="relative w-16 h-16 rounded-full flex items-center justify-center" style={{ background: bg }}>
         <div className="absolute inset-1.5 rounded-full bg-background flex items-center justify-center text-xs font-bold text-foreground">
-          {done}/{total || 0}
+          {approved}/{total || 0}
         </div>
       </div>
       <span className="text-[9.5px] font-bold tracking-wide text-muted-foreground text-center leading-tight">
@@ -84,13 +103,19 @@ export const StandardOverviewTab: React.FC<Props> = ({ handoverPoint }) => {
     }));
   }, [prerequisites]);
 
+  // DC1: qualification-requested rides along with "in review"; approved fraction
+  // drives the headline % and the emerald arc.
+  const approvedN  = overall.terminal;
+  const inReviewN  = overall.pipeline + overall.qualification;
+  const reworkN    = overall.rework;
+  const toDeliverN = overall.todeliver;
+
   const contextBits: string[] = [];
-  contextBits.push(`${overall.terminal} of ${overall.total} items closed`);
-  if (overall.pipeline) contextBits.push(`${overall.pipeline} in review`);
-  if (overall.rework) contextBits.push(`${overall.rework} in rework`);
-  if (overall.qualification) contextBits.push(`${overall.qualification} qualification`);
-  if (overall.todeliver) contextBits.push(`${overall.todeliver} to deliver`);
-  const pct = overall.total ? Math.round(((overall.terminal) / overall.total) * 100) : 0;
+  contextBits.push(`${approvedN} of ${overall.total} items approved`);
+  if (inReviewN)  contextBits.push(`${inReviewN} in review`);
+  if (reworkN)    contextBits.push(`${reworkN} in rework`);
+  if (toDeliverN) contextBits.push(`${toDeliverN} to deliver`);
+  const pct = overall.total ? Math.round((approvedN / overall.total) * 100) : 0;
 
   return (
     <div className="space-y-4">
@@ -99,10 +124,16 @@ export const StandardOverviewTab: React.FC<Props> = ({ handoverPoint }) => {
         <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-3">Progress</div>
         <div className="flex justify-between items-baseline mb-2">
           <div className="text-base font-bold">
-            {pct}%<span className="text-[10.5px] font-semibold text-muted-foreground ml-1 tracking-wide">COMPLETE</span>
+            {pct}%<span className="text-[10.5px] font-semibold text-muted-foreground ml-1 tracking-wide">APPROVED</span>
           </div>
         </div>
-        <SegmentedBar done={overall.terminal} pipe={overall.pipeline} total={overall.total} />
+        <SegmentedBar
+          approved={approvedN}
+          inReview={inReviewN}
+          rework={reworkN}
+          toDeliver={toDeliverN}
+          total={overall.total}
+        />
         <div className="text-xs text-muted-foreground mt-2">
           {contextBits.join(' · ')}
         </div>
@@ -119,8 +150,10 @@ export const StandardOverviewTab: React.FC<Props> = ({ handoverPoint }) => {
             {perCat.map(c => (
               <Donut
                 key={c.code}
-                done={c.terminal}
-                pipe={c.pipeline}
+                approved={c.terminal}
+                inReview={c.pipeline + c.qualification}
+                rework={c.rework}
+                toDeliver={c.todeliver}
                 total={c.total}
                 label={c.label}
                 onClick={() => setDrawerCategory(c.code)}
@@ -129,6 +162,7 @@ export const StandardOverviewTab: React.FC<Props> = ({ handoverPoint }) => {
           </div>
         )}
       </Card>
+
 
       {/* Scope card */}
       <Card className="p-4">
