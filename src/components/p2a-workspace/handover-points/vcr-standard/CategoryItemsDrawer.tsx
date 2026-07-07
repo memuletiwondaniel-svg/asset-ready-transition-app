@@ -92,14 +92,14 @@ export const CategoryItemsDrawer: React.FC<Props> = ({
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col !z-modal-critical">
-          <SheetHeader className="px-4 py-3 border-b">
-            <SheetTitle className="text-sm font-semibold">
-              {meta?.name || 'Category'} — {closed} of {rows.length}
+          <SheetHeader className="px-5 pt-5 pb-3 border-b">
+            <SheetTitle className="text-[19px] font-bold tracking-tight leading-tight text-foreground">
+              {meta?.name || 'Category'}
             </SheetTitle>
-            <SheetDescription className="text-[11px] text-muted-foreground">
-              Click an item for full detail.
+            <SheetDescription className="text-xs text-muted-foreground mt-0.5">
+              {closed} of {rows.length} approved
             </SheetDescription>
-            <div className="relative mt-2">
+            <div className="relative mt-3">
               <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/60" />
               <Input
                 value={search}
@@ -118,7 +118,7 @@ export const CategoryItemsDrawer: React.FC<Props> = ({
             {rows.map(r => (
               <button
                 key={r.prereq.id}
-                className="w-full text-left px-4 py-2.5 hover:bg-muted/40 flex items-center gap-3"
+                className="w-full text-left px-4 py-3 hover:bg-muted/40 cursor-pointer flex items-start gap-3"
                 onClick={() => setOpenItem({
                   id: r.prereq.id,
                   vcr_item: r.prereq.summary,
@@ -132,16 +132,16 @@ export const CategoryItemsDrawer: React.FC<Props> = ({
                   itemCode: r.itemCode,
                 } as unknown as VCRItemBasic)}
               >
-                <div className="min-w-0 flex-1">
-                  <div className="text-[12.5px] font-medium text-foreground truncate">
-                    {r.prereq.summary}
-                  </div>
-                  <div className="text-[10.5px] text-muted-foreground font-mono truncate">
+                <div className="min-w-0 flex-1 text-[12.5px] leading-relaxed text-foreground">
+                  <span className="inline-block align-baseline mr-2 px-1.5 py-0.5 rounded bg-[#EEF2F7] dark:bg-muted/60 text-[10.5px] font-mono font-medium text-muted-foreground">
                     {r.itemCode}
-                  </div>
+                  </span>
+                  <span className="font-medium break-words">
+                    {r.prereq.summary}
+                  </span>
                 </div>
                 <span className={cn(
-                  'text-[10.5px] font-semibold rounded-full px-2 py-0.5 flex-none',
+                  'text-[10.5px] font-semibold rounded-full px-2 py-0.5 flex-none mt-0.5',
                   r.pill.className,
                 )}>
                   {r.pill.label}
