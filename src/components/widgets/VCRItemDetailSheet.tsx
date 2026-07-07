@@ -1467,55 +1467,50 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
             </div>
           </ScrollArea>
 
-          {/* Footer — strict role × status gating */}
-          {(() => {
-            const isTerminal = item.status === 'ACCEPTED' || item.status === 'QUALIFICATION_APPROVED';
+          {/* Footer — plan mode hides it entirely (Part 0). Execution mode
+              shows role-aware CTAs with submit-lock (B1-LOCK) and a quiet
+              "awaiting delivering party" state for approvers (Part 0 precondition).
+              A1: no duplicate status pill. A10: no bottom Close button. */}
+          {isExecutionMode && (() => {
             const canDeliver =
-              viewer === 'delivering' && !isTerminal && item.status !== 'READY_FOR_REVIEW';
+              viewer === 'delivering' && !isTerminalStatus && item.status !== 'READY_FOR_REVIEW';
             const canApprove =
               viewer === 'approving' && item.status === 'READY_FOR_REVIEW';
-            const showActions = canDeliver || canApprove;
+            const showFooter = canDeliver || canApprove || approverAwaitingSubmission;
+            if (!showFooter) return null;
             return (
-              <div className="border-t bg-background px-6 py-3 flex items-center justify-between shrink-0">
-                <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
-                  {showActions ? 'Cancel' : 'Close'}
-                </Button>
-                <div className="flex items-center gap-2">
-                  {canApprove ? (
-                    <>
-                      <Button variant="outline" size="sm" onClick={() => setConfirmKind('return')}>
-                        Return to delivering party
-                      </Button>
-                      <Button
-                        size="sm"
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                        onClick={() => setConfirmKind('accept')}
-                      >
-                        Accept item
-                      </Button>
-                    </>
-                  ) : canDeliver ? (
-                    <>
-                      <Button variant="outline" size="sm" onClick={() => setConfirmKind('raise_qualification')}>
-                        Raise qualification
-                      </Button>
-                      <Button
-                        size="sm"
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                        onClick={() => setConfirmKind('mark_complete')}
-                      >
-                        Mark as complete
-                      </Button>
-                    </>
-                  ) : (
-                    <Badge
-                      variant="outline"
-                      className={cn('text-[10px] rounded-full px-2.5 py-0.5 font-normal', pillToneClass[pill.tone])}
+              <div className="border-t bg-background px-6 py-3 flex items-center justify-end shrink-0">
+                {canApprove ? (
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setConfirmKind('return')}>
+                      Return to delivering party
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                      onClick={() => setConfirmKind('accept')}
                     >
-                      {pill.label}
-                    </Badge>
-                  )}
-                </div>
+                      Accept item
+                    </Button>
+                  </div>
+                ) : canDeliver ? (
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setConfirmKind('raise_qualification')}>
+                      Raise qualification
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                      onClick={() => setConfirmKind('mark_complete')}
+                    >
+                      Mark as complete
+                    </Button>
+                  </div>
+                ) : approverAwaitingSubmission ? (
+                  <span className="text-[11px] text-muted-foreground italic">
+                    Awaiting delivering party
+                  </span>
+                ) : null}
               </div>
             );
           })()}
