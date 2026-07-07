@@ -495,10 +495,12 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { members: deliveringParties } = useVCRItemDeliveringParties({
-    vcrItemId: item?.id,
-    handoverPointId: vcrId,
-  });
+  // Delivering parties are resolved from the item's canonical
+  // `delivering_party_role_id` via PTM → roster → org precedence (same
+  // path used by the Parties tab / useVCRPartiesRollup). The legacy
+  // `vcr_item_delivering_parties` junction table is intentionally NOT
+  // consulted here — it is empty for role-driven items and produced the
+  // "DELIVERING PARTY (0)" empty state seen before this fix.
 
   // AI-1 Readiness — hook drives the block; explicit `insights` prop overrides for tests.
   const { insights: liveInsights, recompute } = useVCRItemInsights(vcrId, item?.id);
