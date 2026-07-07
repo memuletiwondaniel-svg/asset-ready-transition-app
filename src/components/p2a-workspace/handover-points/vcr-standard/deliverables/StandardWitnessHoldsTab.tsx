@@ -3,7 +3,13 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { P2AHandoverPoint } from '../../../hooks/useP2AHandoverPoints';
 import { DeliverableList, DeliverableRow, EmptyDeliverable, ChipTone } from './DeliverableRow';
-import { StandardDeliverableSheet } from './StandardDeliverableSheet';
+import {
+  DeliverableDetailShell,
+  Section,
+  FieldGrid,
+  LabeledField,
+  InlineChip,
+} from '../../shared/deliverableDrawer';
 
 interface ITPRow {
   id: string;
@@ -18,6 +24,7 @@ interface WHMeta {
   status?: string;
   planned_date?: string;
   completed_date?: string;
+  system_name?: string;
 }
 
 const parseMeta = (notes: string | null): WHMeta => {
@@ -32,6 +39,8 @@ const statusTone = (status?: string): ChipTone => {
   if (s.includes('schedul')) return 'amber';
   return 'slate';
 };
+
+const typeTone = (type: string): ChipTone => (type === 'HOLD' ? 'red' : 'blue');
 
 export const StandardWitnessHoldsTab: React.FC<{ handoverPoint: P2AHandoverPoint }> = ({ handoverPoint }) => {
   const { data, isLoading } = useQuery({
@@ -81,22 +90,54 @@ export const StandardWitnessHoldsTab: React.FC<{ handoverPoint: P2AHandoverPoint
       {selected && (() => {
         const m = parseMeta(selected.notes);
         const status = m.status || (selected.inspection_type === 'HOLD' ? 'Pending' : 'Scheduled');
+        const typeLabel = selected.inspection_type === 'HOLD' ? 'Hold' : 'Witness';
         return (
-          <StandardDeliverableSheet
+          <DeliverableDetailShell
             open={!!selected}
             onOpenChange={(o) => !o && setSelected(null)}
-            kind={selected.inspection_type === 'HOLD' ? 'Hold point' : 'Witness point'}
+            kind={`${typeLabel} point`}
             title={selected.activity_name}
+            subtitle={m.system_name || selected.system_id || null}
             chipLabel={status}
             chipTone={statusTone(status)}
-            fields={[
-              { label: 'Type', value: selected.inspection_type },
-              { label: 'Witness party', value: m.witness_party || '—' },
-              { label: 'Status', value: status },
-              { label: m.completed_date ? 'Completed' : 'Planned', value: m.completed_date || m.planned_date || '—' },
-            ]}
-            notes={null}
-          />
+          >
+            <Section>
+              <FieldGrid>
+                <LabeledField
+                  label="System"
+                  value={m.system_name || selected.system_id || null}
+                />
+                <LabeledField label="Activity" value={selected.activity_name} />
+                <LabeledField
+                  label="Type"
+                  value={<InlineChip tone={typeTone(selected.inspection_type)}>{typeLabel}</InlineChip>}
+                />
+                <LabeledField
+                  label="Status"
+                  value={<InlineChip tone={statusTone(status)}>{status}</InlineChip>}
+                />
+                <LabeledField label="Witness party" value={m.witness_party || null} full />
+                <LabeledField
+                  label={m.completed_date ? 'Completed' : 'Planned'}
+                  value={m.completed_date || m.planned_date || null}
+                />
+              </FieldGrid>
+            </Section>
+            {(() => {
+              // Notes may be plain string when meta parse fell through
+              const rawNotes = (() => {
+                if (!selected.notes) return null;
+                try { JSON.parse(selected.notes); return null; } catch { return selected.notes; }
+              })();
+              return rawNotes ? (
+                <Section title="Notes">
+                  <div className="text-[12.5px] text-foreground leading-relaxed whitespace-pre-wrap">
+                    {rawNotes}
+                  </div>
+                </Section>
+              ) : null;
+            })()}
+          </DeliverableDetailShell>
         );
       })()}
     </>

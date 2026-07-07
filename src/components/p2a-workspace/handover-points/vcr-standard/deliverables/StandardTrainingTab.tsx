@@ -2,7 +2,21 @@ import React, { useState } from 'react';
 import { P2AHandoverPoint } from '../../../hooks/useP2AHandoverPoints';
 import { useVCRTrainingDeliverables } from '../../../hooks/useVCRDeliverables';
 import { DeliverableList, DeliverableRow, EmptyDeliverable, trainingStatusChip } from './DeliverableRow';
-import { StandardDeliverableSheet } from './StandardDeliverableSheet';
+import {
+  DeliverableDetailShell,
+  Section,
+  FieldGrid,
+  LabeledField,
+  InlineChip,
+  TagList,
+  EvidenceList,
+  DrawerDivider,
+} from '../../shared/deliverableDrawer';
+
+const isCompleted = (status?: string) => {
+  const s = (status || '').toLowerCase();
+  return s === 'delivered' || s === 'competency_verified';
+};
 
 export const StandardTrainingTab: React.FC<{ handoverPoint: P2AHandoverPoint }> = ({ handoverPoint }) => {
   const { data, isLoading } = useVCRTrainingDeliverables(handoverPoint.id);
@@ -15,6 +29,7 @@ export const StandardTrainingTab: React.FC<{ handoverPoint: P2AHandoverPoint }> 
     return <EmptyDeliverable label="No training deliverables planned yet." hint="Add training items during plan definition." />;
 
   const chip = selected ? trainingStatusChip(selected.status) : null;
+  const completed = selected && isCompleted(selected.status);
 
   return (
     <>
@@ -28,7 +43,7 @@ export const StandardTrainingTab: React.FC<{ handoverPoint: P2AHandoverPoint }> 
         })}
       </DeliverableList>
       {selected && chip && (
-        <StandardDeliverableSheet
+        <DeliverableDetailShell
           open={!!selected}
           onOpenChange={(o) => !o && setSelected(null)}
           kind="Training"
@@ -36,15 +51,60 @@ export const StandardTrainingTab: React.FC<{ handoverPoint: P2AHandoverPoint }> 
           subtitle={selected.training_provider || null}
           chipLabel={chip.label}
           chipTone={chip.tone}
-          fields={[
-            { label: 'Provider', value: selected.training_provider || null },
-            { label: 'Duration', value: selected.duration_hours ? `${selected.duration_hours} h` : null },
-            { label: 'Responsible', value: selected.responsible_person || null },
-            { label: 'Status', value: (selected.status || 'to_deliver').replaceAll('_', ' ') },
-            { label: 'Execution %', value: `${Math.round(selected.ora?.ora_completion_percentage || 0)}%` },
-            { label: 'Description', value: selected.description || null, full: true },
-          ]}
-        />
+        >
+          <Section title="Overview">
+            <FieldGrid>
+              <LabeledField label="Title" value={selected.title} full />
+              <LabeledField
+                label="Objective & justification"
+                value={selected.description || null}
+                full
+              />
+              <LabeledField label="Provider" value={selected.training_provider || null} />
+              <LabeledField
+                label="Delivery format"
+                value={<TagList items={selected.delivery_method} />}
+              />
+              <LabeledField
+                label="Target audience"
+                value={<TagList items={selected.target_audience} />}
+                full
+              />
+              <LabeledField
+                label="Applicable systems"
+                value={
+                  selected.system_ids?.length
+                    ? `${selected.system_ids.length} system${selected.system_ids.length === 1 ? '' : 's'} mapped`
+                    : null
+                }
+              />
+              <LabeledField
+                label="Duration"
+                value={selected.duration_hours ? `${selected.duration_hours} h` : null}
+              />
+              <LabeledField
+                label="Status"
+                value={<InlineChip tone={chip.tone}>{chip.label}</InlineChip>}
+              />
+              <LabeledField
+                label={completed ? 'Delivered' : 'Tentative date'}
+                value={selected.tentative_date || null}
+              />
+            </FieldGrid>
+          </Section>
+
+          {completed && (
+            <>
+              <DrawerDivider />
+              <Section title="Supporting evidence">
+                <EvidenceList
+                  items={selected.evidence || null}
+                  emptyLabel="Attendance, materials & photos not yet uploaded."
+                />
+              </Section>
+            </>
+          )}
+        </DeliverableDetailShell>
       )}
     </>
   );
