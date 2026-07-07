@@ -29,7 +29,7 @@ export const CategoryItemsDrawer: React.FC<Props> = ({
 
   const rows = useMemo(() => {
     if (!categoryCode) return [];
-    return prerequisites
+    const mapped = prerequisites
       .filter(p => normalizeCategoryCode(p.category) === categoryCode)
       .map(p => {
         const catCode = normalizeCategoryCode(p.category);
@@ -41,6 +41,22 @@ export const CategoryItemsDrawer: React.FC<Props> = ({
           pill: standardPill(p.status as PrereqStatus),
         };
       });
+
+    // Default sort: Rejected → To do → Under review → Accepted.
+    // Qualification-requested rides under "under review" (matches Overview model).
+    const bucketRank: Record<string, number> = {
+      rework: 0,        // Rejected
+      todeliver: 1,     // To do
+      pipeline: 2,      // Under review
+      qualification: 2, // qualification-requested folds into review
+      terminal: 3,      // Accepted / Qualified
+    };
+    return mapped.sort((a, b) => {
+      const ra = bucketRank[a.pill.bucket] ?? 99;
+      const rb = bucketRank[b.pill.bucket] ?? 99;
+      if (ra !== rb) return ra - rb;
+      return (a.prereq.display_order ?? 0) - (b.prereq.display_order ?? 0);
+    });
   }, [prerequisites, categoryCode]);
 
   const closed = rows.filter(r => r.pill.bucket === 'terminal').length;

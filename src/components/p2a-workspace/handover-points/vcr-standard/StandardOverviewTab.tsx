@@ -79,6 +79,22 @@ const Donut: React.FC<{
   );
 };
 
+/** Small muted colour swatch + label pair for the progress-bar legend. */
+const LegendSwatch: React.FC<{ color: string; label: string }> = ({ color, label }) => (
+  <span className="inline-flex items-center gap-1.5">
+    <span className="inline-block w-2 h-2 rounded-sm" style={{ background: color }} />
+    {label}
+  </span>
+);
+
+/** Quiet metadata pair for the VCR Scope card. */
+const ScopeMeta: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+  <div>
+    <div className="text-[9.5px] uppercase tracking-wide text-muted-foreground/60">{label}</div>
+    <div className="text-[12px] text-muted-foreground">{value}</div>
+  </div>
+);
+
 export const StandardOverviewTab: React.FC<Props> = ({ handoverPoint }) => {
   const { prerequisites } = useVCRPrerequisites(handoverPoint.id);
   const { systems } = useHandoverPointSystems(handoverPoint.id);
@@ -134,7 +150,16 @@ export const StandardOverviewTab: React.FC<Props> = ({ handoverPoint }) => {
           toDeliver={toDeliverN}
           total={overall.total}
         />
-        <div className="text-xs text-muted-foreground mt-2">
+
+        {/* Muted legend — decodes the single-hue + grey-ramp model. */}
+        <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-[10px] text-muted-foreground/70">
+          <LegendSwatch color={CLR_APPROVED}  label="Approved" />
+          <LegendSwatch color={CLR_INREVIEW}  label="In review" />
+          <LegendSwatch color={CLR_REWORK}    label="Rework" />
+          <LegendSwatch color={CLR_TODELIVER} label="To deliver" />
+        </div>
+
+        <div className="text-[11px] text-muted-foreground/70 mt-1.5">
           {contextBits.join(' · ')}
         </div>
 
@@ -164,29 +189,20 @@ export const StandardOverviewTab: React.FC<Props> = ({ handoverPoint }) => {
       </Card>
 
 
-      {/* Scope card */}
+      {/* Scope card — quiet metadata row: muted small-caps labels, muted values. */}
       <Card className="p-4">
         <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-2">VCR Scope</div>
         <div className="text-sm mb-3">
           {handoverPoint.description || handoverPoint.name}
         </div>
-        <div className="flex gap-6 flex-wrap text-xs">
-          <div>
-            <div className="text-[9.5px] uppercase tracking-wide font-medium text-muted-foreground/70">Target</div>
-            <div className="text-[12px] text-muted-foreground">
-              {handoverPoint.target_date ? format(new Date(handoverPoint.target_date), 'dd-MMM-yyyy') : '—'}
-            </div>
-          </div>
-          <div>
-            <div className="text-[9.5px] uppercase tracking-wide font-medium text-muted-foreground/70">Systems</div>
-            <div className="text-[12px] text-muted-foreground">{systems.length}</div>
-          </div>
-          <div>
-            <div className="text-[9.5px] uppercase tracking-wide font-medium text-muted-foreground/70">Hydrocarbon</div>
-            <div className="text-[12px] text-muted-foreground">
-              {hc?.status === 'HC' ? 'Yes' : hc?.status === 'NON_HC' ? 'No' : '—'}
-            </div>
-          </div>
+        <div className="flex gap-6 flex-wrap">
+          <ScopeMeta label="Target" value={
+            handoverPoint.target_date ? format(new Date(handoverPoint.target_date), 'dd-MMM-yyyy') : '—'
+          } />
+          <ScopeMeta label="Systems" value={String(systems.length)} />
+          <ScopeMeta label="Hydrocarbon" value={
+            hc?.status === 'HC' ? 'Yes' : hc?.status === 'NON_HC' ? 'No' : '—'
+          } />
         </div>
       </Card>
 
