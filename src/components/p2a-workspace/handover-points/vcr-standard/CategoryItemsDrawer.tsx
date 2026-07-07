@@ -28,21 +28,36 @@ export const CategoryItemsDrawer: React.FC<Props> = ({
 }) => {
   const open = !!categoryCode;
   const { prerequisites } = useVCRPrerequisites(handoverPointId);
+  const { data: partiesRollup } = useVCRPartiesRollup(handoverPointId, projectId || null);
   const [openItem, setOpenItem] = useState<VCRItemBasic | null>(null);
+  const [search, setSearch] = useState('');
 
   const rows = useMemo(() => {
     if (!categoryCode) return [];
+    const q = search.trim().toLowerCase();
     const mapped = prerequisites
       .filter(p => normalizeCategoryCode(p.category) === categoryCode)
       .map(p => {
         const catCode = normalizeCategoryCode(p.category);
         const code = catCode === 'XX' ? '??' : catCode;
+        const delivering = partiesRollup?.deliveringByPrereq[p.id] || [];
+        const approving = partiesRollup?.approvingByPrereq[p.id] || [];
+        const partyNames = [...delivering, ...approving].join(' ');
         return {
           prereq: p,
           catCode: code,
           itemCode: formatVcrItemCode(code, p.display_order),
           pill: standardPill(p.status as PrereqStatus),
+          partyNames,
         };
+      })
+      .filter(r => {
+        if (!q) return true;
+        return (
+          r.itemCode.toLowerCase().includes(q) ||
+          (r.prereq.summary || '').toLowerCase().includes(q) ||
+          r.partyNames.toLowerCase().includes(q)
+        );
       });
 
     // Default sort: Rejected → To do → Under review → Accepted.
@@ -60,7 +75,7 @@ export const CategoryItemsDrawer: React.FC<Props> = ({
       if (ra !== rb) return ra - rb;
       return (a.prereq.display_order ?? 0) - (b.prereq.display_order ?? 0);
     });
-  }, [prerequisites, categoryCode]);
+  }, [prerequisites, categoryCode, partiesRollup, search]);
 
   const closed = rows.filter(r => r.pill.bucket === 'terminal').length;
   const meta = categoryCode ? CATEGORY_META[categoryCode] : null;
