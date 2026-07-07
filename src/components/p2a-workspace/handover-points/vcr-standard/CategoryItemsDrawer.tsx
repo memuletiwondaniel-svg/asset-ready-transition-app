@@ -91,7 +91,7 @@ export const CategoryItemsDrawer: React.FC<Props> = ({
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col !z-modal-critical">
+        <SheetContent side="right" className="w-full sm:max-w-[540px] p-0 flex flex-col !z-modal-critical">
           <SheetHeader className="px-5 pt-5 pb-3 border-b">
             <SheetTitle className="text-[19px] font-bold tracking-tight leading-tight text-foreground">
               {meta?.name || 'Category'}
@@ -109,7 +109,7 @@ export const CategoryItemsDrawer: React.FC<Props> = ({
               />
             </div>
           </SheetHeader>
-          <div className="flex-1 overflow-y-auto divide-y divide-border/50">
+          <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
             {rows.length === 0 && (
               <div className="p-6 text-center text-sm text-muted-foreground">
                 No items in this category.
@@ -118,7 +118,7 @@ export const CategoryItemsDrawer: React.FC<Props> = ({
             {rows.map(r => (
               <button
                 key={r.prereq.id}
-                className="w-full text-left px-4 py-3 cursor-pointer flex items-start gap-3 group transition-all duration-[120ms] hover:bg-[#F8FAFD] hover:shadow-[inset_3px_0_0_0_#1D4ED8]"
+                className="w-full text-left px-4 py-3 cursor-pointer flex items-start gap-3 rounded-[10px] transition-colors duration-[120ms] hover:bg-[#EEF4FE] group"
                 onClick={() => setOpenItem({
                   id: r.prereq.id,
                   vcr_item: r.prereq.summary,
