@@ -91,7 +91,7 @@ export const CategoryItemsDrawer: React.FC<Props> = ({
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col !z-modal-critical">
+        <SheetContent side="right" className="w-full sm:max-w-[540px] p-0 flex flex-col !z-modal-critical">
           <SheetHeader className="px-5 pt-5 pb-3 border-b">
             <SheetTitle className="text-[19px] font-bold tracking-tight leading-tight text-foreground">
               {meta?.name || 'Category'}
