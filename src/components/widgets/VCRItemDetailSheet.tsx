@@ -1175,7 +1175,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                   const assaiDocNo: string | null = (prereqDetail as any)?.assai_doc_no || null;
                   const assaiRev: string | null = (prereqDetail as any)?.assai_rev || null;
                   const hasAssaiRow = evidence.some((e) => e.source === 'assai' && e.assai_doc_no === assaiDocNo);
-                  if (!assaiDocNo || viewer !== 'delivering' || hasAssaiRow) return null;
+                  if (!assaiDocNo || !deliveringCanEdit || hasAssaiRow) return null;
                   return (
                     <div className="rounded-lg border border-blue-200 dark:border-blue-900 bg-blue-50/60 dark:bg-blue-950/20 px-3 py-2.5 mb-2 flex items-start gap-3">
                       <ExternalLink className="h-4 w-4 text-blue-700 dark:text-blue-300 mt-0.5 shrink-0" />
