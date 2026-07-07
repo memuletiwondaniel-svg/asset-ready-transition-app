@@ -6,7 +6,6 @@ import { useVCRPrerequisites } from '../../hooks/useVCRPrerequisites';
 import { useHandoverPointSystems } from '../../hooks/useP2AHandoverPoints';
 import { useVCRHydrocarbonStatus } from '@/hooks/useVCRHydrocarbonStatus';
 import { CategoryItemsDrawer } from './CategoryItemsDrawer';
-import { format } from 'date-fns';
 import {
   PrereqStatus,
   CATEGORY_META,
@@ -87,13 +86,6 @@ const LegendSwatch: React.FC<{ color: string; label: string }> = ({ color, label
   </span>
 );
 
-/** Quiet metadata pair for the VCR Scope card — muted label + muted value, no bold. */
-const ScopeMeta: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-  <div className="font-normal">
-    <div className="text-[10px] font-normal uppercase tracking-wide text-muted-foreground/70">{label}</div>
-    <div className="text-xs font-normal text-muted-foreground">{value}</div>
-  </div>
-);
 
 export const StandardOverviewTab: React.FC<Props> = ({ handoverPoint }) => {
   const { prerequisites } = useVCRPrerequisites(handoverPoint.id);
@@ -189,20 +181,25 @@ export const StandardOverviewTab: React.FC<Props> = ({ handoverPoint }) => {
       </Card>
 
 
-      {/* Scope card — quiet metadata row: muted small-caps labels, muted values. */}
+      {/* Scope card — description, then a single muted inline metadata caption. */}
       <Card className="p-4">
         <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-2">VCR Scope</div>
         <div className="text-sm mb-3">
           {handoverPoint.description || handoverPoint.name}
         </div>
-        <div className="flex gap-6 flex-wrap">
-          <ScopeMeta label="Target" value={
-            handoverPoint.target_date ? format(new Date(handoverPoint.target_date), 'dd-MMM-yyyy') : '—'
-          } />
-          <ScopeMeta label="Systems" value={String(systems.length)} />
-          <ScopeMeta label="Hydrocarbon" value={
-            hc?.status === 'HC' ? 'Yes' : hc?.status === 'NON_HC' ? 'No' : '—'
-          } />
+        <div className="text-xs font-normal text-muted-foreground/70">
+          {systems.length > 0 && (
+            <span>{systems.length} Systems</span>
+          )}
+          {systems.length > 0 && hc?.status === 'HC' && (
+            <span className="mx-1.5 text-muted-foreground/50">·</span>
+          )}
+          {hc?.status === 'HC' && (
+            <span>Hydrocarbon: Yes</span>
+          )}
+          {hc?.status === 'NON_HC' && (
+            <span>Non-hydrocarbon</span>
+          )}
         </div>
       </Card>
 
