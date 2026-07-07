@@ -1206,8 +1206,12 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
 
 
                 {evidence.length === 0 ? (
-                  viewer !== 'delivering' ? (
-                    <p className="text-xs text-muted-foreground italic">No evidence submitted yet.</p>
+                  !deliveringCanEdit ? (
+                    <p className="text-xs text-muted-foreground italic">
+                      {viewer === 'delivering' && item.status === 'READY_FOR_REVIEW'
+                        ? 'Submitted — evidence is locked until the approver reviews or returns it.'
+                        : 'No evidence submitted yet.'}
+                    </p>
                   ) : !item.prerequisite_id ? (
                     <p className="text-xs text-muted-foreground italic">
                       Evidence can't be attached yet — this item isn't linked to a delivery prerequisite.
