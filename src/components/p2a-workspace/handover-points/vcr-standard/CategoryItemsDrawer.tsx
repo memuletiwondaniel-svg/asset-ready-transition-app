@@ -60,18 +60,26 @@ export const CategoryItemsDrawer: React.FC<Props> = ({
         );
       });
 
-    // Default sort: Rejected → To do → Under review → Accepted.
-    // Qualification-requested rides under "under review" (matches Overview model).
-    const bucketRank: Record<string, number> = {
-      rework: 0,        // Rejected
-      todeliver: 1,     // To do
-      pipeline: 2,      // Under review
-      qualification: 2, // qualification-requested folds into review
-      terminal: 3,      // Accepted / Qualified
+    // Drawer-specific default sort: Rejected → To do → Under review → Accepted.
+    // Status-to-bucket mapping per standardStatus.ts:
+    //   Rejected               = REJECTED                → bucket 'rework'        → rank 0
+    //   To do (to deliver)     = NOT_STARTED             → bucket 'todeliver'     → rank 1
+    //   Under review           = READY_FOR_REVIEW /      → bucket 'pipeline'      → rank 2
+    //                            IN_PROGRESS
+    //   Under review (qual)    = QUALIFICATION_REQUESTED → bucket 'qualification' → rank 2
+    //   Accepted               = ACCEPTED /              → bucket 'terminal'      → rank 3
+    //                            QUALIFICATION_APPROVED
+    // Note: this is intentionally independent of StandardItemsTab.bucketPriority.
+    const drawerBucketRank: Record<string, number> = {
+      rework: 0,
+      todeliver: 1,
+      pipeline: 2,
+      qualification: 2,
+      terminal: 3,
     };
     return mapped.sort((a, b) => {
-      const ra = bucketRank[a.pill.bucket] ?? 99;
-      const rb = bucketRank[b.pill.bucket] ?? 99;
+      const ra = drawerBucketRank[a.pill.bucket] ?? 99;
+      const rb = drawerBucketRank[b.pill.bucket] ?? 99;
       if (ra !== rb) return ra - rb;
       return (a.prereq.display_order ?? 0) - (b.prereq.display_order ?? 0);
     });
