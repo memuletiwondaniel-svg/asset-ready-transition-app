@@ -17,28 +17,47 @@ import {
 
 interface Props { handoverPoint: P2AHandoverPoint }
 
-/** Segmented progress bar: green (terminal) · blue (pipeline) · grey (remainder) */
-const SegmentedBar: React.FC<{ done: number; pipe: number; total: number }> = ({ done, pipe, total }) => {
+/**
+ * Progress colour model (DC1, mockup v14.2):
+ *   Approved (terminal)  → existing emerald  (#059669)
+ *   In review (pipeline + qualification requested) → slate-400  (#94A3B8)
+ *   Rework   (rejected)  → slate-300  (#CBD5E1)
+ *   To deliver (not started / other) → slate-200  (#E2E8F0)
+ * A qualified-but-not-yet-approved item is NOT its own colour; it rides on
+ * the underlying state (we surface it here under "in review").
+ */
+const CLR_APPROVED  = '#059669';
+const CLR_INREVIEW  = '#94A3B8';
+const CLR_REWORK    = '#CBD5E1';
+const CLR_TODELIVER = '#E2E8F0';
+
+/** Segmented progress bar: emerald approved + grey ramp remainder. */
+const SegmentedBar: React.FC<{ approved: number; inReview: number; rework: number; toDeliver: number; total: number }> = ({
+  approved, inReview, rework, toDeliver, total,
+}) => {
   if (total === 0) return <div className="h-2 bg-slate-100 rounded-full" />;
-  const donePct = (done / total) * 100;
-  const pipePct = (pipe / total) * 100;
+  const pct = (n: number) => (n / total) * 100;
   return (
     <div className="h-2 bg-slate-100 rounded-full overflow-hidden flex">
-      <div className="h-full bg-emerald-600" style={{ width: `${donePct}%` }} />
-      <div className="h-full" style={{ width: `${pipePct}%`, background: '#A8C3EE' }} />
+      <div className="h-full" style={{ width: `${pct(approved)}%`,  background: CLR_APPROVED }} />
+      <div className="h-full" style={{ width: `${pct(inReview)}%`,  background: CLR_INREVIEW }} />
+      <div className="h-full" style={{ width: `${pct(rework)}%`,    background: CLR_REWORK }} />
+      <div className="h-full" style={{ width: `${pct(toDeliver)}%`, background: CLR_TODELIVER }} />
     </div>
   );
 };
 
-/** Conic donut per category — clickable to open the category items drawer (D5). */
+/** Conic donut per category — emerald approved arc, grey ramp for the rest. */
 const Donut: React.FC<{
-  done: number; pipe: number; total: number; label: string;
-  onClick?: () => void; disabled?: boolean;
-}> = ({ done, pipe, total, label, onClick, disabled }) => {
-  const donePct = total ? (done / total) * 100 : 0;
-  const pipePct = total ? (pipe / total) * 100 : 0;
+  approved: number; inReview: number; rework: number; toDeliver: number; total: number;
+  label: string; onClick?: () => void; disabled?: boolean;
+}> = ({ approved, inReview, rework, toDeliver, total, label, onClick, disabled }) => {
+  const p = (n: number) => (total ? (n / total) * 100 : 0);
+  const a = p(approved);
+  const b = a + p(inReview);
+  const c = b + p(rework);
   const bg = total
-    ? `conic-gradient(#059669 0 ${donePct}%, #A8C3EE ${donePct}% ${donePct + pipePct}%, #E5E9EF ${donePct + pipePct}% 100%)`
+    ? `conic-gradient(${CLR_APPROVED} 0 ${a}%, ${CLR_INREVIEW} ${a}% ${b}%, ${CLR_REWORK} ${b}% ${c}%, ${CLR_TODELIVER} ${c}% 100%)`
     : '#F1F5F9';
   return (
     <button
@@ -50,7 +69,7 @@ const Donut: React.FC<{
     >
       <div className="relative w-16 h-16 rounded-full flex items-center justify-center" style={{ background: bg }}>
         <div className="absolute inset-1.5 rounded-full bg-background flex items-center justify-center text-xs font-bold text-foreground">
-          {done}/{total || 0}
+          {approved}/{total || 0}
         </div>
       </div>
       <span className="text-[9.5px] font-bold tracking-wide text-muted-foreground text-center leading-tight">
