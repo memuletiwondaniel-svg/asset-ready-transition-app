@@ -651,9 +651,23 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
 
   // ─── Viewer role resolution (strict — no fallback to delivering) ─
   const deliveringMember = deliveringParties[0] || null;
+  // Flatten approving-holders map (role_id → ResolvedHolder[]) into a single
+  // list used for viewer-role detection + representative approver.
   const approvingMembers: Array<{ user_id: string; full_name: string; avatar_url: string | null; role_name: string }> =
-    vcrItemDetail?.approving_members || [];
-  // Representative approver: prefer current user if they're one, else the first.
+    useMemo(() => {
+      const out: Array<{ user_id: string; full_name: string; avatar_url: string | null; role_name: string }> = [];
+      Object.values(approvingHoldersById || {}).forEach((holders: any) => {
+        (holders || []).forEach((h: any) => {
+          out.push({
+            user_id: h.user_id,
+            full_name: h.full_name,
+            avatar_url: h.avatar_url,
+            role_name: h.role_name,
+          });
+        });
+      });
+      return out;
+    }, [approvingHoldersById]);
   const approvingMember =
     approvingMembers.find((m) => m.user_id === user?.id) || approvingMembers[0] || null;
 
@@ -663,6 +677,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
     if (approvingMembers.some((m) => m.user_id === user.id)) return 'approving';
     return 'observer';
   }, [user?.id, deliveringParties, approvingMembers]);
+
 
   // ─── DB-backed evidence + comments ──────────────────────────────
   const [composerOpen, setComposerOpen] = useState(false);
