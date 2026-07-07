@@ -508,23 +508,40 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
 
   // ─── Load authored item + per-VCR overrides + approving-roles catalog ──
   const { data: vcrItemDetail } = useQuery({
-    queryKey: ['vcr-item-detail-v3', item?.id, vcrId],
+    queryKey: ['vcr-item-detail-v3', item?.id, item?.prerequisite_id, vcrId],
     queryFn: async () => {
       if (!item) return null;
+
+      // ── Resolve the canonical vcr_items row id ──────────────────
+      // Some callers pass the prerequisite id in `item.id` (legacy),
+      // others pass the vcr_items id. Always prefer the prereq→
+      // vcr_item_id link when available, so the drawer works
+      // regardless of which convention the caller uses.
+      let canonicalVcrItemId: string | null = item.id;
+      if (item.prerequisite_id) {
+        const { data: pre } = await (supabase as any)
+          .from('p2a_vcr_prerequisites')
+          .select('vcr_item_id')
+          .eq('id', item.prerequisite_id)
+          .maybeSingle();
+        if (pre?.vcr_item_id) canonicalVcrItemId = pre.vcr_item_id;
+      }
+      if (!canonicalVcrItemId) return null;
+
       const { data } = await supabase
         .from('vcr_items')
         .select(`*, delivering_party:roles!vcr_items_delivering_party_role_id_fkey(id, name)`)
-        .eq('id', item.id)
+        .eq('id', canonicalVcrItemId)
         .maybeSingle();
 
       // Per-VCR override row (guidance / required-evidence / topic / party roles / N/A)
       let override: any = null;
-      if (vcrId) {
+      if (vcrId && canonicalVcrItemId) {
         const { data: ov } = await (supabase as any)
           .from('p2a_vcr_item_overrides')
           .select('vcr_item_override, topic_override, delivering_party_role_id_override, approving_party_role_ids_override, guidance_notes_override, supporting_evidence_override, is_na, na_reason')
           .eq('handover_point_id', vcrId)
-          .eq('vcr_item_id', item.id)
+          .eq('vcr_item_id', canonicalVcrItemId)
           .maybeSingle();
         override = ov;
       }
@@ -553,6 +570,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
 
       return {
         ...(data as any),
+        canonical_vcr_item_id: canonicalVcrItemId,
         override,
         effective_topic: override?.topic_override ?? (data as any)?.topic ?? item.topic ?? null,
         effective_guidance: override?.guidance_notes_override ?? (data as any)?.guidance_notes ?? null,
