@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { Search, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { P2AHandoverPoint } from '../../hooks/useP2AHandoverPoints';
 import { useVCRPrerequisites } from '../../hooks/useVCRPrerequisites';
-// Party search is deferred — per-item delivering parties require a per-row query.
+import { useVCRPartiesRollup } from './useVCRPartiesRollup';
 import { VCRItemDetailSheet, VCRItemBasic } from '@/components/widgets/VCRItemDetailSheet';
 import { formatVcrItemCode } from '@/lib/vcrItemCode';
 import { standardPill, normalizeCategoryCode, CATEGORY_META, PrereqStatus, StandardBucket } from './standardStatus';
@@ -44,6 +44,7 @@ const bucketPriority = (bucket: StandardBucket, status: PrereqStatus): number =>
 
 export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) => {
   const { prerequisites, isLoading } = useVCRPrerequisites(handoverPoint.id);
+  const { data: partiesRollup } = useVCRPartiesRollup(handoverPoint.id, projectId || null);
   const [filter, setFilter] = useState<Filter>('all');
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<{ col: SortCol; dir: SortDir } | null>(null);
@@ -54,11 +55,14 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
       const cat = normalizeCategoryCode(p.category);
       const pill = standardPill(p.status as PrereqStatus);
       const code = cat === 'XX' ? '??' : cat;
+      const delivering = partiesRollup?.deliveringByPrereq[p.id] || [];
+      const approving = partiesRollup?.approvingByPrereq[p.id] || [];
       return {
         prereq: p,
         catCode: code,
         itemCode: formatVcrItemCode(code, p.display_order),
         pill,
+        partyNames: [...delivering, ...approving].join(' '),
       };
     });
 
@@ -68,7 +72,8 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
       if (!q) return true;
       return (
         r.itemCode.toLowerCase().includes(q) ||
-        (r.prereq.summary || '').toLowerCase().includes(q)
+        (r.prereq.summary || '').toLowerCase().includes(q) ||
+        r.partyNames.toLowerCase().includes(q)
       );
     });
 
@@ -88,7 +93,7 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
       return (a.prereq.display_order ?? 0) - (b.prereq.display_order ?? 0);
     });
     return filtered;
-  }, [prerequisites, filter, search, sort]);
+  }, [prerequisites, partiesRollup, filter, search, sort]);
 
   const openRow = (r: typeof rows[number]) => {
     setOpenItem({
