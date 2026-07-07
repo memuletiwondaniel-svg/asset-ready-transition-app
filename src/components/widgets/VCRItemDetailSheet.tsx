@@ -1373,8 +1373,10 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                   </div>
                 )}
               </section>
+              )}
 
-              {/* Comments */}
+              {/* Comments — execution-only (Part 0) */}
+              {isExecutionMode && (
               <section>
                 <SectionLabel>Comments</SectionLabel>
                 {thread.length === 0 ? (
