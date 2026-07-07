@@ -109,7 +109,7 @@ export const CategoryItemsDrawer: React.FC<Props> = ({
               />
             </div>
           </SheetHeader>
-          <div className="flex-1 overflow-y-auto divide-y divide-border/50">
+          <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
             {rows.length === 0 && (
               <div className="p-6 text-center text-sm text-muted-foreground">
                 No items in this category.
