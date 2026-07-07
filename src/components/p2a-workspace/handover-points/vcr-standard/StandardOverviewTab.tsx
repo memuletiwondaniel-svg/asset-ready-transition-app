@@ -181,24 +181,22 @@ export const StandardOverviewTab: React.FC<Props> = ({ handoverPoint }) => {
       </Card>
 
 
-      {/* Scope card — description, then a single muted inline metadata caption. */}
+      {/* Scope card — description, then a quiet row of muted pill tags. */}
       <Card className="p-4">
         <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-2">VCR Scope</div>
         <div className="text-sm mb-3">
           {handoverPoint.description || handoverPoint.name}
         </div>
-        <div className="text-xs font-normal text-muted-foreground/70">
+        <div className="flex flex-wrap gap-2">
           {systems.length > 0 && (
-            <span>{systems.length} Systems</span>
-          )}
-          {systems.length > 0 && hc?.status === 'HC' && (
-            <span className="mx-1.5 text-muted-foreground/50">·</span>
+            <span className="inline-flex items-center text-[10.5px] font-medium text-muted-foreground bg-muted/60 rounded-full px-2 py-0.5">
+              {systems.length} Systems
+            </span>
           )}
           {hc?.status === 'HC' && (
-            <span>Hydrocarbon: Yes</span>
-          )}
-          {hc?.status === 'NON_HC' && (
-            <span>Non-hydrocarbon</span>
+            <span className="inline-flex items-center text-[10.5px] font-medium text-muted-foreground bg-muted/60 rounded-full px-2 py-0.5">
+              Hydrocarbon
+            </span>
           )}
         </div>
       </Card>
