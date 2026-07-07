@@ -160,7 +160,7 @@ export const VCRStandardView: React.FC<Props> = ({
       case 'items':          return <StandardItemsTab handoverPoint={handoverPoint} projectId={projectId} />;
       case 'qualifications': return <StandardQualificationsTab handoverPointId={handoverPoint.id} />;
       case 'comments':       return <VCRAssuranceTab handoverPointId={handoverPoint.id} />;
-      case 'parties':        return <StandardPartiesTab handoverPoint={handoverPoint} lifecyclePhase={lifecycle.phase} />;
+      case 'parties':        return <StandardPartiesTab handoverPoint={handoverPoint} projectId={projectId} lifecyclePhase={lifecycle.phase} />;
       case 'sof':            return <StandardSOFTab handoverPoint={handoverPoint} projectCode={effectiveProjectCode} />;
       case 'pac':            return <StandardPACTab handoverPoint={handoverPoint} projectCode={effectiveProjectCode} />;
       case 'systems':        return <StandardSystemsTab handoverPoint={handoverPoint} />;
