@@ -87,12 +87,11 @@ const LegendSwatch: React.FC<{ color: string; label: string }> = ({ color, label
   </span>
 );
 
-/** Quiet metadata pair for the VCR Scope card — muted label + muted value, no bold. */
-const ScopeMeta: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-  <div className="font-normal">
-    <div className="text-[10px] font-normal uppercase tracking-wide text-muted-foreground/70">{label}</div>
-    <div className="text-xs font-normal text-muted-foreground">{value}</div>
-  </div>
+/** Inline muted scope metadata — short caption under the description. */
+const ScopeMeta: React.FC<{ value: string; unit: string; }> = ({ value, unit }) => (
+  <span className="text-xs font-normal text-muted-foreground/70">
+    {value} {unit}
+  </span>
 );
 
 export const StandardOverviewTab: React.FC<Props> = ({ handoverPoint }) => {
