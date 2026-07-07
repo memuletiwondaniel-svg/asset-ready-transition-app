@@ -46,6 +46,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { useVCRItemDeliveringParties } from '@/hooks/useVCRItemDeliveringParties';
 import { useVCRItemInsights } from '@/hooks/useVCRItemInsights';
+import { useApprovingPartyHoldersByIds } from '@/hooks/useApprovingPartyHolders';
+import { resolveVCRMode } from '@/components/p2a-workspace/handover-points/vcr-standard/vcrMode';
 
 // ─── Public contract ─────────────────────────────────────────────────
 export interface VCRItemBasic {
@@ -503,57 +505,111 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   const { insights: liveInsights, recompute } = useVCRItemInsights(vcrId, item?.id);
   const effectiveInsights = insights ?? liveInsights;
 
-  // ─── Load authored item + parties ──────────────────────────────
+  // ─── Load authored item + per-VCR overrides + approving-roles catalog ──
   const { data: vcrItemDetail } = useQuery({
-    queryKey: ['vcr-item-detail-v2', item?.id, projectId],
+    queryKey: ['vcr-item-detail-v3', item?.id, vcrId],
     queryFn: async () => {
       if (!item) return null;
       const { data } = await supabase
         .from('vcr_items')
-        .select(`
-          *,
-          delivering_party:roles!vcr_items_delivering_party_role_id_fkey(id, name)
-        `)
+        .select(`*, delivering_party:roles!vcr_items_delivering_party_role_id_fkey(id, name)`)
         .eq('id', item.id)
         .maybeSingle();
 
-      const appRoleIds: string[] = (data as any)?.approving_party_role_ids || [];
-      let approvingRoles: { id: string; name: string }[] = [];
-      if (appRoleIds.length > 0) {
-        const { data: roles } = await supabase
-          .from('roles')
-          .select('id, name')
-          .in('id', appRoleIds);
-        approvingRoles = (roles as any[]) || [];
+      // Per-VCR override row (guidance / required-evidence / topic / party roles / N/A)
+      let override: any = null;
+      if (vcrId) {
+        const { data: ov } = await (supabase as any)
+          .from('p2a_vcr_item_overrides')
+          .select('vcr_item_override, topic_override, delivering_party_role_id_override, approving_party_role_ids_override, guidance_notes_override, supporting_evidence_override, is_na, na_reason')
+          .eq('handover_point_id', vcrId)
+          .eq('vcr_item_id', item.id)
+          .maybeSingle();
+        override = ov;
       }
 
-      let approvingMembers: Array<{ user_id: string; full_name: string; avatar_url: string | null; role_name: string }> = [];
-      if (projectId && appRoleIds.length > 0) {
-        const { data: members } = await supabase
-          .from('project_team_members')
-          .select('user_id')
-          .eq('project_id', projectId);
-        const userIds = (members || []).map((m: any) => m.user_id);
-        if (userIds.length > 0) {
-          const { data: profiles } = await supabase
-            .from('profiles')
-            .select('user_id, full_name, avatar_url, role')
-            .in('user_id', userIds)
-            .in('role', appRoleIds)
-            .eq('is_active', true);
-          approvingMembers = (profiles || []).map((p: any) => ({
-            user_id: p.user_id,
-            full_name: p.full_name,
-            avatar_url: p.avatar_url,
-            role_name: approvingRoles.find((r) => r.id === (p as any).role)?.name || 'Approving',
-          }));
-        }
+      const effectiveDeliveringRoleId: string | null =
+        override?.delivering_party_role_id_override ?? (data as any)?.delivering_party_role_id ?? null;
+      const effectiveApprovingRoleIds: string[] =
+        (override?.approving_party_role_ids_override as string[] | null) ??
+        ((data as any)?.approving_party_role_ids || []);
+
+      const roleIdsToFetch = Array.from(
+        new Set([...(effectiveApprovingRoleIds || []), effectiveDeliveringRoleId].filter(Boolean) as string[]),
+      );
+      let rolesCatalog: { id: string; name: string }[] = [];
+      if (roleIdsToFetch.length > 0) {
+        const { data: roles } = await supabase.from('roles').select('id, name').in('id', roleIdsToFetch);
+        rolesCatalog = (roles as any[]) || [];
       }
 
-      return { ...(data as any), approving_roles: approvingRoles, approving_members: approvingMembers };
+      const approving_roles = effectiveApprovingRoleIds
+        .map((id) => rolesCatalog.find((r) => r.id === id))
+        .filter(Boolean) as { id: string; name: string }[];
+      const delivering_role = effectiveDeliveringRoleId
+        ? rolesCatalog.find((r) => r.id === effectiveDeliveringRoleId) || (data as any)?.delivering_party
+        : (data as any)?.delivering_party || null;
+
+      return {
+        ...(data as any),
+        override,
+        effective_topic: override?.topic_override ?? (data as any)?.topic ?? item.topic ?? null,
+        effective_guidance: override?.guidance_notes_override ?? (data as any)?.guidance_notes ?? null,
+        effective_required_evidence: override?.supporting_evidence_override ?? (data as any)?.supporting_evidence ?? null,
+        effective_delivering_role_id: effectiveDeliveringRoleId,
+        effective_approving_role_ids: effectiveApprovingRoleIds,
+        delivering_role,
+        approving_roles,
+      };
     },
     enabled: open && !!item,
   });
+
+  // Lifecycle mode (plan vs execution) — derived from the VCR row itself,
+  // never from a caller prop that could be stale. resolveVCRMode is the
+  // shared boundary used by both overlay entry points.
+  const { data: hpRow } = useQuery({
+    queryKey: ['vcr-item-drawer-hp', vcrId],
+    queryFn: async () => {
+      if (!vcrId) return null;
+      const { data } = await (supabase as any)
+        .from('p2a_handover_points')
+        .select('id, execution_plan_status, status, sof_signed_at, pac_signed_at')
+        .eq('id', vcrId)
+        .maybeSingle();
+      return data;
+    },
+    enabled: open && !!vcrId,
+  });
+  const vcrMode = useMemo(
+    () => resolveVCRMode({
+      execution_plan_status: hpRow?.execution_plan_status,
+      status: hpRow?.status,
+      sof_signed_at: hpRow?.sof_signed_at,
+      pac_signed_at: hpRow?.pac_signed_at,
+      total_items: 1, // presence of an item row is execution activity
+    }),
+    [hpRow?.execution_plan_status, hpRow?.status, hpRow?.sof_signed_at, hpRow?.pac_signed_at],
+  );
+  const isExecutionMode = vcrMode === 'execution';
+
+  // Resolve approving-party holders (PTM → scoped roster → org_role_holders)
+  const approvingRoleIdsForHook = vcrItemDetail?.effective_approving_role_ids || [];
+  const rolesCatalogForHook = useMemo(() => {
+    const arr: { id: string; name: string }[] = [...(vcrItemDetail?.approving_roles || [])];
+    if (vcrItemDetail?.delivering_role?.id) {
+      arr.push({ id: vcrItemDetail.delivering_role.id, name: vcrItemDetail.delivering_role.name });
+    }
+    return arr;
+  }, [vcrItemDetail?.approving_roles, vcrItemDetail?.delivering_role]);
+  const { data: approvingHoldersById = {} } = useApprovingPartyHoldersByIds({
+    roles: rolesCatalogForHook,
+    roleIds: approvingRoleIdsForHook,
+    expandFamily: true,
+    scopeKey: projectId ?? '',
+    enabled: open && approvingRoleIdsForHook.length > 0,
+  });
+
 
   const { data: prereqDetail } = useQuery({
     queryKey: ['vcr-prereq-detail', item?.prerequisite_id],
@@ -595,9 +651,23 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
 
   // ─── Viewer role resolution (strict — no fallback to delivering) ─
   const deliveringMember = deliveringParties[0] || null;
+  // Flatten approving-holders map (role_id → ResolvedHolder[]) into a single
+  // list used for viewer-role detection + representative approver.
   const approvingMembers: Array<{ user_id: string; full_name: string; avatar_url: string | null; role_name: string }> =
-    vcrItemDetail?.approving_members || [];
-  // Representative approver: prefer current user if they're one, else the first.
+    useMemo(() => {
+      const out: Array<{ user_id: string; full_name: string; avatar_url: string | null; role_name: string }> = [];
+      Object.values(approvingHoldersById || {}).forEach((holders: any) => {
+        (holders || []).forEach((h: any) => {
+          out.push({
+            user_id: h.user_id,
+            full_name: h.full_name,
+            avatar_url: h.avatar_url,
+            role_name: h.role_name,
+          });
+        });
+      });
+      return out;
+    }, [approvingHoldersById]);
   const approvingMember =
     approvingMembers.find((m) => m.user_id === user?.id) || approvingMembers[0] || null;
 
@@ -608,6 +678,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
     return 'observer';
   }, [user?.id, deliveringParties, approvingMembers]);
 
+
   // ─── DB-backed evidence + comments ──────────────────────────────
   const [composerOpen, setComposerOpen] = useState(false);
   const [composerText, setComposerText] = useState('');
@@ -616,7 +687,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   const [pendingTypeFor, setPendingTypeFor] = useState<string | null>(null);
 
   // Required-evidence labels → AI-suggested dropdown options
-  const requiredEvidenceText: string = vcrItemDetail?.supporting_evidence || '';
+  const requiredEvidenceText: string = vcrItemDetail?.effective_required_evidence || '';
   const evidenceTypeOptions = useMemo(() => {
     const parsed = requiredEvidenceText
       .split(/[,;\n]/)
@@ -878,21 +949,66 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   // Defaults: Guidance collapsed (verbose reference); Required Evidence expanded (action-relevant).
   const [guidanceOpen, setGuidanceOpenLocal] = useState(false);
   const [requiredEvidenceOpen, setRequiredEvidenceOpen] = useState(true);
+  // B2B chip: which approving-role rows are toggled to the partner holder
+  const [b2bExpandedRoleIds, setB2bExpandedRoleIds] = useState<Set<string>>(new Set());
 
   if (!item) return null;
 
   const pill = statusPill(item.status, viewer);
-  const deliveringName = deliveringMember?.full_name || vcrItemDetail?.delivering_party?.name || 'Delivering party';
-  const deliveringRoleName = deliveringMember?.role_name || vcrItemDetail?.delivering_party?.name || 'Delivering';
+  const deliveringName = deliveringMember?.full_name || vcrItemDetail?.delivering_role?.name || 'Delivering party';
   const approvingName = approvingMember?.full_name || (vcrItemDetail?.approving_roles?.[0]?.name) || 'Approving party';
-  const approvingRoleName = approvingMember?.role_name || vcrItemDetail?.approving_roles?.[0]?.name || 'Approving';
+
+  // Delivering-party edit lock (B1-LOCK): the delivering party may add
+  // evidence / comments only while the item is not yet submitted for
+  // review. On submit (READY_FOR_REVIEW) the record freezes; a Return
+  // sets it back to IN_PROGRESS and re-opens edits.
+  const isTerminalStatus =
+    item.status === 'ACCEPTED' || item.status === 'QUALIFICATION_APPROVED' || item.status === 'REJECTED';
+  const deliveringCanEdit =
+    viewer === 'delivering' && !isTerminalStatus && item.status !== 'READY_FOR_REVIEW';
+  const approverAwaitingSubmission =
+    viewer === 'approving' && item.status !== 'READY_FOR_REVIEW' && !isTerminalStatus;
+
+  // Party rows for the DELIVERING PARTY / APPROVING PARTIES sections
+  const deliveringRoleName: string =
+    vcrItemDetail?.delivering_role?.name || deliveringMember?.role_name || 'Delivering party';
+  const partyRow = (
+    role: string,
+    holder: { user_id: string; full_name: string; avatar_url: string | null } | null,
+    isYou: boolean,
+    trailing?: React.ReactNode,
+  ) => (
+    <div
+      key={`${role}-${holder?.user_id ?? 'unassigned'}`}
+      className="grid grid-cols-[minmax(140px,180px)_28px_minmax(0,1fr)_auto] items-center gap-x-2 py-1.5"
+    >
+      <span className="text-[11px] font-medium text-foreground/80 truncate" title={role}>{role}</span>
+      {holder ? (
+        <>
+          <Avatar className="h-6 w-6 justify-self-start">
+            <AvatarImage src={getAvatarUrl(holder.avatar_url)} />
+            <AvatarFallback className="text-[9px]">{getInitials(holder.full_name)}</AvatarFallback>
+          </Avatar>
+          <span className={cn('text-xs truncate min-w-0', isYou && 'font-semibold')}>
+            {isYou ? `${holder.full_name} (you)` : holder.full_name}
+          </span>
+        </>
+      ) : (
+        <>
+          <span className="w-6 h-6" />
+          <span className="text-[11px] italic text-muted-foreground truncate min-w-0">No holder assigned</span>
+        </>
+      )}
+      <div className="justify-self-end">{trailing}</div>
+    </div>
+  );
 
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent className="sm:max-w-xl overflow-hidden flex flex-col p-0 !z-modal-critical" data-rm-safe hideClose>
-          {/* Header */}
-          <SheetHeader className="px-6 pt-5 pb-4 border-b shrink-0 space-y-3">
+          {/* Header — single status chip (A1) */}
+          <SheetHeader className="px-6 pt-5 pb-4 border-b shrink-0 space-y-2">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 flex-wrap">
                 <Badge variant="outline" className="text-[10px] rounded-md font-normal">
@@ -911,36 +1027,84 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
             </div>
             <SheetTitle className="text-[15px] leading-snug font-semibold">{item.vcr_item}</SheetTitle>
             <SheetDescription className="sr-only">VCR item detail</SheetDescription>
-
-            {/* Party row */}
-            <div className="flex items-center gap-6 flex-wrap pt-0.5">
-              <PartyUnit
-                side="delivering"
-                isYou={viewer === 'delivering'}
-                name={deliveringName}
-                role={deliveringRoleName}
-                avatarUrl={deliveringMember?.avatar_url}
-              />
-              <PartyUnit
-                side="approving"
-                isYou={viewer === 'approving'}
-                name={approvingName}
-                role={approvingRoleName}
-                avatarUrl={approvingMember?.avatar_url}
-              />
-            </div>
+            {/* TOPIC (A2) */}
+            {vcrItemDetail?.effective_topic && (
+              <div className="flex items-center gap-2 pt-0.5">
+                <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Topic:</span>
+                <span className="text-xs font-medium text-foreground">{vcrItemDetail.effective_topic}</span>
+              </div>
+            )}
           </SheetHeader>
 
           {/* Body */}
           <ScrollArea className="flex-1 min-h-0">
             <div className="px-6 py-5 space-y-6">
-              {/* Insights */}
-              <InsightsBlock
-                insights={effectiveInsights}
-                viewer={viewer}
-                onRecompute={insights ? undefined : () => recompute.mutate()}
-                recomputing={recompute.isPending}
-              />
+              {/* Delivering party (A3) */}
+              <section>
+                <SectionLabel>Delivering party ({deliveringParties.length || (vcrItemDetail?.delivering_role ? 1 : 0)})</SectionLabel>
+                <div className="rounded-lg border border-border/60 divide-y divide-border/40 px-3">
+                  {deliveringParties.length > 0
+                    ? deliveringParties.map((m) =>
+                        partyRow(deliveringRoleName, m, user?.id === m.user_id),
+                      )
+                    : partyRow(deliveringRoleName, null, false)}
+                </div>
+              </section>
+
+              {/* Approving parties (A3 + A4 B2B chip) */}
+              <section>
+                <SectionLabel>
+                  Approving parties ({(vcrItemDetail?.approving_roles || []).length})
+                </SectionLabel>
+                <div className="rounded-lg border border-border/60 divide-y divide-border/40 px-3">
+                  {(vcrItemDetail?.approving_roles || []).length === 0 ? (
+                    <p className="text-[11px] italic text-muted-foreground py-2">No approving parties configured.</p>
+                  ) : (
+                    (vcrItemDetail?.approving_roles || []).map((role: { id: string; name: string }) => {
+                      const holders = (approvingHoldersById as any)[role.id] || [];
+                      const isB2B = holders.length === 2;
+                      const showPartner = b2bExpandedRoleIds.has(role.id) && isB2B;
+                      const shown = showPartner ? holders[1] : holders[0];
+                      const isYou = !!(user?.id && shown?.user_id === user.id);
+                      const chip = isB2B ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setB2bExpandedRoleIds((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(role.id)) next.delete(role.id);
+                              else next.add(role.id);
+                              return next;
+                            })
+                          }
+                          aria-pressed={showPartner}
+                          title={showPartner ? 'Show delivering-side holder' : 'Show B2B partner holder'}
+                          className={cn(
+                            'inline-flex items-center justify-center text-[9px] font-semibold tracking-wider px-1.5 h-4 rounded-md border transition-colors',
+                            showPartner
+                              ? 'bg-amber-200 text-amber-900 border-amber-400 ring-1 ring-amber-400 dark:bg-amber-800/60 dark:text-amber-100 dark:border-amber-600'
+                              : 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-800',
+                          )}
+                        >
+                          B2B
+                        </button>
+                      ) : null;
+                      return partyRow(role.name, shown || null, isYou, chip);
+                    })
+                  )}
+                </div>
+              </section>
+
+              {/* Insights — execution-only (Part 0) */}
+              {isExecutionMode && (
+                <InsightsBlock
+                  insights={effectiveInsights}
+                  viewer={viewer}
+                  onRecompute={insights ? undefined : () => recompute.mutate()}
+                  recomputing={recompute.isPending}
+                />
+              )}
+
 
               {/* Guidance notes — collapsed by default; chevron toggle */}
               <section>
@@ -960,9 +1124,9 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                   )}
                 </button>
                 {guidanceOpen && (
-                  vcrItemDetail?.guidance_notes ? (
-                    <p className="text-[13px] text-foreground leading-relaxed mt-1">
-                      {vcrItemDetail.guidance_notes}
+                  vcrItemDetail?.effective_guidance ? (
+                    <p className="text-[13px] text-foreground leading-relaxed mt-1 whitespace-pre-wrap">
+                      {vcrItemDetail.effective_guidance}
                     </p>
                   ) : (
                     <p className="text-xs text-muted-foreground italic mt-1">No guidance notes for this item.</p>
@@ -996,7 +1160,8 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                 )}
               </section>
 
-              {/* Evidence */}
+              {/* Evidence — execution-only (Part 0) */}
+              {isExecutionMode && (
               <section>
                 <SectionLabel right={viewer !== 'delivering' && evidence.length > 0 ? 'Submitted by delivering party' : undefined}>
                   Evidence
@@ -1010,7 +1175,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                   const assaiDocNo: string | null = (prereqDetail as any)?.assai_doc_no || null;
                   const assaiRev: string | null = (prereqDetail as any)?.assai_rev || null;
                   const hasAssaiRow = evidence.some((e) => e.source === 'assai' && e.assai_doc_no === assaiDocNo);
-                  if (!assaiDocNo || viewer !== 'delivering' || hasAssaiRow) return null;
+                  if (!assaiDocNo || !deliveringCanEdit || hasAssaiRow) return null;
                   return (
                     <div className="rounded-lg border border-blue-200 dark:border-blue-900 bg-blue-50/60 dark:bg-blue-950/20 px-3 py-2.5 mb-2 flex items-start gap-3">
                       <ExternalLink className="h-4 w-4 text-blue-700 dark:text-blue-300 mt-0.5 shrink-0" />
@@ -1041,8 +1206,12 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
 
 
                 {evidence.length === 0 ? (
-                  viewer !== 'delivering' ? (
-                    <p className="text-xs text-muted-foreground italic">No evidence submitted yet.</p>
+                  !deliveringCanEdit ? (
+                    <p className="text-xs text-muted-foreground italic">
+                      {viewer === 'delivering' && item.status === 'READY_FOR_REVIEW'
+                        ? 'Submitted — evidence is locked until the approver reviews or returns it.'
+                        : 'No evidence submitted yet.'}
+                    </p>
                   ) : !item.prerequisite_id ? (
                     <p className="text-xs text-muted-foreground italic">
                       Evidence can't be attached yet — this item isn't linked to a delivery prerequisite.
@@ -1104,7 +1273,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                             {f.file_name}
                           </button>
                           <div className="flex items-center gap-2 flex-wrap">
-                            {viewer !== 'delivering' ? (
+                            {!deliveringCanEdit ? (
                               <Badge variant="secondary" className="text-[10px] font-normal">
                                 {typeLabel}
                               </Badge>
@@ -1165,7 +1334,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                             )}
                           </div>
                         </div>
-                        {viewer !== 'delivering' ? (
+                        {!deliveringCanEdit ? (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -1187,7 +1356,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                       </div>
                       );
                     })}
-                    {viewer === 'delivering' && (
+                    {deliveringCanEdit && (
                       <button
                         onClick={() => fileInputRef.current?.click()}
                         className="text-xs text-primary hover:underline"
@@ -1208,8 +1377,10 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                   </div>
                 )}
               </section>
+              )}
 
-              {/* Comments */}
+              {/* Comments — execution-only (Part 0) */}
+              {isExecutionMode && (
               <section>
                 <SectionLabel>Comments</SectionLabel>
                 {thread.length === 0 ? (
@@ -1260,94 +1431,101 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                   </div>
                 )}
 
-                {composerOpen ? (
-                  <div className="mt-3 space-y-2">
-                    <Textarea
-                      value={composerText}
-                      onChange={(e) => setComposerText(e.target.value)}
-                      rows={2}
-                      placeholder="Add a comment…"
-                    />
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => { setComposerOpen(false); setComposerText(''); }}>
-                        Cancel
-                      </Button>
-                      <Button
-                        size="sm"
-                        disabled={!composerText.trim() || insertComment.isPending}
-                        onClick={async () => {
-                          const text = composerText.trim();
-                          if (!text) return;
-                          await insertComment.mutateAsync({ body: text, action_tag: null });
-                          setComposerText('');
-                          setComposerOpen(false);
-                        }}
-                      >
-                        Post
-                      </Button>
+                {/* Composer: approvers may always comment (append-only,
+                    audit-logged — useful for early flagging even before the
+                    delivering party has submitted). Delivering party may
+                    comment only while unlocked (B1-LOCK). Observers: never. */}
+                {(viewer === 'approving' || deliveringCanEdit) && (
+                  composerOpen ? (
+                    <div className="mt-3 space-y-2">
+                      <Textarea
+                        value={composerText}
+                        onChange={(e) => setComposerText(e.target.value)}
+                        rows={2}
+                        placeholder="Add a comment…"
+                      />
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="sm" onClick={() => { setComposerOpen(false); setComposerText(''); }}>
+                          Cancel
+                        </Button>
+                        <Button
+                          size="sm"
+                          disabled={!composerText.trim() || insertComment.isPending}
+                          onClick={async () => {
+                            const text = composerText.trim();
+                            if (!text) return;
+                            await insertComment.mutateAsync({ body: text, action_tag: null });
+                            setComposerText('');
+                            setComposerOpen(false);
+                          }}
+                        >
+                          Post
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setComposerOpen(true)}
-                    className="mt-3 text-xs text-primary hover:underline"
-                  >
-                    Add comment
-                  </button>
+                  ) : (
+                    <button
+                      onClick={() => setComposerOpen(true)}
+                      className="mt-3 text-xs text-primary hover:underline"
+                    >
+                      Add comment
+                    </button>
+                  )
+                )}
+                {viewer === 'delivering' && !deliveringCanEdit && !isTerminalStatus && (
+                  <p className="mt-3 text-[11px] text-muted-foreground italic">
+                    Comments are locked while the item is awaiting approver review.
+                  </p>
                 )}
               </section>
+              )}
             </div>
           </ScrollArea>
 
-          {/* Footer — strict role × status gating */}
-          {(() => {
-            const isTerminal = item.status === 'ACCEPTED' || item.status === 'QUALIFICATION_APPROVED';
+          {/* Footer — plan mode hides it entirely (Part 0). Execution mode
+              shows role-aware CTAs with submit-lock (B1-LOCK) and a quiet
+              "awaiting delivering party" state for approvers (Part 0 precondition).
+              A1: no duplicate status pill. A10: no bottom Close button. */}
+          {isExecutionMode && (() => {
             const canDeliver =
-              viewer === 'delivering' && !isTerminal && item.status !== 'READY_FOR_REVIEW';
+              viewer === 'delivering' && !isTerminalStatus && item.status !== 'READY_FOR_REVIEW';
             const canApprove =
               viewer === 'approving' && item.status === 'READY_FOR_REVIEW';
-            const showActions = canDeliver || canApprove;
+            const showFooter = canDeliver || canApprove || approverAwaitingSubmission;
+            if (!showFooter) return null;
             return (
-              <div className="border-t bg-background px-6 py-3 flex items-center justify-between shrink-0">
-                <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
-                  {showActions ? 'Cancel' : 'Close'}
-                </Button>
-                <div className="flex items-center gap-2">
-                  {canApprove ? (
-                    <>
-                      <Button variant="outline" size="sm" onClick={() => setConfirmKind('return')}>
-                        Return to delivering party
-                      </Button>
-                      <Button
-                        size="sm"
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                        onClick={() => setConfirmKind('accept')}
-                      >
-                        Accept item
-                      </Button>
-                    </>
-                  ) : canDeliver ? (
-                    <>
-                      <Button variant="outline" size="sm" onClick={() => setConfirmKind('raise_qualification')}>
-                        Raise qualification
-                      </Button>
-                      <Button
-                        size="sm"
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                        onClick={() => setConfirmKind('mark_complete')}
-                      >
-                        Mark as complete
-                      </Button>
-                    </>
-                  ) : (
-                    <Badge
-                      variant="outline"
-                      className={cn('text-[10px] rounded-full px-2.5 py-0.5 font-normal', pillToneClass[pill.tone])}
+              <div className="border-t bg-background px-6 py-3 flex items-center justify-end shrink-0">
+                {canApprove ? (
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setConfirmKind('return')}>
+                      Return to delivering party
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                      onClick={() => setConfirmKind('accept')}
                     >
-                      {pill.label}
-                    </Badge>
-                  )}
-                </div>
+                      Accept item
+                    </Button>
+                  </div>
+                ) : canDeliver ? (
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setConfirmKind('raise_qualification')}>
+                      Raise qualification
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                      onClick={() => setConfirmKind('mark_complete')}
+                    >
+                      Mark as complete
+                    </Button>
+                  </div>
+                ) : approverAwaitingSubmission ? (
+                  <span className="text-[11px] text-muted-foreground italic">
+                    Awaiting delivering party
+                  </span>
+                ) : null}
               </div>
             );
           })()}
