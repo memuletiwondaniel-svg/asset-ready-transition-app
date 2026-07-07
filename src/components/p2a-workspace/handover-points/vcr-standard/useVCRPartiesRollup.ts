@@ -85,7 +85,21 @@ async function resolveProfiles(userIds: string[]) {
   }
   const map = new Map<string, any>();
   (data || []).forEach((p: any) => {
-    map.set(p.user_id, { ...p, role_name: p.role ? roleMap[p.role] || null : null });
+    let avatar: string | null = p.avatar_url ?? null;
+    if (avatar && !avatar.startsWith('http')) {
+      // profiles.avatar_url can be a storage path — resolve to a public URL
+      // so <AvatarImage src=…> renders the actual photo instead of falling
+      // back to initials.
+      const { data: pub } = (supabase as any).storage
+        .from('user-avatars')
+        .getPublicUrl(avatar);
+      avatar = pub?.publicUrl ?? avatar;
+    }
+    map.set(p.user_id, {
+      ...p,
+      avatar_url: avatar,
+      role_name: p.role ? roleMap[p.role] || null : null,
+    });
   });
   return map;
 }
