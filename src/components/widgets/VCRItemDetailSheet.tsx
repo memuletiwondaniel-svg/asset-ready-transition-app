@@ -1463,6 +1463,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                   </button>
                 )}
               </section>
+              )}
             </div>
           </ScrollArea>
 
