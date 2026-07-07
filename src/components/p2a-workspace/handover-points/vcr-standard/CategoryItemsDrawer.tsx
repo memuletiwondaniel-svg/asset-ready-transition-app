@@ -118,7 +118,7 @@ export const CategoryItemsDrawer: React.FC<Props> = ({
             {rows.map(r => (
               <button
                 key={r.prereq.id}
-                className="w-full text-left px-4 py-3 hover:bg-muted/40 cursor-pointer flex items-start gap-3"
+                className="w-full text-left px-4 py-3 cursor-pointer flex items-start gap-3 group transition-all duration-[120ms] hover:bg-[#F8FAFD] hover:shadow-[inset_3px_0_0_0_#1D4ED8]"
                 onClick={() => setOpenItem({
                   id: r.prereq.id,
                   vcr_item: r.prereq.summary,
@@ -133,7 +133,7 @@ export const CategoryItemsDrawer: React.FC<Props> = ({
                 } as unknown as VCRItemBasic)}
               >
                 <div className="min-w-0 flex-1 text-[12.5px] leading-relaxed text-foreground">
-                  <span className="inline-block align-baseline mr-2 px-1.5 py-0.5 rounded bg-[#EEF2F7] dark:bg-muted/60 text-[10.5px] font-mono font-medium text-muted-foreground">
+                  <span className="inline-block align-baseline mr-2 px-1.5 py-0.5 rounded bg-[#EEF2F7] dark:bg-muted/60 text-[10.5px] font-mono font-medium text-muted-foreground transition-all duration-[120ms] group-hover:bg-[#DBE7FB] group-hover:text-[#1D4ED8] group-hover:-translate-y-[0.5px] dark:group-hover:bg-[#DBE7FB]">
                     {r.itemCode}
                   </span>
                   <span className="font-medium break-words">
