@@ -170,6 +170,14 @@ export const StandardOverviewTab: React.FC<Props> = ({ handoverPoint }) => {
             ))}
           </div>
         )}
+
+        {/* Muted legend — quiet footer at the bottom of the progress card. */}
+        <div className="flex flex-wrap gap-x-3 gap-y-1 mt-3 pt-2.5 border-t border-border text-[10px] text-muted-foreground/70">
+          <LegendSwatch color={CLR_APPROVED}  label="Approved" />
+          <LegendSwatch color={CLR_INREVIEW}  label="In review" />
+          <LegendSwatch color={CLR_REWORK}    label="Rework" />
+          <LegendSwatch color={CLR_TODELIVER} label="To deliver" />
+        </div>
       </Card>
 
 
