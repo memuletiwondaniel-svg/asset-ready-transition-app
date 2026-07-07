@@ -91,6 +91,15 @@ export const CategoryItemsDrawer: React.FC<Props> = ({
             <SheetDescription className="text-[11px] text-muted-foreground">
               Click an item for full detail.
             </SheetDescription>
+            <div className="relative mt-2">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/60" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search ID, description, party…"
+                className="h-7 pl-7 text-[11.5px]"
+              />
+            </div>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto divide-y divide-border/50">
             {rows.length === 0 && (
