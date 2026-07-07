@@ -1097,11 +1097,12 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
               {isExecutionMode && (
                 <InsightsBlock
                   insights={effectiveInsights}
+                  viewer={viewer}
+                  onRecompute={insights ? undefined : () => recompute.mutate()}
+                  recomputing={recompute.isPending}
+                />
+              )}
 
-                viewer={viewer}
-                onRecompute={insights ? undefined : () => recompute.mutate()}
-                recomputing={recompute.isPending}
-              />
 
               {/* Guidance notes — collapsed by default; chevron toggle */}
               <section>
