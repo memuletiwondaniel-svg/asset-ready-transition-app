@@ -187,20 +187,25 @@ export const StandardOverviewTab: React.FC<Props> = ({ handoverPoint }) => {
       </Card>
 
 
-      {/* Scope card — quiet metadata row: muted small-caps labels, muted values. */}
+      {/* Scope card — description, then a single muted inline metadata caption. */}
       <Card className="p-4">
         <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-2">VCR Scope</div>
         <div className="text-sm mb-3">
           {handoverPoint.description || handoverPoint.name}
         </div>
-        <div className="flex gap-6 flex-wrap">
-          <ScopeMeta label="Target" value={
-            handoverPoint.target_date ? format(new Date(handoverPoint.target_date), 'dd-MMM-yyyy') : '—'
-          } />
-          <ScopeMeta label="Systems" value={String(systems.length)} />
-          <ScopeMeta label="Hydrocarbon" value={
-            hc?.status === 'HC' ? 'Yes' : hc?.status === 'NON_HC' ? 'No' : '—'
-          } />
+        <div className="text-xs font-normal text-muted-foreground/70">
+          {systems.length > 0 && (
+            <span>{systems.length} Systems</span>
+          )}
+          {systems.length > 0 && hc?.status === 'HC' && (
+            <span className="mx-1.5 text-muted-foreground/50">·</span>
+          )}
+          {hc?.status === 'HC' && (
+            <span>Hydrocarbon: Yes</span>
+          )}
+          {hc?.status === 'NON_HC' && (
+            <span>Non-hydrocarbon</span>
+          )}
         </div>
       </Card>
 
