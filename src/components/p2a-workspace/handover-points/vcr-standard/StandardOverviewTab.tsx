@@ -143,14 +143,6 @@ export const StandardOverviewTab: React.FC<Props> = ({ handoverPoint }) => {
           total={overall.total}
         />
 
-        {/* Muted legend — decodes the single-hue + grey-ramp model. */}
-        <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-[10px] text-muted-foreground/70">
-          <LegendSwatch color={CLR_APPROVED}  label="Approved" />
-          <LegendSwatch color={CLR_INREVIEW}  label="In review" />
-          <LegendSwatch color={CLR_REWORK}    label="Rework" />
-          <LegendSwatch color={CLR_TODELIVER} label="To deliver" />
-        </div>
-
         <div className="text-[11px] text-muted-foreground/70 mt-1.5">
           {contextBits.join(' · ')}
         </div>
