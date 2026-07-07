@@ -687,7 +687,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   const [pendingTypeFor, setPendingTypeFor] = useState<string | null>(null);
 
   // Required-evidence labels → AI-suggested dropdown options
-  const requiredEvidenceText: string = vcrItemDetail?.supporting_evidence || '';
+  const requiredEvidenceText: string = vcrItemDetail?.effective_required_evidence || '';
   const evidenceTypeOptions = useMemo(() => {
     const parsed = requiredEvidenceText
       .split(/[,;\n]/)
