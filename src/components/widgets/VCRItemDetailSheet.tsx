@@ -949,6 +949,8 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   // Defaults: Guidance collapsed (verbose reference); Required Evidence expanded (action-relevant).
   const [guidanceOpen, setGuidanceOpenLocal] = useState(false);
   const [requiredEvidenceOpen, setRequiredEvidenceOpen] = useState(true);
+  // B2B chip: which approving-role rows are toggled to the partner holder
+  const [b2bExpandedRoleIds, setB2bExpandedRoleIds] = useState<Set<string>>(new Set());
 
   if (!item) return null;
 
