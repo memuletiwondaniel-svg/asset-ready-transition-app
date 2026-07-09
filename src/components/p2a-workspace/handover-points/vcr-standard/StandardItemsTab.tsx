@@ -48,6 +48,29 @@ const bucketPriority = (bucket: StandardBucket, status: PrereqStatus): number =>
 export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) => {
   const { prerequisites, isLoading } = useVCRPrerequisites(handoverPoint.id);
   const { data: partiesRollup } = useVCRPartiesRollup(handoverPoint.id, projectId || null);
+export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) => {
+  const { prerequisites, isLoading } = useVCRPrerequisites(handoverPoint.id);
+  const { data: partiesRollup } = useVCRPartiesRollup(handoverPoint.id, projectId || null);
+  // Qualification overlay: latest qualification per prerequisite for this VCR.
+  const { data: qualsByPrereq } = useQuery({
+    queryKey: ['vcr-quals-overlay', handoverPoint.id],
+    enabled: !!handoverPoint.id,
+    queryFn: async (): Promise<Record<string, QualStage>> => {
+      const prereqIds = (prerequisites || []).map(p => p.id);
+      if (!prereqIds.length) return {};
+      const { data, error } = await (supabase as any)
+        .from('p2a_vcr_qualifications')
+        .select('vcr_prerequisite_id,status,submitted_at')
+        .in('vcr_prerequisite_id', prereqIds)
+        .order('submitted_at', { ascending: false });
+      if (error) throw error;
+      const map: Record<string, QualStage> = {};
+      for (const q of (data || []) as any[]) {
+        if (!map[q.vcr_prerequisite_id]) map[q.vcr_prerequisite_id] = q.status as QualStage;
+      }
+      return map;
+    },
+  });
   const [activeFilters, setActiveFilters] = useState<Set<ActiveFilter>>(new Set());
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<{ col: SortCol; dir: SortDir } | null>(null);
