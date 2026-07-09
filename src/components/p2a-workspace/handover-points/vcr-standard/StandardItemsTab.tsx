@@ -143,20 +143,25 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
       {/* Filter chips + search on same row */}
       <div className="flex items-center gap-2 p-2.5 border-b border-border bg-muted/30 flex-wrap">
         <div className="flex gap-1.5 flex-wrap flex-1 min-w-0">
-          {FILTERS.map(f => (
-            <button
-              key={f.id}
-              onClick={() => setFilter(f.id)}
-              className={cn(
-                'text-[11px] font-semibold px-3 py-0.5 rounded-full border transition',
-                filter === f.id
-                  ? 'bg-foreground text-background border-foreground'
-                  : 'bg-background text-muted-foreground border-border hover:text-foreground'
-              )}
-            >
-              {f.label}
-            </button>
-          ))}
+          {FILTERS.map(f => {
+            const isActive = f.id === 'all'
+              ? activeFilters.size === 0
+              : activeFilters.has(f.id as ActiveFilter);
+            return (
+              <button
+                key={f.id}
+                onClick={() => toggleFilter(f.id)}
+                className={cn(
+                  'text-[11px] font-semibold px-3 py-0.5 rounded-full border transition',
+                  isActive
+                    ? 'bg-foreground text-background border-foreground'
+                    : 'bg-background text-muted-foreground border-border hover:text-foreground'
+                )}
+              >
+                {f.label}
+              </button>
+            );
+          })}
         </div>
         <div className="relative w-56 flex-none">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/60" />
