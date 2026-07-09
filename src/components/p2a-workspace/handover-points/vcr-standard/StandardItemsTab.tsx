@@ -55,10 +55,11 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
       setActiveFilters(new Set());
       return;
     }
+    const activeId = id as ActiveFilter;
     setActiveFilters(prev => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(activeId)) next.delete(activeId);
+      else next.add(activeId);
       return next;
     });
   };
