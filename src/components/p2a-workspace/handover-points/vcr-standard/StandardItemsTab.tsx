@@ -81,7 +81,7 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
 
     const q = search.trim().toLowerCase();
     const filtered = withPill.filter(r => {
-      if (!matchesFilter(r.pill.bucket, filter)) return false;
+      if (!matchesFilter(r.pill.bucket, activeFilters)) return false;
       if (!q) return true;
       return (
         r.itemCode.toLowerCase().includes(q) ||
