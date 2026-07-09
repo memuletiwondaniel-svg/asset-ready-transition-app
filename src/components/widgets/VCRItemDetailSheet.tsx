@@ -211,7 +211,7 @@ const InsightsBlock: React.FC<{
         </div>
       </div>
 
-      <div className="rounded-lg border border-l-4 border-amber-300/70 border-l-amber-400 bg-amber-50/40 dark:bg-amber-950/10 px-4 py-3 space-y-3">
+      <div className="rounded-lg border border-border/70 bg-muted/30 px-4 py-3 space-y-3">
         {state === 'pending' && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -219,9 +219,21 @@ const InsightsBlock: React.FC<{
           </div>
         )}
         {state === 'unavailable' && (
-          <p className="text-xs text-muted-foreground">
-            Readiness data not connected for this item yet.
-          </p>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs text-muted-foreground">
+              Not yet computed for this item.
+            </p>
+            {onRecompute && (
+              <button
+                type="button"
+                onClick={onRecompute}
+                disabled={recomputing}
+                className="text-[11px] font-medium text-primary hover:underline disabled:opacity-50"
+              >
+                {recomputing ? 'Computing…' : 'Compute now'}
+              </button>
+            )}
+          </div>
         )}
         {state === 'ready' && (
           <>
