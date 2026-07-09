@@ -94,11 +94,14 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
       const code = cat === 'XX' ? '??' : cat;
       const delivering = partiesRollup?.deliveringByPrereq[p.id] || [];
       const approving = partiesRollup?.approvingByPrereq[p.id] || [];
+      const qualStage = qualsByPrereq?.[p.id];
+      const qual = qualStage ? qualificationPill(qualStage) : null;
       return {
         prereq: p,
         catCode: code,
         itemCode: formatVcrItemCode(code, p.display_order),
         pill,
+        qual,
         partyNames: [...delivering, ...approving].join(' '),
       };
     });
