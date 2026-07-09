@@ -249,7 +249,7 @@ export const VCRStandardView: React.FC<Props> = ({
                   <NavItem id="pac"            label="PAC"            icon={Award}         active={activeTab==='pac'}            locked={!(counts.total>0 && counts.terminal===counts.total)} onClick={() => setActiveTab('pac')} />
 
                   <Separator className="mx-3 my-5" />
-                  <div className="text-[9px] font-extrabold tracking-[.14em] text-slate-400 px-4 pb-2 font-mono">DELIVERABLES</div>
+                  <div className="text-[9.5px] font-bold tracking-[.14em] text-muted-foreground/70 px-4 pb-2">DELIVERABLES</div>
 
                   <NavItem id="systems"      label="Systems"                 icon={Layers}        active={activeTab==='systems'}      tick={systems.length>0} onClick={() => setActiveTab('systems')} />
                   <NavItem id="witnessholds" label="Witness & Holds"         icon={Eye}           active={activeTab==='witnessholds'} onClick={() => setActiveTab('witnessholds')} />
