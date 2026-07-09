@@ -1,13 +1,18 @@
 /**
- * Shared item-status mapping for the standardized VCR view.
- * Maps p2a_vcr_prerequisites.status → 5-way pill label + tone bucket.
+ * UNIVERSAL STATUS COLOUR LANGUAGE
  *
- *   TERMINAL  = ACCEPTED | QUALIFICATION_APPROVED          → green
- *   PIPELINE  = READY_FOR_REVIEW | IN_PROGRESS             → blue
- *   REWORK    = REJECTED                                   → red
- *   QUAL      = QUALIFICATION_REQUESTED                    → amber
- *   TODO      = NOT_STARTED                                → muted
+ *   GREY   = To deliver / Draft (not started)
+ *   AMBER  = Under review (being reviewed)
+ *   GREEN  = Approved / Completed
+ *   RED    = Rework required (rejected)
+ *
+ * The same four colours are used for the ITEM status badge AND for the
+ * QUALIFICATION overlay badge. Users learn the key once and it applies
+ * everywhere in the VCR items list.
  */
+
+// ---- Item status --------------------------------------------------------
+
 export type PrereqStatus =
   | 'NOT_STARTED'
   | 'IN_PROGRESS'
@@ -17,7 +22,12 @@ export type PrereqStatus =
   | 'QUALIFICATION_REQUESTED'
   | 'QUALIFICATION_APPROVED';
 
-export type StandardBucket = 'terminal' | 'pipeline' | 'rework' | 'qualification' | 'todeliver';
+export type StandardBucket =
+  | 'todeliver'      // grey
+  | 'pipeline'       // amber (under review)
+  | 'terminal'       // green (approved)
+  | 'rework'         // red (rejected)
+  | 'qualification'; // handled by overlay; keeps filter chip compatibility
 
 export interface StandardPill {
   bucket: StandardBucket;
@@ -25,27 +35,64 @@ export interface StandardPill {
   className: string;
 }
 
+/** Enum → display mapping for the item status badge (universal colours). */
 export const standardPill = (status: PrereqStatus): StandardPill => {
   switch (status) {
     case 'ACCEPTED':
-      return { bucket: 'terminal', label: 'Accepted', className: 'bg-emerald-50 text-emerald-700' };
+      return { bucket: 'terminal', label: 'Approved', className: 'bg-emerald-50 text-emerald-700 border border-emerald-200' };
     case 'QUALIFICATION_APPROVED':
-      return { bucket: 'terminal', label: 'Qualified', className: 'bg-emerald-50 text-emerald-700' };
+      // Item's parent status when its qualification was approved.
+      return { bucket: 'terminal', label: 'Approved', className: 'bg-emerald-50 text-emerald-700 border border-emerald-200' };
     case 'READY_FOR_REVIEW':
-      return { bucket: 'pipeline', label: 'In review', className: 'bg-blue-50 text-blue-700' };
     case 'IN_PROGRESS':
-      return { bucket: 'pipeline', label: 'In progress', className: 'bg-blue-50 text-blue-700' };
+      return { bucket: 'pipeline', label: 'Under Review', className: 'bg-amber-50 text-amber-700 border border-amber-200' };
     case 'REJECTED':
-      return { bucket: 'rework', label: 'Rework', className: 'bg-red-50 text-red-700' };
+      return { bucket: 'rework', label: 'Rework', className: 'bg-red-50 text-red-700 border border-red-200' };
     case 'QUALIFICATION_REQUESTED':
-      return { bucket: 'qualification', label: 'Qualification', className: 'bg-amber-50 text-amber-700' };
+      // Parent item shows amber "Under Review" while a qualification is in flight;
+      // the qualification overlay carries the finer-grained stage.
+      return { bucket: 'qualification', label: 'Under Review', className: 'bg-amber-50 text-amber-700 border border-amber-200' };
     case 'NOT_STARTED':
     default:
-      return { bucket: 'todeliver', label: 'To deliver', className: 'bg-slate-100 text-muted-foreground' };
+      return { bucket: 'todeliver', label: 'To Deliver', className: 'bg-slate-100 text-slate-600 border border-slate-200' };
   }
 };
 
-/** Normalize the free-text `category` column onto the 5-way VCR taxonomy. */
+// ---- Qualification overlay ---------------------------------------------
+
+export type QualStage = 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED';
+
+export interface QualPill {
+  stage: QualStage;
+  /** Universal colour bucket, shared with items. */
+  bucket: 'todeliver' | 'pipeline' | 'terminal' | 'rework';
+  /** Label is ALWAYS "Qualification" — colour carries the stage. */
+  label: 'Qualification';
+  className: string;
+  /** For tooltips / aria labels. */
+  stageLabel: string;
+}
+
+export const qualificationPill = (stage: QualStage): QualPill => {
+  switch (stage) {
+    case 'APPROVED':
+      return { stage, bucket: 'terminal', label: 'Qualification', stageLabel: 'Approved',
+        className: 'bg-emerald-50 text-emerald-700 border border-emerald-200' };
+    case 'REJECTED':
+      return { stage, bucket: 'rework', label: 'Qualification', stageLabel: 'Rejected — rework required',
+        className: 'bg-red-50 text-red-700 border border-red-200' };
+    case 'PENDING':
+      return { stage, bucket: 'pipeline', label: 'Qualification', stageLabel: 'Under review',
+        className: 'bg-amber-50 text-amber-700 border border-amber-200' };
+    case 'DRAFT':
+    default:
+      return { stage, bucket: 'todeliver', label: 'Qualification', stageLabel: 'Draft',
+        className: 'bg-slate-100 text-slate-600 border border-slate-200' };
+  }
+};
+
+// ---- Category helpers (unchanged) --------------------------------------
+
 export const normalizeCategoryCode = (raw: string | null | undefined): 'DI' | 'TI' | 'OI' | 'MS' | 'HS' | 'XX' => {
   const s = (raw || '').toLowerCase();
   if (/design/.test(s) || s === 'di') return 'DI';
