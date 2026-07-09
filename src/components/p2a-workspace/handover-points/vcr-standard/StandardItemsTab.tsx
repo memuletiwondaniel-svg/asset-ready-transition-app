@@ -190,6 +190,45 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
             );
           })}
         </div>
+        <TooltipProvider delayDuration={100}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                aria-label="Status colour legend"
+                className="h-7 w-7 flex-none inline-flex items-center justify-center rounded-full border border-border bg-background text-muted-foreground hover:text-foreground"
+              >
+                <Info className="w-3.5 h-3.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" align="end" className="w-72 p-3">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-foreground mb-2">
+                Universal status colours
+              </div>
+              <ul className="space-y-1.5 text-[11.5px] text-foreground/80">
+                <li className="flex items-start gap-2">
+                  <span className="mt-1 w-2.5 h-2.5 rounded-full bg-slate-300 flex-none" />
+                  <span><b>Grey</b> — To deliver / Draft (not started)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="mt-1 w-2.5 h-2.5 rounded-full bg-amber-400 flex-none" />
+                  <span><b>Amber</b> — Under review</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="mt-1 w-2.5 h-2.5 rounded-full bg-emerald-500 flex-none" />
+                  <span><b>Green</b> — Approved / Completed</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="mt-1 w-2.5 h-2.5 rounded-full bg-red-500 flex-none" />
+                  <span><b>Red</b> — Rework required (rejected)</span>
+                </li>
+              </ul>
+              <div className="mt-2 pt-2 border-t border-border text-[10.5px] text-muted-foreground leading-snug">
+                Colours mean the same thing for item status <em>and</em> Qualification badges.
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         <div className="relative w-56 flex-none">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/60" />
           <Input
