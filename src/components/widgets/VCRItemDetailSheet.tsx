@@ -1180,7 +1180,19 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                           B2B
                         </button>
                       ) : null;
-                      return partyRow(role.name, shown || null, isYou, chip);
+                      const statusStr = shown?.user_id ? (approverStatusByUserId as any)[shown.user_id] : null;
+                      const approved = statusStr === 'APPROVED' || statusStr === 'ACCEPTED';
+                      const statusDot = shown ? (
+                        approved ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            Approved
+                          </span>
+                        ) : (
+                          <span className="text-[11px] text-muted-foreground">Pending</span>
+                        )
+                      ) : null;
+                      return partyRow(role.name, shown || null, isYou, chip, statusDot);
                     })
                   )}
                 </div>
