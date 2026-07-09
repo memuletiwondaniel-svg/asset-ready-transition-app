@@ -596,6 +596,14 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
     enabled: open && !!item,
   });
 
+  // AI-1 Readiness — hook drives the block; explicit `insights` prop overrides for tests.
+  // Cache is keyed by the canonical vcr_items.id, but some callers still pass a
+  // prereq id in item.id. Prefer the resolved canonical id, fall back to item.id.
+  const canonicalItemIdForInsights = (vcrItemDetail as any)?.canonical_vcr_item_id ?? item?.id;
+  const { insights: liveInsights, recompute } = useVCRItemInsights(vcrId, canonicalItemIdForInsights);
+  const effectiveInsights = insights ?? liveInsights;
+
+
   // Lifecycle mode (plan vs execution) — derived from the VCR row itself,
   // never from a caller prop that could be stale. resolveVCRMode is the
   // shared boundary used by both overlay entry points.
