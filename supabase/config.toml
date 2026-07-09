@@ -139,3 +139,7 @@ verify_jwt = false
 [functions.test-workflow-e2e]
 verify_jwt = false
 
+[functions.seed-evidence-files]
+verify_jwt = false
+
+

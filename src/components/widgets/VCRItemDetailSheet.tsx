@@ -192,34 +192,39 @@ const InsightsBlock: React.FC<{
 }> = ({ insights, viewer, onRecompute, recomputing }) => {
   const state = insights?.state ?? 'unavailable';
   const severity = insights?.severity;
-  const summaryWord =
+
+
+
+  // Readiness badge + tone are driven purely by the computed severity.
+  const badge =
     severity === 'green'
-      ? 'ready'
+      ? { label: 'Ready', className: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900' }
       : severity === 'amber'
-      ? 'partially complete'
+      ? { label: 'Partially complete', className: 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-900' }
       : severity === 'red'
-      ? 'not ready'
+      ? { label: 'Not ready', className: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-300 dark:border-red-900' }
       : state === 'pending'
-      ? 'checking…'
-      : 'not yet computed';
+      ? { label: 'Checking…', className: 'bg-muted text-muted-foreground border-border' }
+      : { label: 'Not yet computed', className: 'bg-muted text-muted-foreground border-border' };
 
   return (
     <section className="space-y-2">
-      <div className="flex items-center justify-between">
-        <h3 className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
-          Insights
-        </h3>
-        {state === 'ready' && (
-          <span className="text-[10px] text-muted-foreground">Live records · advisory</span>
-        )}
-      </div>
+      <h3 className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
+        Insights
+      </h3>
 
-      <div className="rounded-lg border border-border/60 bg-[#FBFCFE] dark:bg-muted/20 px-4 py-3">
-        {/* Title row: "Readiness — <summary>" left, Recompute right */}
-        <div className="flex items-start justify-between gap-3">
-          <div className="text-[13px] font-semibold text-foreground">
-            Readiness <span className="text-muted-foreground font-normal">— {summaryWord}</span>
-          </div>
+      {/* Subtly toned "computed intelligence" panel — very light blue-grey */}
+      <div className="rounded-lg border border-sky-100 dark:border-sky-950/60 bg-[#F5F8FC] dark:bg-sky-950/10 px-4 py-3">
+        {/* Row 1: readiness badge (left) + Recompute (right) */}
+        <div className="flex items-center justify-between gap-3">
+          <span
+            className={cn(
+              'inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium',
+              badge.className,
+            )}
+          >
+            {badge.label}
+          </span>
           {onRecompute && (
             <button
               type="button"
@@ -240,7 +245,7 @@ const InsightsBlock: React.FC<{
         )}
 
         {state === 'unavailable' && (
-          <p className="mt-1 text-[12px] text-muted-foreground leading-relaxed">
+          <p className="mt-2 text-[12px] text-muted-foreground leading-relaxed">
             No readiness signal is available for this item yet.
           </p>
         )}
@@ -248,14 +253,19 @@ const InsightsBlock: React.FC<{
         {state === 'ready' && (
           <>
             {insights?.headline && (
-              <p className="mt-1 text-[12.5px] leading-relaxed text-foreground/85">
+              <p className="mt-2 text-[12.5px] leading-relaxed text-foreground/85">
                 {insights.headline}
               </p>
             )}
 
             {(insights?.facts?.length ?? 0) > 0 && (
-              <div className="mt-3 border-t border-border/60 divide-y divide-border/50">
+              <div className="mt-3 border-t border-sky-100/70 dark:border-sky-950/50 divide-y divide-sky-100/70 dark:divide-sky-950/50">
                 {insights!.facts!.map((f, i) => {
+                  // Fact-value colour = the fact's own semantic state.
+                  // 'amber' / 'red' mark a genuine gap or risk (incomplete
+                  // count, outstanding list, breached threshold). Anything
+                  // else — including complete/verified values — renders as
+                  // default foreground so a green fact never reads as amber.
                   const toneClass =
                     f.tone === 'red'
                       ? 'text-red-700 dark:text-red-300'
@@ -274,30 +284,18 @@ const InsightsBlock: React.FC<{
               </div>
             )}
 
-            {(insights?.sources?.length ?? 0) > 0 && (
-              <div className="mt-3 pt-2 border-t border-border/60 flex flex-wrap gap-3">
-                {insights!.sources!.map((s, i) => (
-                  <a
-                    key={i}
-                    href={s.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-[12px] text-primary hover:underline inline-flex items-center gap-1"
-                  >
-                    {s.label}
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
-                ))}
-              </div>
-            )}
+            {/* Deep-links intentionally omitted. The seeded "notification
+                register" href was a placeholder — no such ORSH route exists
+                — so we do not render a dead link. Re-enable this block only
+                once `sources[].href` resolves to a real in-app route. */}
 
             {viewer === 'delivering' && insights?.delivering_action && (
-              <p className="mt-2 pt-2 border-t border-border/60 text-[12px] text-foreground/80">
+              <p className="mt-2 pt-2 border-t border-sky-100/70 dark:border-sky-950/50 text-[12px] text-foreground/80">
                 {insights.delivering_action}
               </p>
             )}
             {viewer === 'approving' && insights?.approver_check && (
-              <p className="mt-2 pt-2 border-t border-border/60 text-[12px] text-foreground/80">
+              <p className="mt-2 pt-2 border-t border-sky-100/70 dark:border-sky-950/50 text-[12px] text-foreground/80">
                 {insights.approver_check}
               </p>
             )}
@@ -307,6 +305,7 @@ const InsightsBlock: React.FC<{
     </section>
   );
 };
+
 
 // ─── Confirmation dialog (4 variants share this shell) ────────────
 type ConfirmKind = 'mark_complete' | 'raise_qualification' | 'accept' | 'return';
