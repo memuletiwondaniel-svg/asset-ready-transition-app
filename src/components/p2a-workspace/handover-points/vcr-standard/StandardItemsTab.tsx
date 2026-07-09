@@ -13,6 +13,7 @@ import { standardPill, normalizeCategoryCode, CATEGORY_META, PrereqStatus, Stand
 interface Props { handoverPoint: P2AHandoverPoint; projectId?: string }
 
 type Filter = 'all' | 'rework' | 'pipeline' | 'qualification' | 'terminal';
+type ActiveFilter = Exclude<Filter, 'all'>;
 type SortCol = 'id' | 'description' | 'status';
 type SortDir = 'asc' | 'desc';
 
@@ -24,10 +25,9 @@ const FILTERS: { id: Filter; label: string }[] = [
   { id: 'terminal', label: 'Completed' },
 ];
 
-const matchesFilter = (bucket: StandardBucket, f: Filter): boolean => {
-  if (f === 'all') return true;
-  if (f === 'pipeline') return bucket === 'pipeline';
-  return bucket === f;
+const matchesFilter = (bucket: StandardBucket, active: Set<ActiveFilter>): boolean => {
+  if (active.size === 0) return true;
+  return active.has(bucket as ActiveFilter);
 };
 
 /** Bucket-order priority when no user sort applied.
@@ -45,10 +45,24 @@ const bucketPriority = (bucket: StandardBucket, status: PrereqStatus): number =>
 export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) => {
   const { prerequisites, isLoading } = useVCRPrerequisites(handoverPoint.id);
   const { data: partiesRollup } = useVCRPartiesRollup(handoverPoint.id, projectId || null);
-  const [filter, setFilter] = useState<Filter>('all');
+  const [activeFilters, setActiveFilters] = useState<Set<ActiveFilter>>(new Set());
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<{ col: SortCol; dir: SortDir } | null>(null);
   const [openItem, setOpenItem] = useState<VCRItemBasic | null>(null);
+
+  const toggleFilter = (id: Filter) => {
+    if (id === 'all') {
+      setActiveFilters(new Set());
+      return;
+    }
+    const activeId = id as ActiveFilter;
+    setActiveFilters(prev => {
+      const next = new Set(prev);
+      if (next.has(activeId)) next.delete(activeId);
+      else next.add(activeId);
+      return next;
+    });
+  };
 
   const rows = useMemo(() => {
     const withPill = prerequisites.map(p => {
@@ -68,7 +82,7 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
 
     const q = search.trim().toLowerCase();
     const filtered = withPill.filter(r => {
-      if (!matchesFilter(r.pill.bucket, filter)) return false;
+      if (!matchesFilter(r.pill.bucket, activeFilters)) return false;
       if (!q) return true;
       return (
         r.itemCode.toLowerCase().includes(q) ||
@@ -93,7 +107,7 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
       return (a.prereq.display_order ?? 0) - (b.prereq.display_order ?? 0);
     });
     return filtered;
-  }, [prerequisites, partiesRollup, filter, search, sort]);
+  }, [prerequisites, partiesRollup, activeFilters, search, sort]);
 
   const openRow = (r: typeof rows[number]) => {
     setOpenItem({
@@ -130,20 +144,25 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
       {/* Filter chips + search on same row */}
       <div className="flex items-center gap-2 p-2.5 border-b border-border bg-muted/30 flex-wrap">
         <div className="flex gap-1.5 flex-wrap flex-1 min-w-0">
-          {FILTERS.map(f => (
-            <button
-              key={f.id}
-              onClick={() => setFilter(f.id)}
-              className={cn(
-                'text-[11px] font-semibold px-3 py-0.5 rounded-full border transition',
-                filter === f.id
-                  ? 'bg-foreground text-background border-foreground'
-                  : 'bg-background text-muted-foreground border-border hover:text-foreground'
-              )}
-            >
-              {f.label}
-            </button>
-          ))}
+          {FILTERS.map(f => {
+            const isActive = f.id === 'all'
+              ? activeFilters.size === 0
+              : activeFilters.has(f.id as ActiveFilter);
+            return (
+              <button
+                key={f.id}
+                onClick={() => toggleFilter(f.id)}
+                className={cn(
+                  'text-[11px] font-semibold px-3 py-0.5 rounded-full border transition',
+                  isActive
+                    ? 'bg-foreground text-background border-foreground'
+                    : 'bg-background text-muted-foreground border-border hover:text-foreground'
+                )}
+              >
+                {f.label}
+              </button>
+            );
+          })}
         </div>
         <div className="relative w-56 flex-none">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/60" />
