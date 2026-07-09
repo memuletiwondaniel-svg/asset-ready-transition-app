@@ -170,7 +170,7 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search ID, description, party…"
-            className="h-7 pl-7 text-[11.5px]"
+            className="h-7 pl-7 text-[11.5px] placeholder:text-[10px] placeholder:text-muted-foreground/50"
           />
         </div>
       </div>
