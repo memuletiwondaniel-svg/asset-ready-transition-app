@@ -274,13 +274,26 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
                 {r.itemCode}
               </div>
               <div className="flex-1 text-[13px] font-normal leading-snug">{r.prereq.summary}</div>
-              <div
-                className={cn(
-                  'w-[92px] flex-none text-center text-[10.5px] font-bold py-0.5 rounded-full',
-                  r.pill.className
+              <div className="flex-none flex items-center justify-end gap-1.5">
+                {r.qual && (
+                  <span
+                    title={`Qualification — ${r.qual.stageLabel}`}
+                    className={cn(
+                      'text-[10.5px] font-bold px-2 py-0.5 rounded-full',
+                      r.qual.className
+                    )}
+                  >
+                    {r.qual.label}
+                  </span>
                 )}
-              >
-                {r.pill.label}
+                <span
+                  className={cn(
+                    'w-[92px] text-center text-[10.5px] font-bold py-0.5 rounded-full',
+                    r.pill.className
+                  )}
+                >
+                  {r.pill.label}
+                </span>
               </div>
             </button>
           ))}
