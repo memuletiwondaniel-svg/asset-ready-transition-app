@@ -21,7 +21,7 @@ const FILTERS: { id: Filter; label: string }[] = [
   { id: 'rework', label: 'Rework' },
   { id: 'pipeline', label: 'In review' },
   { id: 'qualification', label: 'Qualification' },
-  { id: 'terminal', label: 'Terminal' },
+  { id: 'terminal', label: 'Completed' },
 ];
 
 const matchesFilter = (bucket: StandardBucket, f: Filter): boolean => {
