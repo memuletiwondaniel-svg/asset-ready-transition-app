@@ -515,7 +515,11 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   // "DELIVERING PARTY (0)" empty state seen before this fix.
 
   // AI-1 Readiness — hook drives the block; explicit `insights` prop overrides for tests.
-  const { insights: liveInsights, recompute } = useVCRItemInsights(vcrId, item?.id);
+  // NOTE: cache is keyed by the canonical vcr_items.id, but some callers still pass
+  // a prereq id in item.id. We prefer the resolved canonical id from vcrItemDetail
+  // once it loads, and fall back to item.id only until it does.
+  const canonicalItemIdForInsights = (vcrItemDetail as any)?.canonical_vcr_item_id ?? item?.id;
+  const { insights: liveInsights, recompute } = useVCRItemInsights(vcrId, canonicalItemIdForInsights);
   const effectiveInsights = insights ?? liveInsights;
 
   // ─── Load authored item + per-VCR overrides + approving-roles catalog ──
