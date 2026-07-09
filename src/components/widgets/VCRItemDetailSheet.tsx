@@ -1032,29 +1032,34 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
     holder: { user_id: string; full_name: string; avatar_url: string | null } | null,
     isYou: boolean,
     trailing?: React.ReactNode,
+    statusDot?: React.ReactNode,
   ) => (
     <div
       key={`${role}-${holder?.user_id ?? 'unassigned'}`}
-      className="grid grid-cols-[minmax(140px,180px)_28px_minmax(0,1fr)_auto] items-center gap-x-2 py-1.5"
+      className="flex items-center gap-3 py-2"
     >
-      <span className="text-[11px] font-medium text-foreground/80 truncate" title={role}>{role}</span>
       {holder ? (
-        <>
-          <Avatar className="h-6 w-6 justify-self-start">
-            <AvatarImage src={getAvatarUrl(holder.avatar_url)} />
-            <AvatarFallback className="text-[9px]">{getInitials(holder.full_name)}</AvatarFallback>
-          </Avatar>
-          <span className={cn('text-xs truncate min-w-0', isYou && 'font-semibold')}>
-            {isYou ? `${holder.full_name} (you)` : holder.full_name}
-          </span>
-        </>
+        <Avatar className="h-8 w-8 shrink-0">
+          <AvatarImage src={getAvatarUrl(holder.avatar_url)} />
+          <AvatarFallback className="text-[10px]">{getInitials(holder.full_name)}</AvatarFallback>
+        </Avatar>
       ) : (
-        <>
-          <span className="w-6 h-6" />
-          <span className="text-[11px] italic text-muted-foreground truncate min-w-0">No holder assigned</span>
-        </>
+        <div className="h-8 w-8 shrink-0 rounded-full bg-muted" />
       )}
-      <div className="justify-self-end">{trailing}</div>
+      <div className="min-w-0 flex-1 leading-tight">
+        <div className="flex items-center gap-1.5 min-w-0">
+          {holder ? (
+            <span className={cn('text-[13px] truncate', isYou && 'font-semibold')}>
+              {isYou ? `${holder.full_name} (you)` : holder.full_name}
+            </span>
+          ) : (
+            <span className="text-[12px] italic text-muted-foreground truncate">No holder assigned</span>
+          )}
+          {trailing && <span className="shrink-0">{trailing}</span>}
+        </div>
+        <div className="text-[11px] text-muted-foreground truncate" title={role}>{role}</div>
+      </div>
+      {statusDot && <div className="shrink-0">{statusDot}</div>}
     </div>
   );
 
