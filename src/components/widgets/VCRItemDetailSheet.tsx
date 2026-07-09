@@ -1067,10 +1067,10 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent className="sm:max-w-xl overflow-hidden flex flex-col p-0 !z-modal-critical" data-rm-safe hideClose>
-          {/* Header — single status chip (A1) */}
+          {/* Header — ID chip leads, status on the right, single-line meta row below title */}
           <SheetHeader className="px-6 pt-5 pb-4 border-b shrink-0 space-y-2">
             <div className="flex items-center justify-between gap-2">
-              <Badge variant="outline" className="text-[10px] rounded-md font-mono font-medium">
+              <Badge variant="outline" className="text-[10px] rounded-md font-mono font-medium bg-muted/50 text-foreground/80">
                 {item.itemCode}
               </Badge>
               <Badge
@@ -1082,14 +1082,17 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
             </div>
             <SheetTitle className="text-[15px] leading-snug font-semibold">{item.vcr_item}</SheetTitle>
             <SheetDescription className="sr-only">VCR item detail</SheetDescription>
-            <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
-              <Badge variant="secondary" className="text-[10px] rounded-md font-normal bg-muted/60 text-muted-foreground">
+            <div className="flex flex-nowrap items-center gap-1.5 pt-0.5 min-w-0 overflow-hidden whitespace-nowrap">
+              <span className="text-[11px] text-muted-foreground font-medium shrink-0">
                 {item.category_name}
-              </Badge>
+              </span>
               {vcrItemDetail?.effective_topic && (
-                <Badge variant="secondary" className="text-[10px] rounded-md font-normal bg-muted/60 text-muted-foreground">
-                  {vcrItemDetail.effective_topic}
-                </Badge>
+                <>
+                  <span className="text-[11px] text-muted-foreground/60 shrink-0">·</span>
+                  <span className="inline-flex items-center rounded-md bg-muted/60 px-1.5 py-0.5 text-[11px] text-muted-foreground shrink-0 max-w-[220px] truncate">
+                    {vcrItemDetail.effective_topic}
+                  </span>
+                </>
               )}
             </div>
           </SheetHeader>
