@@ -1437,16 +1437,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                             )}
                           </div>
                         </div>
-                        {!deliveringCanEdit ? (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 shrink-0"
-                            onClick={() => openSignedUrl(f.file_path)}
-                          >
-                            <Eye className="h-3.5 w-3.5" />
-                          </Button>
-                        ) : (
+                        {!deliveringCanEdit ? null : (
                           <Button
                             variant="ghost"
                             size="icon"
