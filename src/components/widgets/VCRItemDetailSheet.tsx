@@ -697,6 +697,28 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
     enabled: open && !!item?.prerequisite_id,
   });
 
+  // Per-approver approval status (drives the ✓ Approved / Pending indicator on each
+  // approving-party row). Keyed by approver_user_id so we can map back to the
+  // resolved holder shown in the row.
+  const { data: approverStatusByUserId = {} } = useQuery({
+    queryKey: ['vcr-item-approver-status', item?.prerequisite_id],
+    queryFn: async (): Promise<Record<string, string>> => {
+      if (!item?.prerequisite_id) return {};
+      const { data, error } = await (supabase as any)
+        .from('vcr_prerequisite_approvals')
+        .select('approver_user_id, status')
+        .eq('prerequisite_id', item.prerequisite_id);
+      if (error) return {};
+      const out: Record<string, string> = {};
+      (data || []).forEach((r: any) => {
+        if (r.approver_user_id) out[r.approver_user_id] = r.status;
+      });
+      return out;
+    },
+    enabled: open && !!item?.prerequisite_id,
+  });
+
+
   // ─── Status mutation (reuses existing prereq backing) ──────────
   const updateStatus = useMutation({
     mutationFn: async ({ status }: { status: string }) => {
