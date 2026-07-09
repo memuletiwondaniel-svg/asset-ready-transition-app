@@ -192,16 +192,8 @@ const InsightsBlock: React.FC<{
 }> = ({ insights, viewer, onRecompute, recomputing }) => {
   const state = insights?.state ?? 'unavailable';
   const severity = insights?.severity;
-  const summaryWord =
-    severity === 'green'
-      ? 'ready'
-      : severity === 'amber'
-      ? 'partially complete'
-      : severity === 'red'
-      ? 'not ready'
-      : state === 'pending'
-      ? 'checking…'
-      : 'not yet computed';
+
+
 
   // Readiness badge + tone are driven purely by the computed severity.
   const badge =
