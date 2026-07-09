@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   FileText,
-  Eye,
+  // Eye removed — filename is already clickable
   X,
   ChevronDown,
   ChevronRight,
