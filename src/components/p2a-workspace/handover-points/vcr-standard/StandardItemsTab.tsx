@@ -45,10 +45,23 @@ const bucketPriority = (bucket: StandardBucket, status: PrereqStatus): number =>
 export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) => {
   const { prerequisites, isLoading } = useVCRPrerequisites(handoverPoint.id);
   const { data: partiesRollup } = useVCRPartiesRollup(handoverPoint.id, projectId || null);
-  const [filter, setFilter] = useState<Filter>('all');
+  const [activeFilters, setActiveFilters] = useState<Set<ActiveFilter>>(new Set());
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<{ col: SortCol; dir: SortDir } | null>(null);
   const [openItem, setOpenItem] = useState<VCRItemBasic | null>(null);
+
+  const toggleFilter = (id: Filter) => {
+    if (id === 'all') {
+      setActiveFilters(new Set());
+      return;
+    }
+    setActiveFilters(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const rows = useMemo(() => {
     const withPill = prerequisites.map(p => {
