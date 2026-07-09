@@ -2,13 +2,16 @@ import React, { useMemo, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { Search, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Search, ArrowUpDown, ArrowUp, ArrowDown, Info } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { P2AHandoverPoint } from '../../hooks/useP2AHandoverPoints';
 import { useVCRPrerequisites } from '../../hooks/useVCRPrerequisites';
 import { useVCRPartiesRollup } from './useVCRPartiesRollup';
 import { VCRItemDetailSheet, VCRItemBasic } from '@/components/widgets/VCRItemDetailSheet';
 import { formatVcrItemCode } from '@/lib/vcrItemCode';
-import { standardPill, normalizeCategoryCode, CATEGORY_META, PrereqStatus, StandardBucket } from './standardStatus';
+import { standardPill, qualificationPill, QualStage, normalizeCategoryCode, CATEGORY_META, PrereqStatus, StandardBucket } from './standardStatus';
 
 interface Props { handoverPoint: P2AHandoverPoint; projectId?: string }
 
@@ -45,6 +48,26 @@ const bucketPriority = (bucket: StandardBucket, status: PrereqStatus): number =>
 export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) => {
   const { prerequisites, isLoading } = useVCRPrerequisites(handoverPoint.id);
   const { data: partiesRollup } = useVCRPartiesRollup(handoverPoint.id, projectId || null);
+  // Qualification overlay: latest qualification per prerequisite for this VCR.
+  const { data: qualsByPrereq } = useQuery({
+    queryKey: ['vcr-quals-overlay', handoverPoint.id],
+    enabled: !!handoverPoint.id,
+    queryFn: async (): Promise<Record<string, QualStage>> => {
+      const prereqIds = (prerequisites || []).map(p => p.id);
+      if (!prereqIds.length) return {};
+      const { data, error } = await (supabase as any)
+        .from('p2a_vcr_qualifications')
+        .select('vcr_prerequisite_id,status,submitted_at')
+        .in('vcr_prerequisite_id', prereqIds)
+        .order('submitted_at', { ascending: false });
+      if (error) throw error;
+      const map: Record<string, QualStage> = {};
+      for (const q of (data || []) as any[]) {
+        if (!map[q.vcr_prerequisite_id]) map[q.vcr_prerequisite_id] = q.status as QualStage;
+      }
+      return map;
+    },
+  });
   const [activeFilters, setActiveFilters] = useState<Set<ActiveFilter>>(new Set());
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<{ col: SortCol; dir: SortDir } | null>(null);
@@ -71,11 +94,14 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
       const code = cat === 'XX' ? '??' : cat;
       const delivering = partiesRollup?.deliveringByPrereq[p.id] || [];
       const approving = partiesRollup?.approvingByPrereq[p.id] || [];
+      const qualStage = qualsByPrereq?.[p.id];
+      const qual = qualStage ? qualificationPill(qualStage) : null;
       return {
         prereq: p,
         catCode: code,
         itemCode: formatVcrItemCode(code, p.display_order),
         pill,
+        qual,
         partyNames: [...delivering, ...approving].join(' '),
       };
     });
@@ -107,7 +133,7 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
       return (a.prereq.display_order ?? 0) - (b.prereq.display_order ?? 0);
     });
     return filtered;
-  }, [prerequisites, partiesRollup, activeFilters, search, sort]);
+  }, [prerequisites, partiesRollup, qualsByPrereq, activeFilters, search, sort]);
 
   const openRow = (r: typeof rows[number]) => {
     setOpenItem({
@@ -164,6 +190,45 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
             );
           })}
         </div>
+        <TooltipProvider delayDuration={100}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                aria-label="Status colour legend"
+                className="h-7 w-7 flex-none inline-flex items-center justify-center rounded-full border border-border bg-background text-muted-foreground hover:text-foreground"
+              >
+                <Info className="w-3.5 h-3.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" align="end" className="w-72 p-3">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-foreground mb-2">
+                Universal status colours
+              </div>
+              <ul className="space-y-1.5 text-[11.5px] text-foreground/80">
+                <li className="flex items-start gap-2">
+                  <span className="mt-1 w-2.5 h-2.5 rounded-full bg-slate-300 flex-none" />
+                  <span><b>Grey</b> — To deliver / Draft (not started)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="mt-1 w-2.5 h-2.5 rounded-full bg-amber-400 flex-none" />
+                  <span><b>Amber</b> — Under review</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="mt-1 w-2.5 h-2.5 rounded-full bg-emerald-500 flex-none" />
+                  <span><b>Green</b> — Approved / Completed</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="mt-1 w-2.5 h-2.5 rounded-full bg-red-500 flex-none" />
+                  <span><b>Red</b> — Rework required (rejected)</span>
+                </li>
+              </ul>
+              <div className="mt-2 pt-2 border-t border-border text-[10.5px] text-muted-foreground leading-snug">
+                Colours mean the same thing for item status <em>and</em> Qualification badges.
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         <div className="relative w-56 flex-none">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/60" />
           <Input
@@ -209,13 +274,26 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
                 {r.itemCode}
               </div>
               <div className="flex-1 text-[13px] font-normal leading-snug">{r.prereq.summary}</div>
-              <div
-                className={cn(
-                  'w-[92px] flex-none text-center text-[10.5px] font-bold py-0.5 rounded-full',
-                  r.pill.className
+              <div className="flex-none flex items-center justify-end gap-1.5">
+                {r.qual && (
+                  <span
+                    title={`Qualification — ${r.qual.stageLabel}`}
+                    className={cn(
+                      'text-[10.5px] font-bold px-2 py-0.5 rounded-full',
+                      r.qual.className
+                    )}
+                  >
+                    {r.qual.label}
+                  </span>
                 )}
-              >
-                {r.pill.label}
+                <span
+                  className={cn(
+                    'w-[92px] text-center text-[10.5px] font-bold py-0.5 rounded-full',
+                    r.pill.className
+                  )}
+                >
+                  {r.pill.label}
+                </span>
               </div>
             </button>
           ))}
