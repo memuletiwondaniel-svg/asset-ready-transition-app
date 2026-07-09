@@ -13,6 +13,7 @@ import { standardPill, normalizeCategoryCode, CATEGORY_META, PrereqStatus, Stand
 interface Props { handoverPoint: P2AHandoverPoint; projectId?: string }
 
 type Filter = 'all' | 'rework' | 'pipeline' | 'qualification' | 'terminal';
+type ActiveFilter = Exclude<Filter, 'all'>;
 type SortCol = 'id' | 'description' | 'status';
 type SortDir = 'asc' | 'desc';
 
@@ -24,10 +25,9 @@ const FILTERS: { id: Filter; label: string }[] = [
   { id: 'terminal', label: 'Completed' },
 ];
 
-const matchesFilter = (bucket: StandardBucket, f: Filter): boolean => {
-  if (f === 'all') return true;
-  if (f === 'pipeline') return bucket === 'pipeline';
-  return bucket === f;
+const matchesFilter = (bucket: StandardBucket, active: Set<ActiveFilter>): boolean => {
+  if (active.size === 0) return true;
+  return active.has(bucket as ActiveFilter);
 };
 
 /** Bucket-order priority when no user sort applied.
