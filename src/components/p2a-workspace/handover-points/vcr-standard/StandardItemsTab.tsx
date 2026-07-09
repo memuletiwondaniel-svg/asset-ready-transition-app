@@ -48,9 +48,6 @@ const bucketPriority = (bucket: StandardBucket, status: PrereqStatus): number =>
 export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) => {
   const { prerequisites, isLoading } = useVCRPrerequisites(handoverPoint.id);
   const { data: partiesRollup } = useVCRPartiesRollup(handoverPoint.id, projectId || null);
-export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) => {
-  const { prerequisites, isLoading } = useVCRPrerequisites(handoverPoint.id);
-  const { data: partiesRollup } = useVCRPartiesRollup(handoverPoint.id, projectId || null);
   // Qualification overlay: latest qualification per prerequisite for this VCR.
   const { data: qualsByPrereq } = useQuery({
     queryKey: ['vcr-quals-overlay', handoverPoint.id],
