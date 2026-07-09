@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   FileText,
-  Eye,
+  // Eye removed — filename is already clickable
   X,
   ChevronDown,
   ChevronRight,
@@ -180,6 +180,10 @@ const sanitizeFile = (name: string) =>
   name.replace(/[^a-zA-Z0-9._-]+/g, '_').slice(0, 120);
 
 // ─── Insights block ────────────────────────────────────────────────
+// Clean bordered card, no left taper/accent. Renders one of three states:
+//   ready       → title + summary sentence + fact rows + optional deep-link
+//   pending     → subtle "checking…" line
+//   unavailable → honest empty state with a Compute affordance
 const InsightsBlock: React.FC<{
   insights?: VCRInsights;
   viewer: 'delivering' | 'approving' | 'observer';
@@ -187,6 +191,17 @@ const InsightsBlock: React.FC<{
   recomputing?: boolean;
 }> = ({ insights, viewer, onRecompute, recomputing }) => {
   const state = insights?.state ?? 'unavailable';
+  const severity = insights?.severity;
+  const summaryWord =
+    severity === 'green'
+      ? 'ready'
+      : severity === 'amber'
+      ? 'partially complete'
+      : severity === 'red'
+      ? 'not ready'
+      : state === 'pending'
+      ? 'checking…'
+      : 'not yet computed';
 
   return (
     <section className="space-y-2">
@@ -194,56 +209,52 @@ const InsightsBlock: React.FC<{
         <h3 className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
           Insights
         </h3>
-        <div className="flex items-center gap-2">
-          {state === 'ready' && (
-            <span className="text-[10px] text-muted-foreground">Live records · advisory</span>
-          )}
+        {state === 'ready' && (
+          <span className="text-[10px] text-muted-foreground">Live records · advisory</span>
+        )}
+      </div>
+
+      <div className="rounded-lg border border-border/60 bg-[#FBFCFE] dark:bg-muted/20 px-4 py-3">
+        {/* Title row: "Readiness — <summary>" left, Recompute right */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="text-[13px] font-semibold text-foreground">
+            Readiness <span className="text-muted-foreground font-normal">— {summaryWord}</span>
+          </div>
           {onRecompute && (
             <button
               type="button"
               onClick={onRecompute}
               disabled={recomputing}
-              className="text-[10px] text-primary hover:underline disabled:opacity-50"
+              className="text-[11px] text-primary hover:underline disabled:opacity-50 shrink-0"
             >
               {recomputing ? 'Recomputing…' : 'Recompute'}
             </button>
           )}
         </div>
-      </div>
 
-      <div className="rounded-lg border border-border/70 bg-muted/30 px-4 py-3 space-y-3">
         {state === 'pending' && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
             Readiness check running…
           </div>
         )}
+
         {state === 'unavailable' && (
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-xs text-muted-foreground">
-              Not yet computed for this item.
-            </p>
-            {onRecompute && (
-              <button
-                type="button"
-                onClick={onRecompute}
-                disabled={recomputing}
-                className="text-[11px] font-medium text-primary hover:underline disabled:opacity-50"
-              >
-                {recomputing ? 'Computing…' : 'Compute now'}
-              </button>
-            )}
-          </div>
+          <p className="mt-1 text-[12px] text-muted-foreground leading-relaxed">
+            No readiness signal is available for this item yet.
+          </p>
         )}
+
         {state === 'ready' && (
           <>
             {insights?.headline && (
-              <p className="text-[13px] leading-relaxed text-foreground/90">
+              <p className="mt-1 text-[12.5px] leading-relaxed text-foreground/85">
                 {insights.headline}
               </p>
             )}
+
             {(insights?.facts?.length ?? 0) > 0 && (
-              <div className="divide-y divide-amber-200/60 dark:divide-amber-900/40">
+              <div className="mt-3 border-t border-border/60 divide-y divide-border/50">
                 {insights!.facts!.map((f, i) => {
                   const toneClass =
                     f.tone === 'red'
@@ -251,44 +262,27 @@ const InsightsBlock: React.FC<{
                       : f.tone === 'amber'
                       ? 'text-amber-700 dark:text-amber-300'
                       : 'text-foreground';
-                  const confTag =
-                    f.confidence === 'verified'
-                      ? { label: 'Verified', cls: 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-800' }
-                      : f.confidence === 'ai_read'
-                      ? { label: 'AI-read · confirm', cls: 'text-amber-700 bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-800' }
-                      : f.confidence === 'unavailable'
-                      ? { label: 'Unavailable', cls: 'text-muted-foreground bg-muted border-border' }
-                      : null;
                   return (
-                    <div key={i} className="flex items-center justify-between gap-3 py-1.5">
-                      <span className="text-xs text-foreground/80">{f.label}</span>
-                      <div className="flex items-center gap-2">
-                        {confTag && (
-                          <span className={cn('text-[9px] px-1.5 py-0.5 rounded border', confTag.cls)}>
-                            {confTag.label}
-                          </span>
-                        )}
-                        {f.sourceHref && (
-                          <a href={f.sourceHref} target="_blank" rel="noreferrer" className="text-[10px] text-primary hover:underline inline-flex items-center gap-0.5">
-                            source <ExternalLink className="h-2.5 w-2.5" />
-                          </a>
-                        )}
-                        <span className={cn('text-xs', toneClass)}>{f.value}</span>
-                      </div>
+                    <div key={i} className="flex items-center justify-between gap-3 py-2">
+                      <span className="text-[12px] text-muted-foreground">{f.label}</span>
+                      <span className={cn('text-[12.5px] font-semibold', toneClass)}>
+                        {f.value}
+                      </span>
                     </div>
                   );
                 })}
               </div>
             )}
+
             {(insights?.sources?.length ?? 0) > 0 && (
-              <div className="flex flex-wrap gap-3 pt-1">
+              <div className="mt-3 pt-2 border-t border-border/60 flex flex-wrap gap-3">
                 {insights!.sources!.map((s, i) => (
                   <a
                     key={i}
                     href={s.href}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+                    className="text-[12px] text-primary hover:underline inline-flex items-center gap-1"
                   >
                     {s.label}
                     <ExternalLink className="h-3 w-3" />
@@ -296,13 +290,14 @@ const InsightsBlock: React.FC<{
                 ))}
               </div>
             )}
+
             {viewer === 'delivering' && insights?.delivering_action && (
-              <p className="text-[12px] text-amber-800 dark:text-amber-200 pt-1 border-t border-amber-200/60 dark:border-amber-900/40">
+              <p className="mt-2 pt-2 border-t border-border/60 text-[12px] text-foreground/80">
                 {insights.delivering_action}
               </p>
             )}
             {viewer === 'approving' && insights?.approver_check && (
-              <p className="text-[12px] text-amber-800 dark:text-amber-200 pt-1 border-t border-amber-200/60 dark:border-amber-900/40">
+              <p className="mt-2 pt-2 border-t border-border/60 text-[12px] text-foreground/80">
                 {insights.approver_check}
               </p>
             )}
@@ -514,9 +509,9 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   // consulted here — it is empty for role-driven items and produced the
   // "DELIVERING PARTY (0)" empty state seen before this fix.
 
-  // AI-1 Readiness — hook drives the block; explicit `insights` prop overrides for tests.
-  const { insights: liveInsights, recompute } = useVCRItemInsights(vcrId, item?.id);
-  const effectiveInsights = insights ?? liveInsights;
+  // AI-1 Readiness hook is initialised further down, once the canonical vcr_items id
+  // has been resolved (some callers pass a prereq id in item.id, and the insights
+  // cache is keyed by the canonical id — see the `canonicalItemIdForInsights` block).
 
   // ─── Load authored item + per-VCR overrides + approving-roles catalog ──
   const { data: vcrItemDetail } = useQuery({
@@ -595,6 +590,14 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
     },
     enabled: open && !!item,
   });
+
+  // AI-1 Readiness — hook drives the block; explicit `insights` prop overrides for tests.
+  // Cache is keyed by the canonical vcr_items.id, but some callers still pass a
+  // prereq id in item.id. Prefer the resolved canonical id, fall back to item.id.
+  const canonicalItemIdForInsights = (vcrItemDetail as any)?.canonical_vcr_item_id ?? item?.id;
+  const { insights: liveInsights, recompute } = useVCRItemInsights(vcrId, canonicalItemIdForInsights);
+  const effectiveInsights = insights ?? liveInsights;
+
 
   // Lifecycle mode (plan vs execution) — derived from the VCR row itself,
   // never from a caller prop that could be stale. resolveVCRMode is the
@@ -688,6 +691,28 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
     },
     enabled: open && !!item?.prerequisite_id,
   });
+
+  // Per-approver approval status (drives the ✓ Approved / Pending indicator on each
+  // approving-party row). Keyed by approver_user_id so we can map back to the
+  // resolved holder shown in the row.
+  const { data: approverStatusByUserId = {} } = useQuery({
+    queryKey: ['vcr-item-approver-status', item?.prerequisite_id],
+    queryFn: async (): Promise<Record<string, string>> => {
+      if (!item?.prerequisite_id) return {};
+      const { data, error } = await (supabase as any)
+        .from('vcr_prerequisite_approvals')
+        .select('approver_user_id, status')
+        .eq('prerequisite_id', item.prerequisite_id);
+      if (error) return {};
+      const out: Record<string, string> = {};
+      (data || []).forEach((r: any) => {
+        if (r.approver_user_id) out[r.approver_user_id] = r.status;
+      });
+      return out;
+    },
+    enabled: open && !!item?.prerequisite_id,
+  });
+
 
   // ─── Status mutation (reuses existing prereq backing) ──────────
   const updateStatus = useMutation({
@@ -1067,10 +1092,10 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent className="sm:max-w-xl overflow-hidden flex flex-col p-0 !z-modal-critical" data-rm-safe hideClose>
-          {/* Header — single status chip (A1) */}
+          {/* Header — ID chip leads, status on the right, single-line meta row below title */}
           <SheetHeader className="px-6 pt-5 pb-4 border-b shrink-0 space-y-2">
             <div className="flex items-center justify-between gap-2">
-              <Badge variant="outline" className="text-[10px] rounded-md font-mono font-medium">
+              <Badge variant="outline" className="text-[10px] rounded-md font-mono font-medium bg-muted/50 text-foreground/80">
                 {item.itemCode}
               </Badge>
               <Badge
@@ -1082,14 +1107,17 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
             </div>
             <SheetTitle className="text-[15px] leading-snug font-semibold">{item.vcr_item}</SheetTitle>
             <SheetDescription className="sr-only">VCR item detail</SheetDescription>
-            <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
-              <Badge variant="secondary" className="text-[10px] rounded-md font-normal bg-muted/60 text-muted-foreground">
+            <div className="flex flex-nowrap items-center gap-1.5 pt-0.5 min-w-0 overflow-hidden whitespace-nowrap">
+              <span className="text-[11px] text-muted-foreground font-medium shrink-0">
                 {item.category_name}
-              </Badge>
+              </span>
               {vcrItemDetail?.effective_topic && (
-                <Badge variant="secondary" className="text-[10px] rounded-md font-normal bg-muted/60 text-muted-foreground">
-                  {vcrItemDetail.effective_topic}
-                </Badge>
+                <>
+                  <span className="text-[11px] text-muted-foreground/60 shrink-0">·</span>
+                  <span className="inline-flex items-center rounded-md bg-muted/60 px-1.5 py-0.5 text-[11px] text-muted-foreground shrink-0 max-w-[220px] truncate">
+                    {vcrItemDetail.effective_topic}
+                  </span>
+                </>
               )}
             </div>
           </SheetHeader>
@@ -1147,7 +1175,19 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                           B2B
                         </button>
                       ) : null;
-                      return partyRow(role.name, shown || null, isYou, chip);
+                      const statusStr = shown?.user_id ? (approverStatusByUserId as any)[shown.user_id] : null;
+                      const approved = statusStr === 'APPROVED' || statusStr === 'ACCEPTED';
+                      const statusDot = shown ? (
+                        approved ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            Approved
+                          </span>
+                        ) : (
+                          <span className="text-[11px] text-muted-foreground">Pending</span>
+                        )
+                      ) : null;
+                      return partyRow(role.name, shown || null, isYou, chip, statusDot);
                     })
                   )}
                 </div>
@@ -1392,16 +1432,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                             )}
                           </div>
                         </div>
-                        {!deliveringCanEdit ? (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 shrink-0"
-                            onClick={() => openSignedUrl(f.file_path)}
-                          >
-                            <Eye className="h-3.5 w-3.5" />
-                          </Button>
-                        ) : (
+                        {!deliveringCanEdit ? null : (
                           <Button
                             variant="ghost"
                             size="icon"
