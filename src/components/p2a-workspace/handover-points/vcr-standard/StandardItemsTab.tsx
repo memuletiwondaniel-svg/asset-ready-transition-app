@@ -2,13 +2,16 @@ import React, { useMemo, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { Search, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Search, ArrowUpDown, ArrowUp, ArrowDown, Info } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { P2AHandoverPoint } from '../../hooks/useP2AHandoverPoints';
 import { useVCRPrerequisites } from '../../hooks/useVCRPrerequisites';
 import { useVCRPartiesRollup } from './useVCRPartiesRollup';
 import { VCRItemDetailSheet, VCRItemBasic } from '@/components/widgets/VCRItemDetailSheet';
 import { formatVcrItemCode } from '@/lib/vcrItemCode';
-import { standardPill, normalizeCategoryCode, CATEGORY_META, PrereqStatus, StandardBucket } from './standardStatus';
+import { standardPill, qualificationPill, QualStage, normalizeCategoryCode, CATEGORY_META, PrereqStatus, StandardBucket } from './standardStatus';
 
 interface Props { handoverPoint: P2AHandoverPoint; projectId?: string }
 
