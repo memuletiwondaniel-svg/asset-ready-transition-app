@@ -15525,7 +15525,7 @@ export type Database = {
         | "COMPLETED"
         | "ARCHIVED"
         | "PENDING_APPROVAL"
-      p2a_qualification_status: "PENDING" | "APPROVED" | "REJECTED"
+      p2a_qualification_status: "DRAFT" | "PENDING" | "APPROVED" | "REJECTED"
       p2a_status: "DRAFT" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED"
       p2a_subsystem_status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED"
       p2a_system_completion_status:
@@ -15886,7 +15886,7 @@ export const Constants = {
         "ARCHIVED",
         "PENDING_APPROVAL",
       ],
-      p2a_qualification_status: ["PENDING", "APPROVED", "REJECTED"],
+      p2a_qualification_status: ["DRAFT", "PENDING", "APPROVED", "REJECTED"],
       p2a_status: ["DRAFT", "IN_PROGRESS", "COMPLETED", "CANCELLED"],
       p2a_subsystem_status: ["NOT_STARTED", "IN_PROGRESS", "COMPLETED"],
       p2a_system_completion_status: [
