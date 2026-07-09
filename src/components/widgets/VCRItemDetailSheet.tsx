@@ -1065,14 +1065,9 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
           {/* Header — single status chip (A1) */}
           <SheetHeader className="px-6 pt-5 pb-4 border-b shrink-0 space-y-2">
             <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 flex-wrap">
-                <Badge variant="outline" className="text-[10px] rounded-md font-normal">
-                  {item.category_name}
-                </Badge>
-                <Badge variant="outline" className="text-[10px] rounded-md font-normal">
-                  {item.itemCode}
-                </Badge>
-              </div>
+              <Badge variant="outline" className="text-[10px] rounded-md font-mono font-medium">
+                {item.itemCode}
+              </Badge>
               <Badge
                 variant="outline"
                 className={cn('text-[10px] rounded-full px-2.5 py-0.5 font-normal', pillToneClass[pill.tone])}
@@ -1082,13 +1077,16 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
             </div>
             <SheetTitle className="text-[15px] leading-snug font-semibold">{item.vcr_item}</SheetTitle>
             <SheetDescription className="sr-only">VCR item detail</SheetDescription>
-            {/* TOPIC (A2) */}
-            {vcrItemDetail?.effective_topic && (
-              <div className="flex items-center gap-2 pt-0.5">
-                <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Topic:</span>
-                <span className="text-xs font-medium text-foreground">{vcrItemDetail.effective_topic}</span>
-              </div>
-            )}
+            <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+              <Badge variant="secondary" className="text-[10px] rounded-md font-normal bg-muted/60 text-muted-foreground">
+                {item.category_name}
+              </Badge>
+              {vcrItemDetail?.effective_topic && (
+                <Badge variant="secondary" className="text-[10px] rounded-md font-normal bg-muted/60 text-muted-foreground">
+                  {vcrItemDetail.effective_topic}
+                </Badge>
+              )}
+            </div>
           </SheetHeader>
 
           {/* Body */}
