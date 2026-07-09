@@ -58,6 +58,9 @@ const Donut: React.FC<{
   const bg = total
     ? `conic-gradient(${CLR_APPROVED} 0 ${a}%, ${CLR_INREVIEW} ${a}% ${b}%, ${CLR_REWORK} ${b}% ${c}%, ${CLR_TODELIVER} ${c}% 100%)`
     : '#F1F5F9';
+  const firstSpace = label.indexOf(' ');
+  const line1 = firstSpace > 0 ? label.slice(0, firstSpace) : label;
+  const line2 = firstSpace > 0 ? label.slice(firstSpace + 1) : '';
   return (
     <button
       type="button"
@@ -72,7 +75,13 @@ const Donut: React.FC<{
         </div>
       </div>
       <span className="text-[9.5px] font-bold tracking-wide text-muted-foreground text-center leading-tight">
-        {label}
+        {line1}
+        {line2 && (
+          <>
+            <br />
+            {line2}
+          </>
+        )}
       </span>
     </button>
   );
