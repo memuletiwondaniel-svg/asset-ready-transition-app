@@ -1623,16 +1623,48 @@ serve(async (req) => {
     });
 
     const usable = allFacts.filter((f) => f.confidence !== "unavailable");
+    // Terminal items: quiet retrospective, no nag. Facts stay for audit but
+    // their tone is downgraded to neutral so severity reads green.
+    const TERMINAL_STATUSES = new Set(["ACCEPTED", "QUALIFICATION_APPROVED", "REJECTED"]);
+    const isTerminal = !!prereqStatus && TERMINAL_STATUSES.has(prereqStatus);
     const insights: Insights = usable.length === 0
       ? { state: "unavailable", facts: renderedFacts }
       : (() => {
+          if (isTerminal) {
+            const neutralFacts = renderedFacts.map((f) => ({ ...f, tone: "neutral" as Tone }));
+            const reviewedAtRaw = (prereq as any)?.reviewed_at || (prereq as any)?.updated_at || null;
+            const dateLabel = reviewedAtRaw
+              ? new Date(reviewedAtRaw).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
+              : null;
+            const verb = prereqStatus === "ACCEPTED" ? "Accepted"
+              : prereqStatus === "QUALIFICATION_APPROVED" ? "Qualified"
+              : "Rejected";
+            const readinessLabel = verb;
+            const hadGap = renderedFacts.some((f) =>
+              (f.label || "").toLowerCase().includes("required evidence attached") ||
+              (f.label || "").toLowerCase().includes("required documents attached"),
+            );
+            const summaryParts = [dateLabel ? `${verb} on ${dateLabel}.` : `${verb}.`];
+            if (hadGap) summaryParts.push("No evidence was attached.");
+            return {
+              state: "ready",
+              severity: "green",
+              headline: `${verb}.`,
+              summary: summaryParts.join(" "),
+              next_step: null,
+              facts: neutralFacts,
+              readiness_label: readinessLabel,
+              terminal: true,
+            };
+          }
+
           const severity = composeSeverity(renderedFacts);
           const topFact = renderedFacts.find((f) => f.tone === "red") || renderedFacts.find((f) => f.tone === "amber");
           const deliverKey = topFact?.label || "";
           const approverKey = topFact?.label || "";
           const defaultDeliver = severity === "green"
             ? "Looks ready — review evidence before marking complete."
-            : nextStepForFact(topFact) ?? "Resolve flagged signals before submitting.";
+            : nextStepForFact(topFact, renderedFacts) ?? "Resolve flagged signals before submitting.";
           const defaultApprover = severity === "green"
             ? "Live signals look ready."
             : "Heads up before accepting — confirm flagged signals.";
@@ -1643,7 +1675,7 @@ serve(async (req) => {
             itrsValue: renderedFacts.find((f) => f.label === "ITRs complete (A+B)")?.value,
           };
           const summary = composeSummary(renderedFacts, severity, summaryCtx);
-          const nextStep = severity === "green" ? null : nextStepForFact(topFact);
+          const nextStep = severity === "green" ? null : nextStepForFact(topFact, renderedFacts);
 
           return {
             state: "ready",
