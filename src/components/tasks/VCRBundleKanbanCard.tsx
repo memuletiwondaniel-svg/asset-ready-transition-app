@@ -88,6 +88,13 @@ export const VCRBundleKanbanCard: React.FC<Props> = ({ bundle, onClick, dragHand
   let segments: Segments;
   let pill: { label: string; tone: 'grey' | 'amber' | 'green' };
 
+  // Kanban column is derived purely from task.status: 'completed' → Done.
+  // Guard: when the trigger-owned counts still show outstanding work but
+  // the card sits in Done, do NOT render a "Needs review" pill (the trigger
+  // fix should make this unreachable — warn if it isn't).
+  const inDoneColumn = (bundle.status || '').toLowerCase() === 'completed'
+                    || (bundle.status || '').toLowerCase() === 'done';
+
   if (isApproving) {
     const total    = Number(meta.approver_total_items ?? subItems.length ?? 0);
     const decided  = Number(meta.approver_decided_items ?? 0);
@@ -104,11 +111,23 @@ export const VCRBundleKanbanCard: React.FC<Props> = ({ bundle, onClick, dragHand
     qualifier = 'awaiting your review';
     subtext = `${accepted} approved · ${awaiting} awaiting your review · ${rejected} returned`;
     if (parties > 1) footer = `From ${parties} delivering parties`;
-    pill = awaiting > 0
-      ? { label: 'Needs review', tone: 'amber' }
-      : (decided >= total && total > 0)
-        ? { label: 'Done', tone: 'green' }
-        : { label: 'Up to date', tone: 'grey' };
+
+    if (inDoneColumn && awaiting > 0) {
+      // Incoherent state — counts say outstanding, column says done.
+      // Show the counts (Done pill) and warn; trigger fix should prevent this.
+      // eslint-disable-next-line no-console
+      console.warn(
+        '[VCRBundleKanbanCard] approver bundle in Done column with outstanding items',
+        { bundleId: bundle.id, awaiting, total, decided, status: bundle.status },
+      );
+      pill = { label: 'Done', tone: 'green' };
+    } else {
+      pill = awaiting > 0
+        ? { label: 'Needs review', tone: 'amber' }
+        : (decided >= total && total > 0)
+          ? { label: 'Done', tone: 'green' }
+          : { label: 'Up to date', tone: 'grey' };
+    }
   } else {
     const total    = subItems.length;
     const approved = subItems.filter((i) => i.completed).length;
