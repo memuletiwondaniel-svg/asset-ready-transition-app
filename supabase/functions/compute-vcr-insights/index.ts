@@ -802,7 +802,9 @@ serve(async (req) => {
           };
         })();
 
+    const nowIso = new Date().toISOString();
     await bounded("cache upsert", DB_TIMEOUT_MS, null, (signal) =>
+
       withAbort(
         sb.from("vcr_item_insights").upsert({
           vcr_id, vcr_item_id, payload: insights, inputs_hash: inputsHash,
