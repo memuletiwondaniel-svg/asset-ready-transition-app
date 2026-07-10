@@ -38,12 +38,16 @@ interface Props {
 
 interface Segments { approvedPct: number; midPct: number; }
 
-const bar = ({ approvedPct, midPct }: Segments) => (
-  <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden flex" role="progressbar">
-    <div className="h-full bg-emerald-500" style={{ width: `${approvedPct}%` }} />
-    <div className="h-full bg-muted-foreground/35" style={{ width: `${midPct}%` }} />
+const bar = ({ approvedPct, midPct }: Segments, pctLabel: number) => (
+  <div className="flex items-center gap-1.5 w-full">
+    <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden flex" role="progressbar">
+      <div className="h-full bg-emerald-500" style={{ width: `${approvedPct}%` }} />
+      <div className="h-full bg-muted-foreground/35" style={{ width: `${midPct}%` }} />
+    </div>
+    <span className="text-[10px] tabular-nums text-muted-foreground shrink-0">{pctLabel}%</span>
   </div>
 );
+
 
 const statusPill = (label: string, tone: 'grey' | 'amber' | 'green') => (
   <span className={cn(
