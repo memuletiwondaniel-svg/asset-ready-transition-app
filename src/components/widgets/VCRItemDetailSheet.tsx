@@ -1310,14 +1310,10 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                 right={viewer !== 'delivering' && evidence.length > 0 ? 'Submitted by delivering party' : undefined}
               >
                 {requiredEvidenceText && (
-                  <div className="mb-2.5 rounded-md bg-accent/40 px-3 py-2">
-                    <div className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground/80 font-semibold mb-0.5">
-                      Required
-                    </div>
-                    <div className="text-[13px] text-foreground leading-relaxed">
-                      {requiredEvidenceText}
-                    </div>
-                  </div>
+                  <p className="text-[13px] mb-2.5 px-0.5">
+                    <span className="text-muted-foreground">Required: </span>
+                    <span className="text-foreground">{requiredEvidenceText}</span>
+                  </p>
                 )}
 
 
