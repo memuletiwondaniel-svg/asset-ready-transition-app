@@ -31,7 +31,7 @@ async function readCachedInsights(vcrId: string, vcrItemId: string): Promise<Cac
   try {
     const { data, error } = await supabase
       .from('vcr_item_insights')
-      .select('payload')
+      .select('payload, origin, computed_at')
       .eq('vcr_id', vcrId)
       .eq('vcr_item_id', vcrItemId)
       .abortSignal(controller.signal)
@@ -40,7 +40,13 @@ async function readCachedInsights(vcrId: string, vcrItemId: string): Promise<Cac
     if (timedOut) return { status: 'timeout' };
     if (error) return { status: 'error' };
     if (!data) return { status: 'miss' };
-    return { status: 'hit', payload: (data.payload as unknown as VCRInsights) ?? { state: 'unavailable' } };
+    const payload = (data.payload as unknown as VCRInsights) ?? { state: 'unavailable' };
+    const merged: VCRInsights = {
+      ...payload,
+      origin: (data as { origin?: 'computed' | 'synthetic' }).origin ?? payload.origin ?? 'computed',
+      computed_at: (data as { computed_at?: string }).computed_at ?? payload.computed_at,
+    };
+    return { status: 'hit', payload: merged };
   } catch (error) {
     const name = error instanceof Error ? error.name : '';
     if (timedOut || name === 'AbortError') return { status: 'timeout' };
