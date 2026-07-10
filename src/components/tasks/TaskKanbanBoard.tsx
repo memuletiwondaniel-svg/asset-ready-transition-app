@@ -1720,7 +1720,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 items-stretch">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 items-stretch max-w-[1220px] mx-auto">
           {columnData.map(col => {
             const ColIcon = col.icon;
             const isEmpty = col.tasks.length === 0;
