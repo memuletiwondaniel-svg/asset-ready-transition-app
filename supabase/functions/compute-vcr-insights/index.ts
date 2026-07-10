@@ -553,10 +553,7 @@ async function ivanHempReader(sb: any, item: any, lovableKey: string): Promise<F
 async function selmaRevisionPass(sb: any, item: any): Promise<Fact[]> {
   const atts = await loadVcrEvidence(sb, item.prerequisite_id);
   if (atts.length === 0) {
-    const required = (item.supporting_evidence || "").trim();
-    if (required) {
-      return [{ label: "Required documents attached", value: "0", tone: "amber", confidence: "verified" }];
-    }
+    // Zero-evidence gap is owned by evidenceMatchEngine (E1); Selma stays silent here.
     return [];
   }
   const facts: Fact[] = [];
@@ -648,12 +645,17 @@ async function evidenceMatchEngine(sb: any, item: any, lovableKey: string): Prom
 
   const n = uploads.length;
   const m = requiredLabels.length;
-  facts.push({
-    label: "Required evidence attached",
-    value: m > 0 ? `${n} file(s) against ${m} requirement(s)` : `${n} file(s)`,
-    tone: n === 0 && m > 0 ? "amber" : "neutral",
-    confidence: "verified",
-  });
+
+  // Only surface the count when it is a real gap (0 files, requirement exists).
+  // Neutral counts (n>0 or m===0) add nothing the Evidence section doesn't already show.
+  if (n === 0 && m > 0) {
+    facts.push({
+      label: "Required evidence attached",
+      value: `${n} file(s) against ${m} requirement(s)`,
+      tone: "amber",
+      confidence: "verified",
+    });
+  }
 
   if (m === 0 || n === 0 || !lovableKey) return facts;
 
