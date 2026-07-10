@@ -15444,6 +15444,10 @@ export type Database = {
         Args: { p_handover_point_id: string }
         Returns: Json
       }
+      reconcile_vcr_delivery_tasks: {
+        Args: { p_handover_point_id: string }
+        Returns: Json
+      }
       reject_user_account: {
         Args: { rejection_reason_text?: string; target_user_id: string }
         Returns: boolean
@@ -15562,6 +15566,7 @@ export type Database = {
         Args: { p_handover_point_id: string }
         Returns: string
       }
+      vcr_short_label: { Args: { p_vcr_code: string }; Returns: string }
       withdraw_vcr_plan_approval: {
         Args: { p_approver_row_id: string; p_reason: string }
         Returns: Json
