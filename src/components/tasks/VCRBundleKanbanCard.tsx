@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
-import { GripVertical } from 'lucide-react';
+
 import { cn } from '@/lib/utils';
 import type { VCRBundleTask } from '@/hooks/useUserVCRBundleTasks';
 import { shortVCRCode } from '@/components/widgets/p2a-wizard/steps/phases/vcrDisplayUtils';
@@ -32,7 +32,6 @@ import { shortVCRCode } from '@/components/widgets/p2a-wizard/steps/phases/vcrDi
 interface Props {
   bundle: VCRBundleTask;
   onClick: () => void;
-  dragHandleProps?: Record<string, any>;
   isChild?: boolean;
 }
 
@@ -74,7 +73,7 @@ const buildIdCode = (bundle: VCRBundleTask): string => {
 
 
 
-export const VCRBundleKanbanCard: React.FC<Props> = ({ bundle, onClick, dragHandleProps, isChild }) => {
+export const VCRBundleKanbanCard: React.FC<Props> = ({ bundle, onClick, isChild }) => {
   const isApproving = bundle.type === 'vcr_approval_bundle';
   const idCode = buildIdCode(bundle);
   const subItems = bundle.sub_items || [];
@@ -156,17 +155,8 @@ export const VCRBundleKanbanCard: React.FC<Props> = ({ bundle, onClick, dragHand
                   'p-3.5 pl-4 rounded-lg border border-border/60 bg-card shadow-[0_1px_2px_0_rgb(0,0,0,0.03)] hover:-translate-y-0.5 hover:shadow-md hover:border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
       )}
     >
-      {/* Drag handle — absolute overlay, hover-only, no layout shift. */}
-      {!isChild && dragHandleProps && (
-        <button
-          {...dragHandleProps}
-          onClick={(e) => e.stopPropagation()}
-          className="absolute top-1 right-1 z-10 touch-none p-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity cursor-grab active:cursor-grabbing bg-card/80 rounded"
-          aria-label="Drag task"
-        >
-          <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
-        </button>
-      )}
+
+
 
       {/* Row 1: chip flush left; optional Done "Approved" pill on the right */}
       <div className="flex items-center justify-between gap-2">

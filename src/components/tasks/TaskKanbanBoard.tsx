@@ -37,7 +37,7 @@ import {
   
   ChevronDown,
   ChevronRight,
-  GripVertical,
+  
   AlertTriangle,
   CircleDashed,
   Timer,
@@ -533,18 +533,19 @@ const DraggableKanbanCard: React.FC<{
     ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
     : undefined;
 
+  const dragProps = isDraggable ? { ...attributes, ...listeners } : {};
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={cn(isDragging && 'opacity-30')}
+      {...dragProps}
+      className={cn('select-none touch-none', isDragging && 'opacity-30', isDraggable && 'cursor-grab active:cursor-grabbing')}
       aria-disabled={isLocked || undefined}
       data-drag-locked={isLocked || undefined}
     >
       <KanbanCardContent
         task={task}
         onClick={onClick}
-        dragHandleProps={isDraggable ? { ...attributes, ...listeners } : undefined}
         accentClass={accentClass}
       />
     </div>
@@ -555,11 +556,10 @@ const DraggableKanbanCard: React.FC<{
 const KanbanCardContent: React.FC<{
   task: UnifiedTask;
   onClick: () => void;
-  dragHandleProps?: Record<string, any>;
   isOverlay?: boolean;
   accentClass?: string;
   isChild?: boolean;
-}> = ({ task, onClick, dragHandleProps, isOverlay, accentClass, isChild }) => {
+}> = ({ task, onClick, isOverlay, accentClass, isChild }) => {
   // Mockup v3: VCR bundle tasks get a dedicated card body (delivering %/approving n).
   const vcrBundle = task.bundleTask;
   if (vcrBundle && (vcrBundle.type === 'vcr_checklist_bundle' || vcrBundle.type === 'vcr_approval_bundle')) {
@@ -567,7 +567,6 @@ const KanbanCardContent: React.FC<{
       <VCRBundleKanbanCard
         bundle={vcrBundle}
         onClick={onClick}
-        dragHandleProps={dragHandleProps}
         isChild={isChild}
       />
     );
@@ -635,8 +634,7 @@ const KanbanCardContent: React.FC<{
   })() : null;
 
 
-  // Overdue: tiny Clock glyph + "{n}d" in destructive tone, top-right. The
-  // clock disambiguates from the trailing % at the bar end. Non-overdue: none.
+  // Overdue: tiny Clock glyph + "{n}d" in destructive tone, top-right.
   const overdueChip: React.ReactNode = (() => {
     if (task.kanbanColumn === 'done') return null;
     if (urgency.rail !== 'red' || !urgency.label) return null;
@@ -644,8 +642,8 @@ const KanbanCardContent: React.FC<{
     const days = m ? Number(m[1]) : null;
     if (!days) return null;
     return (
-      <span className="inline-flex items-center gap-0.5 text-[10px] text-destructive tabular-nums whitespace-nowrap">
-        <Clock className="h-3 w-3" strokeWidth={2.25} />
+      <span className="inline-flex items-center gap-0.5 text-[9px] text-destructive tabular-nums whitespace-nowrap">
+        <Clock className="h-2.5 w-2.5" strokeWidth={2.25} />
         {days}d
       </span>
     );
@@ -669,18 +667,8 @@ const KanbanCardContent: React.FC<{
         isOverlay && 'shadow-xl ring-2 ring-primary/20 rotate-[1deg] scale-[1.02]',
       )}
     >
-      {/* Drag handle — absolute overlay, hover-only, no layout shift.
-          The chip row below stays flush with card padding. */}
-      {!isChild && dragHandleProps && (
-        <button
-          {...dragHandleProps}
-          onClick={(e) => e.stopPropagation()}
-          className="absolute top-1 right-1 z-10 touch-none p-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition-opacity cursor-grab active:cursor-grabbing bg-card/80 rounded"
-          aria-label="Drag task"
-        >
-          <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
-        </button>
-      )}
+
+
 
       {/* Row 1: chip row (flush left) + top-right status/overdue chip */}
       <div className="flex items-center gap-1.5 min-w-0">
@@ -1746,7 +1734,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
                   <div className={cn("flex items-center justify-between gap-2 px-3 pt-3 pb-2 border-b border-border/40", col.headerTint)}>
                     <div className="flex items-center gap-2 min-w-0">
                       <ColIcon className={cn("h-3.5 w-3.5 shrink-0", col.iconColor)} strokeWidth={2.25} />
-                      <span className="text-[13px] font-medium text-foreground truncate">{col.label}</span>
+                      <span className="text-sm font-semibold text-foreground truncate">{col.label}</span>
                       <span className="text-[11px] tabular-nums text-muted-foreground/70">{col.tasks.length}</span>
                     </div>
                     <DropdownMenu>
