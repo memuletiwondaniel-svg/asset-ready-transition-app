@@ -533,18 +533,19 @@ const DraggableKanbanCard: React.FC<{
     ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
     : undefined;
 
+  const dragProps = isDraggable ? { ...attributes, ...listeners } : {};
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={cn(isDragging && 'opacity-30')}
+      {...dragProps}
+      className={cn('select-none touch-none', isDragging && 'opacity-30', isDraggable && 'cursor-grab active:cursor-grabbing')}
       aria-disabled={isLocked || undefined}
       data-drag-locked={isLocked || undefined}
     >
       <KanbanCardContent
         task={task}
         onClick={onClick}
-        dragHandleProps={isDraggable ? { ...attributes, ...listeners } : undefined}
         accentClass={accentClass}
       />
     </div>
