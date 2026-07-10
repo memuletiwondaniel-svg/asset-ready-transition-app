@@ -137,6 +137,12 @@ const P2AApprovalContext = createContext<Map<string, P2AApprovalSummary>>(new Ma
 interface ORAApprovalSummary { total: number; approved: number; rejected: number; }
 const ORAApprovalContext = createContext<Map<string, ORAApprovalSummary>>(new Map());
 
+// Set of stripped titles that would collide with another card's stripped
+// title on the SAME board data set. When a card's stripped title is in this
+// set, the card renders the original (unstripped) title instead, so distinct
+// tasks stay visually distinguishable in Kanban.
+const TitleCollisionContext = createContext<Set<string>>(new Set());
+
 function isClickableVcrApprovalBundle(task: UnifiedTask): boolean {
   const bundleType = task.bundleTask?.type ?? task.userTask?.type;
   return bundleType === 'vcr_approval_bundle';
