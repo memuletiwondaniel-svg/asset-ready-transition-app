@@ -1002,6 +1002,19 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     todo: 'category', in_progress: 'none', waiting: 'none', done: 'project',
   });
 
+  // Lens toggle: "My work" (default) hides approval bundles; "My reviews"
+  // shows only approval bundles re-columned by decision state. Persisted per
+  // user in localStorage.
+  const [lens, setLens] = useState<'work' | 'reviews'>(() => {
+    try {
+      const v = localStorage.getItem('kanban-lens');
+      return v === 'reviews' ? 'reviews' : 'work';
+    } catch { return 'work'; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem('kanban-lens', lens); } catch { /* noop */ }
+  }, [lens]);
+
   // Batch-fetch reviewer summaries for ALL tasks (not just done column)
   const allTaskIds = useMemo(() => 
     tasks.filter(t => t.userTask?.id).map(t => t.userTask!.id),
