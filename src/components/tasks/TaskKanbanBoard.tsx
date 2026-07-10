@@ -494,19 +494,18 @@ function getApprovalProgress(
 
 const ApprovalBar: React.FC<{ approved: number; total: number }> = ({ approved, total }) => {
   if (total <= 0) return null;
-  // Linear bar only — the legacy dash-segment indicator ("▪▪▪▪▪ 5/5") was
-  // removed per v3: linear progress bar + subtext are the ONLY progress UI
-  // on a card (it collided with the 0% headline on P2A Plan cards).
+  // v3 skeleton: thin full-width bar + compact % trailing on the right.
   const pct = Math.max(0, Math.min(100, Math.round((approved / total) * 100)));
   return (
-    <div className="flex items-center gap-1.5">
-      <div className="h-1 w-16 rounded-full bg-muted-foreground/20 overflow-hidden">
+    <div className="flex items-center gap-1.5 w-full">
+      <div className="h-1 flex-1 rounded-full bg-muted-foreground/20 overflow-hidden">
         <div className="h-full bg-emerald-500/80 dark:bg-emerald-400/80" style={{ width: `${pct}%` }} />
       </div>
-      <span className="text-[10px] tabular-nums text-muted-foreground">{approved}/{total}</span>
+      <span className="text-[10px] tabular-nums text-muted-foreground shrink-0">{pct}%</span>
     </div>
   );
 };
+
 
 // ─── Draggable Card ────────────────────────────────────────────────
 const DraggableKanbanCard: React.FC<{
