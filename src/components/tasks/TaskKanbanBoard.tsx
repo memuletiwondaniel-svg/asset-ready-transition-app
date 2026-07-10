@@ -1182,20 +1182,23 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     });
     if (task.isWaiting && !isClickableVcrApprovalBundle(task)) return;
 
-    // VCR approval bundle: open the per-prereq approver action sheet (E-1c).
-    // Do NOT route to TaskDetailSheet — it has no branch for this type.
+    // VCR bundle click routing (mockup v3):
+    //   vcr_approval_bundle → Items-to-review panel (supersedes VCRApprovalBundleSheet)
+    //   vcr_checklist_bundle → My items panel
     const bundle = task.bundleTask as VCRBundleTask | undefined;
     const bundleType = bundle?.type ?? (task as { type?: string }).type ?? task.userTask?.type;
     if (bundle && bundleType === 'vcr_approval_bundle') {
-      console.log('[TaskKanbanBoard] handleTaskClick:branch', {
-        branch: 'vcr_approval_bundle',
-        bundleType,
-        bundle,
-      });
       setSelectedTask(null);
       setDetailOpen(false);
       setApprovalBundle(bundle);
       setApprovalBundleOpen(true);
+      return;
+    }
+    if (bundle && bundleType === 'vcr_checklist_bundle') {
+      setSelectedTask(null);
+      setDetailOpen(false);
+      setMyItemsBundle(bundle);
+      setMyItemsOpen(true);
       return;
     }
 
