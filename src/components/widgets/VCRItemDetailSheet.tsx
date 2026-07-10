@@ -79,6 +79,8 @@ export interface VCRInsights {
   delivering_action?: string;
   approver_check?: string;
   sources?: { label: string; href: string }[];
+  origin?: 'computed' | 'synthetic';
+  computed_at?: string;
 }
 
 interface VCRItemDetailSheetProps {
