@@ -201,71 +201,71 @@ const InsightsBlock: React.FC<{
 
 
 
-  // Readiness badge + tone are driven purely by the computed severity.
-  const badge =
+  // Readiness label — plain muted text in the header row, no pill.
+  const readinessLabel =
     severity === 'green'
-      ? { label: 'Ready', className: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900' }
+      ? 'Ready'
       : severity === 'amber'
-      ? { label: 'Partially complete', className: 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-900' }
+      ? 'Partially complete'
       : severity === 'red'
-      ? { label: 'Not ready', className: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-300 dark:border-red-900' }
+      ? 'Not ready'
       : state === 'pending'
-      ? { label: 'Checking…', className: 'bg-muted text-muted-foreground border-border' }
-      : { label: 'Not yet computed', className: 'bg-muted text-muted-foreground border-border' };
+      ? 'Checking…'
+      : 'Not yet computed';
 
   return (
     <section className="space-y-2">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between gap-2 group"
-        aria-expanded={open}
-      >
-        <h3 className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
-          Insights
-        </h3>
-        <div className="flex items-center gap-2">
-          <span
-            className={cn(
-              'inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium',
-              badge.className,
-            )}
-          >
-            {badge.label}
-          </span>
+      <div className="w-full flex items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="flex items-center gap-1.5 group"
+          aria-expanded={open}
+        >
+          <h3 className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
+            Insights
+          </h3>
           {open ? (
             <ChevronDown className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
           ) : (
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
           )}
+        </button>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] text-muted-foreground">{readinessLabel}</span>
+          {onRecompute && (
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={onRecompute}
+                    disabled={recomputing}
+                    aria-label="Recompute"
+                    className="p-1 rounded text-muted-foreground hover:text-foreground disabled:opacity-50 transition-colors"
+                  >
+                    <RefreshCw className={cn('h-3.5 w-3.5', recomputing && 'animate-spin')} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top">Recompute</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </div>
-      </button>
+      </div>
 
       {/* Subtly toned "computed intelligence" panel — very light blue-grey */}
       {open && (
         <div className="rounded-lg border border-sky-100 dark:border-sky-950/60 bg-[#F5F8FC] dark:bg-sky-950/10 px-4 py-3">
-          {onRecompute && (
-            <div className="flex items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={onRecompute}
-                disabled={recomputing}
-                className="text-[11px] text-primary hover:underline disabled:opacity-50 shrink-0"
-              >
-                {recomputing ? 'Recomputing…' : 'Recompute'}
-              </button>
-            </div>
-          )}
-
           {state === 'pending' && (
-            <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
               Readiness check running…
             </div>
           )}
 
           {state === 'unavailable' && (
-            <p className="mt-2 text-[12px] text-muted-foreground leading-relaxed">
+            <p className="text-[12px] text-muted-foreground leading-relaxed">
               No readiness signal is available for this item yet.
             </p>
           )}
@@ -273,7 +273,7 @@ const InsightsBlock: React.FC<{
           {state === 'ready' && (
             <>
               {insights?.headline && (
-                <p className="mt-2 text-[12.5px] leading-relaxed text-foreground/85">
+                <p className="text-[12.5px] leading-relaxed text-foreground/85">
                   {insights.headline}
                 </p>
               )}
@@ -281,16 +281,12 @@ const InsightsBlock: React.FC<{
               {(insights?.facts?.length ?? 0) > 0 && (
                 <div className="mt-3 border-t border-sky-100/70 dark:border-sky-950/50 divide-y divide-sky-100/70 dark:divide-sky-950/50">
                   {insights!.facts!.map((f, i) => {
-                    // Fact-value colour = the fact's own semantic state.
-                    // 'amber' / 'red' mark a genuine gap or risk (incomplete
-                    // count, outstanding list, breached threshold). Anything
-                    // else — including complete/verified values — renders as
-                    // default foreground so a green fact never reads as amber.
+                    // Only genuine risk (tone === 'red') is colourised.
+                    // Amber facts render as plain foreground text — a partial
+                    // count like "6 of 8" is informational, not a risk signal.
                     const toneClass =
                       f.tone === 'red'
                         ? 'text-red-700 dark:text-red-300'
-                        : f.tone === 'amber'
-                        ? 'text-amber-700 dark:text-amber-300'
                         : 'text-foreground';
                     return (
                       <div key={i} className="flex items-center justify-between gap-3 py-2">
@@ -304,10 +300,23 @@ const InsightsBlock: React.FC<{
                 </div>
               )}
 
-              {/* Deep-links intentionally omitted. The seeded "notification
-                  register" href was a placeholder — no such ORSH route exists
-                  — so we do not render a dead link. Re-enable this block only
-                  once `sources[].href` resolves to a real in-app route. */}
+              {/* Deep-links: only render sources whose href resolves to a real
+                  in-app route (starts with '/'). External / placeholder hrefs
+                  are silently omitted — no dead links. */}
+              {(insights?.sources ?? []).filter((s) => s.href && s.href.startsWith('/')).length > 0 && (
+                <div className="mt-3 pt-2 border-t border-sky-100/70 dark:border-sky-950/50 flex flex-wrap gap-x-3 gap-y-1">
+                  {insights!.sources!.filter((s) => s.href && s.href.startsWith('/')).map((s, i) => (
+                    <a
+                      key={i}
+                      href={s.href}
+                      className="text-[12px] text-primary hover:underline inline-flex items-center gap-1"
+                    >
+                      {s.label}
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  ))}
+                </div>
+              )}
 
               {viewer === 'delivering' && insights?.delivering_action && (
                 <p className="mt-2 pt-2 border-t border-sky-100/70 dark:border-sky-950/50 text-[12px] text-foreground/80">
