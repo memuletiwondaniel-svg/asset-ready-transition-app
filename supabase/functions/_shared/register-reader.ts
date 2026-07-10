@@ -34,6 +34,7 @@ export const SCHEMA_SU_NOTIFICATION_OI: TableRowSchema = {
   row_unit: "table_row",
   record_key: "unit",
   closed_field: "acknowledged",
+  requires_date: true,
   labels: {
     docType: "notification sheet",
     countLabel: "Units acknowledged",
