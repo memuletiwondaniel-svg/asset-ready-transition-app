@@ -1609,7 +1609,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         return a.localeCompare(b);
       });
       return sorted.map(([project, tasks]) => (
-        <ProjectGroup key={project} projectName={project} tasks={tasks} onTaskClick={handleTaskClick} />
+        <ProjectGroup key={project} projectName={project} tasks={tasks} onTaskClick={handleTaskClick} accentClass={col.accent} />
       ));
     }
 
@@ -1621,22 +1621,32 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         groups[key].push(t);
       });
       return Object.entries(groups).map(([category, tasks]) => (
-        <ProjectGroup key={category} projectName={category} tasks={tasks} onTaskClick={handleTaskClick} />
+        <ProjectGroup key={category} projectName={category} tasks={tasks} onTaskClick={handleTaskClick} accentClass={col.accent} />
       ));
     }
 
-    return columnTasks.map(task => {
-      const meta = task.userTask?.metadata as Record<string, any> | undefined;
-      const isRejected = meta?.outcome === 'rejected';
-      return (
-        <KanbanCardWithChildren
-          key={task.id}
-          task={task}
-          onTaskClick={handleTaskClick}
-          accentClass={isRejected ? 'border-l-destructive' : col.accent}
-        />
-      );
-    });
+    // Default (no explicit grouping) — apply VCR clustering when tasks share
+    // a vcr_id; tasks without a VCR key fall to a trailing flat section.
+    const { groups: vcrGroups, flat: vcrFlat } = clusterByVcr(columnTasks);
+    return (
+      <>
+        {vcrGroups.map(g => (
+          <VCRCluster key={g.key} group={g} onTaskClick={handleTaskClick} accentClass={col.accent} />
+        ))}
+        {vcrFlat.map(task => {
+          const meta = task.userTask?.metadata as Record<string, any> | undefined;
+          const isRejected = meta?.outcome === 'rejected';
+          return (
+            <KanbanCardWithChildren
+              key={task.id}
+              task={task}
+              onTaskClick={handleTaskClick}
+              accentClass={isRejected ? 'border-l-destructive' : col.accent}
+            />
+          );
+        })}
+      </>
+    );
   };
 
   const reviewerMap = reviewerSummaries || new Map<string, ReviewerSummary>();
