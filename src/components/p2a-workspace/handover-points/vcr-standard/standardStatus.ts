@@ -44,8 +44,12 @@ export const standardPill = (status: PrereqStatus): StandardPill => {
       // Item's parent status when its qualification was approved.
       return { bucket: 'terminal', label: 'Approved', className: 'bg-emerald-50 text-emerald-700 border border-emerald-200' };
     case 'READY_FOR_REVIEW':
-    case 'IN_PROGRESS':
       return { bucket: 'pipeline', label: 'Under Review', className: 'bg-amber-50 text-amber-700 border border-amber-200' };
+    case 'IN_PROGRESS':
+      // Distinct from READY_FOR_REVIEW — item is being worked on but has NOT
+      // yet been submitted for approver review. Shares the amber "pipeline"
+      // bucket for filter parity with the drawer's copy.
+      return { bucket: 'pipeline', label: 'In Progress', className: 'bg-amber-50 text-amber-700 border border-amber-200' };
     case 'REJECTED':
       return { bucket: 'rework', label: 'Rework', className: 'bg-red-50 text-red-700 border border-red-200' };
     case 'QUALIFICATION_REQUESTED':
