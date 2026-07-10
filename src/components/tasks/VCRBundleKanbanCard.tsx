@@ -179,16 +179,17 @@ export const VCRBundleKanbanCard: React.FC<Props> = ({ bundle, onClick, dragHand
         {title}
       </p>
 
-      {/* Segmented bar + trailing % */}
-      {bar(segments, pctLabel)}
-
-      {/* Subtext (approver: bolded awaiting count leads) */}
-      <p className="text-[11px] text-muted-foreground mt-1.5 leading-snug">
-        {subtext}
-      </p>
-
-      {footer && (
-        <p className="text-[10px] text-muted-foreground/80 italic mt-1">{footer}</p>
+      {/* Done column: no bar, no subtext, no % — the pill (if any) is the signal. */}
+      {!inDoneColumn && (
+        <>
+          {bar(segments, pctLabel)}
+          <p className="text-[11px] text-muted-foreground mt-1.5 leading-snug">
+            {subtext}
+          </p>
+          {footer && (
+            <p className="text-[10px] text-muted-foreground/80 italic mt-1">{footer}</p>
+          )}
+        </>
       )}
     </Card>
   );

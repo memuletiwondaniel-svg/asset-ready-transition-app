@@ -1266,7 +1266,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
           {/* Header — ID chip leads, status on the right, single-line meta row below title */}
           <SheetHeader className="px-6 pt-5 pb-4 border-b shrink-0 space-y-2">
             <div className="flex items-center justify-between gap-2">
-              <Badge variant="outline" className="text-[10px] rounded-md font-mono font-medium bg-muted/50 text-foreground/80">
+              <Badge variant="outline" className="text-[10px] rounded-md font-mono font-medium bg-muted text-foreground/80">
                 {item.itemCode}
               </Badge>
               <Badge

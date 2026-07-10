@@ -122,7 +122,7 @@ export const MyVCRItemsPanel: React.FC<Props> = ({ bundle, open, onOpenChange })
         <SheetContent hideClose className="w-full sm:max-w-2xl overflow-hidden flex flex-col p-0">
           <SheetHeader className="px-6 pt-5 pb-4 border-b shrink-0 space-y-3">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[10px] font-mono text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded">
+              <span className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                 {idCode}
               </span>
               {projectId && vcrId && (
@@ -143,7 +143,7 @@ export const MyVCRItemsPanel: React.FC<Props> = ({ bundle, open, onOpenChange })
               </SheetDescription>
             </div>
 
-            <div>
+            <div className="mt-3">
               <div className="flex items-baseline gap-2 mb-1">
                 <span className="text-xl font-bold text-foreground">{pct}%</span>
                 <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Approved</span>
@@ -156,10 +156,6 @@ export const MyVCRItemsPanel: React.FC<Props> = ({ bundle, open, onOpenChange })
                 {approvedN} of {total} approved · {underN} under review · {toDeliverN} to deliver
               </p>
             </div>
-
-            <p className="text-[11px] text-muted-foreground italic">
-              Tap an item to open it and continue.
-            </p>
           </SheetHeader>
 
 
@@ -261,7 +257,7 @@ export const PanelRow: React.FC<{
         onClick={onClick}
         className="w-full flex items-start gap-3 px-2 py-2.5 text-left hover:bg-muted/40 transition rounded-sm"
       >
-        <span className="text-[10px] font-mono text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded shrink-0 mt-0.5">
+        <span className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded shrink-0 mt-0.5">
           {item.item_code}
         </span>
         <div className="flex-1 min-w-0">

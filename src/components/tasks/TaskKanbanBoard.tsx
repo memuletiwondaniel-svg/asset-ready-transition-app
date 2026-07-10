@@ -495,11 +495,13 @@ function getApprovalProgress(
 const ApprovalBar: React.FC<{ approved: number; total: number }> = ({ approved, total }) => {
   if (total <= 0) return null;
   // v3 skeleton: thin full-width bar + compact % trailing on the right.
+  // Neutral fill on activity cards — green is reserved for the "approved"
+  // segment of bundle cards (semantic).
   const pct = Math.max(0, Math.min(100, Math.round((approved / total) * 100)));
   return (
     <div className="flex items-center gap-1.5 w-full">
       <div className="h-1 flex-1 rounded-full bg-muted-foreground/20 overflow-hidden">
-        <div className="h-full bg-emerald-500/80 dark:bg-emerald-400/80" style={{ width: `${pct}%` }} />
+        <div className="h-full bg-muted-foreground/50" style={{ width: `${pct}%` }} />
       </div>
       <span className="text-[10px] tabular-nums text-muted-foreground shrink-0">{pct}%</span>
     </div>
@@ -633,7 +635,7 @@ const KanbanCardContent: React.FC<{
   })() : null;
 
 
-  // Compact overdue chip: "28d overdue". Non-overdue cards render nothing.
+  // Overdue: plain small red text "28d" top-right (no pill). Non-overdue: none.
   const overdueChip: React.ReactNode = (() => {
     if (task.kanbanColumn === 'done') return null;
     if (urgency.rail !== 'red' || !urgency.label) return null;
@@ -641,8 +643,8 @@ const KanbanCardContent: React.FC<{
     const days = m ? Number(m[1]) : null;
     if (!days) return null;
     return (
-      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
-        {days}d overdue
+      <span className="text-[10px] text-destructive tabular-nums whitespace-nowrap">
+        {days}d
       </span>
     );
   })();
@@ -730,8 +732,9 @@ const KanbanCardContent: React.FC<{
       </div>
 
       {/* Unified skeleton row: [bar + trailing %]. Approval progress preferred
-          when available; else in-progress % / step count; else counted items. */}
-      {!isChild && (() => {
+          when available; else in-progress % / step count; else counted items.
+          Done column: no progress bar at all (finished work). */}
+      {!isChild && task.kanbanColumn !== 'done' && (() => {
         const approvalProgress = getApprovalProgress(task, reviewerSummaries, p2aApprovalSummaries, oraApprovalSummaries);
         if (approvalProgress) {
           return (
