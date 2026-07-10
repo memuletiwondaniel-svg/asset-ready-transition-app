@@ -1321,6 +1321,12 @@ function nextStepForFact(f: Fact | undefined, allFacts: Fact[] = []): string | n
   if (l.includes("hemp/hazop actions") && l.includes("open")) {
     return "Close the open HEMP actions (TSE-TA2 sign-off) before submitting.";
   }
+  if (l.includes("itrs complete") && !l.includes("(a+b)") && f.tone === "amber") {
+    return "Progress the outstanding E+I ITRs in GoCompletions before submitting.";
+  }
+  if (l.includes("punch items open") && f.tone === "amber") {
+    return "Close the outstanding punch items in GoCompletions before submitting.";
+  }
   return null;
 }
 
