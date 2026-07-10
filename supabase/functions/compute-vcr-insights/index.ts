@@ -28,6 +28,8 @@ interface Insights {
   delivering_action?: string;
   approver_check?: string;
   sources?: { label: string; href: string }[];
+  readiness_label?: string;
+  terminal?: boolean;
 }
 
 const sha = async (s: string) => {
