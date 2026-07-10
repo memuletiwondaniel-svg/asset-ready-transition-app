@@ -1274,6 +1274,136 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
   }
 
   // Signal 7 (item-level tasks) — deferred pending EXE-1. Intentionally omitted.
+
+  // ─── E5 cross-item signals (all 'verified', bounded, no N+1) ────────────
+  // Look up this item's category_id + terminal state up-front.
+  const { data: thisItem } = await bounded("workflow this item", DB_TIMEOUT_MS, { data: null }, (signal) =>
+    withAbort(sb.from("vcr_items").select("category_id").eq("id", vcrItemId).maybeSingle(), signal),
+  );
+  const categoryId: string | null = (thisItem as any)?.category_id || null;
+  const TERMINAL_STATUSES = new Set(["ACCEPTED", "QUALIFICATION_APPROVED", "REJECTED"]);
+  const isTerminal = TERMINAL_STATUSES.has(status);
+
+  // Load siblings once (same handover point, excluding self). Bounded single query.
+  const { data: siblings } = await bounded("workflow siblings", DB_TIMEOUT_MS, { data: [] }, (signal) =>
+    withAbort(
+      sb
+        .from("p2a_vcr_prerequisites")
+        .select("id, vcr_item_id, status, vcr_items:vcr_item_id(category_id, category:vcr_item_categories(code), display_order)")
+        .eq("handover_point_id", vcrId)
+        .neq("id", prereqId),
+      signal,
+    ),
+  );
+  const sibs = ((siblings || []) as any[]);
+  const sameCategorySibs = categoryId
+    ? sibs.filter((s) => s.vcr_items?.category_id === categoryId)
+    : [];
+  const sameCategorySibVcrItemIds = sameCategorySibs.map((s) => s.vcr_item_id).filter(Boolean);
+  const sameCategorySibPrereqIds = sameCategorySibs.map((s) => s.id).filter(Boolean);
+
+  // 8) Sibling rework pattern — one bounded count-style query over all sibling comments.
+  if (sameCategorySibVcrItemIds.length > 0) {
+    const { data: sibComments } = await bounded("workflow sib comments", DB_TIMEOUT_MS, { data: [] }, (signal) =>
+      withAbort(
+        sb
+          .from("vcr_item_comments")
+          .select("vcr_item_id, action_tag")
+          .eq("handover_point_id", vcrId)
+          .in("vcr_item_id", sameCategorySibVcrItemIds),
+        signal,
+      ),
+    );
+    const returnedByItem = new Map<string, number>();
+    for (const c of (sibComments || []) as any[]) {
+      if ((c.action_tag || "").toLowerCase() === "returned") {
+        returnedByItem.set(c.vcr_item_id, (returnedByItem.get(c.vcr_item_id) || 0) + 1);
+      }
+    }
+    const returnedCount = returnedByItem.size;
+    const total = sameCategorySibs.length;
+    if (total > 0 && (returnedCount >= 3 || returnedCount / total >= 0.5)) {
+      const catCode = sameCategorySibs[0]?.vcr_items?.category?.code || "category";
+      facts.push({
+        label: "Category rework pattern",
+        value: `${returnedCount} of ${total} ${catCode} items returned`,
+        tone: "amber",
+        confidence: "verified",
+      });
+    }
+  }
+
+  // 9) Shared-evidence risk — this item's evidence also cited on a REJECTED sibling.
+  //    One bounded query over sibling evidence, matched by assai_doc_no when present
+  //    else exact file_name.
+  const myEvidence = await loadVcrEvidence(sb, prereqId);
+  const myDocNos = Array.from(new Set(myEvidence.map((e: any) => (e.assai_doc_no || "").trim()).filter(Boolean)));
+  const myFileNames = Array.from(new Set(myEvidence.map((e: any) => (e.file_name || "").trim()).filter(Boolean)));
+  const rejectedSibPrereqIds = sibs.filter((s) => String(s.status || "").toUpperCase() === "REJECTED").map((s) => s.id);
+  if (rejectedSibPrereqIds.length > 0 && (myDocNos.length > 0 || myFileNames.length > 0)) {
+    // Build a single OR filter over both keys.
+    const orParts: string[] = [];
+    if (myDocNos.length > 0) orParts.push(`assai_doc_no.in.(${myDocNos.map((d) => `"${d.replace(/"/g, "")}"`).join(",")})`);
+    if (myFileNames.length > 0) orParts.push(`file_name.in.(${myFileNames.map((d) => `"${d.replace(/"/g, "")}"`).join(",")})`);
+    const { data: sharedEv } = await bounded("workflow shared evidence", DB_TIMEOUT_MS, { data: [] }, (signal) =>
+      withAbort(
+        sb
+          .from("p2a_vcr_evidence")
+          .select("file_name, assai_doc_no, vcr_prerequisite_id")
+          .in("vcr_prerequisite_id", rejectedSibPrereqIds)
+          .or(orParts.join(",")),
+        signal,
+      ),
+    );
+    const hits = ((sharedEv || []) as any[]);
+    if (hits.length > 0) {
+      // Resolve sibling item_code for each hit prereq.
+      const prereqToItemCode = new Map<string, string>();
+      for (const s of sibs) {
+        const cat = s.vcr_items?.category?.code || "?";
+        const ord = s.vcr_items?.display_order ?? "?";
+        prereqToItemCode.set(s.id, `${cat}-${ord}`);
+      }
+      const first = hits[0];
+      const siblingCode = prereqToItemCode.get(first.vcr_prerequisite_id) || "sibling";
+      const label = first.assai_doc_no || first.file_name;
+      facts.push({
+        label: "Shared evidence on a returned item",
+        value: `${label} also cited on ${siblingCode}`,
+        tone: "amber",
+        confidence: "verified",
+      });
+    }
+  }
+
+  // 10) VCR target date pressure. Column: p2a_handover_points.target_date (verified
+  //     via information_schema at authoring time). Emit only for non-terminal items.
+  if (!isTerminal) {
+    const { data: hpRow } = await bounded("workflow hp target", DB_TIMEOUT_MS, { data: null }, (signal) =>
+      withAbort(sb.from("p2a_handover_points").select("target_date").eq("id", vcrId).maybeSingle(), signal),
+    );
+    const targetRaw = (hpRow as any)?.target_date || null;
+    if (targetRaw) {
+      const target = new Date(targetRaw);
+      const diffDays = Math.floor((target.getTime() - now.getTime()) / 86400000);
+      if (diffDays < 0) {
+        facts.push({
+          label: "VCR target approaching",
+          value: `Target ${targetRaw} · ${Math.abs(diffDays)} days past-due`,
+          tone: "red",
+          confidence: "verified",
+        });
+      } else if (diffDays <= 14) {
+        facts.push({
+          label: "VCR target approaching",
+          value: `Target ${targetRaw} · ${diffDays} days`,
+          tone: "amber",
+          confidence: "verified",
+        });
+      }
+    }
+  }
+
   return facts;
 }
 
