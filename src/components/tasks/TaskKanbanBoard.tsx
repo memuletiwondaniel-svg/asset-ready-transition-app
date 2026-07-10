@@ -494,14 +494,14 @@ function getApprovalProgress(
 
 const ApprovalBar: React.FC<{ approved: number; total: number }> = ({ approved, total }) => {
   if (total <= 0) return null;
-  // v3 skeleton: thin full-width bar + compact % trailing on the right.
-  // Neutral fill on activity cards — green is reserved for the "approved"
-  // segment of bundle cards (semantic).
+  // v3 unified bar token system: neutral track (bg-muted) + neutral fill on
+  // ALL scalar activity cards. Green is reserved for the "approved" segment
+  // of bundle cards (semantic — see VCRBundleKanbanCard).
   const pct = Math.max(0, Math.min(100, Math.round((approved / total) * 100)));
   return (
     <div className="flex items-center gap-1.5 w-full">
-      <div className="h-1 flex-1 rounded-full bg-muted-foreground/20 overflow-hidden">
-        <div className="h-full bg-muted-foreground/50" style={{ width: `${pct}%` }} />
+      <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
+        <div className="h-full bg-muted-foreground/60" style={{ width: `${pct}%` }} />
       </div>
       <span className="text-[10px] tabular-nums text-muted-foreground shrink-0">{pct}%</span>
     </div>
@@ -635,7 +635,8 @@ const KanbanCardContent: React.FC<{
   })() : null;
 
 
-  // Overdue: plain small red text "28d" top-right (no pill). Non-overdue: none.
+  // Overdue: tiny Clock glyph + "{n}d" in destructive tone, top-right. The
+  // clock disambiguates from the trailing % at the bar end. Non-overdue: none.
   const overdueChip: React.ReactNode = (() => {
     if (task.kanbanColumn === 'done') return null;
     if (urgency.rail !== 'red' || !urgency.label) return null;
@@ -643,7 +644,8 @@ const KanbanCardContent: React.FC<{
     const days = m ? Number(m[1]) : null;
     if (!days) return null;
     return (
-      <span className="text-[10px] text-destructive tabular-nums whitespace-nowrap">
+      <span className="inline-flex items-center gap-0.5 text-[10px] text-destructive tabular-nums whitespace-nowrap">
+        <Clock className="h-3 w-3" strokeWidth={2.25} />
         {days}d
       </span>
     );
@@ -750,7 +752,7 @@ const KanbanCardContent: React.FC<{
           return (
             <div className="mt-1.5 space-y-1">
               <div className="flex items-center gap-1.5">
-                <Progress value={pct} className="h-1 flex-1" />
+                <Progress value={pct} className="h-1.5 flex-1 bg-muted" indicatorClassName="bg-muted-foreground/60" />
                 <span className="text-[10px] tabular-nums text-muted-foreground">{pct}%</span>
               </div>
               <p className="text-[11px] text-muted-foreground leading-snug">
@@ -774,7 +776,7 @@ const KanbanCardContent: React.FC<{
           return (
             <div className="mt-1.5 space-y-1">
               <div className="flex items-center gap-1.5">
-                <Progress value={pct} className="h-1 flex-1 bg-muted/30" indicatorClassName="bg-muted-foreground/25" />
+                <Progress value={pct} className="h-1.5 flex-1 bg-muted" indicatorClassName="bg-muted-foreground/60" />
                 <span className="text-[10px] tabular-nums text-muted-foreground">{Math.round(pct)}%</span>
               </div>
               {stepInfo && (
@@ -832,13 +834,119 @@ const KanbanCardWithChildren: React.FC<{
   );
 };
 
+// ─── VCR Cluster (per-column, per-project) ─────────────────────────
+// Groups tasks by metadata vcr_id (fallback handover_point_id/point_id).
+// Collapsible header shows chevron + short VCR label + task count +
+// right-aligned overdue rollup. Initial render capped at 4 cards; a
+// "+ N more" expander reveals the rest. Collapse state persists per user
+// per group in localStorage. Drag-and-drop is unaffected (grouping is
+// purely visual — dnd-kit works on the individual cards and column drops).
+const VCR_CLUSTER_CAP = 4;
+
+interface VcrGroup { key: string; label: string; tasks: UnifiedTask[]; }
+
+const clusterByVcr = (tasks: UnifiedTask[]): { groups: VcrGroup[]; flat: UnifiedTask[] } => {
+  const groups = new Map<string, VcrGroup>();
+  const flat: UnifiedTask[] = [];
+  for (const t of tasks) {
+    const um = (t.userTask?.metadata || {}) as Record<string, any>;
+    const bm = (t.bundleTask?.metadata || {}) as Record<string, any>;
+    const vcrId: string | undefined =
+      um.vcr_id || bm.vcr_id || um.handover_point_id || bm.handover_point_id || um.point_id || bm.point_id;
+    if (!vcrId) { flat.push(t); continue; }
+    const vcrLabelRaw: string | undefined = um.vcr_label || bm.vcr_label;
+    const vcrName: string | undefined = um.vcr_name || bm.vcr_name;
+    const short = vcrLabelRaw ? shortenInlineVCRCode(vcrLabelRaw).replace(/\s*:\s*.+$/, '') : `VCR-${String(vcrId).slice(-4)}`;
+    const label = vcrName ? `${short} (${vcrName})` : short;
+    const g = groups.get(vcrId) || { key: vcrId, label, tasks: [] };
+    g.tasks.push(t);
+    groups.set(vcrId, g);
+  }
+  const groupList = Array.from(groups.values()).sort((a, b) => a.label.localeCompare(b.label));
+  return { groups: groupList, flat };
+};
+
+const VCRCluster: React.FC<{
+  group: VcrGroup;
+  onTaskClick: (t: UnifiedTask) => void;
+  accentClass?: string;
+}> = ({ group, onTaskClick, accentClass }) => {
+  const storageKey = `kanban-vcr-collapse:${group.key}`;
+  const [open, setOpen] = useState(() => {
+    try { return localStorage.getItem(storageKey) !== '0'; } catch { return true; }
+  });
+  const [expanded, setExpanded] = useState(false);
+  useEffect(() => {
+    try { localStorage.setItem(storageKey, open ? '1' : '0'); } catch { /* noop */ }
+  }, [open, storageKey]);
+
+  const overdueDays = useMemo(() => {
+    const days: number[] = [];
+    for (const t of group.tasks) {
+      if (t.kanbanColumn === 'done') continue;
+      const u = computeUrgency(t);
+      if (u.rail === 'red' && u.label) {
+        const m = /(\d+)\s*day/i.exec(u.label);
+        if (m) days.push(Number(m[1]));
+      }
+    }
+    return days;
+  }, [group.tasks]);
+
+  const overdueRollup: string | null = (() => {
+    if (overdueDays.length === 0) return null;
+    const uniform = overdueDays.length === group.tasks.length && overdueDays.every(d => d === overdueDays[0]);
+    if (uniform) return `all ${overdueDays[0]}d overdue`;
+    return `${Math.max(...overdueDays)}d overdue`;
+  })();
+
+  const shown = expanded ? group.tasks : group.tasks.slice(0, VCR_CLUSTER_CAP);
+  const more = group.tasks.length - shown.length;
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen} className="rounded-md">
+      <CollapsibleTrigger className="flex items-center gap-1.5 w-full text-left py-1 group/vcr">
+        {open ? <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" /> : <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />}
+        <span className="text-[11px] font-semibold text-foreground/80 truncate">{group.label}</span>
+        <span className="text-[10px] text-muted-foreground/70 shrink-0">· {group.tasks.length} tasks</span>
+        {overdueRollup && <span className="ml-auto text-[10px] text-destructive shrink-0">{overdueRollup}</span>}
+      </CollapsibleTrigger>
+      <CollapsibleContent className="space-y-2 mt-1">
+        {shown.map(task => {
+          const meta = task.userTask?.metadata as Record<string, any> | undefined;
+          const isRejected = meta?.outcome === 'rejected';
+          return (
+            <KanbanCardWithChildren
+              key={task.id}
+              task={task}
+              onTaskClick={onTaskClick}
+              accentClass={isRejected ? 'border-l-destructive' : accentClass}
+            />
+          );
+        })}
+        {more > 0 && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setExpanded(true); }}
+            className="text-[10px] text-muted-foreground hover:text-foreground pl-4 py-0.5"
+          >
+            + {more} more
+          </button>
+        )}
+      </CollapsibleContent>
+    </Collapsible>
+  );
+};
+
 // ─── Project Group ─────────────────────────────────────────────────
 const ProjectGroup: React.FC<{
   projectName: string;
   tasks: UnifiedTask[];
   onTaskClick: (task: UnifiedTask) => void;
-}> = ({ projectName, tasks, onTaskClick }) => {
+  accentClass?: string;
+}> = ({ projectName, tasks, onTaskClick, accentClass }) => {
   const [open, setOpen] = useState(true);
+  const { groups, flat } = clusterByVcr(tasks);
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
@@ -848,8 +956,11 @@ const ProjectGroup: React.FC<{
         <span className="text-[10px] text-muted-foreground/60 ml-auto">{tasks.length}</span>
       </CollapsibleTrigger>
       <CollapsibleContent className="space-y-2">
-        {tasks.map(task => (
-          <KanbanCardWithChildren key={task.id} task={task} onTaskClick={onTaskClick} />
+        {groups.map(g => (
+          <VCRCluster key={g.key} group={g} onTaskClick={onTaskClick} accentClass={accentClass} />
+        ))}
+        {flat.map(task => (
+          <KanbanCardWithChildren key={task.id} task={task} onTaskClick={onTaskClick} accentClass={accentClass} />
         ))}
       </CollapsibleContent>
     </Collapsible>
@@ -890,6 +1001,19 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   const [columnGroupBy, setColumnGroupBy] = useState<Record<KanbanColumn, GroupBy>>({
     todo: 'category', in_progress: 'none', waiting: 'none', done: 'project',
   });
+
+  // Lens toggle: "My work" (default) hides approval bundles; "My reviews"
+  // shows only approval bundles re-columned by decision state. Persisted per
+  // user in localStorage.
+  const [lens, setLens] = useState<'work' | 'reviews'>(() => {
+    try {
+      const v = localStorage.getItem('kanban-lens');
+      return v === 'reviews' ? 'reviews' : 'work';
+    } catch { return 'work'; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem('kanban-lens', lens); } catch { /* noop */ }
+  }, [lens]);
 
   // Batch-fetch reviewer summaries for ALL tasks (not just done column)
   const allTaskIds = useMemo(() => 
@@ -1447,9 +1571,31 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     }
   };
 
+  // Lens partition. "My reviews" surfaces vcr/pssr approval bundles only;
+  // "My work" hides them. Both derive from the same input list.
+  const isReviewBundle = (u: UnifiedTask): boolean => {
+    const bt = (u.bundleTask as { type?: string } | undefined)?.type;
+    return bt === 'vcr_approval_bundle' || bt === 'pssr_approval_bundle';
+  };
+  const workTasks = useMemo(() => tasks.filter(u => !isReviewBundle(u)), [tasks]);
+  const reviewBundles = useMemo(() => tasks.filter(isReviewBundle), [tasks]);
+
+  // Aggregate awaiting count across all review bundles (badge on the toggle).
+  const awaitingTotal = useMemo(() => {
+    let n = 0;
+    for (const u of reviewBundles) {
+      const m = (u.bundleTask?.metadata || {}) as Record<string, any>;
+      const total = Number(m.approver_total_items ?? 0);
+      const decided = Number(m.approver_decided_items ?? 0);
+      n += Math.max(0, total - decided);
+    }
+    return n;
+  }, [reviewBundles]);
+
   const columnData = useMemo(() => {
+    const source = lens === 'reviews' ? reviewBundles : workTasks;
     return COLUMNS.map(col => {
-      const filtered = tasks.filter(t =>
+      const filtered = source.filter(t =>
         col.key === 'todo'
           ? (t.kanbanColumn === 'todo' || t.kanbanColumn === 'waiting')
           : t.kanbanColumn === col.key
@@ -1463,7 +1609,32 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         : [...filtered].sort(compareBySort(sortKey));
       return { ...col, tasks: ordered, sortKey };
     });
-  }, [tasks, COLUMNS, columnSort]);
+  }, [workTasks, reviewBundles, lens, COLUMNS, columnSort]);
+
+  // Reviews-lens decision buckets. Approval bundles are re-columned by their
+  // review state, not by kanbanColumn.
+  interface ReviewBucketDef { key: 'needs' | 'in_progress' | 'waiting' | 'done'; label: string; hint?: string; dim?: boolean; }
+  const REVIEW_BUCKETS: ReviewBucketDef[] = [
+    { key: 'needs', label: 'Needs my decision' },
+    { key: 'in_progress', label: 'In review progress' },
+    { key: 'waiting', label: 'Waiting on delivering parties', hint: 'Nothing submitted yet', dim: true },
+    { key: 'done', label: 'Done' },
+  ];
+  const reviewBuckets = useMemo(() => {
+    const buckets: Record<ReviewBucketDef['key'], UnifiedTask[]> = { needs: [], in_progress: [], waiting: [], done: [] };
+    for (const u of reviewBundles) {
+      if (u.kanbanColumn === 'done') { buckets.done.push(u); continue; }
+      const m = (u.bundleTask?.metadata || {}) as Record<string, any>;
+      const total = Number(m.approver_total_items ?? u.bundleTask?.sub_items?.length ?? 0);
+      const decided = Number(m.approver_decided_items ?? 0);
+      const awaiting = Math.max(0, total - decided);
+      if (awaiting > 0 && decided > 0) buckets.in_progress.push(u);
+      else if (awaiting > 0) buckets.needs.push(u);
+      else buckets.waiting.push(u);
+    }
+    return buckets;
+  }, [reviewBundles]);
+
 
   const renderColumnContent = (columnTasks: UnifiedTask[], col: typeof columnData[number]) => {
     if (columnTasks.length === 0) {
@@ -1498,7 +1669,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         return a.localeCompare(b);
       });
       return sorted.map(([project, tasks]) => (
-        <ProjectGroup key={project} projectName={project} tasks={tasks} onTaskClick={handleTaskClick} />
+        <ProjectGroup key={project} projectName={project} tasks={tasks} onTaskClick={handleTaskClick} accentClass={col.accent} />
       ));
     }
 
@@ -1510,22 +1681,32 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         groups[key].push(t);
       });
       return Object.entries(groups).map(([category, tasks]) => (
-        <ProjectGroup key={category} projectName={category} tasks={tasks} onTaskClick={handleTaskClick} />
+        <ProjectGroup key={category} projectName={category} tasks={tasks} onTaskClick={handleTaskClick} accentClass={col.accent} />
       ));
     }
 
-    return columnTasks.map(task => {
-      const meta = task.userTask?.metadata as Record<string, any> | undefined;
-      const isRejected = meta?.outcome === 'rejected';
-      return (
-        <KanbanCardWithChildren
-          key={task.id}
-          task={task}
-          onTaskClick={handleTaskClick}
-          accentClass={isRejected ? 'border-l-destructive' : col.accent}
-        />
-      );
-    });
+    // Default (no explicit grouping) — apply VCR clustering when tasks share
+    // a vcr_id; tasks without a VCR key fall to a trailing flat section.
+    const { groups: vcrGroups, flat: vcrFlat } = clusterByVcr(columnTasks);
+    return (
+      <>
+        {vcrGroups.map(g => (
+          <VCRCluster key={g.key} group={g} onTaskClick={handleTaskClick} accentClass={col.accent} />
+        ))}
+        {vcrFlat.map(task => {
+          const meta = task.userTask?.metadata as Record<string, any> | undefined;
+          const isRejected = meta?.outcome === 'rejected';
+          return (
+            <KanbanCardWithChildren
+              key={task.id}
+              task={task}
+              onTaskClick={handleTaskClick}
+              accentClass={isRejected ? 'border-l-destructive' : col.accent}
+            />
+          );
+        })}
+      </>
+    );
   };
 
   const reviewerMap = reviewerSummaries || new Map<string, ReviewerSummary>();
@@ -1568,6 +1749,73 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     <P2AApprovalContext.Provider value={p2aApprovalMap}>
     <ReviewerSummaryContext.Provider value={reviewerMap}>
     <>
+      {/* Lens toggle — My work / My reviews. Persisted per user. */}
+      <div className="flex items-center gap-2 mb-3">
+        <div className="inline-flex rounded-md border border-border/60 bg-card/40 p-0.5">
+          <button
+            type="button"
+            onClick={() => setLens('work')}
+            className={cn(
+              'text-[12px] px-3 py-1 rounded transition-colors',
+              lens === 'work' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            My work
+          </button>
+          <button
+            type="button"
+            onClick={() => setLens('reviews')}
+            className={cn(
+              'text-[12px] px-3 py-1 rounded transition-colors inline-flex items-center gap-1.5',
+              lens === 'reviews' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            My reviews
+            {awaitingTotal > 0 && (
+              <span className="text-[10px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                {awaitingTotal}
+              </span>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {lens === 'reviews' ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 items-stretch">
+          {REVIEW_BUCKETS.map(bucket => {
+            const bTasks = reviewBuckets[bucket.key];
+            const isEmpty = bTasks.length === 0;
+            return (
+              <div key={bucket.key} className="bg-card/40 dark:bg-muted/20 rounded-xl border border-border/60 flex flex-col min-h-[60vh] overflow-hidden">
+                <div className="flex items-center justify-between gap-2 px-3 pt-3 pb-2 border-b border-border/40">
+                  <span className="text-[13px] font-medium text-foreground truncate">{bucket.label}</span>
+                  <span className="text-[11px] tabular-nums text-muted-foreground/70">{bTasks.length}</span>
+                </div>
+                {isEmpty ? (
+                  <div className="flex-1 flex items-stretch p-3">
+                    <div className="flex-1 rounded-lg border border-dashed border-border/60 flex items-center justify-center text-center px-4 py-8">
+                      <p className="text-[11px] text-muted-foreground/60">{bucket.hint || 'Nothing here.'}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <ScrollArea className="flex-1 max-h-[calc(100vh-320px)]">
+                    <div className={cn('px-3 pb-3 pt-2 space-y-2', bucket.dim && 'opacity-60')}>
+                      {bTasks.map(task => (
+                        <div key={task.id} className="space-y-1">
+                          <KanbanCardWithChildren task={task} onTaskClick={handleTaskClick} />
+                          {bucket.dim && (
+                            <p className="text-[10px] text-muted-foreground/70 pl-3">{bucket.hint}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
       <DndContext
         sensors={sensors}
         onDragStart={handleDragStart}
@@ -1686,6 +1934,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
           ) : null}
         </DragOverlay>
       </DndContext>
+      )}
 
       <TaskDetailSheet
         task={selectedTask}
