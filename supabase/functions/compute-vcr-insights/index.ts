@@ -588,7 +588,363 @@ async function selmaRevisionPass(sb: any, item: any): Promise<Fact[]> {
   return facts;
 }
 
+// ─── Parse requirement labels (same rule as the drawer chip splitter) ─────
+function parseEvidenceLabels(raw: string | null | undefined): string[] {
+  return (raw || "")
+    .split(/[,;\n]+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+}
+
+const EVIDENCE_MATCH_MODEL = "google/gemini-2.5-flash-lite";
+
+async function classifyEvidenceAgainstRequirement(
+  lovableKey: string,
+  fileName: string,
+  evidenceType: string,
+  requirementText: string,
+): Promise<{ verdict: "match" | "related" | "unrelated"; reason: string } | null> {
+  const r = await bounded<Response | null>("evidence_match ai", AI_TIMEOUT_MS, null, (signal) =>
+    fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      signal,
+      headers: { "Content-Type": "application/json", "Lovable-API-Key": lovableKey },
+      body: JSON.stringify({
+        model: EVIDENCE_MATCH_MODEL,
+        response_format: { type: "json_object" },
+        messages: [
+          {
+            role: "system",
+            content:
+              'You classify whether an uploaded evidence file matches a requirement, based ONLY on the filename and declared evidence type (no file contents). Return STRICT JSON: {"verdict":"match|related|unrelated","reason":"<=12 words"}. "match" = clearly the required artifact; "related" = same topic/system, wrong document; "unrelated" = different topic.',
+          },
+          {
+            role: "user",
+            content: `Requirement: ${requirementText}\nFile: ${fileName}\nEvidence type: ${evidenceType || "(unspecified)"}`,
+          },
+        ],
+      }),
+    }),
+  );
+  if (!r || !r.ok) return null;
+  try {
+    const j = await r.json();
+    const txt = j.choices?.[0]?.message?.content || "{}";
+    const parsed = JSON.parse(typeof txt === "string" ? txt : "{}");
+    const verdict = parsed?.verdict;
+    if (verdict !== "match" && verdict !== "related" && verdict !== "unrelated") return null;
+    const reason = String(parsed?.reason || "").slice(0, 120);
+    return { verdict, reason };
+  } catch (_e) {
+    return null;
+  }
+}
+
+// ─── Engine E1: EvidenceMatch (deterministic count + AI per-file check) ───
+async function evidenceMatchEngine(sb: any, item: any, lovableKey: string): Promise<Fact[]> {
+  const requiredLabels = parseEvidenceLabels(item.supporting_evidence);
+  const uploads = await loadVcrEvidence(sb, item.prerequisite_id);
+  const facts: Fact[] = [];
+
+  const n = uploads.length;
+  const m = requiredLabels.length;
+  facts.push({
+    label: "Required evidence attached",
+    value: m > 0 ? `${n} file(s) against ${m} requirement(s)` : `${n} file(s)`,
+    tone: n === 0 && m > 0 ? "amber" : "neutral",
+    confidence: "verified",
+  });
+
+  if (m === 0 || n === 0 || !lovableKey) return facts;
+
+  // Combined requirement text for classification input
+  const requirementText = requiredLabels.join("; ");
+  const reqHash = await sha(requirementText);
+
+  for (const up of uploads) {
+    // Cache lookup
+    const { data: cached } = await bounded("evidence_match cache read", DB_TIMEOUT_MS, { data: null }, (signal) =>
+      withAbort(
+        sb
+          .from("evidence_match_cache")
+          .select("verdict, reason")
+          .eq("evidence_id", up.id)
+          .eq("req_hash", reqHash)
+          .maybeSingle(),
+        signal,
+      ),
+    );
+    let verdict = (cached as any)?.verdict as "match" | "related" | "unrelated" | undefined;
+    let reason = (cached as any)?.reason as string | undefined;
+
+    if (!verdict) {
+      const ai = await classifyEvidenceAgainstRequirement(
+        lovableKey,
+        up.file_name || "",
+        up.evidence_type || "",
+        requirementText,
+      );
+      if (!ai) continue; // silent skip on failure/timeout — never guess
+      verdict = ai.verdict;
+      reason = ai.reason;
+      await bounded("evidence_match cache write", DB_TIMEOUT_MS, null, (signal) =>
+        withAbort(
+          sb.from("evidence_match_cache").upsert(
+            { evidence_id: up.id, req_hash: reqHash, verdict, reason },
+            { onConflict: "evidence_id,req_hash" },
+          ),
+          signal,
+        ),
+      );
+    }
+
+    if (verdict === "match") continue; // only surface non-matching files
+
+    const { data: signed } = await bounded("evidence_match signed url", DB_TIMEOUT_MS, { data: null }, () =>
+      sb.storage.from(EVIDENCE_BUCKET).createSignedUrl(up.file_path, 60 * 60),
+    );
+
+    facts.push({
+      label: `Evidence check: ${up.file_name}`,
+      value: `${verdict} — ${reason || ""}`.trim(),
+      tone: verdict === "unrelated" ? "amber" : "neutral", // ai_read never red (guardrail)
+      confidence: "ai_read",
+      sourceHref: (signed as any)?.signedUrl,
+    });
+  }
+
+  return facts;
+}
+
+// ─── Engine E5: WorkflowSignals (pure SQL, verified confidence) ───────────
+function daysBetween(a: Date | null | undefined, b: Date): number {
+  if (!a) return 0;
+  return Math.max(0, Math.floor((b.getTime() - a.getTime()) / 86400000));
+}
+
+async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<Fact[]> {
+  const facts: Fact[] = [];
+  const now = new Date();
+  const prereqId = item.prerequisite_id;
+  const vcrItemId = item.id;
+  const vcrId = item.handover_point_id;
+  if (!prereqId) return facts;
+
+  // Reload full prereq row for timestamps + party ids
+  const { data: pr } = await bounded("workflow prereq load", DB_TIMEOUT_MS, { data: null }, (signal) =>
+    withAbort(
+      sb
+        .from("p2a_vcr_prerequisites")
+        .select("id, status, submitted_at, reviewed_at, updated_at, created_at, delivering_party_id, delivering_party_name, receiving_party_id, receiving_party_name")
+        .eq("id", prereqId)
+        .maybeSingle(),
+      signal,
+    ),
+  );
+  if (!pr) return facts;
+
+  // 1) Status + aging (always emitted)
+  const status = (pr as any).status || "UNKNOWN";
+  const anchor = (pr as any).submitted_at || (pr as any).updated_at || (pr as any).created_at;
+  const days = daysBetween(anchor ? new Date(anchor) : null, now);
+  let statusTone: Tone = "neutral";
+  if (status === "READY_FOR_REVIEW" && days > 7) statusTone = "amber";
+  else if (status === "IN_PROGRESS" && days > 21) statusTone = "amber";
+  facts.push({
+    label: "Status",
+    value: `${status} · ${days} days`,
+    tone: statusTone,
+    confidence: "verified",
+  });
+
+  // 2, 3) Comment-based signals
+  const { data: comments } = await bounded("workflow comments", DB_TIMEOUT_MS, { data: [] }, (signal) =>
+    withAbort(
+      sb
+        .from("vcr_item_comments")
+        .select("id, author_user_id, body, action_tag, created_at")
+        .eq("vcr_item_id", vcrItemId)
+        .eq("handover_point_id", vcrId)
+        .order("created_at", { ascending: true }),
+      signal,
+    ),
+  );
+  const cs = (comments || []) as any[];
+  const returned = cs.filter((c) => (c.action_tag || "").toLowerCase() === "returned");
+  if (returned.length >= 1) {
+    facts.push({
+      label: "Returned by approver",
+      value: `${returned.length}×`,
+      tone: returned.length >= 2 ? "red" : "amber",
+      confidence: "verified",
+    });
+  }
+
+  // Unanswered approver comment — resolve party membership via RLS helpers
+  if (cs.length > 0) {
+    const last = cs[cs.length - 1];
+    const authorId = last.author_user_id;
+    if (authorId) {
+      const { data: isApprover } = await bounded("is approver check", DB_TIMEOUT_MS, { data: false }, () =>
+        sb.rpc("is_vcr_item_approving_party", {
+          _user_id: authorId,
+          _vcr_item_id: vcrItemId,
+          _handover_point_id: vcrId,
+        }),
+      );
+      if (isApprover === true) {
+        // Any later delivering-party reply?
+        let hasReply = false;
+        for (const c of cs.filter((c) => new Date(c.created_at) > new Date(last.created_at))) {
+          const { data: isDeliv } = await bounded("is deliv check", DB_TIMEOUT_MS, { data: false }, () =>
+            sb.rpc("is_vcr_item_delivering_party", {
+              _user_id: c.author_user_id,
+              _vcr_item_id: vcrItemId,
+              _handover_point_id: vcrId,
+            }),
+          );
+          if (isDeliv === true) { hasReply = true; break; }
+        }
+        if (!hasReply) {
+          const d = daysBetween(new Date(last.created_at), now);
+          facts.push({
+            label: "Approver comment awaiting reply",
+            value: `${d} days`,
+            tone: "amber",
+            confidence: "verified",
+          });
+        }
+      }
+    }
+  }
+
+  // 4) Open qualification (join through vcr_prerequisite_id; status stands in for stage)
+  const { data: quals } = await bounded("workflow quals", DB_TIMEOUT_MS, { data: [] }, (signal) =>
+    withAbort(
+      sb
+        .from("p2a_vcr_qualifications")
+        .select("id, status, submitted_at, updated_at, created_at")
+        .eq("vcr_prerequisite_id", prereqId),
+      signal,
+    ),
+  );
+  const openQual = ((quals || []) as any[]).find((q) => {
+    const s = String(q.status || "").toUpperCase();
+    return s && !["APPROVED", "REJECTED", "CLOSED", "COMPLETED"].includes(s);
+  });
+  if (openQual || status === "QUALIFICATION_REQUESTED") {
+    const q = openQual as any;
+    const qAnchor = q?.submitted_at || q?.updated_at || q?.created_at;
+    const qDays = daysBetween(qAnchor ? new Date(qAnchor) : null, now);
+    facts.push({
+      label: "Qualification open",
+      value: `${q?.status || "QUALIFICATION_REQUESTED"} · ${qDays} days`,
+      tone: "amber",
+      confidence: "verified",
+    });
+  }
+
+  // 5) Party health — effective role unassigned
+  // Effective delivering/approving role resolution lives at the item level.
+  const { data: itemRoles } = await bounded("workflow item roles", DB_TIMEOUT_MS, { data: null }, (signal) =>
+    withAbort(
+      sb
+        .from("vcr_items")
+        .select("delivering_party_role_id, approving_party_role_ids")
+        .eq("id", vcrItemId)
+        .maybeSingle(),
+      signal,
+    ),
+  );
+  const projectId = (item as any).project_id || null;
+  const checkRole = async (roleId: string | null | undefined): Promise<{ has: boolean; roleName: string | null }> => {
+    if (!roleId) return { has: true, roleName: null };
+    const { data: r } = await bounded("workflow resolve role", DB_TIMEOUT_MS, { data: null }, () =>
+      sb.rpc("resolve_project_role_user", { _project_id: projectId, _role_id: roleId }),
+    );
+    const { data: roleRow } = await bounded("workflow role name", DB_TIMEOUT_MS, { data: null }, (signal) =>
+      withAbort(sb.from("roles").select("name").eq("id", roleId).maybeSingle(), signal),
+    );
+    return { has: r != null, roleName: (roleRow as any)?.name || null };
+  };
+  if (projectId) {
+    const deliv = await checkRole((itemRoles as any)?.delivering_party_role_id);
+    if (!deliv.has) {
+      facts.push({
+        label: "Unassigned role",
+        value: deliv.roleName ? `Delivering: ${deliv.roleName}` : "Delivering party",
+        tone: "red",
+        confidence: "verified",
+      });
+    }
+    for (const rid of ((itemRoles as any)?.approving_party_role_ids || []) as string[]) {
+      const ap = await checkRole(rid);
+      if (!ap.has) {
+        facts.push({
+          label: "Unassigned role",
+          value: ap.roleName ? `Approving: ${ap.roleName}` : "Approving party",
+          tone: "red",
+          confidence: "verified",
+        });
+      }
+    }
+  }
+
+  // 6) Evidence provenance
+  const { data: ev } = await bounded("workflow evidence", DB_TIMEOUT_MS, { data: [] }, (signal) =>
+    withAbort(
+      sb
+        .from("p2a_vcr_evidence")
+        .select("id, source, confirmed, created_at")
+        .eq("vcr_prerequisite_id", prereqId),
+      signal,
+    ),
+  );
+  const evRows = (ev || []) as any[];
+  const assaiPending = evRows.filter(
+    (e) => String(e.source || "").toLowerCase() === "assai" && e.confirmed === false,
+  );
+  if (assaiPending.length > 0) {
+    facts.push({
+      label: "Assai evidence awaiting confirmation",
+      value: String(assaiPending.length),
+      tone: "amber",
+      confidence: "verified",
+    });
+  }
+  const submittedAt = (pr as any).submitted_at ? new Date((pr as any).submitted_at) : null;
+  if (submittedAt && status === "READY_FOR_REVIEW") {
+    const lateFiles = evRows.filter((e) => new Date(e.created_at) > submittedAt);
+    if (lateFiles.length > 0) {
+      facts.push({
+        label: "Evidence added after submission",
+        value: `${lateFiles.length} file(s)`,
+        tone: "red",
+        confidence: "verified",
+      });
+    }
+  }
+
+  // Signal 7 (item-level tasks) — deferred pending EXE-1. Intentionally omitted.
+  return facts;
+}
+
+function nextStepForFact(f: Fact | undefined): string | null {
+  if (!f) return null;
+  const l = f.label.toLowerCase();
+  if (l.includes("returned by approver")) return "Address the approver's return reason in the thread before resubmitting.";
+  if (l.includes("unassigned role")) return "Assign the missing role before this item can progress.";
+  if (l.includes("approver comment awaiting reply")) return "Reply to the approver's comment in the thread.";
+  if (l.includes("qualification open")) return "Close the open qualification before submitting.";
+  if (l.includes("evidence added after submission")) return "Re-submit so the approver reviews the latest evidence.";
+  if (l.includes("evidence check")) return "Review the flagged file — it may be unrelated to the requirement.";
+  if (l.includes("required evidence attached") && f.tone === "amber") return "Attach the required evidence before submitting.";
+  if (l.includes("assai evidence")) return "Confirm the Assai-sourced evidence.";
+  return null;
+}
+
 // ─── Bob composer ─────────────────────────────────────────────────────────
+
 function composeSeverity(facts: Fact[]): "green" | "amber" | "red" {
   if (facts.some((f) => f.tone === "red")) return "red";
   if (facts.some((f) => f.tone === "amber")) return "amber";
@@ -683,6 +1039,24 @@ serve(async (req) => {
     const contribs = (cfg?.contrib_agents || []) as string[];
     const configVersion = cfg?.config_version || 0;
 
+    // Phase 1 template lookup (item-level routing). Must precede hashInput so
+    // template edits invalidate the cache.
+    const { data: template } = await bounded("template lookup", DB_TIMEOUT_MS, { data: null }, (signal) =>
+      withAbort(
+        sb
+          .from("vcr_item_insight_templates")
+          .select("engines, action_templates, config_version")
+          .eq("vcr_item_id", vcr_item_id)
+          .maybeSingle(),
+        signal,
+      ),
+    );
+    const templateEngines: string[] = Array.isArray((template as any)?.engines) && (template as any).engines.length > 0
+      ? (template as any).engines
+      : ["evidence_match", "workflow_signals", "currency_check"];
+    const templateVersion = (template as any)?.config_version || 0;
+    const actionTemplates = ((template as any)?.action_templates || {}) as Record<string, string>;
+
     // Evidence fingerprint — invalidate when files are added/removed/updated
     // Reads from p2a_vcr_evidence (the same store the UI writes to).
     const { data: evRows } = await bounded("evidence fingerprint", DB_TIMEOUT_MS, { data: [] }, (signal) =>
@@ -700,6 +1074,8 @@ serve(async (req) => {
     // Cache lookup — include prereq status so any status change invalidates
     const hashInput = JSON.stringify({
       configVersion,
+      templateVersion,
+      templateEngines,
       vcr_id,
       vcr_item_id,
       categoryCode,
@@ -707,6 +1083,7 @@ serve(async (req) => {
       evidenceFingerprint,
       prereqStatus,
     });
+
     const inputsHash = await sha(hashInput);
     if (!force) {
       const { data: cached } = await bounded("cache lookup", DB_TIMEOUT_MS, { data: null }, (signal) =>
@@ -731,9 +1108,64 @@ serve(async (req) => {
         });
       }
     }
-...
+
+    const lovableKey = Deno.env.get("LOVABLE_API_KEY") || "";
+    const allFacts: Fact[] = [];
+    const runAgent = async (name: string) => {
+      try {
+        if (name === "fred") allFacts.push(...(await fredCompletionsAggregator(sb, vcr_id)));
+        else if (name === "ivan") allFacts.push(...(await ivanHempReader(sb, item, lovableKey)));
+        else if (name === "selma") allFacts.push(...(await selmaRevisionPass(sb, item)));
+        else if (name === "evidence_match") allFacts.push(...(await evidenceMatchEngine(sb, item, lovableKey)));
+        else if (name === "workflow_signals") allFacts.push(...(await workflowSignalsEngine(sb, item, prereq)));
+        else if (name === "currency_check") allFacts.push(...(await selmaRevisionPass(sb, item)));
+        else if (name === "hannah" || name === "alex") {
+          allFacts.push({ label: `${name[0].toUpperCase()}${name.slice(1)} check`, value: "Not connected", confidence: "unavailable" });
+        }
+      } catch (e) {
+        allFacts.push({ label: `${name} agent`, value: `Error: ${(e as Error).message}`, confidence: "unavailable" });
+      }
+    };
+
+    const ranSet = new Set<string>();
+    const runOnce = async (name: string) => {
+      if (ranSet.has(name)) return;
+      ranSet.add(name);
+      await runAgent(name);
+    };
+    for (const eng of templateEngines) await runOnce(eng);
+    // Category-level config is ADDITIVE (fred/ivan/selma) — do not remove.
+    if (cfg?.lead_agent) await runOnce(cfg.lead_agent);
+    for (const c of contribs) await runOnce(c);
+
+    const usable = allFacts.filter((f) => f.confidence !== "unavailable");
+    const insights: Insights = usable.length === 0
+      ? { state: "unavailable", facts: allFacts }
+      : (() => {
+          const severity = composeSeverity(allFacts);
+          const topFact = allFacts.find((f) => f.tone === "red") || allFacts.find((f) => f.tone === "amber");
+          const deliverKey = topFact?.label || "";
+          const approverKey = topFact?.label || "";
+          const defaultDeliver = severity === "green"
+            ? "Looks ready — review evidence before marking complete."
+            : nextStepForFact(topFact) ?? "Resolve flagged signals before submitting.";
+          const defaultApprover = severity === "green"
+            ? "Live signals look ready."
+            : "Heads up before accepting — confirm flagged signals.";
+
+          return {
+            state: "ready",
+            severity,
+            headline: composeHeadline(allFacts, severity),
+            facts: allFacts,
+            delivering_action: actionTemplates[`delivering:${deliverKey}`] || defaultDeliver,
+            approver_check: actionTemplates[`approver:${approverKey}`] || defaultApprover,
+          };
+        })();
+
     const nowIso = new Date().toISOString();
     await bounded("cache upsert", DB_TIMEOUT_MS, null, (signal) =>
+
       withAbort(
         sb.from("vcr_item_insights").upsert({
           vcr_id, vcr_item_id, payload: insights, inputs_hash: inputsHash,
