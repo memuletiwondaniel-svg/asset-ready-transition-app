@@ -30,7 +30,7 @@ export interface VCRBundleEnrichedItem {
   delivering_party_name: string | null;
   submitted_at: string | null;
   completed_from_bundle: boolean;
-  ledger_status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'QUALIFIED' | null;
+  ledger_status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'QUALIFIED' | 'SUPERSEDED' | null;
 }
 
 export function useVcrBundleEnrichedItems(bundle: VCRBundleTask | null, opts: { forApprover: boolean }) {
@@ -66,7 +66,7 @@ export function useVcrBundleEnrichedItems(bundle: VCRBundleTask | null, opts: { 
         .in('id', prereqIds);
       if (error) throw error;
 
-      let ledgerMap: Record<string, 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'QUALIFIED'> = {};
+      let ledgerMap: Record<string, 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'QUALIFIED' | 'SUPERSEDED'> = {};
       if (opts.forApprover && user?.id) {
         const { data: led, error: le } = await (supabase as any)
           .from('vcr_prerequisite_approvals')
