@@ -1001,6 +1001,9 @@ function fmtNum(s: string): string {
 function sentenceForFact(f: Fact, ctx: SummaryCtx, allFacts: Fact[], consumed: Set<string>): string | null {
   const l = (f.label || "").toLowerCase();
   const v = fmtNum(f.value || "");
+  // Detail-tier percentage stats stay in facts[]/Details only; their amber tone
+  // is just "<100%" and would generate noise in the prose summary.
+  if (l.includes("avg completion %")) return null;
   if (l.includes("required evidence attached") && f.tone === "amber") {
     const req = ctx.requirementText && ctx.requirementText.trim()
       ? ctx.requirementText.trim()
