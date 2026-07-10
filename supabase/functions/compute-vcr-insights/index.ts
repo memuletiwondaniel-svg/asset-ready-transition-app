@@ -1588,7 +1588,7 @@ serve(async (req) => {
       withAbort(
         sb
           .from("vcr_item_insight_templates")
-          .select("engines, action_templates, config_version")
+          .select("engines, action_templates, config_version, source_rollup, suppress_category_agents")
           .eq("vcr_item_id", vcr_item_id)
           .maybeSingle(),
         signal,
@@ -1599,6 +1599,8 @@ serve(async (req) => {
       : ["evidence_match", "workflow_signals", "currency_check"];
     const templateVersion = (template as any)?.config_version || 0;
     const actionTemplates = ((template as any)?.action_templates || {}) as Record<string, string>;
+    const sourceRollupCfg: SourceRollupCfg = ((template as any)?.source_rollup || {}) as SourceRollupCfg;
+    const suppressCategoryAgents: boolean = !!(template as any)?.suppress_category_agents;
 
     // Evidence fingerprint — invalidate when files are added/removed/updated
     // Reads from p2a_vcr_evidence (the same store the UI writes to).
