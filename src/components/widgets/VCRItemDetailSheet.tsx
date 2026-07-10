@@ -212,14 +212,16 @@ const InsightsBlock: React.FC<{
 
   return (
     <section className="space-y-2">
-      <h3 className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
-        Insights
-      </h3>
-
-      {/* Subtly toned "computed intelligence" panel — very light blue-grey */}
-      <div className="rounded-lg border border-sky-100 dark:border-sky-950/60 bg-[#F5F8FC] dark:bg-sky-950/10 px-4 py-3">
-        {/* Row 1: readiness badge (left) + Recompute (right) */}
-        <div className="flex items-center justify-between gap-3">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between gap-2 group"
+        aria-expanded={open}
+      >
+        <h3 className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
+          Insights
+        </h3>
+        <div className="flex items-center gap-2">
           <span
             className={cn(
               'inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium',
@@ -228,83 +230,96 @@ const InsightsBlock: React.FC<{
           >
             {badge.label}
           </span>
-          {onRecompute && (
-            <button
-              type="button"
-              onClick={onRecompute}
-              disabled={recomputing}
-              className="text-[11px] text-primary hover:underline disabled:opacity-50 shrink-0"
-            >
-              {recomputing ? 'Recomputing…' : 'Recompute'}
-            </button>
+          {open ? (
+            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+          ) : (
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
           )}
         </div>
+      </button>
 
-        {state === 'pending' && (
-          <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            Readiness check running…
-          </div>
-        )}
+      {/* Subtly toned "computed intelligence" panel — very light blue-grey */}
+      {open && (
+        <div className="rounded-lg border border-sky-100 dark:border-sky-950/60 bg-[#F5F8FC] dark:bg-sky-950/10 px-4 py-3">
+          {onRecompute && (
+            <div className="flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={onRecompute}
+                disabled={recomputing}
+                className="text-[11px] text-primary hover:underline disabled:opacity-50 shrink-0"
+              >
+                {recomputing ? 'Recomputing…' : 'Recompute'}
+              </button>
+            </div>
+          )}
 
-        {state === 'unavailable' && (
-          <p className="mt-2 text-[12px] text-muted-foreground leading-relaxed">
-            No readiness signal is available for this item yet.
-          </p>
-        )}
+          {state === 'pending' && (
+            <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              Readiness check running…
+            </div>
+          )}
 
-        {state === 'ready' && (
-          <>
-            {insights?.headline && (
-              <p className="mt-2 text-[12.5px] leading-relaxed text-foreground/85">
-                {insights.headline}
-              </p>
-            )}
+          {state === 'unavailable' && (
+            <p className="mt-2 text-[12px] text-muted-foreground leading-relaxed">
+              No readiness signal is available for this item yet.
+            </p>
+          )}
 
-            {(insights?.facts?.length ?? 0) > 0 && (
-              <div className="mt-3 border-t border-sky-100/70 dark:border-sky-950/50 divide-y divide-sky-100/70 dark:divide-sky-950/50">
-                {insights!.facts!.map((f, i) => {
-                  // Fact-value colour = the fact's own semantic state.
-                  // 'amber' / 'red' mark a genuine gap or risk (incomplete
-                  // count, outstanding list, breached threshold). Anything
-                  // else — including complete/verified values — renders as
-                  // default foreground so a green fact never reads as amber.
-                  const toneClass =
-                    f.tone === 'red'
-                      ? 'text-red-700 dark:text-red-300'
-                      : f.tone === 'amber'
-                      ? 'text-amber-700 dark:text-amber-300'
-                      : 'text-foreground';
-                  return (
-                    <div key={i} className="flex items-center justify-between gap-3 py-2">
-                      <span className="text-[12px] text-muted-foreground">{f.label}</span>
-                      <span className={cn('text-[12.5px] font-semibold', toneClass)}>
-                        {f.value}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+          {state === 'ready' && (
+            <>
+              {insights?.headline && (
+                <p className="mt-2 text-[12.5px] leading-relaxed text-foreground/85">
+                  {insights.headline}
+                </p>
+              )}
 
-            {/* Deep-links intentionally omitted. The seeded "notification
-                register" href was a placeholder — no such ORSH route exists
-                — so we do not render a dead link. Re-enable this block only
-                once `sources[].href` resolves to a real in-app route. */}
+              {(insights?.facts?.length ?? 0) > 0 && (
+                <div className="mt-3 border-t border-sky-100/70 dark:border-sky-950/50 divide-y divide-sky-100/70 dark:divide-sky-950/50">
+                  {insights!.facts!.map((f, i) => {
+                    // Fact-value colour = the fact's own semantic state.
+                    // 'amber' / 'red' mark a genuine gap or risk (incomplete
+                    // count, outstanding list, breached threshold). Anything
+                    // else — including complete/verified values — renders as
+                    // default foreground so a green fact never reads as amber.
+                    const toneClass =
+                      f.tone === 'red'
+                        ? 'text-red-700 dark:text-red-300'
+                        : f.tone === 'amber'
+                        ? 'text-amber-700 dark:text-amber-300'
+                        : 'text-foreground';
+                    return (
+                      <div key={i} className="flex items-center justify-between gap-3 py-2">
+                        <span className="text-[12px] text-muted-foreground">{f.label}</span>
+                        <span className={cn('text-[12.5px] font-semibold', toneClass)}>
+                          {f.value}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
 
-            {viewer === 'delivering' && insights?.delivering_action && (
-              <p className="mt-2 pt-2 border-t border-sky-100/70 dark:border-sky-950/50 text-[12px] text-foreground/80">
-                {insights.delivering_action}
-              </p>
-            )}
-            {viewer === 'approving' && insights?.approver_check && (
-              <p className="mt-2 pt-2 border-t border-sky-100/70 dark:border-sky-950/50 text-[12px] text-foreground/80">
-                {insights.approver_check}
-              </p>
-            )}
-          </>
-        )}
-      </div>
+              {/* Deep-links intentionally omitted. The seeded "notification
+                  register" href was a placeholder — no such ORSH route exists
+                  — so we do not render a dead link. Re-enable this block only
+                  once `sources[].href` resolves to a real in-app route. */}
+
+              {viewer === 'delivering' && insights?.delivering_action && (
+                <p className="mt-2 pt-2 border-t border-sky-100/70 dark:border-sky-950/50 text-[12px] text-foreground/80">
+                  {insights.delivering_action}
+                </p>
+              )}
+              {viewer === 'approving' && insights?.approver_check && (
+                <p className="mt-2 pt-2 border-t border-sky-100/70 dark:border-sky-950/50 text-[12px] text-foreground/80">
+                  {insights.approver_check}
+                </p>
+              )}
+            </>
+          )}
+        </div>
+      )}
     </section>
   );
 };
