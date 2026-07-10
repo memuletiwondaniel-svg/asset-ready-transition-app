@@ -1666,6 +1666,7 @@ serve(async (req) => {
     const runAgent = async (name: string) => {
       try {
         if (name === "fred") allFacts.push(...(await fredCompletionsAggregator(sb, vcr_id)));
+        else if (name === "source_rollup") allFacts.push(...(await sourceRollupEngine(sb, vcr_id, sourceRollupCfg)));
         else if (name.startsWith("register_reader:")) {
           const schemaKey = name.slice("register_reader:".length);
           allFacts.push(...(await registerReaderEngine(sb, item, lovableKey, schemaKey)));
