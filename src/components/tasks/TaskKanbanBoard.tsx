@@ -635,7 +635,7 @@ const KanbanCardContent: React.FC<{
   })() : null;
 
 
-  // Compact overdue chip: "28d overdue". Non-overdue cards render nothing.
+  // Overdue: plain small red text "28d" top-right (no pill). Non-overdue: none.
   const overdueChip: React.ReactNode = (() => {
     if (task.kanbanColumn === 'done') return null;
     if (urgency.rail !== 'red' || !urgency.label) return null;
@@ -643,8 +643,8 @@ const KanbanCardContent: React.FC<{
     const days = m ? Number(m[1]) : null;
     if (!days) return null;
     return (
-      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
-        {days}d overdue
+      <span className="text-[10px] text-destructive tabular-nums whitespace-nowrap">
+        {days}d
       </span>
     );
   })();
