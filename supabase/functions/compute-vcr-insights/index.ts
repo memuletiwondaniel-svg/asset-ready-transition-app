@@ -551,6 +551,270 @@ async function ivanHempReader(sb: any, item: any, lovableKey: string): Promise<F
   return facts;
 }
 
+// ─────────────────────────────────────────────────────────────────────────
+// RegisterReader (schema-driven generalisation of Ivan's machinery)
+//
+// Ivan's HEMP/HAZOP reader is per-page. Many other advisory reads on
+// attached registers are per-row on a single-page matrix (start-up
+// notification acknowledgment sheets, permit registers, …). This engine
+// pulls the schema-agnostic bits — bounded download, size guard, page
+// count, single-shot AI extraction, honest partials, page-linked facts —
+// into one function driven by a RegisterSchema. HEMP schema (page-unit)
+// keeps its dedicated reader (ivanHempReader) so behaviour is byte-
+// identical; the schema entry aliases to it. Table-row schemas run here.
+// ─────────────────────────────────────────────────────────────────────────
+
+interface RegisterSchemaBase {
+  schema_key: string;
+  doc_match: RegExp;          // matches on file_name/evidence_type
+  row_unit: "page" | "table_row";
+  system_prompt: string;
+  record_shape: string;       // JSON shape hint used in the prompt
+}
+interface TableRowSchema extends RegisterSchemaBase {
+  row_unit: "table_row";
+  record_key: string;         // unique key field in each record (e.g. "unit")
+  closed_field: string;       // field that being non-empty marks the row "done"
+  labels: {
+    docType: string;          // human phrase e.g. "notification sheet"
+    countLabel: string;       // "Units acknowledged"
+    countUnit: string;        // "units"
+    outstandingLabel: string; // "Awaiting acknowledgement"
+    outstandingItem: string;  // "acknowledgement"
+  };
+}
+interface PageRegisterSchema extends RegisterSchemaBase {
+  row_unit: "page";
+  // Delegated to ivanHempReader — HEMP-specific fields live in that fn.
+}
+type RegisterSchema = TableRowSchema | PageRegisterSchema;
+
+const SCHEMA_HEMP_DI03: PageRegisterSchema = {
+  schema_key: "hemp_di03",
+  doc_match: /(hemp|hazop|action[\s_-]*register|close[\s_-]*out)/i,
+  row_unit: "page",
+  system_prompt: IVAN_SYSTEM_PROMPT,
+  record_shape: "IvanAction",
+};
+
+const SCHEMA_SU_NOTIFICATION_OI: TableRowSchema = {
+  schema_key: "su_notification",
+  doc_match: /(notification|acknowledg|start[\s_-]*up.*(comms|notice|ack))/i,
+  row_unit: "table_row",
+  record_key: "unit",
+  closed_field: "acknowledged",
+  labels: {
+    docType: "notification sheet",
+    countLabel: "Units acknowledged",
+    countUnit: "units",
+    outstandingLabel: "Awaiting acknowledgement",
+    outstandingItem: "acknowledgement",
+  },
+  record_shape:
+    '{"unit":"string","notified":"string (date or method, or empty)",' +
+    '"acknowledged":"string (acknowledger name + date, or empty if outstanding)",' +
+    '"source_page":"integer (1-based page in the PDF)"}',
+  system_prompt:
+    'You are extracting a start-up NOTIFICATION & ACKNOWLEDGMENT sheet from a ' +
+    'PDF. Each row is one affected unit or department (Operations, Maintenance, ' +
+    'HSE, Utilities, Marine, …). Columns typically include UNIT/DEPARTMENT, ' +
+    'NOTIFIED (date or method), and ACKNOWLEDGED (name + date). A unit counts ' +
+    'as ACKNOWLEDGED only when the acknowledgement cell carries a non-empty ' +
+    'value (name and/or date). Placeholders such as "—", "-", "N/A", "TBD", ' +
+    '"pending", or blank all count as NOT acknowledged. Do not invent units. ' +
+    'source_page is the 1-based page where you read the row. Return STRICT ' +
+    'JSON, no prose, no markdown:\n' +
+    '{"records":[{"unit":"string","notified":"string","acknowledged":"string",' +
+    '"source_page":number}]}',
+};
+
+const REGISTER_SCHEMAS: Record<string, RegisterSchema> = {
+  hemp_di03: SCHEMA_HEMP_DI03,
+  su_notification: SCHEMA_SU_NOTIFICATION_OI,
+};
+
+async function tableRowExtract(
+  lovableKey: string,
+  pdfBytes: Uint8Array,
+  filename: string,
+  schema: TableRowSchema,
+): Promise<Array<Record<string, any>> | null> {
+  const b64 = bytesToBase64(pdfBytes);
+  const r = await bounded<Response | null>("register_reader ai", AI_TIMEOUT_MS, null, (signal) =>
+    fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      signal,
+      headers: { "Content-Type": "application/json", "Lovable-API-Key": lovableKey },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: schema.system_prompt },
+          {
+            role: "user",
+            content: [
+              { type: "text", text: `Extract every row from this ${schema.labels.docType}.` },
+              { type: "file", file: { filename, file_data: `data:application/pdf;base64,${b64}` } },
+            ],
+          },
+        ],
+      }),
+    }),
+  );
+  if (!r || !r.ok) return null;
+  try {
+    const j = await r.json();
+    const txt = j.choices?.[0]?.message?.content || "{}";
+    const parsed = JSON.parse(typeof txt === "string" ? txt : "{}");
+    return Array.isArray(parsed?.records) ? parsed.records : [];
+  } catch (_e) {
+    return null;
+  }
+}
+
+function isRowClosed(row: Record<string, any>, field: string): boolean {
+  const v = row?.[field];
+  if (v === true) return true;
+  if (v == null) return false;
+  const s = String(v).trim().toLowerCase();
+  if (!s) return false;
+  return !["—", "-", "n/a", "na", "tbd", "pending", "outstanding", "none"].includes(s);
+}
+
+async function registerReaderTableRow(
+  sb: any,
+  item: any,
+  lovableKey: string,
+  schema: TableRowSchema,
+): Promise<Fact[]> {
+  const atts = await loadVcrEvidence(sb, item.prerequisite_id);
+  const matches = (a: any) => {
+    const hay = `${a.file_name || ""} ${a.evidence_type || ""}`;
+    return schema.doc_match.test(hay);
+  };
+  const pdf = atts.find((a: any) =>
+    (/pdf/i.test(a.file_type || "") || /\.pdf$/i.test(a.file_name || "")) && matches(a),
+  );
+  if (!pdf) {
+    // Zero-evidence is already owned by evidenceMatchEngine. Stay silent.
+    return [];
+  }
+
+  const { data: signed } = await bounded("register_reader signed url", DB_TIMEOUT_MS, { data: null }, () =>
+    sb.storage.from(EVIDENCE_BUCKET).createSignedUrl(pdf.file_path, 60 * 60),
+  );
+  const sourceHref: string | undefined = signed?.signedUrl;
+  if (!sourceHref) {
+    return [{ label: schema.labels.countLabel, value: "Attachment link unavailable", confidence: "unavailable" }];
+  }
+  const pageHref = (p?: number) => (p && Number.isFinite(p) ? `${sourceHref}#page=${p}` : sourceHref);
+
+  let pdfBytes: Uint8Array | null = null;
+  try {
+    pdfBytes = await bounded<Uint8Array | null>("register_reader download", STORAGE_TIMEOUT_MS, null, async (signal) => {
+      const response = await fetch(sourceHref, { signal });
+      if (!response.ok) return null;
+      const cl = Number(response.headers.get("content-length") || 0);
+      if (cl && cl > MAX_PDF_BYTES) return null;
+      const buf = await response.arrayBuffer();
+      if (buf.byteLength > MAX_PDF_BYTES) return null;
+      return new Uint8Array(buf);
+    });
+  } catch (_e) {
+    return [{ label: schema.labels.countLabel, value: "Attachment unreadable", confidence: "unavailable", sourceHref }];
+  }
+  if (!pdfBytes) {
+    return [{ label: schema.labels.countLabel, value: "Attachment too large or unreachable", confidence: "unavailable", tone: "amber", sourceHref }];
+  }
+  if (!lovableKey) {
+    return [{ label: schema.labels.countLabel, value: "AI gateway not connected", confidence: "unavailable", sourceHref }];
+  }
+
+  // Single-shot: notification/ack sheets are typically 1–2 pages. If the doc
+  // exceeds the page budget we still send it (small enough by byte cap).
+  const records = await tableRowExtract(lovableKey, pdfBytes, pdf.file_name || "register.pdf", schema);
+  if (!records) {
+    return [{ label: schema.labels.countLabel, value: "AI read failed", confidence: "unavailable", sourceHref }];
+  }
+
+  // Dedupe by record_key (last-wins for cell fills).
+  const byKey = new Map<string, Record<string, any>>();
+  for (const rec of records) {
+    const k = String(rec?.[schema.record_key] || "").trim();
+    if (!k) continue;
+    const prev = byKey.get(k) || {};
+    byKey.set(k, { ...prev, ...rec });
+  }
+  const rows = Array.from(byKey.values());
+  const total = rows.length;
+
+  if (total === 0) {
+    return [{
+      label: schema.labels.countLabel,
+      value: "No readable rows",
+      tone: "amber",
+      confidence: "ai_read",
+      sourceHref,
+    }];
+  }
+
+  const closed = rows.filter((r) => isRowClosed(r, schema.closed_field));
+  const outstanding = rows.filter((r) => !isRowClosed(r, schema.closed_field));
+  const firstOutstandingPage =
+    typeof outstanding[0]?.source_page === "number" ? outstanding[0].source_page : undefined;
+
+  const facts: Fact[] = [{
+    label: schema.labels.countLabel,
+    value: `${closed.length} of ${total}`,
+    tone: closed.length < total ? "amber" : "neutral",  // ai_read never red — guardrail
+    confidence: "ai_read",
+    sourceHref: pageHref(firstOutstandingPage),
+  }];
+
+  if (outstanding.length > 0) {
+    const names = outstanding
+      .map((r) => String(r?.[schema.record_key] || "").trim())
+      .filter(Boolean)
+      .slice(0, 6);
+    facts.push({
+      label: schema.labels.outstandingLabel,
+      value: names.join(", ") || `${outstanding.length} ${schema.labels.countUnit}`,
+      tone: "amber",
+      confidence: "ai_read",
+      sourceHref: pageHref(firstOutstandingPage),
+    });
+  }
+
+  return facts;
+}
+
+async function registerReaderEngine(
+  sb: any,
+  item: any,
+  lovableKey: string,
+  schemaKey: string,
+): Promise<Fact[]> {
+  const schema = REGISTER_SCHEMAS[schemaKey];
+  if (!schema) {
+    return [{
+      label: "Register reader",
+      value: `Unknown schema '${schemaKey}'`,
+      confidence: "unavailable",
+    }];
+  }
+  if (schema.row_unit === "page") {
+    // HEMP page-unit reader — keep the existing implementation verbatim so
+    // DI-03 behaviour is byte-identical to pre-refactor.
+    if (schema.schema_key === "hemp_di03") return ivanHempReader(sb, item, lovableKey);
+  }
+  if (schema.row_unit === "table_row") {
+    return registerReaderTableRow(sb, item, lovableKey, schema);
+  }
+  return [];
+}
+
+
+
 // ─── Selma: attachment revision pass (runs on EVERY item) ─────────────────
 async function selmaRevisionPass(sb: any, item: any): Promise<Fact[]> {
   const atts = await loadVcrEvidence(sb, item.prerequisite_id);
@@ -1001,9 +1265,29 @@ function fmtNum(s: string): string {
 function sentenceForFact(f: Fact, ctx: SummaryCtx, allFacts: Fact[], consumed: Set<string>): string | null {
   const l = (f.label || "").toLowerCase();
   const v = fmtNum(f.value || "");
-  // Detail-tier percentage stats stay in facts[]/Details only; their amber tone
-  // is just "<100%" and would generate noise in the prose summary.
-  if (l.includes("avg completion %")) return null;
+  // Generalised exclusion: any fact whose value is a bare percentage and whose
+  // tone is amber SOLELY because it is <100 % is detail-tier — it belongs in
+  // facts[]/Details, not in the prose summary. This covers "Avg completion %"
+  // and any future percentage stat that lands with an amber tone.
+  if (f.tone === "amber" && /^\s*\d{1,3}(\.\d+)?\s*%\s*$/.test(f.value || "")) return null;
+  // Register-reader table-row schemas: friendly sentences using the schema
+  // labels. Deterministic, no LLM.
+  if (l === "units acknowledged") {
+    const m = /^(\d+)\s+of\s+(\d+)$/.exec(v);
+    if (m) {
+      const ack = Number(m[1]), total = Number(m[2]);
+      const outstandingFact = allFacts.find((x) => (x.label || "").toLowerCase() === "awaiting acknowledgement");
+      if (ack < total) {
+        const names = outstandingFact?.value || "";
+        consumed.add("Awaiting acknowledgement");
+        return names
+          ? `The notification sheet shows ${ack} of ${total} units have acknowledged; ${names} are still outstanding.`
+          : `The notification sheet shows ${ack} of ${total} units have acknowledged.`;
+      }
+      return `All ${total} affected units have acknowledged the start-up notification.`;
+    }
+  }
+
   if (l.includes("required evidence attached") && f.tone === "amber") {
     const req = ctx.requirementText && ctx.requirementText.trim()
       ? ctx.requirementText.trim()
@@ -1262,14 +1546,19 @@ serve(async (req) => {
     // Alias engine names to a single identity so runOnce truly dedupes.
     // 'selma' (contrib in vcr_insights_agent_config) and 'currency_check'
     // (template engine) both invoke selmaRevisionPass — collapse to one id.
+    // 'ivan' is now a legacy alias for register_reader:hemp_di03.
     const canonicalEngine = (name: string): string => {
       if (name === "selma") return "currency_check";
+      if (name === "ivan") return "register_reader:hemp_di03";
       return name;
     };
     const runAgent = async (name: string) => {
       try {
         if (name === "fred") allFacts.push(...(await fredCompletionsAggregator(sb, vcr_id)));
-        else if (name === "ivan") allFacts.push(...(await ivanHempReader(sb, item, lovableKey)));
+        else if (name.startsWith("register_reader:")) {
+          const schemaKey = name.slice("register_reader:".length);
+          allFacts.push(...(await registerReaderEngine(sb, item, lovableKey, schemaKey)));
+        }
         else if (name === "evidence_match") allFacts.push(...(await evidenceMatchEngine(sb, item, lovableKey)));
         else if (name === "workflow_signals") allFacts.push(...(await workflowSignalsEngine(sb, item, prereq)));
         else if (name === "currency_check") allFacts.push(...(await selmaRevisionPass(sb, item)));
@@ -1279,6 +1568,7 @@ serve(async (req) => {
         allFacts.push({ label: `${name} agent`, value: `Error: ${(e as Error).message}`, confidence: "unavailable" });
       }
     };
+
 
     const ranSet = new Set<string>();
     const runOnce = async (name: string) => {
