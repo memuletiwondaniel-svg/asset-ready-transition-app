@@ -844,18 +844,32 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   // Per-approver approval status (drives the ✓ Approved / Pending indicator on each
   // approving-party row). Keyed by approver_user_id so we can map back to the
   // resolved holder shown in the row.
+  // B2B shared-seat: a role is decided when ANY holder decides. The partner's
+  // own row is SUPERSEDED — we surface the deciding partner's outcome so the
+  // chip shows the role's effective status, not the raw row status.
   const { data: approverStatusByUserId = {} } = useQuery({
     queryKey: ['vcr-item-approver-status', item?.prerequisite_id],
     queryFn: async (): Promise<Record<string, string>> => {
       if (!item?.prerequisite_id) return {};
       const { data, error } = await (supabase as any)
         .from('vcr_prerequisite_approvals')
-        .select('approver_user_id, status')
+        .select('approver_user_id, approver_role_id, status')
         .eq('prerequisite_id', item.prerequisite_id);
       if (error) return {};
+      const rows = (data || []) as Array<{ approver_user_id: string | null; approver_role_id: string; status: string }>;
+      // Effective status per role: REJECTED > QUALIFIED > ACCEPTED > SUPERSEDED > PENDING.
+      const roleEff: Record<string, string> = {};
+      const rank = (s: string) => s === 'REJECTED' ? 4 : s === 'QUALIFIED' ? 3 : s === 'ACCEPTED' ? 2 : s === 'SUPERSEDED' ? 1 : 0;
+      rows.forEach((r) => {
+        const cur = roleEff[r.approver_role_id];
+        if (!cur || rank(r.status) > rank(cur)) roleEff[r.approver_role_id] = r.status;
+      });
       const out: Record<string, string> = {};
-      (data || []).forEach((r: any) => {
-        if (r.approver_user_id) out[r.approver_user_id] = r.status;
+      rows.forEach((r) => {
+        if (!r.approver_user_id) return;
+        const eff = roleEff[r.approver_role_id] || r.status;
+        // If this user is SUPERSEDED, show the role's decided status (partner's).
+        out[r.approver_user_id] = r.status === 'SUPERSEDED' ? eff : r.status;
       });
       return out;
     },
