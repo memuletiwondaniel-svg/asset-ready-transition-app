@@ -495,11 +495,13 @@ function getApprovalProgress(
 const ApprovalBar: React.FC<{ approved: number; total: number }> = ({ approved, total }) => {
   if (total <= 0) return null;
   // v3 skeleton: thin full-width bar + compact % trailing on the right.
+  // Neutral fill on activity cards — green is reserved for the "approved"
+  // segment of bundle cards (semantic).
   const pct = Math.max(0, Math.min(100, Math.round((approved / total) * 100)));
   return (
     <div className="flex items-center gap-1.5 w-full">
       <div className="h-1 flex-1 rounded-full bg-muted-foreground/20 overflow-hidden">
-        <div className="h-full bg-emerald-500/80 dark:bg-emerald-400/80" style={{ width: `${pct}%` }} />
+        <div className="h-full bg-muted-foreground/50" style={{ width: `${pct}%` }} />
       </div>
       <span className="text-[10px] tabular-nums text-muted-foreground shrink-0">{pct}%</span>
     </div>
