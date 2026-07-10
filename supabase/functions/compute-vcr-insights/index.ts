@@ -553,10 +553,7 @@ async function ivanHempReader(sb: any, item: any, lovableKey: string): Promise<F
 async function selmaRevisionPass(sb: any, item: any): Promise<Fact[]> {
   const atts = await loadVcrEvidence(sb, item.prerequisite_id);
   if (atts.length === 0) {
-    const required = (item.supporting_evidence || "").trim();
-    if (required) {
-      return [{ label: "Required documents attached", value: "0", tone: "amber", confidence: "verified" }];
-    }
+    // Zero-evidence gap is owned by evidenceMatchEngine (E1); Selma stays silent here.
     return [];
   }
   const facts: Fact[] = [];
