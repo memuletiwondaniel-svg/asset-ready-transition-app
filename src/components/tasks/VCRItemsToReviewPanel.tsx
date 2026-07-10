@@ -145,7 +145,7 @@ export const VCRItemsToReviewPanel: React.FC<Props> = ({ bundle, open, onOpenCha
               </SheetDescription>
             </div>
 
-            <div>
+            <div className="mt-3">
               <div className="flex items-baseline gap-2 mb-1">
                 <span className="text-xl font-bold text-foreground">{awaiting}</span>
                 <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Awaiting your review</span>
@@ -161,10 +161,6 @@ export const VCRItemsToReviewPanel: React.FC<Props> = ({ bundle, open, onOpenCha
                 <p className="text-[10px] text-muted-foreground/80 italic mt-0.5">From {parties} delivering parties</p>
               )}
             </div>
-
-            <p className="text-[11px] text-muted-foreground italic">
-              Tap an item to review it — accept or return.
-            </p>
           </SheetHeader>
 
 
