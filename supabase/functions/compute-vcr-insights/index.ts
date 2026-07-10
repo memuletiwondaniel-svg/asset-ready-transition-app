@@ -987,6 +987,75 @@ function composeHeadline(facts: Fact[], severity: string): string {
   return "All checked signals look ready for review.";
 }
 
+// Deterministic per-label sentence templates. No LLM. Woven in severity order,
+// max 3 sentences. Cat-A/ITR sentences MUST carry the "all scoped systems"
+// caveat until Phase 2 Ex-scoping lands.
+interface SummaryCtx {
+  requirementText?: string;
+  systemsInScope?: string;
+  itrsValue?: string; // "X / Y"
+}
+function sentenceForFact(f: Fact, ctx: SummaryCtx, allFacts: Fact[]): string | null {
+  const l = (f.label || "").toLowerCase();
+  const v = f.value || "";
+  if (l.includes("required evidence attached") && f.tone === "amber") {
+    const req = ctx.requirementText && ctx.requirementText.trim()
+      ? ctx.requirementText.trim()
+      : "the required evidence";
+    return `Nothing has been attached yet. This item needs ${req} before it can be submitted for review.`;
+  }
+  if (l.startsWith("evidence check")) {
+    const file = f.label.replace(/^evidence check:\s*/i, "").trim() || "the attached file";
+    const [verdictRaw, ...reasonParts] = v.split("—");
+    const verdict = (verdictRaw || "").trim() || "unrelated";
+    const reason = reasonParts.join("—").trim();
+    return reason
+      ? `The attached file '${file}' looks ${verdict} to the requirement — ${reason}.`
+      : `The attached file '${file}' looks ${verdict} to the requirement.`;
+  }
+  if (l.includes("cat-a punch")) {
+    const n = v;
+    const systems = ctx.systemsInScope || "the";
+    const itr = allFacts.find((x) => x.label === "ITRs complete (A+B)" && x.value && x.value !== "No data");
+    const itrParen = itr ? ` (with ${itr.value.replace(/\s*\/\s*/, " of ")} ITRs signed)` : "";
+    return `The scoped systems still carry ${n} open Cat-A punch items (across all ${systems} scoped systems — not specific to this item's topic)${itrParen}.`;
+  }
+  if (l.includes("itrs complete") && f.tone === "amber") {
+    const systems = ctx.systemsInScope || "the";
+    return `Only ${v.replace(/\s*\/\s*/, " of ")} ITRs are signed across all ${systems} scoped systems (not specific to this item's topic).`;
+  }
+  if (l.includes("returned by approver")) return "The approver returned this item — address the return reason before resubmitting.";
+  if (l.includes("approver comment awaiting reply")) return "An approver comment is awaiting a reply.";
+  if (l.includes("qualification open")) return "An open qualification is blocking submission.";
+  if (l.includes("unassigned role")) return `A required role (${v}) is unassigned.`;
+  if (l.includes("evidence added after submission")) return `Evidence changed after submission (${v}) — a fresh review is needed.`;
+  if (l.includes("assai")) return "Assai-sourced evidence needs confirmation.";
+  if (l.includes("outdated revision") || v.toLowerCase().includes("outdated revision")) {
+    return "An attached document is on an outdated revision.";
+  }
+  return `${f.label}: ${v}.`;
+}
+function composeSummary(facts: Fact[], severity: string, ctx: SummaryCtx): string {
+  if (severity === "green") return "All checked signals look ready for review.";
+  const actionable = [
+    ...facts.filter((f) => f.tone === "red"),
+    ...facts.filter((f) => f.tone === "amber"),
+  ];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const f of actionable) {
+    if (out.length >= 3) break;
+    const s = sentenceForFact(f, ctx, facts);
+    if (!s) continue;
+    if (seen.has(s)) continue;
+    seen.add(s);
+    out.push(s);
+  }
+  if (out.length === 0) return composeHeadline(facts, severity);
+  return out.join(" ");
+}
+
+
 // ─── Main handler ─────────────────────────────────────────────────────────
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
