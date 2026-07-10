@@ -37,7 +37,7 @@ import {
   
   ChevronDown,
   ChevronRight,
-  GripVertical,
+  
   AlertTriangle,
   CircleDashed,
   Timer,
