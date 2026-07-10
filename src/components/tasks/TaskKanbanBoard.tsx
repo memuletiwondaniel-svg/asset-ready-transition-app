@@ -665,17 +665,21 @@ const KanbanCardContent: React.FC<{
         isOverlay && 'shadow-xl ring-2 ring-primary/20 rotate-[1deg] scale-[1.02]',
       )}
     >
-      {/* Row 1: drag handle + project / category pills (status pill lives here on the right) */}
+      {/* Drag handle — absolute overlay, hover-only, no layout shift.
+          The chip row below stays flush with card padding. */}
+      {!isChild && dragHandleProps && (
+        <button
+          {...dragHandleProps}
+          onClick={(e) => e.stopPropagation()}
+          className="absolute top-1 right-1 z-10 touch-none p-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition-opacity cursor-grab active:cursor-grabbing bg-card/80 rounded"
+          aria-label="Drag task"
+        >
+          <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
+        </button>
+      )}
+
+      {/* Row 1: chip row (flush left) + top-right status/overdue chip */}
       <div className={cn("flex items-center gap-1.5 min-w-0", isChild ? "mb-1" : "mb-1.5")}>
-        {!isChild && dragHandleProps && (
-          <button
-            {...dragHandleProps}
-            onClick={(e) => e.stopPropagation()}
-            className="touch-none p-0.5 -ml-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition-opacity cursor-grab active:cursor-grabbing shrink-0"
-          >
-            <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
-          </button>
-        )}
         {!isChild && (
           task.project ? (
             <>
@@ -688,9 +692,7 @@ const KanbanCardContent: React.FC<{
             <span className="text-[10px] text-muted-foreground">{task.categoryLabel}</span>
           )
         )}
-        {/* Top-right chip: status pill (done column) or compact overdue chip */}
         {topRightChip && <div className="ml-auto shrink-0">{topRightChip}</div>}
-
       </div>
 
       {/* Title + View in Gantt */}
@@ -703,17 +705,10 @@ const KanbanCardContent: React.FC<{
             let title = task.title;
             if (task.project) {
               const escaped = task.project.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-              // Strip trailing "  - PROJECT" (existing behaviour)
               title = title.replace(new RegExp(`\\s*[–\\-]\\s*${escaped}\\s*$`), '');
-              // Strip leading "PROJECT:" / "PROJECT -" / "PROJECT –" prefix, case-insensitive
               title = title.replace(new RegExp(`^\\s*${escaped}\\s*[:\\-–]\\s*`, 'i'), '');
             }
-            // Shorten inline VCR-<projectCode>-<seq> → VCR-<seq>
             title = shortenInlineVCRCode(title);
-            // Drop leading "Deliver" verb only. Collision guard: if the
-            // stripped title would clash with another card's stripped title
-            // on this board, keep the original so distinct tasks stay
-            // visually distinguishable.
             const stripped = stripLeadingTaskVerb(title);
             title = strippedTitleCollisions.has(stripped) ? title : stripped;
             return title;
@@ -734,49 +729,63 @@ const KanbanCardContent: React.FC<{
         )}
       </div>
 
-      {/* Progress for in-progress tasks (hidden on child rows — leaves use status pill only) */}
-      {!isChild && task.kanbanColumn === 'in_progress' && (() => {
-        const isVcrReview = !!task.vcrPlanApproval;
-        const pct = task.progressPercentage ?? 0;
-        const reviewedSteps = isVcrReview
-          ? (task.vcrPlanApproval!.reviewMaxStep != null
-              ? Math.min((task.vcrPlanApproval!.reviewMaxStep as number) + 1, 10)
-              : (task.vcrPlanApproval!.reviewStartedAt ? 1 : 0))
-          : 0;
-        const stepInfo = isVcrReview
-          ? { reviewed: reviewedSteps, total: 10 }
-          : (task.stepProgress ?? null);
-        return (
-          <div className="flex items-center gap-1.5 mt-1.5">
-            <Progress value={pct} className="h-1 flex-1 bg-muted/30" indicatorClassName="bg-muted-foreground/25" />
-            <span className="text-[10px] font-medium text-muted-foreground">
-              {stepInfo ? `${stepInfo.reviewed} of ${stepInfo.total} steps` : `${Math.round(pct)}%`}
-            </span>
-          </div>
-        );
-      })()}
-      {/* Item counts for bundle tasks */}
-      {!isChild && task.kanbanColumn !== 'in_progress' && task.totalItems != null && task.totalItems > 0 && (
-        <div className="flex items-center gap-1.5 mt-1.5">
-          <Progress value={task.progressPercentage || 0} className="h-1 flex-1" />
-          <span className="text-[10px] text-muted-foreground">{task.completedItems}/{task.totalItems}</span>
-        </div>
-      )}
-
-      {/* Bottom meta row: approval progress bar only. Status pill and overdue
-          chip live in the top-right per v3 mockup; non-overdue urgency labels
-          are dropped to remove clutter. */}
+      {/* Unified skeleton row: [bar + trailing %]. Approval progress preferred
+          when available; else in-progress % / step count; else counted items. */}
       {!isChild && (() => {
         const approvalProgress = getApprovalProgress(task, reviewerSummaries, p2aApprovalSummaries, oraApprovalSummaries);
-        if (!approvalProgress) return null;
-        return (
-          <div className="mt-1.5 flex items-center justify-end gap-2 min-w-0">
-            <div className="shrink-0">
+        if (approvalProgress) {
+          return (
+            <div className="mt-1.5">
               <ApprovalBar approved={approvalProgress.approved} total={approvalProgress.total} />
             </div>
-          </div>
-        );
+          );
+        }
+        // Counted sub-deliverables (bundle-like tasks not routed to VCRBundleKanbanCard).
+        if (task.totalItems != null && task.totalItems > 0) {
+          const pct = Math.max(0, Math.min(100, Math.round(((task.completedItems || 0) / task.totalItems) * 100)));
+          const unit = 'items';
+          return (
+            <div className="mt-1.5 space-y-1">
+              <div className="flex items-center gap-1.5">
+                <Progress value={pct} className="h-1 flex-1" />
+                <span className="text-[10px] tabular-nums text-muted-foreground">{pct}%</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground leading-snug">
+                {task.completedItems} of {task.totalItems} {unit}
+              </p>
+            </div>
+          );
+        }
+        // Scalar % (in-progress) — bar + %, no subtext (per v3 subtext rule).
+        if (task.kanbanColumn === 'in_progress') {
+          const isVcrReview = !!task.vcrPlanApproval;
+          const pct = task.progressPercentage ?? 0;
+          const reviewedSteps = isVcrReview
+            ? (task.vcrPlanApproval!.reviewMaxStep != null
+                ? Math.min((task.vcrPlanApproval!.reviewMaxStep as number) + 1, 10)
+                : (task.vcrPlanApproval!.reviewStartedAt ? 1 : 0))
+            : 0;
+          const stepInfo = isVcrReview
+            ? { reviewed: reviewedSteps, total: 10 }
+            : (task.stepProgress ?? null);
+          return (
+            <div className="mt-1.5 space-y-1">
+              <div className="flex items-center gap-1.5">
+                <Progress value={pct} className="h-1 flex-1 bg-muted/30" indicatorClassName="bg-muted-foreground/25" />
+                <span className="text-[10px] tabular-nums text-muted-foreground">{Math.round(pct)}%</span>
+              </div>
+              {stepInfo && (
+                <p className="text-[11px] text-muted-foreground leading-snug">
+                  {stepInfo.reviewed} of {stepInfo.total} steps
+                </p>
+              )}
+            </div>
+          );
+        }
+        return null;
       })()}
+
+
 
     </Card>
   );
