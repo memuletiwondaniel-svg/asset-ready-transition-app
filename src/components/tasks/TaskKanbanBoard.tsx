@@ -902,7 +902,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   // grouping does NOT affect the others.
   const [columnSort, setColumnSort] = useState<Record<KanbanColumn, SortKey>>(DEFAULT_COLUMN_SORT);
   const [columnGroupBy, setColumnGroupBy] = useState<Record<KanbanColumn, GroupBy>>({
-    todo: 'category', in_progress: 'none', waiting: 'none', done: 'project',
+    todo: 'project', in_progress: 'project', waiting: 'project', done: 'project',
   });
 
   // Lens toggle: "My work" (default) hides approval bundles; "My reviews"
