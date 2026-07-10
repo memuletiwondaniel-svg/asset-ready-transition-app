@@ -847,31 +847,78 @@ async function registerReaderEngine(
 
 
 // ─── Selma: attachment revision pass (runs on EVERY item) ─────────────────
+// Doc-number-first precedence (Phase 3A hardening):
+//   Tier 1: evidence row carries assai_doc_no (Assai-fetched provenance) →
+//           exact match on document_number, full-strength facts (red allowed
+//           for "Outdated revision").
+//   Tier 2: doc-number pattern extracted from filename via the app-canonical
+//           BGC/IGC regex (source: src/lib/assaiLinks.ts — the one place doc
+//           numbers are constructed/parsed in the codebase; dms_external_sync
+//           was empty at authoring time so the regex is derived from the app
+//           catalog, not fabricated). Exact match → full-strength facts.
+//   Tier 3: no doc number available → filename stem ilike, DOWNGRADED. Only
+//           the mismatch branch renders, and it is capped to amber with a
+//           "verify manually" phrasing. Current-revision stem-matches emit
+//           nothing (too weak to confirm silently as green/neutral).
+const DOC_NUMBER_REGEX = /\b(\d{4}-[A-Z]{2,6}-[A-Z0-9]+-[A-Z]+-[A-Z0-9]+-[A-Z]{2}-[A-Z]\d{2}-\d{5}-\d{3})\b/;
 async function selmaRevisionPass(sb: any, item: any): Promise<Fact[]> {
   const atts = await loadVcrEvidence(sb, item.prerequisite_id);
-  if (atts.length === 0) {
-    // Zero-evidence gap is owned by evidenceMatchEngine (E1); Selma stays silent here.
-    return [];
-  }
+  if (atts.length === 0) return [];
   const facts: Fact[] = [];
   for (const a of atts) {
     const stem = (a.file_name || "").replace(/\.[^.]+$/, "");
-    const { data: docs } = await bounded("selma dms revision", DB_TIMEOUT_MS, { data: [] }, (signal) =>
-      withAbort(
-        sb
-          .from("dms_external_sync")
-          .select("document_number, revision, status_code, metadata")
-          .ilike("document_number", stem ? `%${stem.slice(0, 30)}%` : "%__none__%")
-          .limit(1),
-        signal,
-      ),
-    );
-    const d = (docs || [])[0];
+    const provenanceDocNo: string | null = (a.assai_doc_no || "").trim() || null;
+    const extractedMatch = stem.match(DOC_NUMBER_REGEX);
+    const extractedDocNo: string | null = extractedMatch ? extractedMatch[1] : null;
+    const tier: 1 | 2 | 3 = provenanceDocNo ? 1 : extractedDocNo ? 2 : 3;
+    const exactDocNo = provenanceDocNo || extractedDocNo;
+
+    let d: any = null;
+    if (tier === 1 || tier === 2) {
+      const { data: docs } = await bounded("selma dms revision", DB_TIMEOUT_MS, { data: [] }, (signal) =>
+        withAbort(
+          sb
+            .from("dms_external_sync")
+            .select("document_number, revision, status_code, metadata")
+            .eq("document_number", exactDocNo)
+            .limit(1),
+          signal,
+        ),
+      );
+      d = (docs || [])[0] || null;
+    } else {
+      const { data: docs } = await bounded("selma dms revision stem", DB_TIMEOUT_MS, { data: [] }, (signal) =>
+        withAbort(
+          sb
+            .from("dms_external_sync")
+            .select("document_number, revision, status_code, metadata")
+            .ilike("document_number", stem ? `%${stem.slice(0, 30)}%` : "%__none__%")
+            .limit(1),
+          signal,
+        ),
+      );
+      d = (docs || [])[0] || null;
+    }
+
     if (!d) {
       facts.push({ label: `Doc: ${a.file_name}`, value: "Not tracked in DMS", confidence: "unavailable" });
       continue;
     }
     const isCurrent = (d.metadata as any)?.is_current_revision !== false;
+    if (tier === 3) {
+      // Weak fuzzy match: only speak up on a mismatch, and only in amber.
+      if (!isCurrent) {
+        facts.push({
+          label: `Doc: ${a.file_name}`,
+          value: "Possible revision mismatch — verify manually",
+          tone: "amber",
+          confidence: "verified",
+        });
+      }
+      // Current-revision stem-matches: silent (too weak to confirm).
+      continue;
+    }
+    // Tier 1 or 2: full-strength.
     facts.push({
       label: `Doc: ${d.document_number} rev ${d.revision || "?"}`,
       value: isCurrent ? "Current revision" : "Outdated revision",
