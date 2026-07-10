@@ -6,7 +6,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet';
-import { Badge } from '@/components/ui/badge';
+
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
