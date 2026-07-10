@@ -995,9 +995,12 @@ interface SummaryCtx {
   systemsInScope?: string;
   itrsValue?: string; // "X / Y"
 }
-function sentenceForFact(f: Fact, ctx: SummaryCtx, allFacts: Fact[]): string | null {
+function fmtNum(s: string): string {
+  return s.replace(/\d{4,}/g, (m) => Number(m).toLocaleString("en-US"));
+}
+function sentenceForFact(f: Fact, ctx: SummaryCtx, allFacts: Fact[], consumed: Set<string>): string | null {
   const l = (f.label || "").toLowerCase();
-  const v = f.value || "";
+  const v = fmtNum(f.value || "");
   if (l.includes("required evidence attached") && f.tone === "amber") {
     const req = ctx.requirementText && ctx.requirementText.trim()
       ? ctx.requirementText.trim()
@@ -1017,7 +1020,11 @@ function sentenceForFact(f: Fact, ctx: SummaryCtx, allFacts: Fact[]): string | n
     const n = v;
     const systems = ctx.systemsInScope || "the";
     const itr = allFacts.find((x) => x.label === "ITRs complete (A+B)" && x.value && x.value !== "No data");
-    const itrParen = itr ? ` (with ${itr.value.replace(/\s*\/\s*/, " of ")} ITRs signed)` : "";
+    let itrParen = "";
+    if (itr) {
+      itrParen = ` (with ${fmtNum(itr.value).replace(/\s*\/\s*/, " of ")} ITRs signed)`;
+      consumed.add("ITRs complete (A+B)");
+    }
     return `The scoped systems still carry ${n} open Cat-A punch items (across all ${systems} scoped systems — not specific to this item's topic)${itrParen}.`;
   }
   if (l.includes("itrs complete") && f.tone === "amber") {
@@ -1041,19 +1048,29 @@ function composeSummary(facts: Fact[], severity: string, ctx: SummaryCtx): strin
     ...facts.filter((f) => f.tone === "red"),
     ...facts.filter((f) => f.tone === "amber"),
   ];
+  // Cat-A folds ITR into its parenthetical — process Cat-A before ITR so the
+  // standalone ITR sentence is suppressed when both fire.
+  actionable.sort((a, b) => {
+    const ac = (a.label || "").toLowerCase().includes("cat-a punch") ? 0 : 1;
+    const bc = (b.label || "").toLowerCase().includes("cat-a punch") ? 0 : 1;
+    return ac - bc;
+  });
+  const consumed = new Set<string>();
   const seen = new Set<string>();
   const out: string[] = [];
   for (const f of actionable) {
-    if (out.length >= 3) break;
-    const s = sentenceForFact(f, ctx, facts);
+    if (consumed.has(f.label)) continue;
+    const s = sentenceForFact(f, ctx, facts, consumed);
     if (!s) continue;
     if (seen.has(s)) continue;
     seen.add(s);
     out.push(s);
+    if (out.length >= 3) break;
   }
   if (out.length === 0) return composeHeadline(facts, severity);
   return out.join(" ");
 }
+
 
 
 // ─── Main handler ─────────────────────────────────────────────────────────
