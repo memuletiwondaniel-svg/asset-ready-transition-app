@@ -494,19 +494,18 @@ function getApprovalProgress(
 
 const ApprovalBar: React.FC<{ approved: number; total: number }> = ({ approved, total }) => {
   if (total <= 0) return null;
-  // Linear bar only — the legacy dash-segment indicator ("▪▪▪▪▪ 5/5") was
-  // removed per v3: linear progress bar + subtext are the ONLY progress UI
-  // on a card (it collided with the 0% headline on P2A Plan cards).
+  // v3 skeleton: thin full-width bar + compact % trailing on the right.
   const pct = Math.max(0, Math.min(100, Math.round((approved / total) * 100)));
   return (
-    <div className="flex items-center gap-1.5">
-      <div className="h-1 w-16 rounded-full bg-muted-foreground/20 overflow-hidden">
+    <div className="flex items-center gap-1.5 w-full">
+      <div className="h-1 flex-1 rounded-full bg-muted-foreground/20 overflow-hidden">
         <div className="h-full bg-emerald-500/80 dark:bg-emerald-400/80" style={{ width: `${pct}%` }} />
       </div>
-      <span className="text-[10px] tabular-nums text-muted-foreground">{approved}/{total}</span>
+      <span className="text-[10px] tabular-nums text-muted-foreground shrink-0">{pct}%</span>
     </div>
   );
 };
+
 
 // ─── Draggable Card ────────────────────────────────────────────────
 const DraggableKanbanCard: React.FC<{
@@ -600,10 +599,12 @@ const KanbanCardContent: React.FC<{
     }
   })();
 
-  // ── Status pill (Done column) — moved to top-right per v3 mockup ──
+  // v3 pill rule: pills ONLY on Done column, and only for distinct
+  // governance outcomes ("Approved" / "Qualified" — green). Plain completed
+  // tasks and non-Done columns render NO status pill (column encodes state).
+  // The compact overdue chip on non-Done cards is handled separately below.
   const statusPillNode: React.ReactNode = task.kanbanColumn === 'done' ? (() => {
     const m = task.userTask?.metadata as Record<string, any> | undefined;
-    const isRejected = m?.outcome === 'rejected';
     const action = m?.action;
     const source = m?.source;
     const planStatus = (m?.plan_status || '').toUpperCase();
@@ -611,43 +612,26 @@ const KanbanCardContent: React.FC<{
     const isOraAuthor = action === 'create_ora_plan' || task.userTask?.type === 'ora_plan_creation';
     const isP2aApprover = source === 'p2a_handover' && !isP2aAuthor;
     const isWorkflowTask = isP2aAuthor || isOraAuthor || isP2aApprover;
+    if (!isWorkflowTask) return null;
     const totalApprovers = m?.total_approvers as number | undefined;
     const approvedCount = m?.approved_count as number | undefined;
-    const hasApproverCounts = isP2aApprover && totalApprovers != null && totalApprovers > 0;
-    const chipCls = 'text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap';
-    if (isRejected) return <span className={cn(chipCls, 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400')}>Rejected</span>;
-    if (hasApproverCounts) {
-      const allApproved = (approvedCount || 0) >= totalApprovers!;
-      return <span className={cn(chipCls, allApproved ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400')}>{allApproved ? 'Approved' : `Awaiting · ${approvedCount || 0}/${totalApprovers}`}</span>;
-    }
-    if (isWorkflowTask) {
-      const isApproved = ['APPROVED', 'COMPLETED'].includes(planStatus);
-      const isActive = planStatus === 'ACTIVE';
-      const isDraft = planStatus === 'DRAFT';
-      const authorProjectId = m?.project_id as string | undefined;
-      const p2aAuthorApproval = authorProjectId ? p2aApprovalSummaries.get(authorProjectId) : undefined;
-      const oraAuthorApproval = authorProjectId ? oraApprovalSummaries.get(authorProjectId) : undefined;
-      const authorApproval = isP2aAuthor ? p2aAuthorApproval : isOraAuthor ? oraAuthorApproval : undefined;
-      if (isApproved) return <span className={cn(chipCls, 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400')}>Approved</span>;
-      if (isActive) {
-        if (authorApproval && authorApproval.total > 0) {
-          if (authorApproval.rejected > 0) return <span className={cn(chipCls, 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400')}>Rejected</span>;
-          const allDone = authorApproval.approved >= authorApproval.total;
-          return <span className={cn(chipCls, allDone ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400')}>{allDone ? 'Approved' : `Awaiting · ${authorApproval.approved}/${authorApproval.total}`}</span>;
-        }
-        return <span className={cn(chipCls, 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400')}>Under Review</span>;
-      }
-      if (isDraft) return <span className={cn(chipCls, 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400')}>Draft</span>;
-      return <span className={cn(chipCls, 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400')}>Under Review</span>;
-    }
+    const authorProjectId = m?.project_id as string | undefined;
+    const authorApproval = isP2aAuthor
+      ? (authorProjectId ? p2aApprovalSummaries.get(authorProjectId) : undefined)
+      : isOraAuthor
+        ? (authorProjectId ? oraApprovalSummaries.get(authorProjectId) : undefined)
+        : undefined;
     const reviewerData = task.userTask?.id ? reviewerSummaries.get(task.userTask.id) : undefined;
-    if (reviewerData && reviewerData.total > 0) {
-      if (reviewerData.rejected > 0) return <span className={cn(chipCls, 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400')}>Rejected</span>;
-      const allApproved = reviewerData.approved >= reviewerData.total;
-      return <span className={cn(chipCls, allApproved ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400')}>{allApproved ? 'Approved' : `Awaiting · ${reviewerData.approved}/${reviewerData.total}`}</span>;
-    }
-    return <span className={cn(chipCls, 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400')}>{t.kanbanCompleted || 'Completed'}</span>;
+    const isApproved =
+      ['APPROVED', 'COMPLETED'].includes(planStatus) ||
+      (isP2aApprover && totalApprovers != null && totalApprovers > 0 && (approvedCount || 0) >= totalApprovers) ||
+      (!!authorApproval && authorApproval.total > 0 && authorApproval.approved >= authorApproval.total && authorApproval.rejected === 0) ||
+      (!!reviewerData && reviewerData.total > 0 && reviewerData.approved >= reviewerData.total && reviewerData.rejected === 0);
+    if (!isApproved) return null;
+    const chipCls = 'text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400';
+    return <span className={chipCls}>Approved</span>;
   })() : null;
+
 
   // Compact overdue chip: "28d overdue". Non-overdue cards render nothing.
   const overdueChip: React.ReactNode = (() => {
@@ -681,17 +665,21 @@ const KanbanCardContent: React.FC<{
         isOverlay && 'shadow-xl ring-2 ring-primary/20 rotate-[1deg] scale-[1.02]',
       )}
     >
-      {/* Row 1: drag handle + project / category pills (status pill lives here on the right) */}
+      {/* Drag handle — absolute overlay, hover-only, no layout shift.
+          The chip row below stays flush with card padding. */}
+      {!isChild && dragHandleProps && (
+        <button
+          {...dragHandleProps}
+          onClick={(e) => e.stopPropagation()}
+          className="absolute top-1 right-1 z-10 touch-none p-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition-opacity cursor-grab active:cursor-grabbing bg-card/80 rounded"
+          aria-label="Drag task"
+        >
+          <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
+        </button>
+      )}
+
+      {/* Row 1: chip row (flush left) + top-right status/overdue chip */}
       <div className={cn("flex items-center gap-1.5 min-w-0", isChild ? "mb-1" : "mb-1.5")}>
-        {!isChild && dragHandleProps && (
-          <button
-            {...dragHandleProps}
-            onClick={(e) => e.stopPropagation()}
-            className="touch-none p-0.5 -ml-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition-opacity cursor-grab active:cursor-grabbing shrink-0"
-          >
-            <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
-          </button>
-        )}
         {!isChild && (
           task.project ? (
             <>
@@ -704,9 +692,7 @@ const KanbanCardContent: React.FC<{
             <span className="text-[10px] text-muted-foreground">{task.categoryLabel}</span>
           )
         )}
-        {/* Top-right chip: status pill (done column) or compact overdue chip */}
         {topRightChip && <div className="ml-auto shrink-0">{topRightChip}</div>}
-
       </div>
 
       {/* Title + View in Gantt */}
@@ -719,17 +705,10 @@ const KanbanCardContent: React.FC<{
             let title = task.title;
             if (task.project) {
               const escaped = task.project.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-              // Strip trailing "  - PROJECT" (existing behaviour)
               title = title.replace(new RegExp(`\\s*[–\\-]\\s*${escaped}\\s*$`), '');
-              // Strip leading "PROJECT:" / "PROJECT -" / "PROJECT –" prefix, case-insensitive
               title = title.replace(new RegExp(`^\\s*${escaped}\\s*[:\\-–]\\s*`, 'i'), '');
             }
-            // Shorten inline VCR-<projectCode>-<seq> → VCR-<seq>
             title = shortenInlineVCRCode(title);
-            // Drop leading "Deliver" verb only. Collision guard: if the
-            // stripped title would clash with another card's stripped title
-            // on this board, keep the original so distinct tasks stay
-            // visually distinguishable.
             const stripped = stripLeadingTaskVerb(title);
             title = strippedTitleCollisions.has(stripped) ? title : stripped;
             return title;
@@ -750,49 +729,63 @@ const KanbanCardContent: React.FC<{
         )}
       </div>
 
-      {/* Progress for in-progress tasks (hidden on child rows — leaves use status pill only) */}
-      {!isChild && task.kanbanColumn === 'in_progress' && (() => {
-        const isVcrReview = !!task.vcrPlanApproval;
-        const pct = task.progressPercentage ?? 0;
-        const reviewedSteps = isVcrReview
-          ? (task.vcrPlanApproval!.reviewMaxStep != null
-              ? Math.min((task.vcrPlanApproval!.reviewMaxStep as number) + 1, 10)
-              : (task.vcrPlanApproval!.reviewStartedAt ? 1 : 0))
-          : 0;
-        const stepInfo = isVcrReview
-          ? { reviewed: reviewedSteps, total: 10 }
-          : (task.stepProgress ?? null);
-        return (
-          <div className="flex items-center gap-1.5 mt-1.5">
-            <Progress value={pct} className="h-1 flex-1 bg-muted/30" indicatorClassName="bg-muted-foreground/25" />
-            <span className="text-[10px] font-medium text-muted-foreground">
-              {stepInfo ? `${stepInfo.reviewed} of ${stepInfo.total} steps` : `${Math.round(pct)}%`}
-            </span>
-          </div>
-        );
-      })()}
-      {/* Item counts for bundle tasks */}
-      {!isChild && task.kanbanColumn !== 'in_progress' && task.totalItems != null && task.totalItems > 0 && (
-        <div className="flex items-center gap-1.5 mt-1.5">
-          <Progress value={task.progressPercentage || 0} className="h-1 flex-1" />
-          <span className="text-[10px] text-muted-foreground">{task.completedItems}/{task.totalItems}</span>
-        </div>
-      )}
-
-      {/* Bottom meta row: approval progress bar only. Status pill and overdue
-          chip live in the top-right per v3 mockup; non-overdue urgency labels
-          are dropped to remove clutter. */}
+      {/* Unified skeleton row: [bar + trailing %]. Approval progress preferred
+          when available; else in-progress % / step count; else counted items. */}
       {!isChild && (() => {
         const approvalProgress = getApprovalProgress(task, reviewerSummaries, p2aApprovalSummaries, oraApprovalSummaries);
-        if (!approvalProgress) return null;
-        return (
-          <div className="mt-1.5 flex items-center justify-end gap-2 min-w-0">
-            <div className="shrink-0">
+        if (approvalProgress) {
+          return (
+            <div className="mt-1.5">
               <ApprovalBar approved={approvalProgress.approved} total={approvalProgress.total} />
             </div>
-          </div>
-        );
+          );
+        }
+        // Counted sub-deliverables (bundle-like tasks not routed to VCRBundleKanbanCard).
+        if (task.totalItems != null && task.totalItems > 0) {
+          const pct = Math.max(0, Math.min(100, Math.round(((task.completedItems || 0) / task.totalItems) * 100)));
+          const unit = 'items';
+          return (
+            <div className="mt-1.5 space-y-1">
+              <div className="flex items-center gap-1.5">
+                <Progress value={pct} className="h-1 flex-1" />
+                <span className="text-[10px] tabular-nums text-muted-foreground">{pct}%</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground leading-snug">
+                {task.completedItems} of {task.totalItems} {unit}
+              </p>
+            </div>
+          );
+        }
+        // Scalar % (in-progress) — bar + %, no subtext (per v3 subtext rule).
+        if (task.kanbanColumn === 'in_progress') {
+          const isVcrReview = !!task.vcrPlanApproval;
+          const pct = task.progressPercentage ?? 0;
+          const reviewedSteps = isVcrReview
+            ? (task.vcrPlanApproval!.reviewMaxStep != null
+                ? Math.min((task.vcrPlanApproval!.reviewMaxStep as number) + 1, 10)
+                : (task.vcrPlanApproval!.reviewStartedAt ? 1 : 0))
+            : 0;
+          const stepInfo = isVcrReview
+            ? { reviewed: reviewedSteps, total: 10 }
+            : (task.stepProgress ?? null);
+          return (
+            <div className="mt-1.5 space-y-1">
+              <div className="flex items-center gap-1.5">
+                <Progress value={pct} className="h-1 flex-1 bg-muted/30" indicatorClassName="bg-muted-foreground/25" />
+                <span className="text-[10px] tabular-nums text-muted-foreground">{Math.round(pct)}%</span>
+              </div>
+              {stepInfo && (
+                <p className="text-[11px] text-muted-foreground leading-snug">
+                  {stepInfo.reviewed} of {stepInfo.total} steps
+                </p>
+              )}
+            </div>
+          );
+        }
+        return null;
       })()}
+
+
 
     </Card>
   );
