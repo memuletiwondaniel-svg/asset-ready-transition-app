@@ -15440,6 +15440,10 @@ export type Database = {
         Args: { p_point_id: string }
         Returns: Json
       }
+      reconcile_vcr_approvals: {
+        Args: { p_handover_point_id: string }
+        Returns: Json
+      }
       reject_user_account: {
         Args: { rejection_reason_text?: string; target_user_id: string }
         Returns: boolean
@@ -15467,6 +15471,10 @@ export type Database = {
       resolve_project_role_user: {
         Args: { p_project_id: string; p_role_label: string }
         Returns: string
+      }
+      resolve_project_role_users: {
+        Args: { p_project_id: string; p_role_label: string }
+        Returns: string[]
       }
       revise_orp_plan: { Args: { p_plan_id: string }; Returns: Json }
       search_team_members: {
@@ -15794,6 +15802,7 @@ export type Database = {
         | "ACCEPTED"
         | "REJECTED"
         | "QUALIFIED"
+        | "SUPERSEDED"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -16165,6 +16174,7 @@ export const Constants = {
         "ACCEPTED",
         "REJECTED",
         "QUALIFIED",
+        "SUPERSEDED",
       ],
     },
   },
