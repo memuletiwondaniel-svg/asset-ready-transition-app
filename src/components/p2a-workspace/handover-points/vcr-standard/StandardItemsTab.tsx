@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { Search, ArrowUpDown, ArrowUp, ArrowDown, Info } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { P2AHandoverPoint } from '../../hooks/useP2AHandoverPoints';
@@ -233,9 +233,9 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
   };
 
   return (
-    <Card className="overflow-hidden flex flex-col max-h-[calc(100vh-260px)]">
+    <Card className="rounded-lg border overflow-hidden flex flex-col flex-1 min-h-0 h-full">
       {/* Scroll container — sticky toolbar + column header live INSIDE this element */}
-      <div className="relative overflow-y-auto flex-1">
+      <div className="relative overflow-y-auto flex-1 min-h-0 scrollbar-modern rounded-[inherit]">
         {/* Sticky toolbar: filter chips + search */}
         <div className="sticky top-0 z-20 flex items-center gap-2 p-2.5 border-b border-border bg-muted/95 backdrop-blur flex-wrap">
           <div className="flex gap-1.5 flex-wrap flex-1 min-w-0">
@@ -259,45 +259,49 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
               );
             })}
           </div>
-          <TooltipProvider delayDuration={100}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  aria-label="Status colour legend"
-                  className="h-7 w-7 flex-none inline-flex items-center justify-center rounded-full border border-border bg-background text-muted-foreground hover:text-foreground"
-                >
-                  <Info className="w-3.5 h-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" align="end" className="w-72 p-3">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-foreground mb-2">
-                  Universal status colours
-                </div>
-                <ul className="space-y-1.5 text-[11.5px] text-foreground/80">
-                  <li className="flex items-start gap-2">
-                    <span className="mt-1 w-2.5 h-2.5 rounded-full bg-slate-300 flex-none" />
-                    <span><b>Grey</b> — To deliver / Draft (not started)</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="mt-1 w-2.5 h-2.5 rounded-full bg-amber-400 flex-none" />
-                    <span><b>Amber</b> — Under review</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="mt-1 w-2.5 h-2.5 rounded-full bg-emerald-500 flex-none" />
-                    <span><b>Green</b> — Approved / Completed</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="mt-1 w-2.5 h-2.5 rounded-full bg-red-500 flex-none" />
-                    <span><b>Red</b> — Rework required (rejected)</span>
-                  </li>
-                </ul>
-                <div className="mt-2 pt-2 border-t border-border text-[10.5px] text-muted-foreground leading-snug">
-                  One badge per row. When a qualification exists the badge shows "Qualification" coloured by stage; otherwise it shows the item status.
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                aria-label="Status colour legend"
+                className="h-7 w-7 flex-none inline-flex items-center justify-center rounded-full border border-border bg-background text-muted-foreground hover:text-foreground"
+              >
+                <Info className="w-3.5 h-3.5" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              side="bottom"
+              align="end"
+              sideOffset={6}
+              collisionPadding={12}
+              className="w-72 p-3 shadow-lg border-border bg-popover z-50"
+            >
+              <div className="text-[11px] font-bold uppercase tracking-wider text-foreground mb-2">
+                Universal status colours
+              </div>
+              <ul className="space-y-1.5 text-[11.5px] text-foreground/80">
+                <li className="flex items-start gap-2">
+                  <span className="mt-1 w-2.5 h-2.5 rounded-full bg-slate-300 flex-none" />
+                  <span><b>Grey</b> — To deliver / Draft (not started)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="mt-1 w-2.5 h-2.5 rounded-full bg-amber-400 flex-none" />
+                  <span><b>Amber</b> — Under review</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="mt-1 w-2.5 h-2.5 rounded-full bg-emerald-500 flex-none" />
+                  <span><b>Green</b> — Approved / Completed</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="mt-1 w-2.5 h-2.5 rounded-full bg-red-500 flex-none" />
+                  <span><b>Red</b> — Rework required (rejected)</span>
+                </li>
+              </ul>
+              <div className="mt-2 pt-2 border-t border-border text-[10.5px] text-muted-foreground leading-snug">
+                One badge per row. When a qualification exists the badge shows "Qualification" coloured by stage; otherwise it shows the item status.
+              </div>
+            </PopoverContent>
+          </Popover>
           <div className="relative w-56 flex-none">
             <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/60" />
             <Input

@@ -274,11 +274,17 @@ export const VCRStandardView: React.FC<Props> = ({
                 </div>
               </div>
 
-              <ScrollArea className="flex-1">
-                <div className="p-4 md:p-5">
+              {activeTab === 'items' ? (
+                <div className="flex-1 min-h-0 p-4 md:p-5 flex flex-col overflow-hidden">
                   {renderContent()}
                 </div>
-              </ScrollArea>
+              ) : (
+                <ScrollArea className="flex-1">
+                  <div className="p-4 md:p-5">
+                    {renderContent()}
+                  </div>
+                </ScrollArea>
+              )}
             </div>
           </div>
         </DialogPrimitive.Content>
