@@ -726,8 +726,12 @@ const KanbanCardContent: React.FC<{
             }
             // Shorten inline VCR-<projectCode>-<seq> → VCR-<seq>
             title = shortenInlineVCRCode(title);
-            // Drop leading action verb ("Deliver Critical Documents…" → "Critical Documents…")
-            title = stripLeadingTaskVerb(title);
+            // Drop leading "Deliver" verb only. Collision guard: if the
+            // stripped title would clash with another card's stripped title
+            // on this board, keep the original so distinct tasks stay
+            // visually distinguishable.
+            const stripped = stripLeadingTaskVerb(title);
+            title = strippedTitleCollisions.has(stripped) ? title : stripped;
             return title;
           })()}
         </p>
