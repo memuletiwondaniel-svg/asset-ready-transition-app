@@ -783,141 +783,21 @@ const KanbanCardContent: React.FC<{
         </div>
       )}
 
-      {/* Bottom meta row: status pill (done) OR due/age label (others) on the left,
-          approval progress bar + n/M on the right. */}
+      {/* Bottom meta row: approval progress bar only. Status pill and overdue
+          chip live in the top-right per v3 mockup; non-overdue urgency labels
+          are dropped to remove clutter. */}
       {!isChild && (() => {
-        const statusPillNode = task.kanbanColumn === 'done' ? (() => {
-          const m = task.userTask?.metadata as Record<string, any> | undefined;
-          const isRejected = m?.outcome === 'rejected';
-          const action = m?.action;
-          const source = m?.source;
-          const planStatus = (m?.plan_status || '').toUpperCase();
-          const isP2aAuthor = action === 'create_p2a_plan';
-          const isOraAuthor = action === 'create_ora_plan' || task.userTask?.type === 'ora_plan_creation';
-          const isP2aApprover = source === 'p2a_handover' && !isP2aAuthor;
-          const isWorkflowTask = isP2aAuthor || isOraAuthor || isP2aApprover;
-          const totalApprovers = m?.total_approvers as number | undefined;
-          const approvedCount = m?.approved_count as number | undefined;
-          const hasApproverCounts = isP2aApprover && totalApprovers != null && totalApprovers > 0;
-
-          if (isRejected) {
-            return (
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Rejected</span>
-            );
-          }
-          if (hasApproverCounts) {
-            const allApproved = (approvedCount || 0) >= totalApprovers!;
-            return (
-              <span className={cn(
-                "text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap",
-                allApproved
-                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                  : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-              )}>
-                {allApproved ? 'Approved' : `Awaiting Approval · ${approvedCount || 0}/${totalApprovers}`}
-              </span>
-            );
-          }
-          if (isWorkflowTask) {
-            const isApproved = ['APPROVED', 'COMPLETED'].includes(planStatus);
-            const isActive = planStatus === 'ACTIVE';
-            const isDraft = planStatus === 'DRAFT';
-            const authorProjectId = m?.project_id as string | undefined;
-            const p2aAuthorApproval = authorProjectId ? p2aApprovalSummaries.get(authorProjectId) : undefined;
-            const oraAuthorApproval = authorProjectId ? oraApprovalSummaries.get(authorProjectId) : undefined;
-            const authorApproval = isP2aAuthor ? p2aAuthorApproval : isOraAuthor ? oraAuthorApproval : undefined;
-
-            if (isApproved) {
-              return (
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">Approved</span>
-              );
-            }
-            if (isActive) {
-              if (authorApproval && authorApproval.total > 0) {
-                if (authorApproval.rejected > 0) {
-                  return (
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Rejected</span>
-                  );
-                }
-                const allDone = authorApproval.approved >= authorApproval.total;
-                return (
-                  <span className={cn(
-                    "text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap",
-                    allDone
-                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                      : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                  )}>
-                    {allDone ? 'Approved' : `Awaiting Approval · ${authorApproval.approved}/${authorApproval.total}`}
-                  </span>
-                );
-              }
-              return (
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">Under Review</span>
-              );
-            }
-            if (isDraft) {
-              return (
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">Draft</span>
-              );
-            }
-            return (
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">Under Review</span>
-            );
-          }
-          const reviewerData = task.userTask?.id ? reviewerSummaries.get(task.userTask.id) : undefined;
-          if (reviewerData && reviewerData.total > 0) {
-            if (reviewerData.rejected > 0) {
-              return (
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Rejected</span>
-              );
-            }
-            const allApproved = reviewerData.approved >= reviewerData.total;
-            return (
-              <span className={cn(
-                "text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap",
-                allApproved
-                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                  : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-              )}>
-                {allApproved ? 'Approved' : `Awaiting Approval · ${reviewerData.approved}/${reviewerData.total}`}
-              </span>
-            );
-          }
-          return (
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-              {t.kanbanCompleted || 'Completed'}
-            </span>
-          );
-        })() : null;
-
-        // Urgency label (overdue / due / age) — computed once at the top
-        // of the card and reused here. Status pill (Done column) wins.
-        const urgencyLabel = !statusPillNode && urgency.label ? (
-          <span className={cn(
-            "text-[10px] font-medium whitespace-nowrap",
-            urgency.tone === 'red'    && 'text-red-600 dark:text-red-400',
-            urgency.tone === 'amber'  && 'text-amber-600 dark:text-amber-500',
-            urgency.tone === 'muted'  && 'text-muted-foreground/70',
-            urgency.tone === 'accent' && 'text-primary font-semibold',
-          )}>{urgency.label}</span>
-        ) : null;
         const approvalProgress = getApprovalProgress(task, reviewerSummaries, p2aApprovalSummaries, oraApprovalSummaries);
-
-        const leftNode = statusPillNode ?? urgencyLabel;
-
-        if (!leftNode && !approvalProgress) return null;
-
+        if (!approvalProgress) return null;
         return (
-          <div className="mt-1.5 flex items-center justify-between gap-2 min-w-0">
-            <div className="min-w-0 flex items-center gap-1.5 truncate">{leftNode}</div>
-            {approvalProgress && (
-              <div className="shrink-0">
-                <ApprovalBar approved={approvalProgress.approved} total={approvalProgress.total} />
-              </div>
-            )}
+          <div className="mt-1.5 flex items-center justify-end gap-2 min-w-0">
+            <div className="shrink-0">
+              <ApprovalBar approved={approvalProgress.approved} total={approvalProgress.total} />
+            </div>
           </div>
         );
       })()}
+
     </Card>
   );
 };
