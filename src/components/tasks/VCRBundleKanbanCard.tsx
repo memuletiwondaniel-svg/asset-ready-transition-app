@@ -73,7 +73,7 @@ const buildIdCode = (bundle: VCRBundleTask): string => {
 
 
 
-export const VCRBundleKanbanCard: React.FC<Props> = ({ bundle, onClick, dragHandleProps, isChild }) => {
+export const VCRBundleKanbanCard: React.FC<Props> = ({ bundle, onClick, isChild }) => {
   const isApproving = bundle.type === 'vcr_approval_bundle';
   const idCode = buildIdCode(bundle);
   const subItems = bundle.sub_items || [];
