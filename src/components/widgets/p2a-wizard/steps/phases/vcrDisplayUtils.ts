@@ -14,12 +14,14 @@ export const shortVCRCode = (code: string | undefined): string => {
 };
 
 /**
- * Strip a leading action verb ("Deliver", "Develop", "Complete", "Prepare",
- * "Review") from an activity task title so cards render the deliverable
- * rather than the verb. Bundle cards compose their own titles and do not
- * use this helper.
+ * Strip a leading "Deliver" verb from an activity task title so cards read
+ * as the deliverable itself ("Deliver Critical Documents…" → "Critical
+ * Documents…"). Other verbs (Create/Develop/Review/Complete/Prepare/…) are
+ * retained: stripping them collapses distinct tasks — e.g. "Create ORA Plan"
+ * vs "Develop ORA Plan" — to the same title on the board. Bundle cards
+ * compose their own titles and do not use this helper.
  */
-const LEADING_VERB_RE = /^(Deliver|Develop|Complete|Prepare|Review|Create|Build|Draft)\s+/i;
+const LEADING_VERB_RE = /^Deliver\s+/i;
 export const stripLeadingTaskVerb = (title: string | undefined | null): string => {
   if (!title) return '';
   return title.replace(LEADING_VERB_RE, '');

@@ -137,6 +137,12 @@ const P2AApprovalContext = createContext<Map<string, P2AApprovalSummary>>(new Ma
 interface ORAApprovalSummary { total: number; approved: number; rejected: number; }
 const ORAApprovalContext = createContext<Map<string, ORAApprovalSummary>>(new Map());
 
+// Set of stripped titles that would collide with another card's stripped
+// title on the SAME board data set. When a card's stripped title is in this
+// set, the card renders the original (unstripped) title instead, so distinct
+// tasks stay visually distinguishable in Kanban.
+const TitleCollisionContext = createContext<Set<string>>(new Set());
+
 function isClickableVcrApprovalBundle(task: UnifiedTask): boolean {
   const bundleType = task.bundleTask?.type ?? task.userTask?.type;
   return bundleType === 'vcr_approval_bundle';
@@ -488,24 +494,9 @@ function getApprovalProgress(
 
 const ApprovalBar: React.FC<{ approved: number; total: number }> = ({ approved, total }) => {
   if (total <= 0) return null;
-  if (total <= 6) {
-    return (
-      <div className="flex items-center gap-1.5">
-        <div className="flex items-center gap-[2px]">
-          {Array.from({ length: total }).map((_, i) => (
-            <span
-              key={i}
-              className={cn(
-                'block h-1 w-2 rounded-[1px]',
-                i < approved ? 'bg-emerald-500/80 dark:bg-emerald-400/80' : 'bg-muted-foreground/20',
-              )}
-            />
-          ))}
-        </div>
-        <span className="text-[10px] tabular-nums text-muted-foreground">{approved}/{total}</span>
-      </div>
-    );
-  }
+  // Linear bar only — the legacy dash-segment indicator ("▪▪▪▪▪ 5/5") was
+  // removed per v3: linear progress bar + subtext are the ONLY progress UI
+  // on a card (it collided with the 0% headline on P2A Plan cards).
   const pct = Math.max(0, Math.min(100, Math.round((approved / total) * 100)));
   return (
     <div className="flex items-center gap-1.5">
@@ -593,6 +584,7 @@ const KanbanCardContent: React.FC<{
   const reviewerSummaries = useContext(ReviewerSummaryContext);
   const p2aApprovalSummaries = useContext(P2AApprovalContext);
   const oraApprovalSummaries = useContext(ORAApprovalContext);
+  const strippedTitleCollisions = useContext(TitleCollisionContext);
 
   // Rail color encodes URGENCY (overdue/due-soon/on-track) — see computeUrgency.
   // Rejected status keeps the destructive override.
@@ -734,8 +726,12 @@ const KanbanCardContent: React.FC<{
             }
             // Shorten inline VCR-<projectCode>-<seq> → VCR-<seq>
             title = shortenInlineVCRCode(title);
-            // Drop leading action verb ("Deliver Critical Documents…" → "Critical Documents…")
-            title = stripLeadingTaskVerb(title);
+            // Drop leading "Deliver" verb only. Collision guard: if the
+            // stripped title would clash with another card's stripped title
+            // on this board, keep the original so distinct tasks stay
+            // visually distinguishable.
+            const stripped = stripLeadingTaskVerb(title);
+            title = strippedTitleCollisions.has(stripped) ? title : stripped;
             return title;
           })()}
         </p>
@@ -823,48 +819,20 @@ const DroppableColumn: React.FC<{
 };
 
 // ─── Card With Children (parent_task_id nesting) ──────────────────
+// The legacy chevron expand button (top-right) was removed per v3: the whole
+// card is clickable and sub-tasks are shown in the detail drawer, so the
+// inline affordance was redundant and collided with the overdue chip.
 const KanbanCardWithChildren: React.FC<{
   task: UnifiedTask;
   accentClass?: string;
   onTaskClick: (task: UnifiedTask) => void;
 }> = ({ task, accentClass, onTaskClick }) => {
-  const [expanded, setExpanded] = useState(false);
-  const children = task.children || [];
-  const hasChildren = children.length > 0;
-
   return (
-    <div className="space-y-1.5">
-      <div className="relative">
-        <DraggableKanbanCard
-          task={task}
-          onClick={() => onTaskClick(task)}
-          accentClass={accentClass}
-        />
-        {hasChildren && (
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setExpanded(v => !v); }}
-            className="absolute top-1.5 right-1.5 z-10 p-1 rounded hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors bg-card/80 backdrop-blur-sm border border-border/40"
-            aria-label={expanded ? 'Collapse sub-tasks' : 'Expand sub-tasks'}
-            title={`${children.length} sub-task${children.length === 1 ? '' : 's'}`}
-          >
-            {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-          </button>
-        )}
-      </div>
-      {hasChildren && expanded && (
-        <div className="ml-4 pl-2 border-l-2 border-border/40 space-y-1.5">
-          {children.map(child => (
-            <KanbanCardContent
-              key={child.id}
-              task={child}
-              onClick={() => onTaskClick(child)}
-              isChild
-            />
-          ))}
-        </div>
-      )}
-    </div>
+    <DraggableKanbanCard
+      task={task}
+      onClick={() => onTaskClick(task)}
+      accentClass={accentClass}
+    />
   );
 };
 
@@ -1568,7 +1536,38 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   const p2aApprovalMap = p2aApprovalSummaries || new Map<string, P2AApprovalSummary>();
   const oraApprovalMap = oraApprovalSummaries || new Map<string, ORAApprovalSummary>();
 
+  // Collision guard for verb-stripped titles: only strips "Deliver" today,
+  // but if two cards share the same stripped title we keep the originals.
+  const strippedTitleCollisions = useMemo(() => {
+    const stripFor = (task: UnifiedTask): { stripped: string; original: string } => {
+      let title = task.title || '';
+      if (task.project) {
+        const escaped = task.project.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        title = title.replace(new RegExp(`\\s*[–\\-]\\s*${escaped}\\s*$`), '');
+        title = title.replace(new RegExp(`^\\s*${escaped}\\s*[:\\-–]\\s*`, 'i'), '');
+      }
+      const normalized = shortenInlineVCRCode(title);
+      return { stripped: stripLeadingTaskVerb(normalized), original: normalized };
+    };
+    const byStripped = new Map<string, Set<string>>();
+    for (const task of tasks) {
+      // Bundle cards render their own titles — skip.
+      if (task.bundleTask) continue;
+      const { stripped, original } = stripFor(task);
+      if (!stripped || stripped === original) continue;
+      const set = byStripped.get(stripped) || new Set<string>();
+      set.add(original);
+      byStripped.set(stripped, set);
+    }
+    const collisions = new Set<string>();
+    for (const [stripped, originals] of byStripped) {
+      if (originals.size > 1) collisions.add(stripped);
+    }
+    return collisions;
+  }, [tasks]);
+
   return (
+    <TitleCollisionContext.Provider value={strippedTitleCollisions}>
     <ORAApprovalContext.Provider value={oraApprovalMap}>
     <P2AApprovalContext.Provider value={p2aApprovalMap}>
     <ReviewerSummaryContext.Provider value={reviewerMap}>
@@ -1832,5 +1831,6 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     </ReviewerSummaryContext.Provider>
     </P2AApprovalContext.Provider>
     </ORAApprovalContext.Provider>
+    </TitleCollisionContext.Provider>
   );
 };
