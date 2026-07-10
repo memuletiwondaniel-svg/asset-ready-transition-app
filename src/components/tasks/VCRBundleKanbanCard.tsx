@@ -61,10 +61,10 @@ const idChip = (code: string) => (
 );
 
 const buildIdCode = (bundle: VCRBundleTask): string => {
+  // ID chip carries the project code only ("DP-300"). The VCR identity
+  // ("VCR-02 (OSBL)") lives in the title, per mockup v3.
   const project = bundle.metadata?.project_code || '';
-  const label = shortVCRCode(bundle.metadata?.vcr_label || '');
-  if (project && label) return `${project}-${label}`;
-  return label || project || 'VCR';
+  return project || 'VCR';
 };
 
 const kanbanStatusLabel = (status: string): { label: string; tone: 'grey' | 'amber' | 'green' } => {
