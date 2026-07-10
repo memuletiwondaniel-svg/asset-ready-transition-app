@@ -624,13 +624,13 @@ const KanbanCardContent: React.FC<{
         isOverlay && 'shadow-xl ring-2 ring-primary/20 rotate-[1deg] scale-[1.02]',
       )}
     >
-      {/* Row 1: drag handle + project / category pills */}
+      {/* Row 1: drag handle + project / category pills (status pill lives here on the right) */}
       <div className={cn("flex items-center gap-1.5 min-w-0", isChild ? "mb-1" : "mb-1.5")}>
         {!isChild && dragHandleProps && (
           <button
             {...dragHandleProps}
             onClick={(e) => e.stopPropagation()}
-            className="touch-none p-0.5 -ml-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
+            className="touch-none p-0.5 -ml-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition-opacity cursor-grab active:cursor-grabbing shrink-0"
           >
             <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
           </button>
@@ -647,6 +647,8 @@ const KanbanCardContent: React.FC<{
             <span className="text-[10px] text-muted-foreground">{task.categoryLabel}</span>
           )
         )}
+        {/* Top-right slot: filled below via a portal-free spacer */}
+        <div className="ml-auto shrink-0" data-slot="status-anchor" />
       </div>
 
       {/* Title + View in Gantt */}
@@ -656,15 +658,22 @@ const KanbanCardContent: React.FC<{
           isChild ? "text-xs leading-snug mb-0.5 font-medium" : "text-[13px] leading-[1.3] mb-1 font-medium"
         )}>
           {(() => {
-            if (!task.project) return task.title;
-            const escaped = task.project.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            // Strip trailing "  - PROJECT" (existing behaviour)
-            let title = task.title.replace(new RegExp(`\\s*[–\\-]\\s*${escaped}\\s*$`), '');
-            // Strip leading "PROJECT:" / "PROJECT -" / "PROJECT –" prefix, case-insensitive
-            title = title.replace(new RegExp(`^\\s*${escaped}\\s*[:\\-–]\\s*`, 'i'), '');
+            let title = task.title;
+            if (task.project) {
+              const escaped = task.project.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              // Strip trailing "  - PROJECT" (existing behaviour)
+              title = title.replace(new RegExp(`\\s*[–\\-]\\s*${escaped}\\s*$`), '');
+              // Strip leading "PROJECT:" / "PROJECT -" / "PROJECT –" prefix, case-insensitive
+              title = title.replace(new RegExp(`^\\s*${escaped}\\s*[:\\-–]\\s*`, 'i'), '');
+            }
+            // Shorten inline VCR-<projectCode>-<seq> → VCR-<seq>
+            title = shortenInlineVCRCode(title);
+            // Drop leading action verb ("Deliver Critical Documents…" → "Critical Documents…")
+            title = stripLeadingTaskVerb(title);
             return title;
           })()}
         </p>
+
         {isOraActivity && oraPlanId && oraActivityCode && (
           <button
             onClick={(e) => {
