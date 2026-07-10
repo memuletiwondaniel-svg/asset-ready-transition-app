@@ -234,7 +234,24 @@ const InsightsBlock: React.FC<{
           )}
         </button>
         <div className="flex items-center gap-2">
+          {insights?.origin === 'synthetic' && (
+            <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded border border-border text-muted-foreground">
+              Demo data
+            </span>
+          )}
           <span className="text-[11px] text-muted-foreground">{readinessLabel}</span>
+          {state !== 'unavailable' && insights?.computed_at && (
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="text-[11px] text-muted-foreground">
+                    checked {formatDistanceToNow(new Date(insights.computed_at), { addSuffix: false })} ago
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top">{format(new Date(insights.computed_at), 'PPpp')}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
           {onRecompute && (
             <TooltipProvider delayDuration={200}>
               <Tooltip>
