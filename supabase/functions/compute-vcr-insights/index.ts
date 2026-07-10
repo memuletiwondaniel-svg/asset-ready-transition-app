@@ -859,13 +859,15 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
   const projectId = (item as any).project_id || null;
   const checkRole = async (roleId: string | null | undefined): Promise<{ has: boolean; roleName: string | null }> => {
     if (!roleId) return { has: true, roleName: null };
-    const { data: r } = await bounded("workflow resolve role", DB_TIMEOUT_MS, { data: null }, () =>
-      sb.rpc("resolve_project_role_user", { _project_id: projectId, _role_id: roleId }),
-    );
     const { data: roleRow } = await bounded("workflow role name", DB_TIMEOUT_MS, { data: null }, (signal) =>
       withAbort(sb.from("roles").select("name").eq("id", roleId).maybeSingle(), signal),
     );
-    return { has: r != null, roleName: (roleRow as any)?.name || null };
+    const roleName = (roleRow as any)?.name || null;
+    if (!roleName || !projectId) return { has: true, roleName };
+    const { data: r } = await bounded("workflow resolve role", DB_TIMEOUT_MS, { data: null }, () =>
+      sb.rpc("resolve_project_role_user", { p_project_id: projectId, p_role_label: roleName }),
+    );
+    return { has: r != null, roleName };
   };
   if (projectId) {
     const deliv = await checkRole((itemRoles as any)?.delivering_party_role_id);
