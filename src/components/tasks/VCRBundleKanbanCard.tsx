@@ -85,17 +85,12 @@ export const VCRBundleKanbanCard: React.FC<Props> = ({ bundle, onClick, dragHand
   const subItems = bundle.sub_items || [];
   const meta = (bundle.metadata || {}) as Record<string, any>;
 
-  let headline: React.ReactNode;
-  let qualifier: string;
-  let subtext: string;
+  let subtext: React.ReactNode;
   let footer: string | null = null;
   let segments: Segments;
-  let pill: { label: string; tone: 'grey' | 'amber' | 'green' };
+  let pctLabel: number;
+  let pill: { label: string; tone: 'green' } | null = null;
 
-  // Kanban column is derived purely from task.status: 'completed' → Done.
-  // Guard: when the trigger-owned counts still show outstanding work but
-  // the card sits in Done, do NOT render a "Needs review" pill (the trigger
-  // fix should make this unreachable — warn if it isn't).
   const inDoneColumn = (bundle.status || '').toLowerCase() === 'completed'
                     || (bundle.status || '').toLowerCase() === 'done';
 
@@ -110,27 +105,28 @@ export const VCRBundleKanbanCard: React.FC<Props> = ({ bundle, onClick, dragHand
     const approvedPct = total > 0 ? (accepted / total) * 100 : 0;
     const awaitingPct = total > 0 ? (awaiting / total) * 100 : 0;
     segments = { approvedPct, midPct: awaitingPct };
+    pctLabel = total > 0 ? Math.round((decided / total) * 100) : 0;
 
-    headline = <span className="text-xl font-bold text-foreground">{awaiting}</span>;
-    qualifier = 'awaiting your review';
-    subtext = `${accepted} approved · ${awaiting} awaiting your review · ${rejected} returned`;
+    // Subtext leads with the bolded awaiting count — this is the act-on-me
+    // signal that replaces the pill on non-Done cards.
+    subtext = (
+      <>
+        <span className="font-semibold text-foreground">{awaiting} awaiting your review</span>
+        {` · ${accepted} approved · ${rejected} returned`}
+      </>
+    );
     if (parties > 1) footer = `From ${parties} delivering parties`;
 
+    // Pills only on Done and only for distinct governance outcomes.
+    if (inDoneColumn && awaiting === 0 && decided >= total && total > 0 && rejected === 0) {
+      pill = { label: 'Approved', tone: 'green' };
+    }
     if (inDoneColumn && awaiting > 0) {
-      // Incoherent state — counts say outstanding, column says done.
-      // Show the counts (Done pill) and warn; trigger fix should prevent this.
       // eslint-disable-next-line no-console
       console.warn(
         '[VCRBundleKanbanCard] approver bundle in Done column with outstanding items',
         { bundleId: bundle.id, awaiting, total, decided, status: bundle.status },
       );
-      pill = { label: 'Done', tone: 'green' };
-    } else {
-      pill = awaiting > 0
-        ? { label: 'Needs review', tone: 'amber' }
-        : (decided >= total && total > 0)
-          ? { label: 'Done', tone: 'green' }
-          : { label: 'Up to date', tone: 'grey' };
     }
   } else {
     const total    = subItems.length;
@@ -142,11 +138,13 @@ export const VCRBundleKanbanCard: React.FC<Props> = ({ bundle, onClick, dragHand
     const approvedPct = total > 0 ? (approved / total) * 100 : 0;
     const underPct    = total > 0 ? (under / total) * 100 : 0;
     segments = { approvedPct, midPct: underPct };
+    pctLabel = pct;
 
-    headline = <span className="text-xl font-bold text-foreground">{pct}%</span>;
-    qualifier = 'APPROVED';
     subtext = `${approved} of ${total} approved · ${under} under review · ${toDeliver} to deliver`;
-    pill = kanbanStatusLabel(bundle.status);
+
+    if (inDoneColumn && approved >= total && total > 0) {
+      pill = { label: 'Approved', tone: 'green' };
+    }
   }
 
   const title = isApproving
@@ -163,22 +161,22 @@ export const VCRBundleKanbanCard: React.FC<Props> = ({ bundle, onClick, dragHand
                   'px-3 py-2.5 pl-4 rounded-lg border border-border/60 bg-card shadow-[0_1px_2px_0_rgb(0,0,0,0.03)] hover:-translate-y-0.5 hover:shadow-md hover:border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
       )}
     >
-      {/* Row 1: ID + status pill (+ drag handle on hover) */}
+      {/* Drag handle — absolute overlay, hover-only, no layout shift. */}
+      {!isChild && dragHandleProps && (
+        <button
+          {...dragHandleProps}
+          onClick={(e) => e.stopPropagation()}
+          className="absolute top-1 right-1 z-10 touch-none p-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity cursor-grab active:cursor-grabbing bg-card/80 rounded"
+          aria-label="Drag task"
+        >
+          <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
+        </button>
+      )}
+
+      {/* Row 1: chip flush left; optional Done "Approved" pill on the right */}
       <div className="flex items-center justify-between gap-2 mb-1.5">
-        <div className="flex items-center gap-1.5 min-w-0">
-          {!isChild && dragHandleProps && (
-            <button
-              {...dragHandleProps}
-              onClick={(e) => e.stopPropagation()}
-              className="touch-none p-0.5 -ml-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity cursor-grab active:cursor-grabbing shrink-0"
-              aria-label="Drag task"
-            >
-              <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
-            </button>
-          )}
-          {idChip(idCode)}
-        </div>
-        {statusPill(pill.label, pill.tone)}
+        {idChip(idCode)}
+        {pill && statusPill(pill.label, pill.tone)}
       </div>
 
       {/* Title */}
@@ -186,26 +184,18 @@ export const VCRBundleKanbanCard: React.FC<Props> = ({ bundle, onClick, dragHand
         {title}
       </p>
 
-      {/* Headline metric */}
-      <div className="flex items-baseline gap-1.5 mb-1.5">
-        {headline}
-        <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-          {qualifier}
-        </span>
-      </div>
+      {/* Segmented bar + trailing % */}
+      {bar(segments, pctLabel)}
 
-      {/* Two-segment stacked bar */}
-      {bar(segments)}
-
-      {/* Subtext */}
+      {/* Subtext (approver: bolded awaiting count leads) */}
       <p className="text-[11px] text-muted-foreground mt-1.5 leading-snug">
         {subtext}
       </p>
 
-      {/* Optional footer (approver: from N delivering parties) */}
       {footer && (
         <p className="text-[10px] text-muted-foreground/80 italic mt-1">{footer}</p>
       )}
     </Card>
   );
 };
+
