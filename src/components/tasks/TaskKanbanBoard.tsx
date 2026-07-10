@@ -494,14 +494,14 @@ function getApprovalProgress(
 
 const ApprovalBar: React.FC<{ approved: number; total: number }> = ({ approved, total }) => {
   if (total <= 0) return null;
-  // v3 unified bar token system: neutral track (bg-muted) + neutral fill on
+  // v3 unified bar token system: neutral track (bg-muted/60) + neutral fill on
   // ALL scalar activity cards. Green is reserved for the "approved" segment
   // of bundle cards (semantic — see VCRBundleKanbanCard).
   const pct = Math.max(0, Math.min(100, Math.round((approved / total) * 100)));
   return (
     <div className="flex items-center gap-1.5 w-full">
-      <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
-        <div className="h-full bg-muted-foreground/60" style={{ width: `${pct}%` }} />
+      <div className="h-1 flex-1 rounded-full bg-muted/60 overflow-hidden">
+        <div className="h-full bg-muted-foreground/50" style={{ width: `${pct}%` }} />
       </div>
       <span className="text-[10px] tabular-nums text-muted-foreground shrink-0">{pct}%</span>
     </div>
