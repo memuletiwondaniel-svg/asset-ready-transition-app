@@ -1741,9 +1741,9 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
             }
             return (
               <DroppableColumn key={col.key} columnKey={col.key}>
-                <div className="bg-card/40 dark:bg-muted/20 rounded-xl border border-border/60 flex flex-col h-full min-h-[60vh] overflow-hidden">
-                  {/* Quiet column header */}
-                  <div className="flex items-center justify-between gap-2 px-3 pt-3 pb-2 border-b border-border/40">
+                <div className="bg-card/40 dark:bg-muted/20 rounded-xl border border-border/60 flex flex-col h-full min-h-[60vh] overflow-hidden w-full max-w-[380px] mx-auto">
+                  {/* Column header — subtle per-column tint strip (body stays neutral) */}
+                  <div className={cn("flex items-center justify-between gap-2 px-3 pt-3 pb-2 border-b border-border/40", col.headerTint)}>
                     <div className="flex items-center gap-2 min-w-0">
                       <ColIcon className={cn("h-3.5 w-3.5 shrink-0", col.iconColor)} strokeWidth={2.25} />
                       <span className="text-[13px] font-medium text-foreground truncate">{col.label}</span>
