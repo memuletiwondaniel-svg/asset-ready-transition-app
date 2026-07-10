@@ -599,10 +599,12 @@ const KanbanCardContent: React.FC<{
     }
   })();
 
-  // ── Status pill (Done column) — moved to top-right per v3 mockup ──
+  // v3 pill rule: pills ONLY on Done column, and only for distinct
+  // governance outcomes ("Approved" / "Qualified" — green). Plain completed
+  // tasks and non-Done columns render NO status pill (column encodes state).
+  // The compact overdue chip on non-Done cards is handled separately below.
   const statusPillNode: React.ReactNode = task.kanbanColumn === 'done' ? (() => {
     const m = task.userTask?.metadata as Record<string, any> | undefined;
-    const isRejected = m?.outcome === 'rejected';
     const action = m?.action;
     const source = m?.source;
     const planStatus = (m?.plan_status || '').toUpperCase();
@@ -610,43 +612,26 @@ const KanbanCardContent: React.FC<{
     const isOraAuthor = action === 'create_ora_plan' || task.userTask?.type === 'ora_plan_creation';
     const isP2aApprover = source === 'p2a_handover' && !isP2aAuthor;
     const isWorkflowTask = isP2aAuthor || isOraAuthor || isP2aApprover;
+    if (!isWorkflowTask) return null;
     const totalApprovers = m?.total_approvers as number | undefined;
     const approvedCount = m?.approved_count as number | undefined;
-    const hasApproverCounts = isP2aApprover && totalApprovers != null && totalApprovers > 0;
-    const chipCls = 'text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap';
-    if (isRejected) return <span className={cn(chipCls, 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400')}>Rejected</span>;
-    if (hasApproverCounts) {
-      const allApproved = (approvedCount || 0) >= totalApprovers!;
-      return <span className={cn(chipCls, allApproved ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400')}>{allApproved ? 'Approved' : `Awaiting · ${approvedCount || 0}/${totalApprovers}`}</span>;
-    }
-    if (isWorkflowTask) {
-      const isApproved = ['APPROVED', 'COMPLETED'].includes(planStatus);
-      const isActive = planStatus === 'ACTIVE';
-      const isDraft = planStatus === 'DRAFT';
-      const authorProjectId = m?.project_id as string | undefined;
-      const p2aAuthorApproval = authorProjectId ? p2aApprovalSummaries.get(authorProjectId) : undefined;
-      const oraAuthorApproval = authorProjectId ? oraApprovalSummaries.get(authorProjectId) : undefined;
-      const authorApproval = isP2aAuthor ? p2aAuthorApproval : isOraAuthor ? oraAuthorApproval : undefined;
-      if (isApproved) return <span className={cn(chipCls, 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400')}>Approved</span>;
-      if (isActive) {
-        if (authorApproval && authorApproval.total > 0) {
-          if (authorApproval.rejected > 0) return <span className={cn(chipCls, 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400')}>Rejected</span>;
-          const allDone = authorApproval.approved >= authorApproval.total;
-          return <span className={cn(chipCls, allDone ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400')}>{allDone ? 'Approved' : `Awaiting · ${authorApproval.approved}/${authorApproval.total}`}</span>;
-        }
-        return <span className={cn(chipCls, 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400')}>Under Review</span>;
-      }
-      if (isDraft) return <span className={cn(chipCls, 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400')}>Draft</span>;
-      return <span className={cn(chipCls, 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400')}>Under Review</span>;
-    }
+    const authorProjectId = m?.project_id as string | undefined;
+    const authorApproval = isP2aAuthor
+      ? (authorProjectId ? p2aApprovalSummaries.get(authorProjectId) : undefined)
+      : isOraAuthor
+        ? (authorProjectId ? oraApprovalSummaries.get(authorProjectId) : undefined)
+        : undefined;
     const reviewerData = task.userTask?.id ? reviewerSummaries.get(task.userTask.id) : undefined;
-    if (reviewerData && reviewerData.total > 0) {
-      if (reviewerData.rejected > 0) return <span className={cn(chipCls, 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400')}>Rejected</span>;
-      const allApproved = reviewerData.approved >= reviewerData.total;
-      return <span className={cn(chipCls, allApproved ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400')}>{allApproved ? 'Approved' : `Awaiting · ${reviewerData.approved}/${reviewerData.total}`}</span>;
-    }
-    return <span className={cn(chipCls, 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400')}>{t.kanbanCompleted || 'Completed'}</span>;
+    const isApproved =
+      ['APPROVED', 'COMPLETED'].includes(planStatus) ||
+      (isP2aApprover && totalApprovers != null && totalApprovers > 0 && (approvedCount || 0) >= totalApprovers) ||
+      (!!authorApproval && authorApproval.total > 0 && authorApproval.approved >= authorApproval.total && authorApproval.rejected === 0) ||
+      (!!reviewerData && reviewerData.total > 0 && reviewerData.approved >= reviewerData.total && reviewerData.rejected === 0);
+    if (!isApproved) return null;
+    const chipCls = 'text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400';
+    return <span className={chipCls}>Approved</span>;
   })() : null;
+
 
   // Compact overdue chip: "28d overdue". Non-overdue cards render nothing.
   const overdueChip: React.ReactNode = (() => {
