@@ -1732,12 +1732,21 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         onReject={handleReject}
       />
 
-      <VCRApprovalBundleSheet
+      <VCRItemsToReviewPanel
         bundle={approvalBundle}
         open={approvalBundleOpen}
         onOpenChange={(o) => {
           setApprovalBundleOpen(o);
           if (!o) setApprovalBundle(null);
+        }}
+      />
+
+      <MyVCRItemsPanel
+        bundle={myItemsBundle}
+        open={myItemsOpen}
+        onOpenChange={(o) => {
+          setMyItemsOpen(o);
+          if (!o) setMyItemsBundle(null);
         }}
       />
 
