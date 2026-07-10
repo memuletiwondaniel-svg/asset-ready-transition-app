@@ -488,24 +488,9 @@ function getApprovalProgress(
 
 const ApprovalBar: React.FC<{ approved: number; total: number }> = ({ approved, total }) => {
   if (total <= 0) return null;
-  if (total <= 6) {
-    return (
-      <div className="flex items-center gap-1.5">
-        <div className="flex items-center gap-[2px]">
-          {Array.from({ length: total }).map((_, i) => (
-            <span
-              key={i}
-              className={cn(
-                'block h-1 w-2 rounded-[1px]',
-                i < approved ? 'bg-emerald-500/80 dark:bg-emerald-400/80' : 'bg-muted-foreground/20',
-              )}
-            />
-          ))}
-        </div>
-        <span className="text-[10px] tabular-nums text-muted-foreground">{approved}/{total}</span>
-      </div>
-    );
-  }
+  // Linear bar only — the legacy dash-segment indicator ("▪▪▪▪▪ 5/5") was
+  // removed per v3: linear progress bar + subtext are the ONLY progress UI
+  // on a card (it collided with the 0% headline on P2A Plan cards).
   const pct = Math.max(0, Math.min(100, Math.round((approved / total) * 100)));
   return (
     <div className="flex items-center gap-1.5">
