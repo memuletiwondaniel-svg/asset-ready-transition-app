@@ -516,6 +516,47 @@ const SectionLabel: React.FC<{ children: React.ReactNode; right?: React.ReactNod
   </div>
 );
 
+// ─── Collapsible section primitive ────────────────────────────────
+// Uppercase label + chevron toggle + optional count. Shared by Required
+// evidence, Evidence, and Comments so all three read identically.
+const CollapsibleSection: React.FC<{
+  label: string;
+  count?: number;
+  defaultOpen?: boolean;
+  right?: React.ReactNode;
+  children: React.ReactNode;
+}> = ({ label, count, defaultOpen = true, right, children }) => {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <section>
+      <div className="flex items-center justify-between mb-2.5">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="flex items-center gap-1.5 group"
+          aria-expanded={open}
+        >
+          <h3 className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground/80 font-semibold">
+            {label}
+            {typeof count === 'number' && count > 0 && (
+              <span className="ml-1 text-muted-foreground/70 font-normal normal-case tracking-normal">
+                · {count}
+              </span>
+            )}
+          </h3>
+          {open ? (
+            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+          ) : (
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+          )}
+        </button>
+        {right && <div className="text-[10px] text-muted-foreground">{right}</div>}
+      </div>
+      {open && children}
+    </section>
+  );
+};
+
 // ─── Main component ───────────────────────────────────────────────
 export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   item,
