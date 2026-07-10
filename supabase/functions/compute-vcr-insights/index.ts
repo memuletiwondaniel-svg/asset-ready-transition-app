@@ -283,7 +283,7 @@ async function loadVcrEvidence(sb: any, prereqId: string | null) {
     withAbort(
       sb
         .from("p2a_vcr_evidence")
-        .select("id, file_name, file_path, file_type, evidence_type, created_at")
+        .select("id, file_name, file_path, file_type, evidence_type, created_at, assai_doc_no, assai_rev")
         .eq("vcr_prerequisite_id", prereqId)
         .order("created_at", { ascending: true }),
       signal,
