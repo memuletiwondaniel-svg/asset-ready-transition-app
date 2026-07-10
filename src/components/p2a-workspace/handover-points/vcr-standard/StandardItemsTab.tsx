@@ -46,7 +46,7 @@ const FILTERS: { id: Filter; label: string }[] = [
   { id: 'all', label: 'All' },
   { id: 'rework', label: 'Rework' },
   { id: 'todeliver', label: 'To Deliver' },
-  { id: 'pipeline', label: 'In review' },
+  { id: 'pipeline', label: 'Under Review' },
   { id: 'qualification', label: 'Qualification' },
   { id: 'terminal', label: 'Approved' },
 ];
