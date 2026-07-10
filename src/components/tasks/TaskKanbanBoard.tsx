@@ -732,8 +732,9 @@ const KanbanCardContent: React.FC<{
       </div>
 
       {/* Unified skeleton row: [bar + trailing %]. Approval progress preferred
-          when available; else in-progress % / step count; else counted items. */}
-      {!isChild && (() => {
+          when available; else in-progress % / step count; else counted items.
+          Done column: no progress bar at all (finished work). */}
+      {!isChild && task.kanbanColumn !== 'done' && (() => {
         const approvalProgress = getApprovalProgress(task, reviewerSummaries, p2aApprovalSummaries, oraApprovalSummaries);
         if (approvalProgress) {
           return (
