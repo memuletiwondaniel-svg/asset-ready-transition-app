@@ -683,6 +683,24 @@ serve(async (req) => {
     const contribs = (cfg?.contrib_agents || []) as string[];
     const configVersion = cfg?.config_version || 0;
 
+    // Phase 1 template lookup (item-level routing). Must precede hashInput so
+    // template edits invalidate the cache.
+    const { data: template } = await bounded("template lookup", DB_TIMEOUT_MS, { data: null }, (signal) =>
+      withAbort(
+        sb
+          .from("vcr_item_insight_templates")
+          .select("engines, action_templates, config_version")
+          .eq("vcr_item_id", vcr_item_id)
+          .maybeSingle(),
+        signal,
+      ),
+    );
+    const templateEngines: string[] = Array.isArray((template as any)?.engines) && (template as any).engines.length > 0
+      ? (template as any).engines
+      : ["evidence_match", "workflow_signals", "currency_check"];
+    const templateVersion = (template as any)?.config_version || 0;
+    const actionTemplates = ((template as any)?.action_templates || {}) as Record<string, string>;
+
     // Evidence fingerprint — invalidate when files are added/removed/updated
     // Reads from p2a_vcr_evidence (the same store the UI writes to).
     const { data: evRows } = await bounded("evidence fingerprint", DB_TIMEOUT_MS, { data: [] }, (signal) =>
@@ -700,6 +718,8 @@ serve(async (req) => {
     // Cache lookup — include prereq status so any status change invalidates
     const hashInput = JSON.stringify({
       configVersion,
+      templateVersion,
+      templateEngines,
       vcr_id,
       vcr_item_id,
       categoryCode,
@@ -707,6 +727,7 @@ serve(async (req) => {
       evidenceFingerprint,
       prereqStatus,
     });
+
     const inputsHash = await sha(hashInput);
     if (!force) {
       const { data: cached } = await bounded("cache lookup", DB_TIMEOUT_MS, { data: null }, (signal) =>
