@@ -1,24 +1,8 @@
 import React, { useMemo, useState, useCallback, useEffect, createContext, useContext } from 'react';
 import { createPortal } from 'react-dom';
-
-// Portals the lens toggle into the page toolbar slot when present, else
-// falls back to inline rendering. Re-checks the slot on mount so the portal
-// attaches after the toolbar renders.
-const LensTogglePortal: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [slot, setSlot] = useState<HTMLElement | null>(null);
-  useEffect(() => {
-    const find = () => document.getElementById('kanban-lens-slot');
-    setSlot(find());
-    // If the toolbar mounts after us, retry once on next tick.
-    const t = window.setTimeout(() => setSlot(find()), 0);
-    return () => window.clearTimeout(t);
-  }, []);
-  if (slot) return createPortal(children, slot);
-  return <div className="mb-3">{children}</div>;
-};
-
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
+
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
