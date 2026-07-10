@@ -2472,6 +2472,41 @@ export type Database = {
           },
         ]
       }
+      evidence_match_cache: {
+        Row: {
+          created_at: string
+          evidence_id: string
+          id: string
+          reason: string | null
+          req_hash: string
+          verdict: string
+        }
+        Insert: {
+          created_at?: string
+          evidence_id: string
+          id?: string
+          reason?: string | null
+          req_hash: string
+          verdict: string
+        }
+        Update: {
+          created_at?: string
+          evidence_id?: string
+          id?: string
+          reason?: string | null
+          req_hash?: string
+          verdict?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evidence_match_cache_evidence_id_fkey"
+            columns: ["evidence_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_vcr_evidence"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fac_prerequisites: {
         Row: {
           created_at: string | null
@@ -13807,6 +13842,50 @@ export type Database = {
             foreignKeyName: "vcr_item_delivering_parties_vcr_item_id_fkey"
             columns: ["vcr_item_id"]
             isOneToOne: false
+            referencedRelation: "vcr_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vcr_item_insight_templates: {
+        Row: {
+          action_templates: Json | null
+          config_version: number
+          created_at: string
+          engines: string[]
+          id: string
+          register_schema: Json | null
+          source_rollup: Json | null
+          updated_at: string
+          vcr_item_id: string
+        }
+        Insert: {
+          action_templates?: Json | null
+          config_version?: number
+          created_at?: string
+          engines?: string[]
+          id?: string
+          register_schema?: Json | null
+          source_rollup?: Json | null
+          updated_at?: string
+          vcr_item_id: string
+        }
+        Update: {
+          action_templates?: Json | null
+          config_version?: number
+          created_at?: string
+          engines?: string[]
+          id?: string
+          register_schema?: Json | null
+          source_rollup?: Json | null
+          updated_at?: string
+          vcr_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vcr_item_insight_templates_vcr_item_id_fkey"
+            columns: ["vcr_item_id"]
+            isOneToOne: true
             referencedRelation: "vcr_items"
             referencedColumns: ["id"]
           },
