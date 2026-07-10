@@ -771,22 +771,6 @@ serve(async (req) => {
       }
     };
 
-    // Phase 1 routing: template-first (per vcr_item_id), category-config additive.
-    const { data: template } = await bounded("template lookup", DB_TIMEOUT_MS, { data: null }, (signal) =>
-      withAbort(
-        sb
-          .from("vcr_item_insight_templates")
-          .select("engines, action_templates, config_version")
-          .eq("vcr_item_id", vcr_item_id)
-          .maybeSingle(),
-        signal,
-      ),
-    );
-    const templateEngines: string[] = Array.isArray(template?.engines) && template!.engines.length > 0
-      ? template!.engines
-      : ["evidence_match", "workflow_signals", "currency_check"];
-    const templateVersion = template?.config_version || 0;
-
     const ranSet = new Set<string>();
     const runOnce = async (name: string) => {
       if (ranSet.has(name)) return;
@@ -804,7 +788,6 @@ serve(async (req) => {
       : (() => {
           const severity = composeSeverity(allFacts);
           const topFact = allFacts.find((f) => f.tone === "red") || allFacts.find((f) => f.tone === "amber");
-          const actionTemplates = (template?.action_templates || {}) as Record<string, string>;
           const deliverKey = topFact?.label || "";
           const approverKey = topFact?.label || "";
           const defaultDeliver = severity === "green"
@@ -813,6 +796,7 @@ serve(async (req) => {
           const defaultApprover = severity === "green"
             ? "Live signals look ready."
             : "Heads up before accepting — confirm flagged signals.";
+
           return {
             state: "ready",
             severity,
