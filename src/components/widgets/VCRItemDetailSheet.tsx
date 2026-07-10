@@ -184,14 +184,17 @@ const sanitizeFile = (name: string) =>
 //   ready       → title + summary sentence + fact rows + optional deep-link
 //   pending     → subtle "checking…" line
 //   unavailable → honest empty state with a Compute affordance
+// Collapsible header, expanded by default.
 const InsightsBlock: React.FC<{
   insights?: VCRInsights;
   viewer: 'delivering' | 'approving' | 'observer';
   onRecompute?: () => void;
   recomputing?: boolean;
 }> = ({ insights, viewer, onRecompute, recomputing }) => {
+  const [open, setOpen] = useState(true);
   const state = insights?.state ?? 'unavailable';
   const severity = insights?.severity;
+
 
 
 
