@@ -556,11 +556,10 @@ const DraggableKanbanCard: React.FC<{
 const KanbanCardContent: React.FC<{
   task: UnifiedTask;
   onClick: () => void;
-  dragHandleProps?: Record<string, any>;
   isOverlay?: boolean;
   accentClass?: string;
   isChild?: boolean;
-}> = ({ task, onClick, dragHandleProps, isOverlay, accentClass, isChild }) => {
+}> = ({ task, onClick, isOverlay, accentClass, isChild }) => {
   // Mockup v3: VCR bundle tasks get a dedicated card body (delivering %/approving n).
   const vcrBundle = task.bundleTask;
   if (vcrBundle && (vcrBundle.type === 'vcr_checklist_bundle' || vcrBundle.type === 'vcr_approval_bundle')) {
@@ -568,7 +567,6 @@ const KanbanCardContent: React.FC<{
       <VCRBundleKanbanCard
         bundle={vcrBundle}
         onClick={onClick}
-        dragHandleProps={dragHandleProps}
         isChild={isChild}
       />
     );
