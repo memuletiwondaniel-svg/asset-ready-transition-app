@@ -124,7 +124,7 @@ export const VCRItemsToReviewPanel: React.FC<Props> = ({ bundle, open, onOpenCha
         <SheetContent hideClose className="w-full sm:max-w-2xl overflow-hidden flex flex-col p-0">
           <SheetHeader className="px-6 pt-5 pb-4 border-b shrink-0 space-y-3">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[10px] font-mono text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded">
+              <span className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                 {idCode}
               </span>
               {projectId && vcrId && (
