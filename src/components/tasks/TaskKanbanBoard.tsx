@@ -82,6 +82,20 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core';
 
+// Portals the lens toggle into the page toolbar slot (#kanban-lens-slot).
+// Falls back to inline rendering above the board if the slot isn't mounted.
+const LensTogglePortal: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [slot, setSlot] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    const find = () => document.getElementById('kanban-lens-slot');
+    setSlot(find());
+    const t = window.setTimeout(() => setSlot(find()), 0);
+    return () => window.clearTimeout(t);
+  }, []);
+  if (slot) return createPortal(children, slot);
+  return <div className="mb-3">{children}</div>;
+};
+
 type GroupBy = 'none' | 'project' | 'category';
 type KanbanColumn = 'todo' | 'in_progress' | 'waiting' | 'done';
 type SortKey = 'priority' | 'dueDate' | 'recentlyAdded' | 'recentlyCompleted' | 'oldestCompleted';
