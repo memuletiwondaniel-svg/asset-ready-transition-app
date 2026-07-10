@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
-import { GripVertical } from 'lucide-react';
+
 import { cn } from '@/lib/utils';
 import type { VCRBundleTask } from '@/hooks/useUserVCRBundleTasks';
 import { shortVCRCode } from '@/components/widgets/p2a-wizard/steps/phases/vcrDisplayUtils';
