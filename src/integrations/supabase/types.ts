@@ -13856,6 +13856,7 @@ export type Database = {
           id: string
           register_schema: Json | null
           source_rollup: Json | null
+          suppress_category_agents: boolean
           updated_at: string
           vcr_item_id: string
         }
@@ -13867,6 +13868,7 @@ export type Database = {
           id?: string
           register_schema?: Json | null
           source_rollup?: Json | null
+          suppress_category_agents?: boolean
           updated_at?: string
           vcr_item_id: string
         }
@@ -13878,6 +13880,7 @@ export type Database = {
           id?: string
           register_schema?: Json | null
           source_rollup?: Json | null
+          suppress_category_agents?: boolean
           updated_at?: string
           vcr_item_id?: string
         }
