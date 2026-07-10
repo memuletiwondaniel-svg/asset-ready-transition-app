@@ -292,66 +292,101 @@ const InsightsBlock: React.FC<{
             </p>
           )}
 
-          {state === 'ready' && (
-            <>
-              {insights?.headline && (
-                <p className="text-[12.5px] leading-relaxed text-foreground/85">
-                  {insights.headline}
-                </p>
-              )}
+          {state === 'ready' && (() => {
+            // Back-compat: old cached rows have no `summary`; fall back to headline.
+            const summaryText = insights?.summary ?? insights?.headline ?? null;
+            const factCount = insights?.facts?.length ?? 0;
+            const isDelivering = viewer === 'delivering';
+            const isApproving = viewer === 'approving';
+            const nextText = isDelivering
+              ? insights?.next_step ?? insights?.delivering_action ?? null
+              : isApproving
+              ? insights?.approver_check ?? null
+              : null;
+            return (
+              <>
+                {summaryText && (
+                  <p className="text-[13px] leading-relaxed text-foreground">
+                    {summaryText}
+                  </p>
+                )}
 
-              {(insights?.facts?.length ?? 0) > 0 && (
-                <div className="mt-3 border-t border-sky-100/70 dark:border-sky-950/50 divide-y divide-sky-100/70 dark:divide-sky-950/50">
-                  {insights!.facts!.map((f, i) => {
-                    // Only genuine risk (tone === 'red') is colourised.
-                    // Amber facts render as plain foreground text — a partial
-                    // count like "6 of 8" is informational, not a risk signal.
-                    const toneClass =
-                      f.tone === 'red'
-                        ? 'text-red-700 dark:text-red-300'
-                        : 'text-foreground';
-                    return (
-                      <div key={i} className="flex items-center justify-between gap-3 py-2">
-                        <span className="text-[12px] text-muted-foreground">{f.label}</span>
-                        <span className={cn('text-[12.5px] font-semibold', toneClass)}>
-                          {f.value}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+                {nextText && (
+                  <div className="mt-2 pt-2 border-t border-sky-100/70 dark:border-sky-950/50 text-[12.5px] leading-relaxed">
+                    <span className="font-medium text-foreground">Next: </span>
+                    <span className="text-foreground/70">{nextText}</span>
+                  </div>
+                )}
 
-              {/* Deep-links: only render sources whose href resolves to a real
-                  in-app route (starts with '/'). External / placeholder hrefs
-                  are silently omitted — no dead links. */}
-              {(insights?.sources ?? []).filter((s) => s.href && s.href.startsWith('/')).length > 0 && (
-                <div className="mt-3 pt-2 border-t border-sky-100/70 dark:border-sky-950/50 flex flex-wrap gap-x-3 gap-y-1">
-                  {insights!.sources!.filter((s) => s.href && s.href.startsWith('/')).map((s, i) => (
-                    <a
-                      key={i}
-                      href={s.href}
-                      className="text-[12px] text-primary hover:underline inline-flex items-center gap-1"
+                {factCount > 0 && (
+                  <div className="mt-3 pt-2 border-t border-sky-100/70 dark:border-sky-950/50">
+                    <button
+                      type="button"
+                      onClick={() => setDetailsOpen((v) => !v)}
+                      className="flex items-center gap-1 text-[11.5px] text-muted-foreground hover:text-foreground transition-colors"
+                      aria-expanded={detailsOpen}
                     >
-                      {s.label}
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
-                  ))}
-                </div>
-              )}
+                      <ChevronRight
+                        className={cn(
+                          'h-3.5 w-3.5 transition-transform',
+                          detailsOpen && 'rotate-90',
+                        )}
+                      />
+                      Details · {factCount} {factCount === 1 ? 'signal' : 'signals'}
+                    </button>
+                    {detailsOpen && (
+                      <div className="mt-2 divide-y divide-sky-100/70 dark:divide-sky-950/50">
+                        {insights!.facts!.map((f, i) => {
+                          const toneClass =
+                            f.tone === 'red'
+                              ? 'text-red-700 dark:text-red-300'
+                              : 'text-foreground';
+                          const labelNode = (
+                            <span className="text-[12px] text-muted-foreground">{f.label}</span>
+                          );
+                          return (
+                            <div key={i} className="flex items-center justify-between gap-3 py-2">
+                              {f.sourceHref ? (
+                                <a
+                                  href={f.sourceHref}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-[12px] text-primary hover:underline inline-flex items-center gap-1"
+                                >
+                                  {f.label}
+                                  <ExternalLink className="h-3 w-3" />
+                                </a>
+                              ) : (
+                                labelNode
+                              )}
+                              <span className={cn('text-[12.5px] font-semibold', toneClass)}>
+                                {f.value}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
 
-              {viewer === 'delivering' && insights?.delivering_action && (
-                <p className="mt-2 pt-2 border-t border-sky-100/70 dark:border-sky-950/50 text-[12px] text-foreground/80">
-                  {insights.delivering_action}
-                </p>
-              )}
-              {viewer === 'approving' && insights?.approver_check && (
-                <p className="mt-2 pt-2 border-t border-sky-100/70 dark:border-sky-950/50 text-[12px] text-foreground/80">
-                  {insights.approver_check}
-                </p>
-              )}
-            </>
-          )}
+                {(insights?.sources ?? []).filter((s) => s.href && s.href.startsWith('/')).length > 0 && (
+                  <div className="mt-3 pt-2 border-t border-sky-100/70 dark:border-sky-950/50 flex flex-wrap gap-x-3 gap-y-1">
+                    {insights!.sources!.filter((s) => s.href && s.href.startsWith('/')).map((s, i) => (
+                      <a
+                        key={i}
+                        href={s.href}
+                        className="text-[12px] text-primary hover:underline inline-flex items-center gap-1"
+                      >
+                        {s.label}
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </div>
       )}
     </section>
