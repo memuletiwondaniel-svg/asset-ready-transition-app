@@ -660,7 +660,7 @@ const KanbanCardContent: React.FC<{
       style={railShadow ? { boxShadow: `${railShadow}, 0 1px 2px 0 rgb(0,0,0,0.03)` } : undefined}
       className={cn(
         "relative overflow-hidden",
-        isChild ? "p-2 cursor-pointer rounded-md group border-l-2" : "px-3 py-1.5 pl-4 cursor-pointer transition-all duration-200 rounded-lg group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+        isChild ? "p-2 cursor-pointer rounded-md group border-l-2" : "p-3.5 pl-4 cursor-pointer transition-all duration-200 rounded-lg group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
         isChild
           ? "border-0 border-l-border/50 bg-muted/30 shadow-none hover:bg-muted/50"
           : "border border-border/60 bg-card shadow-[0_1px_2px_0_rgb(0,0,0,0.03)] hover:-translate-y-0.5 hover:shadow-md hover:border-border",
@@ -683,7 +683,7 @@ const KanbanCardContent: React.FC<{
       )}
 
       {/* Row 1: chip row (flush left) + top-right status/overdue chip */}
-      <div className={cn("flex items-center gap-1.5 min-w-0", isChild ? "mb-1" : "mb-1.5")}>
+      <div className="flex items-center gap-1.5 min-w-0">
         {!isChild && (
           task.project ? (
             <>
@@ -700,10 +700,10 @@ const KanbanCardContent: React.FC<{
       </div>
 
       {/* Title + View in Gantt */}
-      <div className="flex items-start justify-between gap-1">
+      <div className={cn("flex items-start justify-between gap-1", isChild ? "mt-1" : "mt-2")}>
         <p className={cn(
           "text-foreground break-words overflow-hidden flex-1",
-          isChild ? "text-xs leading-snug mb-0.5 font-medium" : "text-[13px] leading-[1.3] mb-1 font-medium"
+          isChild ? "text-xs leading-snug font-medium" : "text-[13px] leading-[1.3] font-medium"
         )}>
           {(() => {
             let title = task.title;
@@ -740,7 +740,7 @@ const KanbanCardContent: React.FC<{
         const approvalProgress = getApprovalProgress(task, reviewerSummaries, p2aApprovalSummaries, oraApprovalSummaries);
         if (approvalProgress) {
           return (
-            <div className="mt-1.5">
+            <div className="mt-2.5">
               <ApprovalBar approved={approvalProgress.approved} total={approvalProgress.total} />
             </div>
           );
@@ -750,15 +750,15 @@ const KanbanCardContent: React.FC<{
           const pct = Math.max(0, Math.min(100, Math.round(((task.completedItems || 0) / task.totalItems) * 100)));
           const unit = 'items';
           return (
-            <div className="mt-1.5 space-y-1">
-              <div className="flex items-center gap-1.5">
-                <Progress value={pct} className="h-1.5 flex-1 bg-muted" indicatorClassName="bg-muted-foreground/60" />
+            <>
+              <div className="mt-2.5 flex items-center gap-1.5">
+                <Progress value={pct} className="h-1 flex-1 bg-muted/60" indicatorClassName="bg-muted-foreground/50" />
                 <span className="text-[10px] tabular-nums text-muted-foreground">{pct}%</span>
               </div>
-              <p className="text-[11px] text-muted-foreground leading-snug">
+              <p className="text-[11px] text-muted-foreground leading-snug mt-2">
                 {task.completedItems} of {task.totalItems} {unit}
               </p>
-            </div>
+            </>
           );
         }
         // Scalar % (in-progress) — bar + %, no subtext (per v3 subtext rule).
@@ -774,17 +774,17 @@ const KanbanCardContent: React.FC<{
             ? { reviewed: reviewedSteps, total: 10 }
             : (task.stepProgress ?? null);
           return (
-            <div className="mt-1.5 space-y-1">
-              <div className="flex items-center gap-1.5">
-                <Progress value={pct} className="h-1.5 flex-1 bg-muted" indicatorClassName="bg-muted-foreground/60" />
+            <>
+              <div className="mt-2.5 flex items-center gap-1.5">
+                <Progress value={pct} className="h-1 flex-1 bg-muted/60" indicatorClassName="bg-muted-foreground/50" />
                 <span className="text-[10px] tabular-nums text-muted-foreground">{Math.round(pct)}%</span>
               </div>
               {stepInfo && (
-                <p className="text-[11px] text-muted-foreground leading-snug">
+                <p className="text-[11px] text-muted-foreground leading-snug mt-2">
                   {stepInfo.reviewed} of {stepInfo.total} steps
                 </p>
               )}
-            </div>
+            </>
           );
         }
         return null;
