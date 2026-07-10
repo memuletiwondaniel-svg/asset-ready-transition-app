@@ -952,11 +952,33 @@ function composeSeverity(facts: Fact[]): "green" | "amber" | "red" {
   if (facts.some((f) => f.tone === "amber")) return "amber";
   return "green";
 }
+// Deterministic label → short SME phrase map (no LLM, no value restatement).
+const HEADLINE_PHRASES: Record<string, string> = {
+  "evidence check": "evidence may not match the requirement",
+  "required evidence attached": "required evidence not yet attached",
+  "required documents attached": "required documents not yet attached",
+  "cat-a punch items": "Cat-A punch items outstanding",
+  "outdated revision": "an attached document is on an outdated revision",
+  "returned by approver": "item was returned by the approver",
+  "unanswered approver comment": "an approver comment is awaiting a reply",
+  "qualification open": "an open qualification is blocking submission",
+  "evidence added after submission": "evidence changed after submission",
+  "unassigned role": "a required role is unassigned",
+  "assai evidence": "Assai-sourced evidence needs confirmation",
+  "no hemp register attached": "no HEMP register is attached",
+};
+function headlinePhraseFor(fact: Fact | undefined): string {
+  if (!fact) return "signals need review";
+  const raw = (fact.label || "").toLowerCase().trim();
+  for (const key of Object.keys(HEADLINE_PHRASES)) {
+    if (raw.includes(key)) return HEADLINE_PHRASES[key];
+  }
+  return raw || "signals need review";
+}
 function composeHeadline(facts: Fact[], severity: string): string {
-  // Deterministic — uses only facts[]
   const top = facts.find((f) => f.tone === "red") || facts.find((f) => f.tone === "amber");
-  if (severity === "red" && top) return `Blocker: ${top.label} — ${top.value}.`;
-  if (severity === "amber" && top) return `Heads up: ${top.label} — ${top.value}.`;
+  if (severity === "red" && top) return `Blocker: ${headlinePhraseFor(top)}.`;
+  if (severity === "amber" && top) return `Heads up: ${headlinePhraseFor(top)}.`;
   return "All checked signals look ready for review.";
 }
 
