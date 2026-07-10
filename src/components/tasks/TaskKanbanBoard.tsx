@@ -1698,7 +1698,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
                   </div>
                 ) : (
                   <ScrollArea className="flex-1 max-h-[calc(100vh-320px)]">
-                    <div className={cn('px-3 pb-3 pt-2 space-y-2', bucket.dim && 'opacity-60')}>
+                    <div className={cn('px-3 pb-3 pt-2 space-y-2.5', bucket.dim && 'opacity-60')}>
                       {bTasks.map(task => (
                         <div key={task.id} className="space-y-1">
                           <KanbanCardWithChildren task={task} onTaskClick={handleTaskClick} />
