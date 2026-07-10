@@ -13,6 +13,8 @@ export interface TableRowSchema extends RegisterSchemaBase {
   row_unit: "table_row";
   record_key: string;
   closed_field: string;
+  /** Schema-level: closed cell must contain a recognisable date token */
+  requires_date?: boolean;
   labels: {
     docType: string;
     countLabel: string;
