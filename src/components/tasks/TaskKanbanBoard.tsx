@@ -834,85 +834,26 @@ const KanbanCardWithChildren: React.FC<{
   );
 };
 
-// ─── VCR Cluster (per-column, per-project) ─────────────────────────
-// Groups tasks by metadata vcr_id (fallback handover_point_id/point_id).
-// Collapsible header shows chevron + short VCR label + task count +
-// right-aligned overdue rollup. Initial render capped at 4 cards; a
-// "+ N more" expander reveals the rest. Collapse state persists per user
-// per group in localStorage. Drag-and-drop is unaffected (grouping is
-// purely visual — dnd-kit works on the individual cards and column drops).
-const VCR_CLUSTER_CAP = 4;
-
-interface VcrGroup { key: string; label: string; tasks: UnifiedTask[]; }
-
-const clusterByVcr = (tasks: UnifiedTask[]): { groups: VcrGroup[]; flat: UnifiedTask[] } => {
-  const groups = new Map<string, VcrGroup>();
-  const flat: UnifiedTask[] = [];
-  for (const t of tasks) {
-    const um = (t.userTask?.metadata || {}) as Record<string, any>;
-    const bm = (t.bundleTask?.metadata || {}) as Record<string, any>;
-    const vcrId: string | undefined =
-      um.vcr_id || bm.vcr_id || um.handover_point_id || bm.handover_point_id || um.point_id || bm.point_id;
-    if (!vcrId) { flat.push(t); continue; }
-    const vcrLabelRaw: string | undefined = um.vcr_label || bm.vcr_label;
-    const vcrName: string | undefined = um.vcr_name || bm.vcr_name;
-    const short = vcrLabelRaw ? shortenInlineVCRCode(vcrLabelRaw).replace(/\s*:\s*.+$/, '') : `VCR-${String(vcrId).slice(-4)}`;
-    const label = vcrName ? `${short} (${vcrName})` : short;
-    const g = groups.get(vcrId) || { key: vcrId, label, tasks: [] };
-    g.tasks.push(t);
-    groups.set(vcrId, g);
-  }
-  const groupList = Array.from(groups.values()).sort((a, b) => a.label.localeCompare(b.label));
-  return { groups: groupList, flat };
-};
-
-const VCRCluster: React.FC<{
-  group: VcrGroup;
-  onTaskClick: (t: UnifiedTask) => void;
+// ─── Project Group ─────────────────────────────────────────────────
+// v3: VCR sub-clustering removed. Project is the one and only grouping tier.
+// Cards render flat under the project header.
+const ProjectGroup: React.FC<{
+  projectName: string;
+  tasks: UnifiedTask[];
+  onTaskClick: (task: UnifiedTask) => void;
   accentClass?: string;
-}> = ({ group, onTaskClick, accentClass }) => {
-  const storageKey = `kanban-vcr-collapse:${group.key}`;
-  const [open, setOpen] = useState(() => {
-    try { return localStorage.getItem(storageKey) !== '0'; } catch { return true; }
-  });
-  const [expanded, setExpanded] = useState(false);
-  useEffect(() => {
-    try { localStorage.setItem(storageKey, open ? '1' : '0'); } catch { /* noop */ }
-  }, [open, storageKey]);
-
-  const overdueDays = useMemo(() => {
-    const days: number[] = [];
-    for (const t of group.tasks) {
-      if (t.kanbanColumn === 'done') continue;
-      const u = computeUrgency(t);
-      if (u.rail === 'red' && u.label) {
-        const m = /(\d+)\s*day/i.exec(u.label);
-        if (m) days.push(Number(m[1]));
-      }
-    }
-    return days;
-  }, [group.tasks]);
-
-  const overdueRollup: string | null = (() => {
-    if (overdueDays.length === 0) return null;
-    const uniform = overdueDays.length === group.tasks.length && overdueDays.every(d => d === overdueDays[0]);
-    if (uniform) return `all ${overdueDays[0]}d overdue`;
-    return `${Math.max(...overdueDays)}d overdue`;
-  })();
-
-  const shown = expanded ? group.tasks : group.tasks.slice(0, VCR_CLUSTER_CAP);
-  const more = group.tasks.length - shown.length;
+}> = ({ projectName, tasks, onTaskClick, accentClass }) => {
+  const [open, setOpen] = useState(true);
 
   return (
-    <Collapsible open={open} onOpenChange={setOpen} className="rounded-md">
-      <CollapsibleTrigger className="flex items-center gap-1.5 w-full text-left py-1 group/vcr">
-        {open ? <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" /> : <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />}
-        <span className="text-[11px] font-semibold text-foreground/80 truncate">{group.label}</span>
-        <span className="text-[10px] text-muted-foreground/70 shrink-0">· {group.tasks.length} tasks</span>
-        {overdueRollup && <span className="ml-auto text-[10px] text-destructive shrink-0">{overdueRollup}</span>}
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <CollapsibleTrigger className="flex items-center gap-1.5 w-full text-left mt-4 mb-2 group first:mt-0">
+        {open ? <ChevronDown className="h-3 w-3 text-muted-foreground" /> : <ChevronRight className="h-3 w-3 text-muted-foreground" />}
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider truncate">{projectName}</span>
+        <span className="text-[10px] text-muted-foreground/60 ml-auto">{tasks.length}</span>
       </CollapsibleTrigger>
-      <CollapsibleContent className="space-y-2 mt-1">
-        {shown.map(task => {
+      <CollapsibleContent className="space-y-2.5">
+        {tasks.map(task => {
           const meta = task.userTask?.metadata as Record<string, any> | undefined;
           const isRejected = meta?.outcome === 'rejected';
           return (
@@ -924,44 +865,6 @@ const VCRCluster: React.FC<{
             />
           );
         })}
-        {more > 0 && (
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setExpanded(true); }}
-            className="text-[10px] text-muted-foreground hover:text-foreground pl-4 py-0.5"
-          >
-            + {more} more
-          </button>
-        )}
-      </CollapsibleContent>
-    </Collapsible>
-  );
-};
-
-// ─── Project Group ─────────────────────────────────────────────────
-const ProjectGroup: React.FC<{
-  projectName: string;
-  tasks: UnifiedTask[];
-  onTaskClick: (task: UnifiedTask) => void;
-  accentClass?: string;
-}> = ({ projectName, tasks, onTaskClick, accentClass }) => {
-  const [open, setOpen] = useState(true);
-  const { groups, flat } = clusterByVcr(tasks);
-
-  return (
-    <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger className="flex items-center gap-1.5 w-full text-left py-1 mb-1 group">
-        {open ? <ChevronDown className="h-3 w-3 text-muted-foreground" /> : <ChevronRight className="h-3 w-3 text-muted-foreground" />}
-        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider truncate">{projectName}</span>
-        <span className="text-[10px] text-muted-foreground/60 ml-auto">{tasks.length}</span>
-      </CollapsibleTrigger>
-      <CollapsibleContent className="space-y-2">
-        {groups.map(g => (
-          <VCRCluster key={g.key} group={g} onTaskClick={onTaskClick} accentClass={accentClass} />
-        ))}
-        {flat.map(task => (
-          <KanbanCardWithChildren key={task.id} task={task} onTaskClick={onTaskClick} accentClass={accentClass} />
-        ))}
       </CollapsibleContent>
     </Collapsible>
   );
