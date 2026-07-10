@@ -1425,6 +1425,10 @@ function sentenceForFact(f: Fact, ctx: SummaryCtx, allFacts: Fact[], consumed: S
     }
     return `The scoped systems still carry ${n} open Cat-A punch items (across all ${systems} scoped systems — not specific to this item's topic)${itrParen}.`;
   }
+  if (l.includes("itrs complete") && !l.includes("(a+b)") && f.tone === "amber") {
+    // Discipline-scoped rollup from source_rollup engine — no whole-VCR caveat.
+    return `${v} ${f.label.replace(/\s*ITRs complete\s*$/i, "")} ITRs are signed across the scoped systems.`.replace(/\s+/g, " ").trim();
+  }
   if (l.includes("itrs complete") && f.tone === "amber") {
     const systems = ctx.systemsInScope || "the";
     return `Only ${v.replace(/\s*\/\s*/, " of ")} ITRs are signed across all ${systems} scoped systems (not specific to this item's topic).`;
