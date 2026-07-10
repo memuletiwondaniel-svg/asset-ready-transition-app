@@ -204,12 +204,35 @@ async function sourceRollupEngine(sb: any, vcrId: string, cfg: SourceRollupCfg):
   const total = (itrs || []).length;
   const complete = (itrs || []).filter((r: any) => String(r.status || "").toLowerCase() === "complete").length;
   if (total === 0) {
-    facts.push({
-      label: `${prefix} ITRs in scope`,
-      value: `No ${prefix} ITRs in scope`,
-      confidence: "verified",
-      tone: "neutral",
-    });
+    // Distinguish "genuinely none" from "row-level detail not synced".
+    // p2a_systems carries rollup counts (itr_total_count) covering all disciplines.
+    const { data: rollupSystems } = await bounded("source_rollup p2a rollup", DB_TIMEOUT_MS, { data: [] }, (signal) =>
+      withAbort(
+        sb.from("p2a_systems").select("itr_total_count").in("id", sysIds),
+        signal,
+      ),
+    );
+    const rollupTotal = (rollupSystems || []).reduce(
+      (acc: number, r: any) => acc + (Number(r?.itr_total_count) || 0),
+      0,
+    );
+    if (rollupTotal > 0) {
+      // Case (a): counts exist at rollup level but discipline-filtered rows aren't synced.
+      facts.push({
+        label: `${prefix} ITR detail`,
+        value: "ITR-level data not yet synced for these systems",
+        confidence: "unavailable",
+        tone: "neutral",
+      });
+    } else {
+      // Case (b): genuinely no ITRs in scope.
+      facts.push({
+        label: `${prefix} ITRs in scope`,
+        value: `No ${prefix} ITRs in scope`,
+        confidence: "verified",
+        tone: "neutral",
+      });
+    }
   } else {
     const outstanding = total - complete;
     facts.push({
@@ -219,6 +242,7 @@ async function sourceRollupEngine(sb: any, vcrId: string, cfg: SourceRollupCfg):
       tone: outstanding > 0 ? "amber" : "neutral",
     });
   }
+
 
   // Punch rollup — gohub_punch_items carries discipline. Open = no cleared_date.
   const { data: punches } = await bounded("source_rollup punches", DB_TIMEOUT_MS, { data: [] }, (signal) =>
