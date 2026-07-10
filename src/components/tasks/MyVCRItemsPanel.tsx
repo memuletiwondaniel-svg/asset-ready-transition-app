@@ -6,7 +6,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet';
-import { Badge } from '@/components/ui/badge';
+
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -114,13 +114,15 @@ export const MyVCRItemsPanel: React.FC<Props> = ({ bundle, open, onOpenChange })
     navigate(`/p2a/workspace/${projectId}?vcr=${vcrId}`);
   };
 
+  const vcrShortLabel = vcrShort ? (vcrName ? `${vcrShort} (${vcrName})` : vcrShort) : 'VCR';
+
   return (
     <>
       <Sheet open={open && !!bundle} onOpenChange={onOpenChange}>
-        <SheetContent className="w-full sm:max-w-2xl overflow-hidden flex flex-col p-0">
+        <SheetContent hideClose className="w-full sm:max-w-2xl overflow-hidden flex flex-col p-0">
           <SheetHeader className="px-6 pt-5 pb-4 border-b shrink-0 space-y-3">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[10px] font-mono text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded">
+              <span className="text-[10px] font-mono text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded">
                 {idCode}
               </span>
               {projectId && vcrId && (
@@ -134,10 +136,10 @@ export const MyVCRItemsPanel: React.FC<Props> = ({ bundle, open, onOpenChange })
             </div>
             <div>
               <SheetTitle className="text-[15px] leading-snug font-semibold">
-                My items — {vcrShort || 'VCR'}{vcrName ? ` (${vcrName})` : ''}
+                My items
               </SheetTitle>
               <SheetDescription className="text-xs text-muted-foreground">
-                Your delivering items in this VCR
+                Your delivering items in {vcrShortLabel}
               </SheetDescription>
             </div>
 
@@ -159,6 +161,7 @@ export const MyVCRItemsPanel: React.FC<Props> = ({ bundle, open, onOpenChange })
               Tap an item to open it and continue.
             </p>
           </SheetHeader>
+
 
           <ScrollArea className="flex-1">
             <div className="p-5 space-y-5">
@@ -230,12 +233,12 @@ export const PanelGroup: React.FC<{
 }> = ({ title, caption, items, render }) => {
   if (items.length === 0) return null;
   return (
-    <section className="space-y-1.5">
-      <h4 className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground font-semibold flex items-center gap-1.5">
+    <section className="space-y-1">
+      <h4 className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground font-semibold flex items-center gap-1.5 mb-1">
         <span>{title} ({items.length})</span>
         {caption && <span className="text-muted-foreground/70 normal-case tracking-normal font-normal">· {caption}</span>}
       </h4>
-      <ul className="rounded-md border divide-y">
+      <ul className="divide-y divide-border/60">
         {items.map(render)}
       </ul>
     </section>
@@ -247,21 +250,32 @@ export const PanelRow: React.FC<{
   right: React.ReactNode;
   secondary?: React.ReactNode;
   onClick: () => void;
-}> = ({ item, right, secondary, onClick }) => (
-  <li>
-    <button
-      type="button"
-      onClick={onClick}
-      className="w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-muted/50 transition"
-    >
-      <Badge variant="outline" className="text-[10px] rounded-md font-normal shrink-0 mt-0.5">
-        {item.item_code}
-      </Badge>
-      <div className="flex-1 min-w-0">
-        <div className="text-[13px] leading-snug">{item.topic || item.vcr_item_text || item.summary}</div>
-        {secondary && <div className="text-[11px] text-muted-foreground mt-0.5">{secondary}</div>}
-      </div>
-      <div className="shrink-0 mt-0.5">{right}</div>
-    </button>
-  </li>
-);
+}> = ({ item, right, secondary, onClick }) => {
+  // Primary text = the item question (same text the drawer title uses);
+  // topic renders as a small muted suffix when present.
+  const question = item.vcr_item_text || item.summary || '';
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={onClick}
+        className="w-full flex items-start gap-3 px-2 py-2.5 text-left hover:bg-muted/40 transition rounded-sm"
+      >
+        <span className="text-[10px] font-mono text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded shrink-0 mt-0.5">
+          {item.item_code}
+        </span>
+        <div className="flex-1 min-w-0">
+          <div className="text-[13px] leading-snug text-foreground">
+            {question}
+            {item.topic && question && (
+              <span className="text-muted-foreground/70 ml-1.5">· {item.topic}</span>
+            )}
+          </div>
+          {secondary && <div className="text-[11px] text-muted-foreground mt-0.5">{secondary}</div>}
+        </div>
+        <div className="shrink-0 mt-0.5">{right}</div>
+      </button>
+    </li>
+  );
+};
+
