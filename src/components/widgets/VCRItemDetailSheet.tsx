@@ -36,7 +36,10 @@ import {
   AlertTriangle,
   Loader2,
   ExternalLink,
+  RefreshCw,
+  Trash2,
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -198,71 +201,71 @@ const InsightsBlock: React.FC<{
 
 
 
-  // Readiness badge + tone are driven purely by the computed severity.
-  const badge =
+  // Readiness label — plain muted text in the header row, no pill.
+  const readinessLabel =
     severity === 'green'
-      ? { label: 'Ready', className: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900' }
+      ? 'Ready'
       : severity === 'amber'
-      ? { label: 'Partially complete', className: 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-900' }
+      ? 'Partially complete'
       : severity === 'red'
-      ? { label: 'Not ready', className: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-300 dark:border-red-900' }
+      ? 'Not ready'
       : state === 'pending'
-      ? { label: 'Checking…', className: 'bg-muted text-muted-foreground border-border' }
-      : { label: 'Not yet computed', className: 'bg-muted text-muted-foreground border-border' };
+      ? 'Checking…'
+      : 'Not yet computed';
 
   return (
     <section className="space-y-2">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between gap-2 group"
-        aria-expanded={open}
-      >
-        <h3 className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
-          Insights
-        </h3>
-        <div className="flex items-center gap-2">
-          <span
-            className={cn(
-              'inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium',
-              badge.className,
-            )}
-          >
-            {badge.label}
-          </span>
+      <div className="w-full flex items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="flex items-center gap-1.5 group"
+          aria-expanded={open}
+        >
+          <h3 className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
+            Insights
+          </h3>
           {open ? (
             <ChevronDown className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
           ) : (
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
           )}
+        </button>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] text-muted-foreground">{readinessLabel}</span>
+          {onRecompute && (
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={onRecompute}
+                    disabled={recomputing}
+                    aria-label="Recompute"
+                    className="p-1 rounded text-muted-foreground hover:text-foreground disabled:opacity-50 transition-colors"
+                  >
+                    <RefreshCw className={cn('h-3.5 w-3.5', recomputing && 'animate-spin')} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top">Recompute</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </div>
-      </button>
+      </div>
 
       {/* Subtly toned "computed intelligence" panel — very light blue-grey */}
       {open && (
         <div className="rounded-lg border border-sky-100 dark:border-sky-950/60 bg-[#F5F8FC] dark:bg-sky-950/10 px-4 py-3">
-          {onRecompute && (
-            <div className="flex items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={onRecompute}
-                disabled={recomputing}
-                className="text-[11px] text-primary hover:underline disabled:opacity-50 shrink-0"
-              >
-                {recomputing ? 'Recomputing…' : 'Recompute'}
-              </button>
-            </div>
-          )}
-
           {state === 'pending' && (
-            <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
               Readiness check running…
             </div>
           )}
 
           {state === 'unavailable' && (
-            <p className="mt-2 text-[12px] text-muted-foreground leading-relaxed">
+            <p className="text-[12px] text-muted-foreground leading-relaxed">
               No readiness signal is available for this item yet.
             </p>
           )}
@@ -270,7 +273,7 @@ const InsightsBlock: React.FC<{
           {state === 'ready' && (
             <>
               {insights?.headline && (
-                <p className="mt-2 text-[12.5px] leading-relaxed text-foreground/85">
+                <p className="text-[12.5px] leading-relaxed text-foreground/85">
                   {insights.headline}
                 </p>
               )}
@@ -278,16 +281,12 @@ const InsightsBlock: React.FC<{
               {(insights?.facts?.length ?? 0) > 0 && (
                 <div className="mt-3 border-t border-sky-100/70 dark:border-sky-950/50 divide-y divide-sky-100/70 dark:divide-sky-950/50">
                   {insights!.facts!.map((f, i) => {
-                    // Fact-value colour = the fact's own semantic state.
-                    // 'amber' / 'red' mark a genuine gap or risk (incomplete
-                    // count, outstanding list, breached threshold). Anything
-                    // else — including complete/verified values — renders as
-                    // default foreground so a green fact never reads as amber.
+                    // Only genuine risk (tone === 'red') is colourised.
+                    // Amber facts render as plain foreground text — a partial
+                    // count like "6 of 8" is informational, not a risk signal.
                     const toneClass =
                       f.tone === 'red'
                         ? 'text-red-700 dark:text-red-300'
-                        : f.tone === 'amber'
-                        ? 'text-amber-700 dark:text-amber-300'
                         : 'text-foreground';
                     return (
                       <div key={i} className="flex items-center justify-between gap-3 py-2">
@@ -301,10 +300,23 @@ const InsightsBlock: React.FC<{
                 </div>
               )}
 
-              {/* Deep-links intentionally omitted. The seeded "notification
-                  register" href was a placeholder — no such ORSH route exists
-                  — so we do not render a dead link. Re-enable this block only
-                  once `sources[].href` resolves to a real in-app route. */}
+              {/* Deep-links: only render sources whose href resolves to a real
+                  in-app route (starts with '/'). External / placeholder hrefs
+                  are silently omitted — no dead links. */}
+              {(insights?.sources ?? []).filter((s) => s.href && s.href.startsWith('/')).length > 0 && (
+                <div className="mt-3 pt-2 border-t border-sky-100/70 dark:border-sky-950/50 flex flex-wrap gap-x-3 gap-y-1">
+                  {insights!.sources!.filter((s) => s.href && s.href.startsWith('/')).map((s, i) => (
+                    <a
+                      key={i}
+                      href={s.href}
+                      className="text-[12px] text-primary hover:underline inline-flex items-center gap-1"
+                    >
+                      {s.label}
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  ))}
+                </div>
+              )}
 
               {viewer === 'delivering' && insights?.delivering_action && (
                 <p className="mt-2 pt-2 border-t border-sky-100/70 dark:border-sky-950/50 text-[12px] text-foreground/80">
@@ -503,6 +515,47 @@ const SectionLabel: React.FC<{ children: React.ReactNode; right?: React.ReactNod
     {right && <div className="text-[10px] text-muted-foreground">{right}</div>}
   </div>
 );
+
+// ─── Collapsible section primitive ────────────────────────────────
+// Uppercase label + chevron toggle + optional count. Shared by Required
+// evidence, Evidence, and Comments so all three read identically.
+const CollapsibleSection: React.FC<{
+  label: string;
+  count?: number;
+  defaultOpen?: boolean;
+  right?: React.ReactNode;
+  children: React.ReactNode;
+}> = ({ label, count, defaultOpen = true, right, children }) => {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <section>
+      <div className="flex items-center justify-between mb-2.5">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="flex items-center gap-1.5 group"
+          aria-expanded={open}
+        >
+          <h3 className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground/80 font-semibold">
+            {label}
+            {typeof count === 'number' && count > 0 && (
+              <span className="ml-1 text-muted-foreground/70 font-normal normal-case tracking-normal">
+                · {count}
+              </span>
+            )}
+          </h3>
+          {open ? (
+            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+          ) : (
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+          )}
+        </button>
+        {right && <div className="text-[10px] text-muted-foreground">{right}</div>}
+      </div>
+      {open && children}
+    </section>
+  );
+};
 
 // ─── Main component ───────────────────────────────────────────────
 export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
@@ -1051,7 +1104,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   // Guidance/Required-evidence collapse state (declared before any early return for hooks-rules safety)
   // Defaults: Guidance collapsed (verbose reference); Required Evidence expanded (action-relevant).
   const [guidanceOpen, setGuidanceOpenLocal] = useState(false);
-  const [requiredEvidenceOpen, setRequiredEvidenceOpen] = useState(true);
+  
   // B2B chip: which approving-role rows are toggled to the partner holder
   const [b2bExpandedRoleIds, setB2bExpandedRoleIds] = useState<Set<string>>(new Set());
 
@@ -1255,38 +1308,24 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                 )}
               </section>
 
-              {/* Required evidence — expanded by default; chevron toggle */}
-              <section>
-                <button
-                  type="button"
-                  onClick={() => setRequiredEvidenceOpen((v) => !v)}
-                  className="w-full flex items-center justify-between mb-2.5 group"
-                  aria-expanded={requiredEvidenceOpen}
-                >
-                  <h3 className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground/80 font-semibold">
-                    Required evidence
-                  </h3>
-                  {requiredEvidenceOpen ? (
-                    <ChevronDown className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                  ) : (
-                    <ChevronRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+              {/* Required evidence — collapsed by default */}
+              <CollapsibleSection label="Required evidence" defaultOpen={false}>
+                <p className="text-[13px] text-foreground leading-relaxed mt-1">
+                  {requiredEvidenceText || (
+                    <span className="text-muted-foreground italic">No required evidence specified.</span>
                   )}
-                </button>
-                {requiredEvidenceOpen && (
-                  <p className="text-[13px] text-foreground leading-relaxed mt-1">
-                    {requiredEvidenceText || (
-                      <span className="text-muted-foreground italic">No required evidence specified.</span>
-                    )}
-                  </p>
-                )}
-              </section>
+                </p>
+              </CollapsibleSection>
 
-              {/* Evidence — execution-only (Part 0) */}
+              {/* Evidence — execution-only (Part 0). Collapsible, expanded default. */}
               {isExecutionMode && (
-              <section>
-                <SectionLabel right={viewer !== 'delivering' && evidence.length > 0 ? 'Submitted by delivering party' : undefined}>
-                  Evidence
-                </SectionLabel>
+              <CollapsibleSection
+                label="Evidence"
+                count={evidence.length}
+                defaultOpen={true}
+                right={viewer !== 'delivering' && evidence.length > 0 ? 'Submitted by delivering party' : undefined}
+              >
+
 
                 {/* Selma → Assai doc-number-first fetch.
                     Shown to delivering when the requirement names a controlled
@@ -1376,94 +1415,43 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                 ) : (
                   <div className="space-y-2">
                     {evidence.map((f) => {
-                      const typeLabel = f.evidence_type || defaultEvidenceType;
                       return (
                       <div
                         key={f.id}
-                        className="rounded-lg border border-border px-3 py-2.5 flex items-start gap-3"
+                        className="group rounded-lg border border-border px-3 py-2 flex items-center gap-3"
                       >
-                        <div className="h-9 w-9 rounded bg-muted/60 shrink-0 flex items-center justify-center">
-                          <FileText className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        <div className="flex-1 min-w-0 space-y-1">
+                        <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <button
+                          type="button"
+                          onClick={() => openSignedUrl(f.file_path)}
+                          className="text-[13px] font-medium truncate text-left hover:underline flex-1 min-w-0"
+                          title={f.file_name}
+                        >
+                          {f.file_name}
+                        </button>
+                        <span className="text-[11px] text-muted-foreground shrink-0">
+                          {format(new Date(f.created_at), 'd MMM')}
+                        </span>
+                        {f.source === 'assai' && !f.confirmed && viewer === 'delivering' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-6 px-2 text-[10px] shrink-0"
+                            disabled={confirmEvidence.isPending}
+                            onClick={() => confirmEvidence.mutate(f)}
+                          >
+                            Confirm as submission
+                          </Button>
+                        )}
+                        {deliveringCanEdit && (
                           <button
                             type="button"
-                            onClick={() => openSignedUrl(f.file_path)}
-                            className="text-[13px] font-medium truncate text-left hover:underline"
-                          >
-                            {f.file_name}
-                          </button>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {!deliveringCanEdit ? (
-                              <Badge variant="secondary" className="text-[10px] font-normal">
-                                {typeLabel}
-                              </Badge>
-                            ) : (
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <button className="inline-flex items-center gap-1 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border border-blue-200 dark:border-blue-900 text-[10px] px-2 py-0.5 hover:bg-blue-100 transition">
-                                    <span className="text-[9px] text-blue-600/80 dark:text-blue-400/80">AI:</span>
-                                    {typeLabel}
-                                    <ChevronDown className="h-3 w-3" />
-                                  </button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="start" className="w-56">
-                                  {evidenceTypeOptions.map((opt) => (
-                                    <DropdownMenuItem
-                                      key={opt}
-                                      onSelect={() => updateEvidenceType.mutate({ id: f.id, evidence_type: opt })}
-                                      className={cn(opt === typeLabel && 'font-semibold')}
-                                    >
-                                      {opt}
-                                    </DropdownMenuItem>
-                                  ))}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            )}
-                            <span className="text-[11px] text-muted-foreground">
-                              {fmtBytes(f.file_size || 0)} · {format(new Date(f.created_at), 'd MMM')}
-                            </span>
-                            {f.source === 'assai' && (
-                              <Badge
-                                variant="outline"
-                                className="text-[10px] font-normal border-blue-300 text-blue-700 bg-blue-50 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900"
-                                title={`Assai · ${f.assai_doc_no || ''}${f.assai_rev ? ` rev ${f.assai_rev}` : ''}`}
-                              >
-                                Assai · {f.assai_doc_no}{f.assai_rev ? ` rev ${f.assai_rev}` : ''}
-                              </Badge>
-                            )}
-                            {f.source === 'assai' && !f.confirmed && viewer !== 'delivering' && (
-                              <Badge variant="outline" className={cn('text-[10px] font-normal', pillToneClass.amber)}>
-                                Pending delivering confirmation
-                              </Badge>
-                            )}
-                            {f.source === 'assai' && f.confirmed && (
-                              <Badge variant="outline" className={cn('text-[10px] font-normal', pillToneClass.green)}>
-                                Confirmed as submission
-                              </Badge>
-                            )}
-                            {f.source === 'assai' && !f.confirmed && viewer === 'delivering' && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-6 px-2 text-[10px]"
-                                disabled={confirmEvidence.isPending}
-                                onClick={() => confirmEvidence.mutate(f)}
-                              >
-                                Confirm as submission
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                        {!deliveringCanEdit ? null : (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
                             onClick={() => deleteEvidence.mutate(f)}
+                            aria-label="Delete evidence"
+                            className="shrink-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
                           >
-                            <X className="h-3.5 w-3.5" />
-                          </Button>
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
                         )}
                       </div>
                       );
@@ -1488,44 +1476,55 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                     />
                   </div>
                 )}
-              </section>
+              </CollapsibleSection>
               )}
 
-              {/* Comments — execution-only (Part 0) */}
+
+              {/* Comments — execution-only (Part 0). Collapsible, expanded default. */}
               {isExecutionMode && (
-              <section>
-                <SectionLabel>Comments</SectionLabel>
+              <CollapsibleSection label="Comments" count={thread.length} defaultOpen={true}>
                 {thread.length === 0 ? (
                   <p className="text-xs text-muted-foreground italic">No comments yet.</p>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="divide-y divide-border">
                     {thread.map((c) => {
                       const prof = c.author_user_id ? authorById[c.author_user_id] : undefined;
                       const isYou = c.author_user_id && user?.id && c.author_user_id === user.id;
-                      const authorName = isYou
-                        ? prof?.full_name || 'You'
-                        : prof?.full_name || 'Unknown';
+                      // Graceful fallback: never render literal "Unknown".
+                      // When the profile can't be resolved, omit the name and
+                      // let role/date carry the meta line; if nothing else is
+                      // available, show "Former member".
+                      const resolvedName = prof?.full_name || null;
+                      const displayName = isYou ? (resolvedName || 'You') : resolvedName;
                       const roleName = prof?.role_name || '';
+                      const showFormerFallback = !displayName && !roleName;
                       const tag = c.action_tag;
+                      // Delivering-side "Completed" tag is redundant next to
+                      // the person who marked the item complete — drop it.
+                      // Approver Accepted/Returned and Qualification raised
+                      // tags remain informative and stay.
+                      const showTag = !!tag && tag !== 'Completed';
                       return (
-                        <div key={c.id} className="flex items-start gap-2.5">
+                        <div key={c.id} className="flex items-start gap-2.5 py-2.5">
                           <Avatar className="h-7 w-7 shrink-0">
                             <AvatarImage src={getAvatarUrl(prof?.avatar_url)} />
-                            <AvatarFallback className="text-[10px]">{getInitials(authorName)}</AvatarFallback>
+                            <AvatarFallback className="text-[10px]">{getInitials(displayName || '?')}</AvatarFallback>
                           </Avatar>
                           <div className="min-w-0 flex-1">
                             <div className="text-[11px] text-muted-foreground">
-                              <span className="font-semibold text-foreground">{authorName}</span>
-                              {roleName && <span> · {roleName}</span>}
-                              <span> · {format(new Date(c.created_at), 'd MMM')}</span>
-                              {tag && (
+                              {displayName && <span>{displayName}</span>}
+                              {displayName && roleName && <span> · </span>}
+                              {roleName && <span>{roleName}</span>}
+                              {(displayName || roleName) && <span> · </span>}
+                              {showFormerFallback && <span>Former member · </span>}
+                              <span>{format(new Date(c.created_at), 'd MMM')}</span>
+                              {showTag && (
                                 <Badge
                                   variant="outline"
                                   className={cn(
                                     'ml-2 text-[9px] font-normal',
                                     tag === 'Accepted' && pillToneClass.green,
                                     tag === 'Returned' && pillToneClass.red,
-                                    tag === 'Completed' && pillToneClass.amber,
                                     tag === 'Qualification raised' && pillToneClass.purple,
                                   )}
                                 >
@@ -1533,7 +1532,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                                 </Badge>
                               )}
                             </div>
-                            <p className="text-[13px] text-foreground/90 mt-0.5 leading-relaxed whitespace-pre-wrap">
+                            <p className="text-[13px] text-foreground mt-0.5 leading-relaxed whitespace-pre-wrap">
                               {c.body}
                             </p>
                           </div>
@@ -1589,7 +1588,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                     Comments are locked while the item is awaiting approver review.
                   </p>
                 )}
-              </section>
+              </CollapsibleSection>
               )}
             </div>
           </ScrollArea>
