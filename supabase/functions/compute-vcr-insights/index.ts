@@ -645,12 +645,17 @@ async function evidenceMatchEngine(sb: any, item: any, lovableKey: string): Prom
 
   const n = uploads.length;
   const m = requiredLabels.length;
-  facts.push({
-    label: "Required evidence attached",
-    value: m > 0 ? `${n} file(s) against ${m} requirement(s)` : `${n} file(s)`,
-    tone: n === 0 && m > 0 ? "amber" : "neutral",
-    confidence: "verified",
-  });
+
+  // Only surface the count when it is a real gap (0 files, requirement exists).
+  // Neutral counts (n>0 or m===0) add nothing the Evidence section doesn't already show.
+  if (n === 0 && m > 0) {
+    facts.push({
+      label: "Required evidence attached",
+      value: `${n} file(s) against ${m} requirement(s)`,
+      tone: "amber",
+      confidence: "verified",
+    });
+  }
 
   if (m === 0 || n === 0 || !lovableKey) return facts;
 
