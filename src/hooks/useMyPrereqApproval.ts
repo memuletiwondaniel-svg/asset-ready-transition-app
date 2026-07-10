@@ -16,7 +16,7 @@ import { useToast } from '@/hooks/use-toast';
  * recompute_vcr_prerequisite_from_approvals trigger; we do NOT touch the
  * parent prereq.status from the client.
  */
-export type LedgerStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'QUALIFIED';
+export type LedgerStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'QUALIFIED' | 'SUPERSEDED';
 
 export interface MyLedgerRow {
   id: string;
