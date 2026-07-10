@@ -233,9 +233,9 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
   };
 
   return (
-    <Card className="overflow-hidden flex flex-col max-h-[calc(100vh-260px)]">
+    <Card className="rounded-lg border overflow-hidden flex flex-col flex-1 min-h-0 h-full">
       {/* Scroll container — sticky toolbar + column header live INSIDE this element */}
-      <div className="relative overflow-y-auto flex-1">
+      <div className="relative overflow-y-auto flex-1 min-h-0 scrollbar-modern rounded-[inherit]">
         {/* Sticky toolbar: filter chips + search */}
         <div className="sticky top-0 z-20 flex items-center gap-2 p-2.5 border-b border-border bg-muted/95 backdrop-blur flex-wrap">
           <div className="flex gap-1.5 flex-wrap flex-1 min-w-0">
