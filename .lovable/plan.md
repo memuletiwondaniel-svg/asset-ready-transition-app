@@ -1,96 +1,93 @@
-# Phase 2 continuation — 2.2 → 2.5 + Security triage
+## Assessment (validated against live code + DB)
 
-Scope acknowledged. Temp instrumentation (`[VCR overlay:*]`, `[PSSRSummaryWidget onClick]`, DP-300 self-test, visible `mode:` badge, `VisibleErrorBoundary`) stays in place until Claude's live click-through confirms 5.1; nothing here removes them.
+**Point:** `p2a_handover_points` has `vcr_code` ('VCR-DP300-02') and `name` ('OSBL'). No separate short label column. Cards elsewhere derive short form by stripping `VCR-DP300-` → `VCR-02`. That regex-derived short form is the "VCR-02" the user references.
 
-All new code follows the v8_1 mockup (`ORSH_VCRView_AllTabs_v8_1.html`) as the binding visual reference. Deviations get flagged in the report, not merged.
+**Current DP300-02 tasks** (metadata.point_id filter):
+- 21 × `vcr_approval_bundle`, all `pending`, titles like `"VCR Review Items – VCR-DP300-02: OSBL"` (already partially reconciled — but not using `VCR-02 (OSBL)` form).
+- 25 × `task` (Sr-ORA delivery + sub-items), titles like `"…: Deliver Critical Documents for VCR-DP300-02"` — need reformat.
+- 0 × `vcr_checklist_bundle` for delivering parties (Anuarbek etc.) — the whole per-delivering-user bundle stream is missing; today only Sr-ORA gets the deliverable meta-tasks via `create_vcr_deliverable_fanout`.
 
----
+**Approval bundle recompute trigger** already exists (`recompute_vcr_approval_bundle_progress`) with sensible status rules (todo/pending kept when zero decided; else in_progress; all decided → completed). Meets spec (2) for approval side. No checklist-bundle recompute trigger exists.
 
-## 2.2 — Parties tab (real data, four groups)
+**Overrides table** has `delivering_party_role_id_override` — so delivery reconcile can COALESCE(override, item.delivering_party_role_id) exactly like the approval reconciler.
 
-New: `StandardPartiesTab.tsx` — replaces the temporary qualifications-style list that currently lives in the Parties slot.
+**resolve_project_role_users** exists (SETOF uuid) — reuse.
 
-Four collapsible groups, in this order, matching the mockup:
+## Changes
 
-1. **DELIVERING PARTIES** — muted count in header
-2. **APPROVING PARTIES** — muted count in header
-3. **SOF APPROVER** — rendered **only when `hasHydrocarbon === true`**; small muted lock glyph BEFORE the group name, muted inline text after: *— unlocks once all VCR items are approved*. Tooltip on the lock explains the HC rationale.
-4. **PAC APPROVER** — same lock/inline text treatment; always visible.
+### 1. Title helper + rewrite
 
-Smart-default collapse state, computed once per mount from server data:
-- Delivering group expanded while `delivering.completedFraction < 1` (any delivering work still open). Once all delivering parties are complete, initial state flips to **Approving-only expanded**.
-- SoF/PAC groups start collapsed until their gate unlocks (all items approved), then default-expanded.
+Add SQL helper `public.vcr_short_label(vcr_code text)` → strips `VCR-<prefix>-NN` to `VCR-NN`. New display label = `"{action} for {short} ({name})"`, e.g. `"Deliver Critical Documents for VCR-02 (OSBL)"`, `"Review Items for VCR-02 (OSBL)"`.
 
-**Row template** (shared across all four groups):
-`avatar · full name · role · one live fraction chip · optional B2B badge`
-- Fraction chip: `x / y` items where this person is a delivering/approving party. Green (`--em-soft`) when `x === y && y > 0`; muted otherwise. No client-side aggregation — read from a single Supabase query, see technical notes.
-- B2B badge only when the pair-collapse rule from `useApprovingPartyHolders` triggers (identical normalized position).
+Rewrite in:
+- `create_vcr_deliverable_fanout` (parent + sub-task titles)
+- `reconcile_vcr_approvals` (bundle title)
+- new `reconcile_vcr_delivery_tasks` (bundle title)
+- any other generator that emits VCR titles (grep + patch)
 
-**Explicit non-goals**: no explanatory paragraph boxes, no help text beyond the muted inline lock caption, no per-group action buttons this turn.
+Backfill migration UPDATE existing open (status ≠ completed) user_tasks whose `metadata->>'vcr_code'` matches — rewrite `title` using the new format from `metadata.action` (or type). Report row count.
 
-## 2.3 — Deliverable tabs to shared row template
+Metadata keys (`vcr_code`, `point_id`) unchanged; add new `vcr_short_label` for UI reference.
 
-Split and normalize seven tabs under `vcr-standard/deliverables/`:
+### 2. `reconcile_vcr_delivery_tasks(p_handover_point_id uuid)`
 
-- `SystemsTab.tsx` (Systems only — W&H removed)
-- `WitnessHoldsTab.tsx` (new, split from Systems)
-- `TrainingTab.tsx`
-- `ProceduresTab.tsx`
-- `CriticalDocsTab.tsx`
-- `RegistersLogsheetsTab.tsx`
-- `MaintenanceSystemsTab.tsx`
+SECURITY DEFINER, idempotent, mirrors approval sibling:
 
-Shared row template `DeliverableRow.tsx`:
-`name · muted context line · one live chip on the right (fraction or ✓) · row click → source detail (existing sheet/route, no new nav)`
+```text
+for each actionable prereq (status NOT IN terminal, vcr_item_id NOT NULL):
+  effective_role := COALESCE(override.delivering_party_role_id_override,
+                             vcr_items.delivering_party_role_id)
+  for each user in resolve_project_role_users(project, role_name):
+    ensure ONE user_tasks row per (user, point) type=vcr_checklist_bundle
+      sub_items = REAL prereq ids (their delivering items only)
+      dedupe_key = 'vcr_checklist_bundle:<point>:user:<user>'
+  retire bundles whose user no longer resolves AND no sub_item shows any progress
+```
 
-Data rules:
-- **Today's real data only**. Every chip is derived from a live Supabase query against the existing tables (`p2a_handover_point_systems`, `p2a_vcr_training`, `p2a_vcr_procedures`, `p2a_vcr_critical_docs`, `p2a_vcr_register_selections`, `p2a_vcr_maintenance_deliverables`, W&H rows from `p2a_vcr_prerequisites` filtered to witness/hold categories).
-- **No fabricated chips.** INT-1 linked-record chips are explicitly out of scope — reserved for OWL 3.1.
-- Planned-but-empty sections render an **honest empty state** ("No X recorded for this VCR yet.") — never a fake 0/0 chip that implies live progress.
+Progress trigger (new) stamps counts/status; see §3.
 
-Nav counter (left rail) reads from the same source of truth as the tab body.
+Wire into fan-out: extend existing plan-approval trigger (`create_vcr_deliverable_fanout`) to also `PERFORM reconcile_vcr_delivery_tasks(NEW.point_id)` and `reconcile_vcr_approvals(NEW.point_id)`. Also add trigger on `p2a_vcr_item_overrides` INSERT/UPDATE/DELETE → both reconciles for the affected point.
 
-## 2.4 — Rev counter to server truth
+### 3. Coherent status/column recompute — both bundle types
 
-Replace the heuristic Rev derivation with a single join against `vcr_plan_approval_events` (existing table).
+**Approval bundle** (`recompute_vcr_approval_bundle_progress`): amend to spec exactly —
+- awaiting=0 & decided=0 → `waiting`
+- awaiting>0 & decided=0 → `pending`
+- some decided + some awaiting → `in_progress`
+- all decided → `completed`
 
-- New helper: `useVCRRev(vcrId)` → returns integer `rev` = count of distinct submission events for that handover point (`event_type = 'SUBMITTED'`), or `0` when no submission has occurred.
-- Delete the current client-side "Rev = f(status transitions)" fallback in `VCRStandardView` header. If the hook returns `null/undefined`, render `Rev —` rather than guessing.
-- The heuristic **must not survive into the qualification build** — grep for `computeRev|rev\s*=` in the vcr-standard tree and remove.
+**Checklist bundle** — new `recompute_vcr_checklist_bundle_progress` trigger on `p2a_vcr_prerequisites` UPDATE of status. Rule:
+- 0 approved-or-under-review → `pending`
+- any submitted/approved but not all → `in_progress`
+- all approved → `completed`
 
-## 2.5 — VCR card rollup bug (VCR-02: 100% vs 21%)
+Both allow regress (tasks mirror live work).
 
-Root-cause first, then fix.
+### 4. Execute on VCR-DP300-02 + report
 
-Suspected: the card component (in `PSSRSummaryWidget` / project P2A panel) computes progress from `closed_items / closed_items` or from `p2a_vcr_prerequisites` while the detail view counts `vcr_items`. `useProjectVCRs` uses `prereqs` for `total`/`closed`, but the detail view uses `vcr_items` (57 for VCR-02) — that's the mismatch.
+Call both reconciles, then emit a report table:
+`user · type · title · sub_items count · status`.
 
-Fix:
-- Extend `useProjectVCRs` to compute `total` and `closed` from the same source the detail view uses: `vcr_items` joined via `p2a_vcr_prerequisites` (canonical item list). Verify with a `supabase--read_query` before committing the change.
-- Card fraction and ring both bind to `{closed_items, total_items}` from the hook — no local recomputation in the card component.
-- Add a server-side spot check in the report: query VCR-02 and confirm hook output matches detail-view total.
+Assert / report:
+a) Anuarbek's `vcr_checklist_bundle` present, includes OI-19, status reflects progress
+b) Under-Review items → which approver-bundles are actionable (list TA pairs)
+c) Ewan+Lyle bundles present with counts (awaiting=0 unless other items in-scope)
+d) Daniel's stale/completed bundles re-stamped
 
-## Security findings — LIST ONLY
+### 5. Kanban ↔ Gantt divergence — REPORT ONLY
 
-Run `security--get_scan_results` and report the 7 findings verbatim (severity, table/function, description). **No auto-fix.** Triage happens in a separate turn.
+Grep frontend for the ORA activity Gantt / plan-view components and enumerate what table each binds to. If it does not read `user_tasks` directly (e.g. `ora_plan_activities`, or caches its own status), list the divergence and propose the fix — do not build.
 
----
+## Deliverables
 
-## Verification per item
-
-- 2.2: screenshot Parties tab for VCR-02 (non-HC, no SoF group) and VCR-01 (HC, SoF group present, lock caption visible). Confirm fractions match a manual DB count for one delivering-party row.
-- 2.3: screenshot left rail counters + each deliverable tab body for VCR-02; confirm counter === row count in tab body; empty state visible on at least one section.
-- 2.4: screenshot header showing `Rev N` matching `SELECT count(*) FROM vcr_plan_approval_events WHERE handover_point_id = <VCR-02> AND event_type='SUBMITTED'`.
-- 2.5: card fraction/ring for VCR-02 matches detail-view 12/57 · 21% (or whatever server truth returns at run time).
-
-Reports one paragraph per item, DB numbers cited, screenshots referenced. Temp instrumentation left in place; removal only after Claude's live click-through confirms 5.1.
+- 1 migration: `vcr_short_label` fn + rewrite generators + new reconcile fn + trigger + backfill open titles.
+- 1 insert-tool call: run both reconciles on DP300-02, output report.
+- 1 chat report: task table + assertions + Kanban/Gantt divergence writeup.
+- No prereq/ledger status changes.
 
 ## Technical notes
 
-- New files under `src/components/p2a-workspace/handover-points/vcr-standard/`:
-  - `StandardPartiesTab.tsx`, `partiesData.ts` (single hook `useVCRPartiesRollup`)
-  - `deliverables/{Systems,WitnessHolds,Training,Procedures,CriticalDocs,RegistersLogsheets,MaintenanceSystems}Tab.tsx`
-  - `deliverables/DeliverableRow.tsx`
-  - `useVCRRev.ts`
-- Modified: `VCRStandardView.tsx` (wire new tabs, remove heuristic Rev, remove temp qualifications-list from Parties slot), `useProjectVCRs.ts` (rollup fix).
-- Every new row/chip renders through `VisibleErrorBoundary` — no silent empty panels.
-- No RLS/migration changes anticipated; all data reads use existing tables. If a rollup requires a new SQL view, flagged in the report and deferred, not created inline.
+- New checklist recompute trigger fires from `p2a_vcr_prerequisites` UPDATE (status column); reads bundle sub_items and rewrites `status/progress`.
+- Delivery reconcile uses same temp-table pattern as approval sibling to stay atomic.
+- Backfill regex uses `metadata->>'action'` where present, else derives from `type`.
+- Kanban binds to `useUnifiedTasks` → `user_tasks`; Gantt likely binds to `ora_plan_activities` / `orp_plan_deliverables` — will confirm in report step.
