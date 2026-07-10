@@ -1536,7 +1536,38 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   const p2aApprovalMap = p2aApprovalSummaries || new Map<string, P2AApprovalSummary>();
   const oraApprovalMap = oraApprovalSummaries || new Map<string, ORAApprovalSummary>();
 
+  // Collision guard for verb-stripped titles: only strips "Deliver" today,
+  // but if two cards share the same stripped title we keep the originals.
+  const strippedTitleCollisions = useMemo(() => {
+    const stripFor = (task: UnifiedTask): { stripped: string; original: string } => {
+      let title = task.title || '';
+      if (task.project) {
+        const escaped = task.project.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        title = title.replace(new RegExp(`\\s*[–\\-]\\s*${escaped}\\s*$`), '');
+        title = title.replace(new RegExp(`^\\s*${escaped}\\s*[:\\-–]\\s*`, 'i'), '');
+      }
+      const normalized = shortenInlineVCRCode(title);
+      return { stripped: stripLeadingTaskVerb(normalized), original: normalized };
+    };
+    const byStripped = new Map<string, Set<string>>();
+    for (const task of tasks) {
+      // Bundle cards render their own titles — skip.
+      if (task.bundleTask) continue;
+      const { stripped, original } = stripFor(task);
+      if (!stripped || stripped === original) continue;
+      const set = byStripped.get(stripped) || new Set<string>();
+      set.add(original);
+      byStripped.set(stripped, set);
+    }
+    const collisions = new Set<string>();
+    for (const [stripped, originals] of byStripped) {
+      if (originals.size > 1) collisions.add(stripped);
+    }
+    return collisions;
+  }, [tasks]);
+
   return (
+    <TitleCollisionContext.Provider value={strippedTitleCollisions}>
     <ORAApprovalContext.Provider value={oraApprovalMap}>
     <P2AApprovalContext.Provider value={p2aApprovalMap}>
     <ReviewerSummaryContext.Provider value={reviewerMap}>
