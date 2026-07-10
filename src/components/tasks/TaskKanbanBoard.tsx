@@ -150,9 +150,9 @@ function isClickableVcrApprovalBundle(task: UnifiedTask): boolean {
 
 
 const getColumns = (t: any) => [
-  { key: 'todo' as const, label: t.kanbanToDo || 'To do', icon: CircleDashed, accent: 'border-l-slate-400', iconColor: 'text-muted-foreground', emptyIcon: Inbox, emptyMsg: t.kanbanEmptyToDo || 'Nothing to do right now.', emptyHint: t.kanbanEmptyToDoHint || 'New tasks will appear here.' },
-  { key: 'in_progress' as const, label: t.kanbanInProgress || 'In progress', icon: Timer, accent: 'border-l-amber-500', iconColor: 'text-amber-500', emptyIcon: Timer, emptyMsg: t.kanbanEmptyInProgress || 'Nothing in progress.', emptyHint: t.kanbanEmptyInProgressHint || 'Drag a task here when you start it.' },
-  { key: 'done' as const, label: t.kanbanDone || 'Done', icon: CheckCircle2, accent: 'border-l-emerald-500', iconColor: 'text-emerald-500', emptyIcon: CheckCircle2, emptyMsg: t.kanbanEmptyDone || 'No completed tasks yet.', emptyHint: t.kanbanEmptyDoneHint || 'Finished work will collect here.' },
+  { key: 'todo' as const, label: t.kanbanToDo || 'To do', icon: CircleDashed, accent: 'border-l-slate-400', iconColor: 'text-slate-600 dark:text-slate-300', headerTint: 'bg-slate-50 dark:bg-slate-900/40', emptyIcon: Inbox, emptyMsg: t.kanbanEmptyToDo || 'Nothing to do right now.', emptyHint: t.kanbanEmptyToDoHint || 'New tasks will appear here.' },
+  { key: 'in_progress' as const, label: t.kanbanInProgress || 'In progress', icon: Timer, accent: 'border-l-amber-500', iconColor: 'text-amber-600 dark:text-amber-400', headerTint: 'bg-amber-50 dark:bg-amber-950/30', emptyIcon: Timer, emptyMsg: t.kanbanEmptyInProgress || 'Nothing in progress.', emptyHint: t.kanbanEmptyInProgressHint || 'Drag a task here when you start it.' },
+  { key: 'done' as const, label: t.kanbanDone || 'Done', icon: CheckCircle2, accent: 'border-l-emerald-500', iconColor: 'text-emerald-600 dark:text-emerald-400', headerTint: 'bg-emerald-50 dark:bg-emerald-950/30', emptyIcon: CheckCircle2, emptyMsg: t.kanbanEmptyDone || 'No completed tasks yet.', emptyHint: t.kanbanEmptyDoneHint || 'Finished work will collect here.' },
 ];
 
 /**
