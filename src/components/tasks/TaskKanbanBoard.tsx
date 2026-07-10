@@ -62,6 +62,7 @@ import { isPast, isToday } from 'date-fns';
 import type { UnifiedTask, CategoryFilter } from './useUnifiedTasks';
 import type { UserTask } from '@/hooks/useUserTasks';
 import { computeUrgency } from './taskUrgency';
+import { stripLeadingTaskVerb, shortenInlineVCRCode } from '@/components/widgets/p2a-wizard/steps/phases/vcrDisplayUtils';
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useKanbanDragDrop, type MoveResult } from './useKanbanDragDrop';
