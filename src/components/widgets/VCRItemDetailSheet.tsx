@@ -83,6 +83,8 @@ export interface VCRInsights {
   sources?: { label: string; href: string }[];
   origin?: 'computed' | 'synthetic';
   computed_at?: string;
+  readiness_label?: string;
+  terminal?: boolean;
 }
 
 interface VCRItemDetailSheetProps {
@@ -207,8 +209,12 @@ const InsightsBlock: React.FC<{
 
 
   // Readiness label — plain muted text in the header row, no pill.
+  // Terminal items carry a `readiness_label` from the engine ("Accepted",
+  // "Qualified", "Rejected") which wins over the severity-derived label.
   const readinessLabel =
-    severity === 'green'
+    insights?.readiness_label
+      ? insights.readiness_label
+      : severity === 'green'
       ? 'Ready'
       : severity === 'amber'
       ? 'Partially complete'
@@ -303,7 +309,7 @@ const InsightsBlock: React.FC<{
 
                 {nextText && (
                   <div className="mt-2 pt-2 border-t border-sky-100/70 dark:border-sky-950/50 text-[12.5px] leading-relaxed">
-                    <span className="font-medium text-foreground">Next: </span>
+                    <span className="font-medium text-foreground">{isApproving ? 'Check: ' : 'Next: '}</span>
                     <span className="text-foreground/70">{nextText}</span>
                   </div>
                 )}

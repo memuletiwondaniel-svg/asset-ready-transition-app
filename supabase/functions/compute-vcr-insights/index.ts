@@ -28,6 +28,8 @@ interface Insights {
   delivering_action?: string;
   approver_check?: string;
   sources?: { label: string; href: string }[];
+  readiness_label?: string;
+  terminal?: boolean;
 }
 
 const sha = async (s: string) => {
@@ -1199,7 +1201,7 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
   return facts;
 }
 
-function nextStepForFact(f: Fact | undefined): string | null {
+function nextStepForFact(f: Fact | undefined, allFacts: Fact[] = []): string | null {
   if (!f) return null;
   const l = f.label.toLowerCase();
   if (l.includes("returned by approver")) return "Address the approver's return reason in the thread before resubmitting.";
@@ -1210,6 +1212,32 @@ function nextStepForFact(f: Fact | undefined): string | null {
   if (l.includes("evidence check")) return "Review the flagged file — it may be unrelated to the requirement.";
   if (l.includes("required evidence attached") && f.tone === "amber") return "Attach the required evidence before submitting.";
   if (l.includes("assai evidence")) return "Confirm the Assai-sourced evidence.";
+  // Register-reader: acknowledgement schema (OI-19). Both facts route to the
+  // same next step — chase the outstanding units named in "Awaiting acknowledgement".
+  if (l.includes("awaiting acknowledgement") || (l.includes("units acknowledged") && f.tone === "amber")) {
+    const outstanding = allFacts.find((x) => (x.label || "").toLowerCase() === "awaiting acknowledgement");
+    const raw = (outstanding?.value || f.value || "").trim();
+    if (raw) {
+      const names = raw.split(/\s*,\s*/).filter(Boolean);
+      let phrase: string;
+      if (names.length === 0) phrase = "the outstanding units";
+      else if (names.length <= 3) {
+        phrase = names.length === 1
+          ? names[0]
+          : names.length === 2
+          ? `${names[0]} and ${names[1]}`
+          : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+      } else {
+        phrase = `${names.slice(0, 3).join(", ")} and others`;
+      }
+      return `Chase acknowledgement from ${phrase} before submitting.`;
+    }
+    return "Chase acknowledgement from the outstanding units before submitting.";
+  }
+  // Register-reader: HEMP/HAZOP schema (DI-03).
+  if (l.includes("hemp/hazop actions") && l.includes("open")) {
+    return "Close the open HEMP actions (TSE-TA2 sign-off) before submitting.";
+  }
   return null;
 }
 
@@ -1409,7 +1437,7 @@ serve(async (req) => {
       withAbort(
         sb
           .from("p2a_vcr_prerequisites")
-          .select("id, status")
+          .select("id, status, reviewed_at, updated_at")
           .eq("handover_point_id", vcr_id)
           .eq("vcr_item_id", vcr_item_id)
           .maybeSingle(),
@@ -1595,16 +1623,48 @@ serve(async (req) => {
     });
 
     const usable = allFacts.filter((f) => f.confidence !== "unavailable");
+    // Terminal items: quiet retrospective, no nag. Facts stay for audit but
+    // their tone is downgraded to neutral so severity reads green.
+    const TERMINAL_STATUSES = new Set(["ACCEPTED", "QUALIFICATION_APPROVED", "REJECTED"]);
+    const isTerminal = !!prereqStatus && TERMINAL_STATUSES.has(prereqStatus);
     const insights: Insights = usable.length === 0
       ? { state: "unavailable", facts: renderedFacts }
       : (() => {
+          if (isTerminal) {
+            const neutralFacts = renderedFacts.map((f) => ({ ...f, tone: "neutral" as Tone }));
+            const reviewedAtRaw = (prereq as any)?.reviewed_at || (prereq as any)?.updated_at || null;
+            const dateLabel = reviewedAtRaw
+              ? new Date(reviewedAtRaw).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
+              : null;
+            const verb = prereqStatus === "ACCEPTED" ? "Accepted"
+              : prereqStatus === "QUALIFICATION_APPROVED" ? "Qualified"
+              : "Rejected";
+            const readinessLabel = verb;
+            const hadGap = renderedFacts.some((f) =>
+              (f.label || "").toLowerCase().includes("required evidence attached") ||
+              (f.label || "").toLowerCase().includes("required documents attached"),
+            );
+            const summaryParts = [dateLabel ? `${verb} on ${dateLabel}.` : `${verb}.`];
+            if (hadGap) summaryParts.push("No evidence was attached.");
+            return {
+              state: "ready",
+              severity: "green",
+              headline: `${verb}.`,
+              summary: summaryParts.join(" "),
+              next_step: null,
+              facts: neutralFacts,
+              readiness_label: readinessLabel,
+              terminal: true,
+            };
+          }
+
           const severity = composeSeverity(renderedFacts);
           const topFact = renderedFacts.find((f) => f.tone === "red") || renderedFacts.find((f) => f.tone === "amber");
           const deliverKey = topFact?.label || "";
           const approverKey = topFact?.label || "";
           const defaultDeliver = severity === "green"
             ? "Looks ready — review evidence before marking complete."
-            : nextStepForFact(topFact) ?? "Resolve flagged signals before submitting.";
+            : nextStepForFact(topFact, renderedFacts) ?? "Resolve flagged signals before submitting.";
           const defaultApprover = severity === "green"
             ? "Live signals look ready."
             : "Heads up before accepting — confirm flagged signals.";
@@ -1615,7 +1675,7 @@ serve(async (req) => {
             itrsValue: renderedFacts.find((f) => f.label === "ITRs complete (A+B)")?.value,
           };
           const summary = composeSummary(renderedFacts, severity, summaryCtx);
-          const nextStep = severity === "green" ? null : nextStepForFact(topFact);
+          const nextStep = severity === "green" ? null : nextStepForFact(topFact, renderedFacts);
 
           return {
             state: "ready",
