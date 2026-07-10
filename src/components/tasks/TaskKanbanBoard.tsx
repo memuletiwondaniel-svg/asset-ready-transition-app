@@ -584,6 +584,7 @@ const KanbanCardContent: React.FC<{
   const reviewerSummaries = useContext(ReviewerSummaryContext);
   const p2aApprovalSummaries = useContext(P2AApprovalContext);
   const oraApprovalSummaries = useContext(ORAApprovalContext);
+  const strippedTitleCollisions = useContext(TitleCollisionContext);
 
   // Rail color encodes URGENCY (overdue/due-soon/on-track) — see computeUrgency.
   // Rejected status keeps the destructive override.
