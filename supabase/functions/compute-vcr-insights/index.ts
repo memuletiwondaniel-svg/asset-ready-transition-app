@@ -731,8 +731,77 @@ serve(async (req) => {
         });
       }
     }
-...
-    const nowIso = new Date().toISOString();
+
+    const lovableKey = Deno.env.get("LOVABLE_API_KEY") || "";
+    const allFacts: Fact[] = [];
+    const runAgent = async (name: string) => {
+      try {
+        if (name === "fred") allFacts.push(...(await fredCompletionsAggregator(sb, vcr_id)));
+        else if (name === "ivan") allFacts.push(...(await ivanHempReader(sb, item, lovableKey)));
+        else if (name === "selma") allFacts.push(...(await selmaRevisionPass(sb, item)));
+        else if (name === "evidence_match") allFacts.push(...(await evidenceMatchEngine(sb, item, lovableKey)));
+        else if (name === "workflow_signals") allFacts.push(...(await workflowSignalsEngine(sb, item, prereq)));
+        else if (name === "currency_check") allFacts.push(...(await selmaRevisionPass(sb, item)));
+        else if (name === "hannah" || name === "alex") {
+          allFacts.push({ label: `${name[0].toUpperCase()}${name.slice(1)} check`, value: "Not connected", confidence: "unavailable" });
+        }
+      } catch (e) {
+        allFacts.push({ label: `${name} agent`, value: `Error: ${(e as Error).message}`, confidence: "unavailable" });
+      }
+    };
+
+    // Phase 1 routing: template-first (per vcr_item_id), category-config additive.
+    const { data: template } = await bounded("template lookup", DB_TIMEOUT_MS, { data: null }, (signal) =>
+      withAbort(
+        sb
+          .from("vcr_item_insight_templates")
+          .select("engines, action_templates, config_version")
+          .eq("vcr_item_id", vcr_item_id)
+          .maybeSingle(),
+        signal,
+      ),
+    );
+    const templateEngines: string[] = Array.isArray(template?.engines) && template!.engines.length > 0
+      ? template!.engines
+      : ["evidence_match", "workflow_signals", "currency_check"];
+    const templateVersion = template?.config_version || 0;
+
+    const ranSet = new Set<string>();
+    const runOnce = async (name: string) => {
+      if (ranSet.has(name)) return;
+      ranSet.add(name);
+      await runAgent(name);
+    };
+    for (const eng of templateEngines) await runOnce(eng);
+    // Category-level config is ADDITIVE (fred/ivan/selma) — do not remove.
+    if (cfg?.lead_agent) await runOnce(cfg.lead_agent);
+    for (const c of contribs) await runOnce(c);
+
+    const usable = allFacts.filter((f) => f.confidence !== "unavailable");
+    const insights: Insights = usable.length === 0
+      ? { state: "unavailable", facts: allFacts }
+      : (() => {
+          const severity = composeSeverity(allFacts);
+          const topFact = allFacts.find((f) => f.tone === "red") || allFacts.find((f) => f.tone === "amber");
+          const actionTemplates = (template?.action_templates || {}) as Record<string, string>;
+          const deliverKey = topFact?.label || "";
+          const approverKey = topFact?.label || "";
+          const defaultDeliver = severity === "green"
+            ? "Looks ready — review evidence before marking complete."
+            : nextStepForFact(topFact) ?? "Resolve flagged signals before submitting.";
+          const defaultApprover = severity === "green"
+            ? "Live signals look ready."
+            : "Heads up before accepting — confirm flagged signals.";
+          return {
+            state: "ready",
+            severity,
+            headline: composeHeadline(allFacts, severity),
+            facts: allFacts,
+            delivering_action: actionTemplates[`delivering:${deliverKey}`] || defaultDeliver,
+            approver_check: actionTemplates[`approver:${approverKey}`] || defaultApprover,
+          };
+        })();
+
     await bounded("cache upsert", DB_TIMEOUT_MS, null, (signal) =>
       withAbort(
         sb.from("vcr_item_insights").upsert({
