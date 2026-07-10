@@ -308,22 +308,43 @@ const InsightsBlock: React.FC<{
                   </div>
                 )}
 
+                {(factCount > 0 || insights?.computed_at) && (
+                  <div className="mt-3 pt-2 border-t border-sky-100/70 dark:border-sky-950/50 flex items-center justify-between gap-3">
+                    {factCount > 0 ? (
+                      <button
+                        type="button"
+                        onClick={() => setDetailsOpen((v) => !v)}
+                        className="flex items-center gap-1 text-[11.5px] text-muted-foreground hover:text-foreground transition-colors"
+                        aria-expanded={detailsOpen}
+                      >
+                        <ChevronRight
+                          className={cn(
+                            'h-3.5 w-3.5 transition-transform',
+                            detailsOpen && 'rotate-90',
+                          )}
+                        />
+                        Details · {factCount} {factCount === 1 ? 'signal' : 'signals'}
+                      </button>
+                    ) : (
+                      <span />
+                    )}
+                    {insights?.computed_at && (
+                      <TooltipProvider delayDuration={200}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="text-[11px] text-muted-foreground">
+                              checked {formatDistanceToNow(new Date(insights.computed_at), { addSuffix: false })} ago
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">{format(new Date(insights.computed_at), 'PPpp')}</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </div>
+                )}
                 {factCount > 0 && (
-                  <div className="mt-3 pt-2 border-t border-sky-100/70 dark:border-sky-950/50">
-                    <button
-                      type="button"
-                      onClick={() => setDetailsOpen((v) => !v)}
-                      className="flex items-center gap-1 text-[11.5px] text-muted-foreground hover:text-foreground transition-colors"
-                      aria-expanded={detailsOpen}
-                    >
-                      <ChevronRight
-                        className={cn(
-                          'h-3.5 w-3.5 transition-transform',
-                          detailsOpen && 'rotate-90',
-                        )}
-                      />
-                      Details · {factCount} {factCount === 1 ? 'signal' : 'signals'}
-                    </button>
+                  <div>
+
                     {detailsOpen && (
                       <div className="mt-2 divide-y divide-sky-100/70 dark:divide-sky-950/50">
                         {insights!.facts!.map((f, i) => {
