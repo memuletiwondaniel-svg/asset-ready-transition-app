@@ -1573,8 +1573,24 @@ function sentenceForFact(f: Fact, ctx: SummaryCtx, allFacts: Fact[], consumed: S
   if (l.includes("unassigned role")) return `A required role (${v}) is unassigned.`;
   if (l.includes("evidence added after submission")) return `Evidence changed after submission (${v}) — a fresh review is needed.`;
   if (l.includes("assai")) return "Assai-sourced evidence needs confirmation.";
+  if (l.includes("category rework pattern")) {
+    const m = /^(\d+)\s+of\s+(\d+)\s+(\S+)\s+items\s+returned/i.exec(v);
+    if (m) return `Note: ${m[1]} of ${m[2]} ${m[3]} items on this VCR have been returned; check for a common root cause.`;
+    return `Note: ${v} — check for a common root cause.`;
+  }
+  if (l.includes("shared evidence on a returned item")) {
+    return `Heads-up: ${v} — confirm this file still applies here.`;
+  }
+  if (l.includes("vcr target approaching")) {
+    return f.tone === "red"
+      ? `The VCR target date has passed (${v}) — escalate or reschedule.`
+      : `The VCR target date is close (${v}) — prioritise closing this item.`;
+  }
   if (l.includes("outdated revision") || v.toLowerCase().includes("outdated revision")) {
     return "An attached document is on an outdated revision.";
+  }
+  if (v.toLowerCase().includes("possible revision mismatch")) {
+    return "An attached document may be on an outdated revision — verify manually.";
   }
   return `${f.label}: ${v}.`;
 }
