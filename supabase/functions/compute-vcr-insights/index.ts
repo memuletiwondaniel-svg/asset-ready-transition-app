@@ -1143,17 +1143,22 @@ serve(async (req) => {
 
     const lovableKey = Deno.env.get("LOVABLE_API_KEY") || "";
     const allFacts: Fact[] = [];
+    // Alias engine names to a single identity so runOnce truly dedupes.
+    // 'selma' (contrib in vcr_insights_agent_config) and 'currency_check'
+    // (template engine) both invoke selmaRevisionPass — collapse to one id.
+    const canonicalEngine = (name: string): string => {
+      if (name === "selma") return "currency_check";
+      return name;
+    };
     const runAgent = async (name: string) => {
       try {
         if (name === "fred") allFacts.push(...(await fredCompletionsAggregator(sb, vcr_id)));
         else if (name === "ivan") allFacts.push(...(await ivanHempReader(sb, item, lovableKey)));
-        else if (name === "selma") allFacts.push(...(await selmaRevisionPass(sb, item)));
         else if (name === "evidence_match") allFacts.push(...(await evidenceMatchEngine(sb, item, lovableKey)));
         else if (name === "workflow_signals") allFacts.push(...(await workflowSignalsEngine(sb, item, prereq)));
         else if (name === "currency_check") allFacts.push(...(await selmaRevisionPass(sb, item)));
-        else if (name === "hannah" || name === "alex") {
-          allFacts.push({ label: `${name[0].toUpperCase()}${name.slice(1)} check`, value: "Not connected", confidence: "unavailable" });
-        }
+        // hannah / alex: silent no-op stubs until real agents land.
+        else if (name === "hannah" || name === "alex") { /* no-op */ }
       } catch (e) {
         allFacts.push({ label: `${name} agent`, value: `Error: ${(e as Error).message}`, confidence: "unavailable" });
       }
@@ -1161,21 +1166,34 @@ serve(async (req) => {
 
     const ranSet = new Set<string>();
     const runOnce = async (name: string) => {
-      if (ranSet.has(name)) return;
-      ranSet.add(name);
-      await runAgent(name);
+      const canon = canonicalEngine(name);
+      if (ranSet.has(canon)) return;
+      ranSet.add(canon);
+      await runAgent(canon);
     };
     for (const eng of templateEngines) await runOnce(eng);
     // Category-level config is ADDITIVE (fred/ivan/selma) — do not remove.
     if (cfg?.lead_agent) await runOnce(cfg.lead_agent);
     for (const c of contribs) await runOnce(c);
 
+    // Noise suppression at compose time.
+    // - Drop neutral "Status" fact (duplicates header chip, no signal).
+    // - Drop "Not tracked in DMS" facts (honest-gap marker, not actionable).
+    // - Drop facts with confidence 'unavailable' UNLESS they carry an
+    //   actionable tone (amber/red) — those are real gaps.
+    const renderedFacts = allFacts.filter((f) => {
+      if (f.label === "Status" && (!f.tone || f.tone === "neutral")) return false;
+      if (typeof f.value === "string" && f.value === "Not tracked in DMS") return false;
+      if (f.confidence === "unavailable" && (!f.tone || f.tone === "neutral")) return false;
+      return true;
+    });
+
     const usable = allFacts.filter((f) => f.confidence !== "unavailable");
     const insights: Insights = usable.length === 0
-      ? { state: "unavailable", facts: allFacts }
+      ? { state: "unavailable", facts: renderedFacts }
       : (() => {
-          const severity = composeSeverity(allFacts);
-          const topFact = allFacts.find((f) => f.tone === "red") || allFacts.find((f) => f.tone === "amber");
+          const severity = composeSeverity(renderedFacts);
+          const topFact = renderedFacts.find((f) => f.tone === "red") || renderedFacts.find((f) => f.tone === "amber");
           const deliverKey = topFact?.label || "";
           const approverKey = topFact?.label || "";
           const defaultDeliver = severity === "green"
@@ -1188,8 +1206,8 @@ serve(async (req) => {
           return {
             state: "ready",
             severity,
-            headline: composeHeadline(allFacts, severity),
-            facts: allFacts,
+            headline: composeHeadline(renderedFacts, severity),
+            facts: renderedFacts,
             delivering_action: actionTemplates[`delivering:${deliverKey}`] || defaultDeliver,
             approver_check: actionTemplates[`approver:${approverKey}`] || defaultApprover,
           };
