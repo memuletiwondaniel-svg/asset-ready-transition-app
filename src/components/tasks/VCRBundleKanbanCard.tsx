@@ -153,7 +153,7 @@ export const VCRBundleKanbanCard: React.FC<Props> = ({ bundle, onClick, dragHand
       className={cn(
         'relative overflow-hidden group cursor-pointer transition-all duration-200',
         isChild ? 'p-2.5 rounded-md border-l-2 border-l-border/50 bg-muted/30' :
-                  'px-3 py-2.5 pl-4 rounded-lg border border-border/60 bg-card shadow-[0_1px_2px_0_rgb(0,0,0,0.03)] hover:-translate-y-0.5 hover:shadow-md hover:border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                  'p-3.5 pl-4 rounded-lg border border-border/60 bg-card shadow-[0_1px_2px_0_rgb(0,0,0,0.03)] hover:-translate-y-0.5 hover:shadow-md hover:border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
       )}
     >
       {/* Drag handle — absolute overlay, hover-only, no layout shift. */}
@@ -169,21 +169,21 @@ export const VCRBundleKanbanCard: React.FC<Props> = ({ bundle, onClick, dragHand
       )}
 
       {/* Row 1: chip flush left; optional Done "Approved" pill on the right */}
-      <div className="flex items-center justify-between gap-2 mb-1.5">
+      <div className="flex items-center justify-between gap-2">
         {idChip(idCode)}
         {pill && statusPill(pill.label, pill.tone)}
       </div>
 
       {/* Title */}
-      <p className="text-[13px] leading-[1.3] font-medium text-foreground mb-1.5 break-words">
+      <p className="text-[13px] leading-[1.3] font-medium text-foreground mt-2 break-words">
         {title}
       </p>
 
       {/* Done column: no bar, no subtext, no % — the pill (if any) is the signal. */}
       {!inDoneColumn && (
         <>
-          {bar(segments, pctLabel)}
-          <p className="text-[11px] text-muted-foreground mt-1.5 leading-snug">
+          <div className="mt-2.5">{bar(segments, pctLabel)}</div>
+          <p className="text-[11px] text-muted-foreground mt-2 leading-snug">
             {subtext}
           </p>
           {footer && (
