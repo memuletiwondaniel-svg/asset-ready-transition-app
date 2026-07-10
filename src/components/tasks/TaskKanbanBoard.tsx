@@ -634,8 +634,7 @@ const KanbanCardContent: React.FC<{
   })() : null;
 
 
-  // Overdue: tiny Clock glyph + "{n}d" in destructive tone, top-right. The
-  // clock disambiguates from the trailing % at the bar end. Non-overdue: none.
+  // Overdue: tiny Clock glyph + "{n}d" in destructive tone, top-right.
   const overdueChip: React.ReactNode = (() => {
     if (task.kanbanColumn === 'done') return null;
     if (urgency.rail !== 'red' || !urgency.label) return null;
@@ -643,8 +642,8 @@ const KanbanCardContent: React.FC<{
     const days = m ? Number(m[1]) : null;
     if (!days) return null;
     return (
-      <span className="inline-flex items-center gap-0.5 text-[10px] text-destructive tabular-nums whitespace-nowrap">
-        <Clock className="h-3 w-3" strokeWidth={2.25} />
+      <span className="inline-flex items-center gap-0.5 text-[9px] text-destructive tabular-nums whitespace-nowrap">
+        <Clock className="h-2.5 w-2.5" strokeWidth={2.25} />
         {days}d
       </span>
     );
