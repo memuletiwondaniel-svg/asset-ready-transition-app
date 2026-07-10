@@ -1308,38 +1308,24 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                 )}
               </section>
 
-              {/* Required evidence — expanded by default; chevron toggle */}
-              <section>
-                <button
-                  type="button"
-                  onClick={() => setRequiredEvidenceOpen((v) => !v)}
-                  className="w-full flex items-center justify-between mb-2.5 group"
-                  aria-expanded={requiredEvidenceOpen}
-                >
-                  <h3 className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground/80 font-semibold">
-                    Required evidence
-                  </h3>
-                  {requiredEvidenceOpen ? (
-                    <ChevronDown className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                  ) : (
-                    <ChevronRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+              {/* Required evidence — collapsed by default */}
+              <CollapsibleSection label="Required evidence" defaultOpen={false}>
+                <p className="text-[13px] text-foreground leading-relaxed mt-1">
+                  {requiredEvidenceText || (
+                    <span className="text-muted-foreground italic">No required evidence specified.</span>
                   )}
-                </button>
-                {requiredEvidenceOpen && (
-                  <p className="text-[13px] text-foreground leading-relaxed mt-1">
-                    {requiredEvidenceText || (
-                      <span className="text-muted-foreground italic">No required evidence specified.</span>
-                    )}
-                  </p>
-                )}
-              </section>
+                </p>
+              </CollapsibleSection>
 
-              {/* Evidence — execution-only (Part 0) */}
+              {/* Evidence — execution-only (Part 0). Collapsible, expanded default. */}
               {isExecutionMode && (
-              <section>
-                <SectionLabel right={viewer !== 'delivering' && evidence.length > 0 ? 'Submitted by delivering party' : undefined}>
-                  Evidence
-                </SectionLabel>
+              <CollapsibleSection
+                label="Evidence"
+                count={evidence.length}
+                defaultOpen={true}
+                right={viewer !== 'delivering' && evidence.length > 0 ? 'Submitted by delivering party' : undefined}
+              >
+
 
                 {/* Selma → Assai doc-number-first fetch.
                     Shown to delivering when the requirement names a controlled
