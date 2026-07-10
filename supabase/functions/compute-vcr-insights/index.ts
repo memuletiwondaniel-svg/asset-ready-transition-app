@@ -161,6 +161,89 @@ async function fredCompletionsAggregator(sb: any, vcrId: string): Promise<Fact[]
   return facts;
 }
 
+// ─── source_rollup: discipline-scoped rollup from gohub_* mirrors ─────────
+// Driven by vcr_item_insight_templates.source_rollup jsonb:
+//   { source: 'gohub_itr', disciplines: ['E','I'], label_prefix: 'Ex (E+I)' }
+interface SourceRollupCfg {
+  source?: string;
+  disciplines?: string[];
+  label_prefix?: string;
+}
+async function sourceRollupEngine(sb: any, vcrId: string, cfg: SourceRollupCfg): Promise<Fact[]> {
+  const disciplines = (cfg.disciplines || []).map((d) => String(d).toUpperCase()).filter(Boolean);
+  const prefix = (cfg.label_prefix || "Scoped").trim();
+  if (!disciplines.length) return [];
+  // Same scope resolution as Fred: handover point → systems.
+  // p2a_systems.system_id text column holds the gohub subsystem_number.
+  const { data: hpsRows } = await bounded("source_rollup scope", DB_TIMEOUT_MS, { data: [] }, (signal) =>
+    withAbort(
+      sb.from("p2a_handover_point_systems").select("system_id").eq("handover_point_id", vcrId),
+      signal,
+    ),
+  );
+  const sysIds = (hpsRows || []).map((r: any) => r.system_id).filter(Boolean);
+  if (sysIds.length === 0) return [];
+  const { data: systems } = await bounded("source_rollup systems", DB_TIMEOUT_MS, { data: [] }, (signal) =>
+    withAbort(
+      sb.from("p2a_systems").select("system_id").in("id", sysIds),
+      signal,
+    ),
+  );
+  const subs = (systems || []).map((s: any) => s.system_id).filter(Boolean);
+  if (subs.length === 0) return [];
+
+  const facts: Fact[] = [];
+
+  // ITR rollup — status='complete' means signed/complete (see gohub sync).
+  const { data: itrs } = await bounded("source_rollup itrs", DB_TIMEOUT_MS, { data: [] }, (signal) =>
+    withAbort(
+      sb.from("gohub_itr_items").select("status").in("subsystem_number", subs).in("discipline", disciplines),
+      signal,
+    ),
+  );
+  const total = (itrs || []).length;
+  const complete = (itrs || []).filter((r: any) => String(r.status || "").toLowerCase() === "complete").length;
+  if (total === 0) {
+    facts.push({
+      label: `${prefix} ITRs in scope`,
+      value: `No ${prefix} ITRs in scope`,
+      confidence: "verified",
+      tone: "neutral",
+    });
+  } else {
+    const outstanding = total - complete;
+    facts.push({
+      label: `${prefix} ITRs complete`,
+      value: `${complete} of ${total}`,
+      confidence: "verified",
+      tone: outstanding > 0 ? "amber" : "neutral",
+    });
+  }
+
+  // Punch rollup — gohub_punch_items carries discipline. Open = no cleared_date.
+  const { data: punches } = await bounded("source_rollup punches", DB_TIMEOUT_MS, { data: [] }, (signal) =>
+    withAbort(
+      sb
+        .from("gohub_punch_items")
+        .select("cleared_date")
+        .in("subsystem_number", subs)
+        .in("discipline", disciplines)
+        .is("cleared_date", null),
+      signal,
+    ),
+  );
+  const openPunch = (punches || []).length;
+  if (openPunch > 0) {
+    facts.push({
+      label: `${prefix} punch items open`,
+      value: String(openPunch),
+      confidence: "verified",
+      tone: "amber",
+    });
+  }
+  return facts;
+}
+
 // Shared evidence loader — reads VCR evidence from p2a_vcr_evidence keyed by prerequisite
 async function loadVcrEvidence(sb: any, prereqId: string | null) {
   if (!prereqId) return [];
@@ -1238,6 +1321,12 @@ function nextStepForFact(f: Fact | undefined, allFacts: Fact[] = []): string | n
   if (l.includes("hemp/hazop actions") && l.includes("open")) {
     return "Close the open HEMP actions (TSE-TA2 sign-off) before submitting.";
   }
+  if (l.includes("itrs complete") && !l.includes("(a+b)") && f.tone === "amber") {
+    return "Progress the outstanding E+I ITRs in GoCompletions before submitting.";
+  }
+  if (l.includes("punch items open") && f.tone === "amber") {
+    return "Close the outstanding punch items in GoCompletions before submitting.";
+  }
   return null;
 }
 
@@ -1341,6 +1430,10 @@ function sentenceForFact(f: Fact, ctx: SummaryCtx, allFacts: Fact[], consumed: S
       consumed.add("ITRs complete (A+B)");
     }
     return `The scoped systems still carry ${n} open Cat-A punch items (across all ${systems} scoped systems — not specific to this item's topic)${itrParen}.`;
+  }
+  if (l.includes("itrs complete") && !l.includes("(a+b)") && f.tone === "amber") {
+    // Discipline-scoped rollup from source_rollup engine — no whole-VCR caveat.
+    return `${v} ${f.label.replace(/\s*ITRs complete\s*$/i, "")} ITRs are signed across the scoped systems.`.replace(/\s+/g, " ").trim();
   }
   if (l.includes("itrs complete") && f.tone === "amber") {
     const systems = ctx.systemsInScope || "the";
@@ -1505,7 +1598,7 @@ serve(async (req) => {
       withAbort(
         sb
           .from("vcr_item_insight_templates")
-          .select("engines, action_templates, config_version")
+          .select("engines, action_templates, config_version, source_rollup, suppress_category_agents")
           .eq("vcr_item_id", vcr_item_id)
           .maybeSingle(),
         signal,
@@ -1516,6 +1609,8 @@ serve(async (req) => {
       : ["evidence_match", "workflow_signals", "currency_check"];
     const templateVersion = (template as any)?.config_version || 0;
     const actionTemplates = ((template as any)?.action_templates || {}) as Record<string, string>;
+    const sourceRollupCfg: SourceRollupCfg = ((template as any)?.source_rollup || {}) as SourceRollupCfg;
+    const suppressCategoryAgents: boolean = !!(template as any)?.suppress_category_agents;
 
     // Evidence fingerprint — invalidate when files are added/removed/updated
     // Reads from p2a_vcr_evidence (the same store the UI writes to).
@@ -1536,6 +1631,8 @@ serve(async (req) => {
       configVersion,
       templateVersion,
       templateEngines,
+      sourceRollupCfg,
+      suppressCategoryAgents,
       vcr_id,
       vcr_item_id,
       categoryCode,
@@ -1583,6 +1680,7 @@ serve(async (req) => {
     const runAgent = async (name: string) => {
       try {
         if (name === "fred") allFacts.push(...(await fredCompletionsAggregator(sb, vcr_id)));
+        else if (name === "source_rollup") allFacts.push(...(await sourceRollupEngine(sb, vcr_id, sourceRollupCfg)));
         else if (name.startsWith("register_reader:")) {
           const schemaKey = name.slice("register_reader:".length);
           allFacts.push(...(await registerReaderEngine(sb, item, lovableKey, schemaKey)));
@@ -1606,9 +1704,14 @@ serve(async (req) => {
       await runAgent(canon);
     };
     for (const eng of templateEngines) await runOnce(eng);
-    // Category-level config is ADDITIVE (fred/ivan/selma) — do not remove.
-    if (cfg?.lead_agent) await runOnce(cfg.lead_agent);
-    for (const c of contribs) await runOnce(c);
+    // Category-level config is normally ADDITIVE (fred/ivan/selma). Templates
+    // may opt out via suppress_category_agents to keep unscoped whole-VCR
+    // signals off discipline-scoped items (e.g. TI-15 Ex).
+    if (!suppressCategoryAgents) {
+      if (cfg?.lead_agent) await runOnce(cfg.lead_agent);
+      for (const c of contribs) await runOnce(c);
+    }
+
 
     // Noise suppression at compose time.
     // - Drop neutral "Status" fact (duplicates header chip, no signal).
