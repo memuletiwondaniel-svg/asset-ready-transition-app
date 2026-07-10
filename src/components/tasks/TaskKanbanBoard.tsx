@@ -1749,6 +1749,73 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     <P2AApprovalContext.Provider value={p2aApprovalMap}>
     <ReviewerSummaryContext.Provider value={reviewerMap}>
     <>
+      {/* Lens toggle — My work / My reviews. Persisted per user. */}
+      <div className="flex items-center gap-2 mb-3">
+        <div className="inline-flex rounded-md border border-border/60 bg-card/40 p-0.5">
+          <button
+            type="button"
+            onClick={() => setLens('work')}
+            className={cn(
+              'text-[12px] px-3 py-1 rounded transition-colors',
+              lens === 'work' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            My work
+          </button>
+          <button
+            type="button"
+            onClick={() => setLens('reviews')}
+            className={cn(
+              'text-[12px] px-3 py-1 rounded transition-colors inline-flex items-center gap-1.5',
+              lens === 'reviews' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            My reviews
+            {awaitingTotal > 0 && (
+              <span className="text-[10px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                {awaitingTotal}
+              </span>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {lens === 'reviews' ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 items-stretch">
+          {REVIEW_BUCKETS.map(bucket => {
+            const bTasks = reviewBuckets[bucket.key];
+            const isEmpty = bTasks.length === 0;
+            return (
+              <div key={bucket.key} className="bg-card/40 dark:bg-muted/20 rounded-xl border border-border/60 flex flex-col min-h-[60vh] overflow-hidden">
+                <div className="flex items-center justify-between gap-2 px-3 pt-3 pb-2 border-b border-border/40">
+                  <span className="text-[13px] font-medium text-foreground truncate">{bucket.label}</span>
+                  <span className="text-[11px] tabular-nums text-muted-foreground/70">{bTasks.length}</span>
+                </div>
+                {isEmpty ? (
+                  <div className="flex-1 flex items-stretch p-3">
+                    <div className="flex-1 rounded-lg border border-dashed border-border/60 flex items-center justify-center text-center px-4 py-8">
+                      <p className="text-[11px] text-muted-foreground/60">{bucket.hint || 'Nothing here.'}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <ScrollArea className="flex-1 max-h-[calc(100vh-320px)]">
+                    <div className={cn('px-3 pb-3 pt-2 space-y-2', bucket.dim && 'opacity-60')}>
+                      {bTasks.map(task => (
+                        <div key={task.id} className="space-y-1">
+                          <KanbanCardWithChildren task={task} onTaskClick={handleTaskClick} />
+                          {bucket.dim && (
+                            <p className="text-[10px] text-muted-foreground/70 pl-3">{bucket.hint}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
       <DndContext
         sensors={sensors}
         onDragStart={handleDragStart}
