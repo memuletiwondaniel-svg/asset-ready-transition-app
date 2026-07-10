@@ -309,7 +309,7 @@ const InsightsBlock: React.FC<{
 
                 {nextText && (
                   <div className="mt-2 pt-2 border-t border-sky-100/70 dark:border-sky-950/50 text-[12.5px] leading-relaxed">
-                    <span className="font-medium text-foreground">Next: </span>
+                    <span className="font-medium text-foreground">{isApproving ? 'Check: ' : 'Next: '}</span>
                     <span className="text-foreground/70">{nextText}</span>
                   </div>
                 )}
