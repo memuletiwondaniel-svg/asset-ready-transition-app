@@ -71,13 +71,8 @@ const buildIdCode = (bundle: VCRBundleTask): string => {
   return project || 'VCR';
 };
 
-const kanbanStatusLabel = (status: string): { label: string; tone: 'grey' | 'amber' | 'green' } => {
-  const s = (status || '').toLowerCase();
-  if (s === 'completed' || s === 'done') return { label: 'Done', tone: 'green' };
-  if (s === 'waiting' || s === 'pending') return { label: 'Waiting', tone: 'grey' };
-  if (s === 'todo') return { label: 'To do', tone: 'grey' };
-  return { label: 'In Progress', tone: 'amber' };
-};
+
+
 
 export const VCRBundleKanbanCard: React.FC<Props> = ({ bundle, onClick, dragHandleProps, isChild }) => {
   const isApproving = bundle.type === 'vcr_approval_bundle';
