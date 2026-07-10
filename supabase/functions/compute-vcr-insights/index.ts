@@ -1201,7 +1201,7 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
   return facts;
 }
 
-function nextStepForFact(f: Fact | undefined): string | null {
+function nextStepForFact(f: Fact | undefined, allFacts: Fact[] = []): string | null {
   if (!f) return null;
   const l = f.label.toLowerCase();
   if (l.includes("returned by approver")) return "Address the approver's return reason in the thread before resubmitting.";
@@ -1212,6 +1212,32 @@ function nextStepForFact(f: Fact | undefined): string | null {
   if (l.includes("evidence check")) return "Review the flagged file — it may be unrelated to the requirement.";
   if (l.includes("required evidence attached") && f.tone === "amber") return "Attach the required evidence before submitting.";
   if (l.includes("assai evidence")) return "Confirm the Assai-sourced evidence.";
+  // Register-reader: acknowledgement schema (OI-19). Both facts route to the
+  // same next step — chase the outstanding units named in "Awaiting acknowledgement".
+  if (l.includes("awaiting acknowledgement") || (l.includes("units acknowledged") && f.tone === "amber")) {
+    const outstanding = allFacts.find((x) => (x.label || "").toLowerCase() === "awaiting acknowledgement");
+    const raw = (outstanding?.value || f.value || "").trim();
+    if (raw) {
+      const names = raw.split(/\s*,\s*/).filter(Boolean);
+      let phrase: string;
+      if (names.length === 0) phrase = "the outstanding units";
+      else if (names.length <= 3) {
+        phrase = names.length === 1
+          ? names[0]
+          : names.length === 2
+          ? `${names[0]} and ${names[1]}`
+          : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+      } else {
+        phrase = `${names.slice(0, 3).join(", ")} and others`;
+      }
+      return `Chase acknowledgement from ${phrase} before submitting.`;
+    }
+    return "Chase acknowledgement from the outstanding units before submitting.";
+  }
+  // Register-reader: HEMP/HAZOP schema (DI-03).
+  if (l.includes("hemp/hazop actions") && l.includes("open")) {
+    return "Close the open HEMP actions (TSE-TA2 sign-off) before submitting.";
+  }
   return null;
 }
 
