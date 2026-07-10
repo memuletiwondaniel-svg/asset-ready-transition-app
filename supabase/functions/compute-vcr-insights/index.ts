@@ -22,6 +22,8 @@ interface Insights {
   state: "ready" | "pending" | "unavailable";
   severity?: "green" | "amber" | "red";
   headline?: string;
+  summary?: string;
+  next_step?: string | null;
   facts?: Fact[];
   delivering_action?: string;
   approver_check?: string;
