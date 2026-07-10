@@ -882,6 +882,9 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
       queryClient.invalidateQueries({ queryKey: ['vcr-prerequisites'] });
       queryClient.invalidateQueries({ queryKey: ['vcr-category-items'] });
       queryClient.invalidateQueries({ queryKey: ['my-vcr-item-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['vcr-bundle-enriched'] });
+      queryClient.invalidateQueries({ queryKey: ['user-vcr-bundle-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
     },
     onError: (e: any) =>
       toast({ title: 'Error', description: e.message, variant: 'destructive' }),
