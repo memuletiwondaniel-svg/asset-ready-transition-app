@@ -788,8 +788,9 @@ async function registerReaderTableRow(
     }];
   }
 
-  const closed = rows.filter((r) => isRowClosed(r, schema.closed_field));
-  const outstanding = rows.filter((r) => !isRowClosed(r, schema.closed_field));
+  const closedOpts = { requiresDate: !!schema.requires_date };
+  const closed = rows.filter((r) => isRowClosed(r, schema.closed_field, closedOpts));
+  const outstanding = rows.filter((r) => !isRowClosed(r, schema.closed_field, closedOpts));
   const firstOutstandingPage =
     typeof outstanding[0]?.source_page === "number" ? outstanding[0].source_page : undefined;
 
