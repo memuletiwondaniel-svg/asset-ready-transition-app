@@ -75,6 +75,7 @@ export function useMyPrereqApproval(prerequisiteId: string | undefined) {
       // progress/status; without this invalidate the card stays at 0/N and
       // never leaves the To Do column until a hard refresh.
       qc.invalidateQueries({ queryKey: ['user-tasks'] });
+      qc.invalidateQueries({ queryKey: ['vcr-bundle-enriched'] });
       const label =
         vars.status === 'ACCEPTED' ? 'Accepted' :
         vars.status === 'REJECTED' ? 'Rejected' :

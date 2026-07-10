@@ -9,9 +9,11 @@ import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { TaskDetailSheet } from './TaskDetailSheet';
-import { VCRApprovalBundleSheet } from './VCRApprovalBundleSheet';
 import { VCRPlanReviewLauncher } from './VCRPlanReviewLauncher';
 import { VCRItemTaskListSheet } from '@/components/widgets/VCRItemTaskListSheet';
+import { VCRBundleKanbanCard } from './VCRBundleKanbanCard';
+import { MyVCRItemsPanel } from './MyVCRItemsPanel';
+import { VCRItemsToReviewPanel } from './VCRItemsToReviewPanel';
 import type { VCRBundleTask } from '@/hooks/useUserVCRBundleTasks';
 import { useRecallVcrPlan } from '@/hooks/useRecallVcrPlan';
 import { ORAActivityTaskSheet } from './ORAActivityTaskSheet';
@@ -565,6 +567,18 @@ const KanbanCardContent: React.FC<{
   accentClass?: string;
   isChild?: boolean;
 }> = ({ task, onClick, dragHandleProps, isOverlay, accentClass, isChild }) => {
+  // Mockup v3: VCR bundle tasks get a dedicated card body (delivering %/approving n).
+  const vcrBundle = task.bundleTask;
+  if (vcrBundle && (vcrBundle.type === 'vcr_checklist_bundle' || vcrBundle.type === 'vcr_approval_bundle')) {
+    return (
+      <VCRBundleKanbanCard
+        bundle={vcrBundle}
+        onClick={onClick}
+        dragHandleProps={dragHandleProps}
+        isChild={isChild}
+      />
+    );
+  }
   const navigate = useNavigate();
   const sp = task.smartPriority;
   const isWaitingVcrApprovalBundle = task.isWaiting && isClickableVcrApprovalBundle(task);
@@ -935,6 +949,8 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   const [detailOpen, setDetailOpen] = useState(false);
   const [approvalBundle, setApprovalBundle] = useState<VCRBundleTask | null>(null);
   const [approvalBundleOpen, setApprovalBundleOpen] = useState(false);
+  const [myItemsBundle, setMyItemsBundle] = useState<VCRBundleTask | null>(null);
+  const [myItemsOpen, setMyItemsOpen] = useState(false);
   const [vcrPlanApproval, setVcrPlanApproval] = useState<UnifiedTask['vcrPlanApproval'] | null>(null);
   const [vcrItemTask, setVcrItemTask] = useState<UnifiedTask['vcrItemTask'] | null>(null);
   const [vcrItemTaskOpen, setVcrItemTaskOpen] = useState(false);
@@ -1178,20 +1194,23 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     });
     if (task.isWaiting && !isClickableVcrApprovalBundle(task)) return;
 
-    // VCR approval bundle: open the per-prereq approver action sheet (E-1c).
-    // Do NOT route to TaskDetailSheet — it has no branch for this type.
+    // VCR bundle click routing (mockup v3):
+    //   vcr_approval_bundle → Items-to-review panel (supersedes VCRApprovalBundleSheet)
+    //   vcr_checklist_bundle → My items panel
     const bundle = task.bundleTask as VCRBundleTask | undefined;
     const bundleType = bundle?.type ?? (task as { type?: string }).type ?? task.userTask?.type;
     if (bundle && bundleType === 'vcr_approval_bundle') {
-      console.log('[TaskKanbanBoard] handleTaskClick:branch', {
-        branch: 'vcr_approval_bundle',
-        bundleType,
-        bundle,
-      });
       setSelectedTask(null);
       setDetailOpen(false);
       setApprovalBundle(bundle);
       setApprovalBundleOpen(true);
+      return;
+    }
+    if (bundle && bundleType === 'vcr_checklist_bundle') {
+      setSelectedTask(null);
+      setDetailOpen(false);
+      setMyItemsBundle(bundle);
+      setMyItemsOpen(true);
       return;
     }
 
@@ -1725,12 +1744,21 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         onReject={handleReject}
       />
 
-      <VCRApprovalBundleSheet
+      <VCRItemsToReviewPanel
         bundle={approvalBundle}
         open={approvalBundleOpen}
         onOpenChange={(o) => {
           setApprovalBundleOpen(o);
           if (!o) setApprovalBundle(null);
+        }}
+      />
+
+      <MyVCRItemsPanel
+        bundle={myItemsBundle}
+        open={myItemsOpen}
+        onOpenChange={(o) => {
+          setMyItemsOpen(o);
+          if (!o) setMyItemsBundle(null);
         }}
       />
 
