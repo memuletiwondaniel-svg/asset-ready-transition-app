@@ -114,13 +114,15 @@ export const MyVCRItemsPanel: React.FC<Props> = ({ bundle, open, onOpenChange })
     navigate(`/p2a/workspace/${projectId}?vcr=${vcrId}`);
   };
 
+  const vcrShortLabel = vcrShort ? (vcrName ? `${vcrShort} (${vcrName})` : vcrShort) : 'VCR';
+
   return (
     <>
       <Sheet open={open && !!bundle} onOpenChange={onOpenChange}>
-        <SheetContent className="w-full sm:max-w-2xl overflow-hidden flex flex-col p-0">
+        <SheetContent hideClose className="w-full sm:max-w-2xl overflow-hidden flex flex-col p-0">
           <SheetHeader className="px-6 pt-5 pb-4 border-b shrink-0 space-y-3">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[10px] font-mono text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded">
+              <span className="text-[10px] font-mono text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded">
                 {idCode}
               </span>
               {projectId && vcrId && (
@@ -134,10 +136,10 @@ export const MyVCRItemsPanel: React.FC<Props> = ({ bundle, open, onOpenChange })
             </div>
             <div>
               <SheetTitle className="text-[15px] leading-snug font-semibold">
-                My items — {vcrShort || 'VCR'}{vcrName ? ` (${vcrName})` : ''}
+                My items
               </SheetTitle>
               <SheetDescription className="text-xs text-muted-foreground">
-                Your delivering items in this VCR
+                Your delivering items in {vcrShortLabel}
               </SheetDescription>
             </div>
 
@@ -159,6 +161,7 @@ export const MyVCRItemsPanel: React.FC<Props> = ({ bundle, open, onOpenChange })
               Tap an item to open it and continue.
             </p>
           </SheetHeader>
+
 
           <ScrollArea className="flex-1">
             <div className="p-5 space-y-5">
