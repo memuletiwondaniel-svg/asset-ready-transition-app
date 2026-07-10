@@ -1571,9 +1571,31 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     }
   };
 
+  // Lens partition. "My reviews" surfaces vcr/pssr approval bundles only;
+  // "My work" hides them. Both derive from the same input list.
+  const isReviewBundle = (u: UnifiedTask): boolean => {
+    const bt = (u.bundleTask as { type?: string } | undefined)?.type;
+    return bt === 'vcr_approval_bundle' || bt === 'pssr_approval_bundle';
+  };
+  const workTasks = useMemo(() => tasks.filter(u => !isReviewBundle(u)), [tasks]);
+  const reviewBundles = useMemo(() => tasks.filter(isReviewBundle), [tasks]);
+
+  // Aggregate awaiting count across all review bundles (badge on the toggle).
+  const awaitingTotal = useMemo(() => {
+    let n = 0;
+    for (const u of reviewBundles) {
+      const m = (u.bundleTask?.metadata || {}) as Record<string, any>;
+      const total = Number(m.approver_total_items ?? 0);
+      const decided = Number(m.approver_decided_items ?? 0);
+      n += Math.max(0, total - decided);
+    }
+    return n;
+  }, [reviewBundles]);
+
   const columnData = useMemo(() => {
+    const source = lens === 'reviews' ? reviewBundles : workTasks;
     return COLUMNS.map(col => {
-      const filtered = tasks.filter(t =>
+      const filtered = source.filter(t =>
         col.key === 'todo'
           ? (t.kanbanColumn === 'todo' || t.kanbanColumn === 'waiting')
           : t.kanbanColumn === col.key
@@ -1587,7 +1609,32 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         : [...filtered].sort(compareBySort(sortKey));
       return { ...col, tasks: ordered, sortKey };
     });
-  }, [tasks, COLUMNS, columnSort]);
+  }, [workTasks, reviewBundles, lens, COLUMNS, columnSort]);
+
+  // Reviews-lens decision buckets. Approval bundles are re-columned by their
+  // review state, not by kanbanColumn.
+  interface ReviewBucketDef { key: 'needs' | 'in_progress' | 'waiting' | 'done'; label: string; hint?: string; dim?: boolean; }
+  const REVIEW_BUCKETS: ReviewBucketDef[] = [
+    { key: 'needs', label: 'Needs my decision' },
+    { key: 'in_progress', label: 'In review progress' },
+    { key: 'waiting', label: 'Waiting on delivering parties', hint: 'Nothing submitted yet', dim: true },
+    { key: 'done', label: 'Done' },
+  ];
+  const reviewBuckets = useMemo(() => {
+    const buckets: Record<ReviewBucketDef['key'], UnifiedTask[]> = { needs: [], in_progress: [], waiting: [], done: [] };
+    for (const u of reviewBundles) {
+      if (u.kanbanColumn === 'done') { buckets.done.push(u); continue; }
+      const m = (u.bundleTask?.metadata || {}) as Record<string, any>;
+      const total = Number(m.approver_total_items ?? u.bundleTask?.sub_items?.length ?? 0);
+      const decided = Number(m.approver_decided_items ?? 0);
+      const awaiting = Math.max(0, total - decided);
+      if (awaiting > 0 && decided > 0) buckets.in_progress.push(u);
+      else if (awaiting > 0) buckets.needs.push(u);
+      else buckets.waiting.push(u);
+    }
+    return buckets;
+  }, [reviewBundles]);
+
 
   const renderColumnContent = (columnTasks: UnifiedTask[], col: typeof columnData[number]) => {
     if (columnTasks.length === 0) {
