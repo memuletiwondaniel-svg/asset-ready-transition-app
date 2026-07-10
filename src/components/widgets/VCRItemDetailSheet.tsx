@@ -1104,7 +1104,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   // Guidance/Required-evidence collapse state (declared before any early return for hooks-rules safety)
   // Defaults: Guidance collapsed (verbose reference); Required Evidence expanded (action-relevant).
   const [guidanceOpen, setGuidanceOpenLocal] = useState(false);
-  const [requiredEvidenceOpen, setRequiredEvidenceOpen] = useState(true);
+  
   // B2B chip: which approving-role rows are toggled to the partner holder
   const [b2bExpandedRoleIds, setB2bExpandedRoleIds] = useState<Set<string>>(new Set());
 
