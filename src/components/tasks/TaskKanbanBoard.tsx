@@ -776,7 +776,7 @@ const KanbanCardContent: React.FC<{
           return (
             <div className="mt-1.5 space-y-1">
               <div className="flex items-center gap-1.5">
-                <Progress value={pct} className="h-1 flex-1 bg-muted/30" indicatorClassName="bg-muted-foreground/25" />
+                <Progress value={pct} className="h-1.5 flex-1 bg-muted" indicatorClassName="bg-muted-foreground/60" />
                 <span className="text-[10px] tabular-nums text-muted-foreground">{Math.round(pct)}%</span>
               </div>
               {stepInfo && (
