@@ -121,6 +121,7 @@ const statusLabel: Record<LedgerStatus, string> = {
   ACCEPTED: 'Accepted',
   REJECTED: 'Rejected',
   QUALIFIED: 'Qualification raised',
+  SUPERSEDED: 'Decided by partner',
 };
 
 const PrereqRow: React.FC<{
