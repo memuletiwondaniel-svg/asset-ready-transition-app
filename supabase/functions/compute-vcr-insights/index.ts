@@ -1299,10 +1299,20 @@ serve(async (req) => {
             ? "Live signals look ready."
             : "Heads up before accepting — confirm flagged signals.";
 
+          const summaryCtx: SummaryCtx = {
+            requirementText: parseEvidenceLabels((itemRow as any)?.supporting_evidence).join(", "),
+            systemsInScope: renderedFacts.find((f) => f.label === "Systems in scope")?.value,
+            itrsValue: renderedFacts.find((f) => f.label === "ITRs complete (A+B)")?.value,
+          };
+          const summary = composeSummary(renderedFacts, severity, summaryCtx);
+          const nextStep = severity === "green" ? null : nextStepForFact(topFact);
+
           return {
             state: "ready",
             severity,
             headline: composeHeadline(renderedFacts, severity),
+            summary,
+            next_step: nextStep,
             facts: renderedFacts,
             delivering_action: actionTemplates[`delivering:${deliverKey}`] || defaultDeliver,
             approver_check: actionTemplates[`approver:${approverKey}`] || defaultApprover,
