@@ -567,6 +567,18 @@ const KanbanCardContent: React.FC<{
   accentClass?: string;
   isChild?: boolean;
 }> = ({ task, onClick, dragHandleProps, isOverlay, accentClass, isChild }) => {
+  // Mockup v3: VCR bundle tasks get a dedicated card body (delivering %/approving n).
+  const vcrBundle = task.bundleTask;
+  if (vcrBundle && (vcrBundle.type === 'vcr_checklist_bundle' || vcrBundle.type === 'vcr_approval_bundle')) {
+    return (
+      <VCRBundleKanbanCard
+        bundle={vcrBundle}
+        onClick={onClick}
+        dragHandleProps={dragHandleProps}
+        isChild={isChild}
+      />
+    );
+  }
   const navigate = useNavigate();
   const sp = task.smartPriority;
   const isWaitingVcrApprovalBundle = task.isWaiting && isClickableVcrApprovalBundle(task);
