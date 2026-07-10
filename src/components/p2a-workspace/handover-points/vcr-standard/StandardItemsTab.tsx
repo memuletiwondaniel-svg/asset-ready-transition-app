@@ -164,19 +164,40 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
       );
     });
 
+    // Universal comparator: CATEGORY-major (DI→TI→OI→MS→HS), NUMBER-minor.
+    // Parses the item code (e.g. "DI-03") so ordering is independent of the
+    // raw display_order (which is global per prereq, not category-scoped).
+    const CAT_RANK: Record<string, number> = { DI: 1, TI: 2, OI: 3, MS: 4, HS: 5 };
+    const parseCode = (code: string): { rank: number; num: number } => {
+      const m = /^([A-Z?]{2})-(\d+)/.exec(code || '');
+      const prefix = m?.[1] ?? '??';
+      return {
+        rank: CAT_RANK[prefix] ?? 99,
+        num: m ? parseInt(m[2], 10) : Number.MAX_SAFE_INTEGER,
+      };
+    };
+    const categoryThenNumber = (a: typeof filtered[number], b: typeof filtered[number]) => {
+      const pa = parseCode(a.itemCode);
+      const pb = parseCode(b.itemCode);
+      if (pa.rank !== pb.rank) return pa.rank - pb.rank;
+      return pa.num - pb.num;
+    };
+
     filtered.sort((a, b) => {
       if (sort) {
         let cmp = 0;
-        if (sort.col === 'id') cmp = a.itemCode.localeCompare(b.itemCode);
+        if (sort.col === 'id') cmp = categoryThenNumber(a, b);
         else if (sort.col === 'description')
           cmp = (a.prereq.summary || '').localeCompare(b.prereq.summary || '');
         else cmp = a.effectiveBucket.localeCompare(b.effectiveBucket);
-        return sort.dir === 'asc' ? cmp : -cmp;
+        if (cmp !== 0) return sort.dir === 'asc' ? cmp : -cmp;
+        // Tiebreaker: keep category-then-number as the stable secondary order.
+        return categoryThenNumber(a, b);
       }
       const pa = bucketPriority(a.pill.bucket, a.prereq.status as PrereqStatus);
       const pb = bucketPriority(b.pill.bucket, b.prereq.status as PrereqStatus);
       if (pa !== pb) return pa - pb;
-      return (a.prereq.display_order ?? 0) - (b.prereq.display_order ?? 0);
+      return categoryThenNumber(a, b);
     });
     return filtered;
   }, [prerequisites, partiesRollup, qualsByPrereq, activeFilters, search, sort]);
