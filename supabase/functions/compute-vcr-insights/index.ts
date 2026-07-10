@@ -283,7 +283,7 @@ async function loadVcrEvidence(sb: any, prereqId: string | null) {
     withAbort(
       sb
         .from("p2a_vcr_evidence")
-        .select("id, file_name, file_path, file_type, evidence_type, created_at")
+        .select("id, file_name, file_path, file_type, evidence_type, created_at, assai_doc_no, assai_rev")
         .eq("vcr_prerequisite_id", prereqId)
         .order("created_at", { ascending: true }),
       signal,
@@ -847,31 +847,78 @@ async function registerReaderEngine(
 
 
 // ─── Selma: attachment revision pass (runs on EVERY item) ─────────────────
+// Doc-number-first precedence (Phase 3A hardening):
+//   Tier 1: evidence row carries assai_doc_no (Assai-fetched provenance) →
+//           exact match on document_number, full-strength facts (red allowed
+//           for "Outdated revision").
+//   Tier 2: doc-number pattern extracted from filename via the app-canonical
+//           BGC/IGC regex (source: src/lib/assaiLinks.ts — the one place doc
+//           numbers are constructed/parsed in the codebase; dms_external_sync
+//           was empty at authoring time so the regex is derived from the app
+//           catalog, not fabricated). Exact match → full-strength facts.
+//   Tier 3: no doc number available → filename stem ilike, DOWNGRADED. Only
+//           the mismatch branch renders, and it is capped to amber with a
+//           "verify manually" phrasing. Current-revision stem-matches emit
+//           nothing (too weak to confirm silently as green/neutral).
+const DOC_NUMBER_REGEX = /\b(\d{4}-[A-Z]{2,6}-[A-Z0-9]+-[A-Z]+-[A-Z0-9]+-[A-Z]{2}-[A-Z]\d{2}-\d{5}-\d{3})\b/;
 async function selmaRevisionPass(sb: any, item: any): Promise<Fact[]> {
   const atts = await loadVcrEvidence(sb, item.prerequisite_id);
-  if (atts.length === 0) {
-    // Zero-evidence gap is owned by evidenceMatchEngine (E1); Selma stays silent here.
-    return [];
-  }
+  if (atts.length === 0) return [];
   const facts: Fact[] = [];
   for (const a of atts) {
     const stem = (a.file_name || "").replace(/\.[^.]+$/, "");
-    const { data: docs } = await bounded("selma dms revision", DB_TIMEOUT_MS, { data: [] }, (signal) =>
-      withAbort(
-        sb
-          .from("dms_external_sync")
-          .select("document_number, revision, status_code, metadata")
-          .ilike("document_number", stem ? `%${stem.slice(0, 30)}%` : "%__none__%")
-          .limit(1),
-        signal,
-      ),
-    );
-    const d = (docs || [])[0];
+    const provenanceDocNo: string | null = (a.assai_doc_no || "").trim() || null;
+    const extractedMatch = stem.match(DOC_NUMBER_REGEX);
+    const extractedDocNo: string | null = extractedMatch ? extractedMatch[1] : null;
+    const tier: 1 | 2 | 3 = provenanceDocNo ? 1 : extractedDocNo ? 2 : 3;
+    const exactDocNo = provenanceDocNo || extractedDocNo;
+
+    let d: any = null;
+    if (tier === 1 || tier === 2) {
+      const { data: docs } = await bounded("selma dms revision", DB_TIMEOUT_MS, { data: [] }, (signal) =>
+        withAbort(
+          sb
+            .from("dms_external_sync")
+            .select("document_number, revision, status_code, metadata")
+            .eq("document_number", exactDocNo)
+            .limit(1),
+          signal,
+        ),
+      );
+      d = (docs || [])[0] || null;
+    } else {
+      const { data: docs } = await bounded("selma dms revision stem", DB_TIMEOUT_MS, { data: [] }, (signal) =>
+        withAbort(
+          sb
+            .from("dms_external_sync")
+            .select("document_number, revision, status_code, metadata")
+            .ilike("document_number", stem ? `%${stem.slice(0, 30)}%` : "%__none__%")
+            .limit(1),
+          signal,
+        ),
+      );
+      d = (docs || [])[0] || null;
+    }
+
     if (!d) {
       facts.push({ label: `Doc: ${a.file_name}`, value: "Not tracked in DMS", confidence: "unavailable" });
       continue;
     }
     const isCurrent = (d.metadata as any)?.is_current_revision !== false;
+    if (tier === 3) {
+      // Weak fuzzy match: only speak up on a mismatch, and only in amber.
+      if (!isCurrent) {
+        facts.push({
+          label: `Doc: ${a.file_name}`,
+          value: "Possible revision mismatch — verify manually",
+          tone: "amber",
+          confidence: "verified",
+        });
+      }
+      // Current-revision stem-matches: silent (too weak to confirm).
+      continue;
+    }
+    // Tier 1 or 2: full-strength.
     facts.push({
       label: `Doc: ${d.document_number} rev ${d.revision || "?"}`,
       value: isCurrent ? "Current revision" : "Outdated revision",
@@ -1227,6 +1274,136 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
   }
 
   // Signal 7 (item-level tasks) — deferred pending EXE-1. Intentionally omitted.
+
+  // ─── E5 cross-item signals (all 'verified', bounded, no N+1) ────────────
+  // Look up this item's category_id + terminal state up-front.
+  const { data: thisItem } = await bounded("workflow this item", DB_TIMEOUT_MS, { data: null }, (signal) =>
+    withAbort(sb.from("vcr_items").select("category_id").eq("id", vcrItemId).maybeSingle(), signal),
+  );
+  const categoryId: string | null = (thisItem as any)?.category_id || null;
+  const TERMINAL_STATUSES = new Set(["ACCEPTED", "QUALIFICATION_APPROVED", "REJECTED"]);
+  const isTerminal = TERMINAL_STATUSES.has(status);
+
+  // Load siblings once (same handover point, excluding self). Bounded single query.
+  const { data: siblings } = await bounded("workflow siblings", DB_TIMEOUT_MS, { data: [] }, (signal) =>
+    withAbort(
+      sb
+        .from("p2a_vcr_prerequisites")
+        .select("id, vcr_item_id, status, vcr_items:vcr_item_id(category_id, category:vcr_item_categories(code), display_order)")
+        .eq("handover_point_id", vcrId)
+        .neq("id", prereqId),
+      signal,
+    ),
+  );
+  const sibs = ((siblings || []) as any[]);
+  const sameCategorySibs = categoryId
+    ? sibs.filter((s) => s.vcr_items?.category_id === categoryId)
+    : [];
+  const sameCategorySibVcrItemIds = sameCategorySibs.map((s) => s.vcr_item_id).filter(Boolean);
+  const sameCategorySibPrereqIds = sameCategorySibs.map((s) => s.id).filter(Boolean);
+
+  // 8) Sibling rework pattern — one bounded count-style query over all sibling comments.
+  if (sameCategorySibVcrItemIds.length > 0) {
+    const { data: sibComments } = await bounded("workflow sib comments", DB_TIMEOUT_MS, { data: [] }, (signal) =>
+      withAbort(
+        sb
+          .from("vcr_item_comments")
+          .select("vcr_item_id, action_tag")
+          .eq("handover_point_id", vcrId)
+          .in("vcr_item_id", sameCategorySibVcrItemIds),
+        signal,
+      ),
+    );
+    const returnedByItem = new Map<string, number>();
+    for (const c of (sibComments || []) as any[]) {
+      if ((c.action_tag || "").toLowerCase() === "returned") {
+        returnedByItem.set(c.vcr_item_id, (returnedByItem.get(c.vcr_item_id) || 0) + 1);
+      }
+    }
+    const returnedCount = returnedByItem.size;
+    const total = sameCategorySibs.length;
+    if (total > 0 && (returnedCount >= 3 || returnedCount / total >= 0.5)) {
+      const catCode = sameCategorySibs[0]?.vcr_items?.category?.code || "category";
+      facts.push({
+        label: "Category rework pattern",
+        value: `${returnedCount} of ${total} ${catCode} items returned`,
+        tone: "amber",
+        confidence: "verified",
+      });
+    }
+  }
+
+  // 9) Shared-evidence risk — this item's evidence also cited on a REJECTED sibling.
+  //    One bounded query over sibling evidence, matched by assai_doc_no when present
+  //    else exact file_name.
+  const myEvidence = await loadVcrEvidence(sb, prereqId);
+  const myDocNos = Array.from(new Set(myEvidence.map((e: any) => (e.assai_doc_no || "").trim()).filter(Boolean)));
+  const myFileNames = Array.from(new Set(myEvidence.map((e: any) => (e.file_name || "").trim()).filter(Boolean)));
+  const rejectedSibPrereqIds = sibs.filter((s) => String(s.status || "").toUpperCase() === "REJECTED").map((s) => s.id);
+  if (rejectedSibPrereqIds.length > 0 && (myDocNos.length > 0 || myFileNames.length > 0)) {
+    // Build a single OR filter over both keys.
+    const orParts: string[] = [];
+    if (myDocNos.length > 0) orParts.push(`assai_doc_no.in.(${myDocNos.map((d) => `"${d.replace(/"/g, "")}"`).join(",")})`);
+    if (myFileNames.length > 0) orParts.push(`file_name.in.(${myFileNames.map((d) => `"${d.replace(/"/g, "")}"`).join(",")})`);
+    const { data: sharedEv } = await bounded("workflow shared evidence", DB_TIMEOUT_MS, { data: [] }, (signal) =>
+      withAbort(
+        sb
+          .from("p2a_vcr_evidence")
+          .select("file_name, assai_doc_no, vcr_prerequisite_id")
+          .in("vcr_prerequisite_id", rejectedSibPrereqIds)
+          .or(orParts.join(",")),
+        signal,
+      ),
+    );
+    const hits = ((sharedEv || []) as any[]);
+    if (hits.length > 0) {
+      // Resolve sibling item_code for each hit prereq.
+      const prereqToItemCode = new Map<string, string>();
+      for (const s of sibs) {
+        const cat = s.vcr_items?.category?.code || "?";
+        const ord = s.vcr_items?.display_order ?? "?";
+        prereqToItemCode.set(s.id, `${cat}-${ord}`);
+      }
+      const first = hits[0];
+      const siblingCode = prereqToItemCode.get(first.vcr_prerequisite_id) || "sibling";
+      const label = first.assai_doc_no || first.file_name;
+      facts.push({
+        label: "Shared evidence on a returned item",
+        value: `${label} also cited on ${siblingCode}`,
+        tone: "amber",
+        confidence: "verified",
+      });
+    }
+  }
+
+  // 10) VCR target date pressure. Column: p2a_handover_points.target_date (verified
+  //     via information_schema at authoring time). Emit only for non-terminal items.
+  if (!isTerminal) {
+    const { data: hpRow } = await bounded("workflow hp target", DB_TIMEOUT_MS, { data: null }, (signal) =>
+      withAbort(sb.from("p2a_handover_points").select("target_date").eq("id", vcrId).maybeSingle(), signal),
+    );
+    const targetRaw = (hpRow as any)?.target_date || null;
+    if (targetRaw) {
+      const target = new Date(targetRaw);
+      const diffDays = Math.floor((target.getTime() - now.getTime()) / 86400000);
+      if (diffDays < 0) {
+        facts.push({
+          label: "VCR target approaching",
+          value: `Target ${targetRaw} · ${Math.abs(diffDays)} days past-due`,
+          tone: "red",
+          confidence: "verified",
+        });
+      } else if (diffDays <= 14) {
+        facts.push({
+          label: "VCR target approaching",
+          value: `Target ${targetRaw} · ${diffDays} days`,
+          tone: "amber",
+          confidence: "verified",
+        });
+      }
+    }
+  }
+
   return facts;
 }
 
@@ -1241,6 +1418,11 @@ function nextStepForFact(f: Fact | undefined, allFacts: Fact[] = []): string | n
   if (l.includes("evidence check")) return "Review the flagged file — it may be unrelated to the requirement.";
   if (l.includes("required evidence attached") && f.tone === "amber") return "Attach the required evidence before submitting.";
   if (l.includes("assai evidence")) return "Confirm the Assai-sourced evidence.";
+  if (l.includes("category rework pattern")) return "Check for a common root cause across the returned items in this category.";
+  if (l.includes("shared evidence on a returned item")) return "Confirm this file still applies — the same evidence was returned on a sibling item.";
+  if (l.includes("vcr target approaching")) return f.tone === "red"
+    ? "VCR target date has passed — escalate or reschedule."
+    : "VCR target is within two weeks — prioritise closing this item.";
   // Register-reader: acknowledgement schema (OI-19). Both facts route to the
   // same next step — chase the outstanding units named in "Awaiting acknowledgement".
   if (l.includes("awaiting acknowledgement") || (l.includes("units acknowledged") && f.tone === "amber")) {
@@ -1391,8 +1573,24 @@ function sentenceForFact(f: Fact, ctx: SummaryCtx, allFacts: Fact[], consumed: S
   if (l.includes("unassigned role")) return `A required role (${v}) is unassigned.`;
   if (l.includes("evidence added after submission")) return `Evidence changed after submission (${v}) — a fresh review is needed.`;
   if (l.includes("assai")) return "Assai-sourced evidence needs confirmation.";
+  if (l.includes("category rework pattern")) {
+    const m = /^(\d+)\s+of\s+(\d+)\s+(\S+)\s+items\s+returned/i.exec(v);
+    if (m) return `Note: ${m[1]} of ${m[2]} ${m[3]} items on this VCR have been returned; check for a common root cause.`;
+    return `Note: ${v} — check for a common root cause.`;
+  }
+  if (l.includes("shared evidence on a returned item")) {
+    return `Heads-up: ${v} — confirm this file still applies here.`;
+  }
+  if (l.includes("vcr target approaching")) {
+    return f.tone === "red"
+      ? `The VCR target date has passed (${v}) — escalate or reschedule.`
+      : `The VCR target date is close (${v}) — prioritise closing this item.`;
+  }
   if (l.includes("outdated revision") || v.toLowerCase().includes("outdated revision")) {
     return "An attached document is on an outdated revision.";
+  }
+  if (v.toLowerCase().includes("possible revision mismatch")) {
+    return "An attached document may be on an outdated revision — verify manually.";
   }
   return `${f.label}: ${v}.`;
 }
