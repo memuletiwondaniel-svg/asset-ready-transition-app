@@ -1015,10 +1015,40 @@ serve(async (req) => {
       ),
     );
     const categoryCode = (itemRow as any)?.category?.code || "??";
+
+    // Resolve project_id via handover point → handover plan (same chain the RLS helpers use).
+    // Needed by workflowSignalsEngine signal #5 (unassigned role) which calls
+    // resolve_project_role_user(project_id, role_name).
+    const { data: hpRow } = await bounded("handover point lookup", DB_TIMEOUT_MS, { data: null }, (signal) =>
+      withAbort(
+        sb
+          .from("p2a_handover_points")
+          .select("handover_plan_id")
+          .eq("id", vcr_id)
+          .maybeSingle(),
+        signal,
+      ),
+    );
+    let projectId: string | null = null;
+    if ((hpRow as any)?.handover_plan_id) {
+      const { data: planRow } = await bounded("handover plan lookup", DB_TIMEOUT_MS, { data: null }, (signal) =>
+        withAbort(
+          sb
+            .from("p2a_handover_plans")
+            .select("project_id")
+            .eq("id", (hpRow as any).handover_plan_id)
+            .maybeSingle(),
+          signal,
+        ),
+      );
+      projectId = (planRow as any)?.project_id || null;
+    }
+
     const item = {
       ...(itemRow || {}),
       prerequisite_id: prereq?.id || null,
       handover_point_id: vcr_id,
+      project_id: projectId,
       category_code: categoryCode,
       display_order: (itemRow as any)?.display_order ?? null,
     };
