@@ -712,8 +712,9 @@ const KanbanCardContent: React.FC<{
             <span className="text-[10px] text-muted-foreground">{task.categoryLabel}</span>
           )
         )}
-        {/* Top-right slot: filled below via a portal-free spacer */}
-        <div className="ml-auto shrink-0" data-slot="status-anchor" />
+        {/* Top-right chip: status pill (done column) or compact overdue chip */}
+        {topRightChip && <div className="ml-auto shrink-0">{topRightChip}</div>}
+
       </div>
 
       {/* Title + View in Gantt */}
