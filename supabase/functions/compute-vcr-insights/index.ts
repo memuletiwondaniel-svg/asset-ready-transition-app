@@ -1694,9 +1694,14 @@ serve(async (req) => {
       await runAgent(canon);
     };
     for (const eng of templateEngines) await runOnce(eng);
-    // Category-level config is ADDITIVE (fred/ivan/selma) — do not remove.
-    if (cfg?.lead_agent) await runOnce(cfg.lead_agent);
-    for (const c of contribs) await runOnce(c);
+    // Category-level config is normally ADDITIVE (fred/ivan/selma). Templates
+    // may opt out via suppress_category_agents to keep unscoped whole-VCR
+    // signals off discipline-scoped items (e.g. TI-15 Ex).
+    if (!suppressCategoryAgents) {
+      if (cfg?.lead_agent) await runOnce(cfg.lead_agent);
+      for (const c of contribs) await runOnce(c);
+    }
+
 
     // Noise suppression at compose time.
     // - Drop neutral "Status" fact (duplicates header chip, no signal).
