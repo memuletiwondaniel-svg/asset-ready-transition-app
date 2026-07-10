@@ -1621,6 +1621,8 @@ serve(async (req) => {
       configVersion,
       templateVersion,
       templateEngines,
+      sourceRollupCfg,
+      suppressCategoryAgents,
       vcr_id,
       vcr_item_id,
       categoryCode,
