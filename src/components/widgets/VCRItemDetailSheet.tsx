@@ -199,6 +199,7 @@ const InsightsBlock: React.FC<{
   recomputing?: boolean;
 }> = ({ insights, viewer, onRecompute, recomputing }) => {
   const [open, setOpen] = useState(true);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const state = insights?.state ?? 'unavailable';
   const severity = insights?.severity;
 
