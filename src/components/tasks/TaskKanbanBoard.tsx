@@ -667,18 +667,8 @@ const KanbanCardContent: React.FC<{
         isOverlay && 'shadow-xl ring-2 ring-primary/20 rotate-[1deg] scale-[1.02]',
       )}
     >
-      {/* Drag handle — absolute overlay, hover-only, no layout shift.
-          The chip row below stays flush with card padding. */}
-      {!isChild && dragHandleProps && (
-        <button
-          {...dragHandleProps}
-          onClick={(e) => e.stopPropagation()}
-          className="absolute top-1 right-1 z-10 touch-none p-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition-opacity cursor-grab active:cursor-grabbing bg-card/80 rounded"
-          aria-label="Drag task"
-        >
-          <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
-        </button>
-      )}
+
+
 
       {/* Row 1: chip row (flush left) + top-right status/overdue chip */}
       <div className="flex items-center gap-1.5 min-w-0">
