@@ -1418,6 +1418,11 @@ function nextStepForFact(f: Fact | undefined, allFacts: Fact[] = []): string | n
   if (l.includes("evidence check")) return "Review the flagged file — it may be unrelated to the requirement.";
   if (l.includes("required evidence attached") && f.tone === "amber") return "Attach the required evidence before submitting.";
   if (l.includes("assai evidence")) return "Confirm the Assai-sourced evidence.";
+  if (l.includes("category rework pattern")) return "Check for a common root cause across the returned items in this category.";
+  if (l.includes("shared evidence on a returned item")) return "Confirm this file still applies — the same evidence was returned on a sibling item.";
+  if (l.includes("vcr target approaching")) return f.tone === "red"
+    ? "VCR target date has passed — escalate or reschedule."
+    : "VCR target is within two weeks — prioritise closing this item.";
   // Register-reader: acknowledgement schema (OI-19). Both facts route to the
   // same next step — chase the outstanding units named in "Awaiting acknowledgement".
   if (l.includes("awaiting acknowledgement") || (l.includes("units acknowledged") && f.tone === "amber")) {
