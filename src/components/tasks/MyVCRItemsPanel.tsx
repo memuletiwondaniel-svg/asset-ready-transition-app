@@ -143,7 +143,7 @@ export const MyVCRItemsPanel: React.FC<Props> = ({ bundle, open, onOpenChange })
               </SheetDescription>
             </div>
 
-            <div>
+            <div className="mt-3">
               <div className="flex items-baseline gap-2 mb-1">
                 <span className="text-xl font-bold text-foreground">{pct}%</span>
                 <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Approved</span>
@@ -156,10 +156,6 @@ export const MyVCRItemsPanel: React.FC<Props> = ({ bundle, open, onOpenChange })
                 {approvedN} of {total} approved · {underN} under review · {toDeliverN} to deliver
               </p>
             </div>
-
-            <p className="text-[11px] text-muted-foreground italic">
-              Tap an item to open it and continue.
-            </p>
           </SheetHeader>
 
 
