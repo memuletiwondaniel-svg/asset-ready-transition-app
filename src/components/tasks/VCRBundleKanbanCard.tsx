@@ -32,7 +32,6 @@ import { shortVCRCode } from '@/components/widgets/p2a-wizard/steps/phases/vcrDi
 interface Props {
   bundle: VCRBundleTask;
   onClick: () => void;
-  dragHandleProps?: Record<string, any>;
   isChild?: boolean;
 }
 
