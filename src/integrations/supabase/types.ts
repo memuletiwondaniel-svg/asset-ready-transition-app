@@ -13817,6 +13817,7 @@ export type Database = {
           computed_at: string
           id: string
           inputs_hash: string
+          origin: string
           payload: Json
           severity: string | null
           state: string
@@ -13827,6 +13828,7 @@ export type Database = {
           computed_at?: string
           id?: string
           inputs_hash: string
+          origin?: string
           payload: Json
           severity?: string | null
           state: string
@@ -13837,6 +13839,7 @@ export type Database = {
           computed_at?: string
           id?: string
           inputs_hash?: string
+          origin?: string
           payload?: Json
           severity?: string | null
           state?: string

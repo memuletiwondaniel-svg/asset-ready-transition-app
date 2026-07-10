@@ -713,7 +713,7 @@ serve(async (req) => {
         withAbort(
           sb
             .from("vcr_item_insights")
-            .select("payload, inputs_hash")
+            .select("payload, inputs_hash, origin, computed_at")
             .eq("vcr_id", vcr_id)
             .eq("vcr_item_id", vcr_item_id)
             .maybeSingle(),
@@ -721,55 +721,30 @@ serve(async (req) => {
         ),
       );
       if (cached?.inputs_hash === inputsHash) {
-        return new Response(JSON.stringify({ insights: cached.payload, cached: true }), {
+        const merged = {
+          ...(cached.payload as Record<string, unknown>),
+          origin: (cached as { origin?: string }).origin ?? 'computed',
+          computed_at: (cached as { computed_at?: string }).computed_at ?? null,
+        };
+        return new Response(JSON.stringify({ insights: merged, cached: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
     }
-
-    const lovableKey = Deno.env.get("LOVABLE_API_KEY") || "";
-    const allFacts: Fact[] = [];
-    const runAgent = async (name: string) => {
-      try {
-        if (name === "fred") allFacts.push(...(await fredCompletionsAggregator(sb, vcr_id)));
-        else if (name === "ivan") allFacts.push(...(await ivanHempReader(sb, item, lovableKey)));
-        else if (name === "selma") allFacts.push(...(await selmaRevisionPass(sb, item)));
-        else if (name === "hannah" || name === "alex") {
-          allFacts.push({ label: `${name[0].toUpperCase()}${name.slice(1)} check`, value: "Not connected", confidence: "unavailable" });
-        }
-      } catch (e) {
-        allFacts.push({ label: `${name} agent`, value: `Error: ${(e as Error).message}`, confidence: "unavailable" });
-      }
-    };
-    await runAgent(lead);
-    for (const c of contribs) await runAgent(c);
-
-    const usable = allFacts.filter((f) => f.confidence !== "unavailable");
-    const insights: Insights = usable.length === 0
-      ? { state: "unavailable", facts: allFacts }
-      : (() => {
-          const severity = composeSeverity(allFacts);
-          return {
-            state: "ready",
-            severity,
-            headline: composeHeadline(allFacts, severity),
-            facts: allFacts,
-            delivering_action: severity === "green" ? "Looks ready — review evidence before marking complete." : "Resolve flagged signals before submitting.",
-            approver_check: severity === "green" ? "Live signals look ready." : "Heads up before accepting — confirm flagged signals.",
-          };
-        })();
-
+...
+    const nowIso = new Date().toISOString();
     await bounded("cache upsert", DB_TIMEOUT_MS, null, (signal) =>
       withAbort(
         sb.from("vcr_item_insights").upsert({
           vcr_id, vcr_item_id, payload: insights, inputs_hash: inputsHash,
-          state: insights.state, severity: insights.severity ?? null, computed_at: new Date().toISOString(),
+          state: insights.state, severity: insights.severity ?? null, computed_at: nowIso,
+          origin: 'computed',
         }, { onConflict: "vcr_id,vcr_item_id" }),
         signal,
       ),
     );
 
-    return new Response(JSON.stringify({ insights, cached: false }), {
+    return new Response(JSON.stringify({ insights: { ...insights, origin: 'computed', computed_at: nowIso }, cached: false }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
