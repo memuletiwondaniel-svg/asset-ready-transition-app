@@ -161,6 +161,89 @@ async function fredCompletionsAggregator(sb: any, vcrId: string): Promise<Fact[]
   return facts;
 }
 
+// ─── source_rollup: discipline-scoped rollup from gohub_* mirrors ─────────
+// Driven by vcr_item_insight_templates.source_rollup jsonb:
+//   { source: 'gohub_itr', disciplines: ['E','I'], label_prefix: 'Ex (E+I)' }
+interface SourceRollupCfg {
+  source?: string;
+  disciplines?: string[];
+  label_prefix?: string;
+}
+async function sourceRollupEngine(sb: any, vcrId: string, cfg: SourceRollupCfg): Promise<Fact[]> {
+  const disciplines = (cfg.disciplines || []).map((d) => String(d).toUpperCase()).filter(Boolean);
+  const prefix = (cfg.label_prefix || "Scoped").trim();
+  if (!disciplines.length) return [];
+  // Same scope resolution as Fred: handover point → systems.
+  // p2a_systems.system_id text column holds the gohub subsystem_number.
+  const { data: hpsRows } = await bounded("source_rollup scope", DB_TIMEOUT_MS, { data: [] }, (signal) =>
+    withAbort(
+      sb.from("p2a_handover_point_systems").select("system_id").eq("handover_point_id", vcrId),
+      signal,
+    ),
+  );
+  const sysIds = (hpsRows || []).map((r: any) => r.system_id).filter(Boolean);
+  if (sysIds.length === 0) return [];
+  const { data: systems } = await bounded("source_rollup systems", DB_TIMEOUT_MS, { data: [] }, (signal) =>
+    withAbort(
+      sb.from("p2a_systems").select("system_id").in("id", sysIds),
+      signal,
+    ),
+  );
+  const subs = (systems || []).map((s: any) => s.system_id).filter(Boolean);
+  if (subs.length === 0) return [];
+
+  const facts: Fact[] = [];
+
+  // ITR rollup — status='complete' means signed/complete (see gohub sync).
+  const { data: itrs } = await bounded("source_rollup itrs", DB_TIMEOUT_MS, { data: [] }, (signal) =>
+    withAbort(
+      sb.from("gohub_itr_items").select("status").in("subsystem_number", subs).in("discipline", disciplines),
+      signal,
+    ),
+  );
+  const total = (itrs || []).length;
+  const complete = (itrs || []).filter((r: any) => String(r.status || "").toLowerCase() === "complete").length;
+  if (total === 0) {
+    facts.push({
+      label: `${prefix} ITRs in scope`,
+      value: `No ${prefix} ITRs in scope`,
+      confidence: "verified",
+      tone: "neutral",
+    });
+  } else {
+    const outstanding = total - complete;
+    facts.push({
+      label: `${prefix} ITRs complete`,
+      value: `${complete} of ${total}`,
+      confidence: "verified",
+      tone: outstanding > 0 ? "amber" : "neutral",
+    });
+  }
+
+  // Punch rollup — gohub_punch_items carries discipline. Open = no cleared_date.
+  const { data: punches } = await bounded("source_rollup punches", DB_TIMEOUT_MS, { data: [] }, (signal) =>
+    withAbort(
+      sb
+        .from("gohub_punch_items")
+        .select("cleared_date")
+        .in("subsystem_number", subs)
+        .in("discipline", disciplines)
+        .is("cleared_date", null),
+      signal,
+    ),
+  );
+  const openPunch = (punches || []).length;
+  if (openPunch > 0) {
+    facts.push({
+      label: `${prefix} punch items open`,
+      value: String(openPunch),
+      confidence: "verified",
+      tone: "amber",
+    });
+  }
+  return facts;
+}
+
 // Shared evidence loader — reads VCR evidence from p2a_vcr_evidence keyed by prerequisite
 async function loadVcrEvidence(sb: any, prereqId: string | null) {
   if (!prereqId) return [];
