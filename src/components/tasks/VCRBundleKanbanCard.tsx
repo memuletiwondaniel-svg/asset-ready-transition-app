@@ -40,7 +40,7 @@ interface Segments { approvedPct: number; midPct: number; }
 
 const bar = ({ approvedPct, midPct }: Segments, pctLabel: number) => (
   <div className="flex items-center gap-1.5 w-full">
-    <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden flex" role="progressbar">
+    <div className="h-1 flex-1 rounded-full bg-muted/60 overflow-hidden flex" role="progressbar">
       <div className="h-full bg-emerald-500" style={{ width: `${approvedPct}%` }} />
       <div className="h-full bg-border" style={{ width: `${midPct}%` }} />
     </div>
