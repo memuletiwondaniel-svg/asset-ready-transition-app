@@ -116,13 +116,15 @@ export const VCRItemsToReviewPanel: React.FC<Props> = ({ bundle, open, onOpenCha
     navigate(`/p2a/workspace/${projectId}?vcr=${vcrId}`);
   };
 
+  const vcrShortLabel = vcrShort ? (vcrName ? `${vcrShort} (${vcrName})` : vcrShort) : 'VCR';
+
   return (
     <>
       <Sheet open={open && !!bundle} onOpenChange={onOpenChange}>
-        <SheetContent className="w-full sm:max-w-2xl overflow-hidden flex flex-col p-0">
+        <SheetContent hideClose className="w-full sm:max-w-2xl overflow-hidden flex flex-col p-0">
           <SheetHeader className="px-6 pt-5 pb-4 border-b shrink-0 space-y-3">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[10px] font-mono text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded">
+              <span className="text-[10px] font-mono text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded">
                 {idCode}
               </span>
               {projectId && vcrId && (
@@ -136,10 +138,10 @@ export const VCRItemsToReviewPanel: React.FC<Props> = ({ bundle, open, onOpenCha
             </div>
             <div>
               <SheetTitle className="text-[15px] leading-snug font-semibold">
-                Items to review — {vcrShort || 'VCR'}{vcrName ? ` (${vcrName})` : ''}
+                Items to review
               </SheetTitle>
               <SheetDescription className="text-xs text-muted-foreground">
-                Items in this VCR awaiting your approval
+                Items in {vcrShortLabel} awaiting your approval
               </SheetDescription>
             </div>
 
@@ -164,6 +166,7 @@ export const VCRItemsToReviewPanel: React.FC<Props> = ({ bundle, open, onOpenCha
               Tap an item to review it — accept or return.
             </p>
           </SheetHeader>
+
 
           <ScrollArea className="flex-1">
             <div className="p-5 space-y-5">
