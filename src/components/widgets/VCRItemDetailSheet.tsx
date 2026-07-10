@@ -1415,94 +1415,43 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                 ) : (
                   <div className="space-y-2">
                     {evidence.map((f) => {
-                      const typeLabel = f.evidence_type || defaultEvidenceType;
                       return (
                       <div
                         key={f.id}
-                        className="rounded-lg border border-border px-3 py-2.5 flex items-start gap-3"
+                        className="group rounded-lg border border-border px-3 py-2 flex items-center gap-3"
                       >
-                        <div className="h-9 w-9 rounded bg-muted/60 shrink-0 flex items-center justify-center">
-                          <FileText className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        <div className="flex-1 min-w-0 space-y-1">
+                        <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <button
+                          type="button"
+                          onClick={() => openSignedUrl(f.file_path)}
+                          className="text-[13px] font-medium truncate text-left hover:underline flex-1 min-w-0"
+                          title={f.file_name}
+                        >
+                          {f.file_name}
+                        </button>
+                        <span className="text-[11px] text-muted-foreground shrink-0">
+                          {format(new Date(f.created_at), 'd MMM')}
+                        </span>
+                        {f.source === 'assai' && !f.confirmed && viewer === 'delivering' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-6 px-2 text-[10px] shrink-0"
+                            disabled={confirmEvidence.isPending}
+                            onClick={() => confirmEvidence.mutate(f)}
+                          >
+                            Confirm as submission
+                          </Button>
+                        )}
+                        {deliveringCanEdit && (
                           <button
                             type="button"
-                            onClick={() => openSignedUrl(f.file_path)}
-                            className="text-[13px] font-medium truncate text-left hover:underline"
-                          >
-                            {f.file_name}
-                          </button>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {!deliveringCanEdit ? (
-                              <Badge variant="secondary" className="text-[10px] font-normal">
-                                {typeLabel}
-                              </Badge>
-                            ) : (
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <button className="inline-flex items-center gap-1 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border border-blue-200 dark:border-blue-900 text-[10px] px-2 py-0.5 hover:bg-blue-100 transition">
-                                    <span className="text-[9px] text-blue-600/80 dark:text-blue-400/80">AI:</span>
-                                    {typeLabel}
-                                    <ChevronDown className="h-3 w-3" />
-                                  </button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="start" className="w-56">
-                                  {evidenceTypeOptions.map((opt) => (
-                                    <DropdownMenuItem
-                                      key={opt}
-                                      onSelect={() => updateEvidenceType.mutate({ id: f.id, evidence_type: opt })}
-                                      className={cn(opt === typeLabel && 'font-semibold')}
-                                    >
-                                      {opt}
-                                    </DropdownMenuItem>
-                                  ))}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            )}
-                            <span className="text-[11px] text-muted-foreground">
-                              {fmtBytes(f.file_size || 0)} · {format(new Date(f.created_at), 'd MMM')}
-                            </span>
-                            {f.source === 'assai' && (
-                              <Badge
-                                variant="outline"
-                                className="text-[10px] font-normal border-blue-300 text-blue-700 bg-blue-50 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900"
-                                title={`Assai · ${f.assai_doc_no || ''}${f.assai_rev ? ` rev ${f.assai_rev}` : ''}`}
-                              >
-                                Assai · {f.assai_doc_no}{f.assai_rev ? ` rev ${f.assai_rev}` : ''}
-                              </Badge>
-                            )}
-                            {f.source === 'assai' && !f.confirmed && viewer !== 'delivering' && (
-                              <Badge variant="outline" className={cn('text-[10px] font-normal', pillToneClass.amber)}>
-                                Pending delivering confirmation
-                              </Badge>
-                            )}
-                            {f.source === 'assai' && f.confirmed && (
-                              <Badge variant="outline" className={cn('text-[10px] font-normal', pillToneClass.green)}>
-                                Confirmed as submission
-                              </Badge>
-                            )}
-                            {f.source === 'assai' && !f.confirmed && viewer === 'delivering' && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-6 px-2 text-[10px]"
-                                disabled={confirmEvidence.isPending}
-                                onClick={() => confirmEvidence.mutate(f)}
-                              >
-                                Confirm as submission
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                        {!deliveringCanEdit ? null : (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
                             onClick={() => deleteEvidence.mutate(f)}
+                            aria-label="Delete evidence"
+                            className="shrink-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
                           >
-                            <X className="h-3.5 w-3.5" />
-                          </Button>
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
                         )}
                       </div>
                       );
@@ -1527,8 +1476,9 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                     />
                   </div>
                 )}
-              </section>
+              </CollapsibleSection>
               )}
+
 
               {/* Comments — execution-only (Part 0) */}
               {isExecutionMode && (
