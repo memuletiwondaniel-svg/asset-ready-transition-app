@@ -1480,41 +1480,51 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
               )}
 
 
-              {/* Comments — execution-only (Part 0) */}
+              {/* Comments — execution-only (Part 0). Collapsible, expanded default. */}
               {isExecutionMode && (
-              <section>
-                <SectionLabel>Comments</SectionLabel>
+              <CollapsibleSection label="Comments" count={thread.length} defaultOpen={true}>
                 {thread.length === 0 ? (
                   <p className="text-xs text-muted-foreground italic">No comments yet.</p>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="divide-y divide-border">
                     {thread.map((c) => {
                       const prof = c.author_user_id ? authorById[c.author_user_id] : undefined;
                       const isYou = c.author_user_id && user?.id && c.author_user_id === user.id;
-                      const authorName = isYou
-                        ? prof?.full_name || 'You'
-                        : prof?.full_name || 'Unknown';
+                      // Graceful fallback: never render literal "Unknown".
+                      // When the profile can't be resolved, omit the name and
+                      // let role/date carry the meta line; if nothing else is
+                      // available, show "Former member".
+                      const resolvedName = prof?.full_name || null;
+                      const displayName = isYou ? (resolvedName || 'You') : resolvedName;
                       const roleName = prof?.role_name || '';
+                      const showFormerFallback = !displayName && !roleName;
                       const tag = c.action_tag;
+                      // Delivering-side "Completed" tag is redundant next to
+                      // the person who marked the item complete — drop it.
+                      // Approver Accepted/Returned and Qualification raised
+                      // tags remain informative and stay.
+                      const showTag = !!tag && tag !== 'Completed';
                       return (
-                        <div key={c.id} className="flex items-start gap-2.5">
+                        <div key={c.id} className="flex items-start gap-2.5 py-2.5">
                           <Avatar className="h-7 w-7 shrink-0">
                             <AvatarImage src={getAvatarUrl(prof?.avatar_url)} />
-                            <AvatarFallback className="text-[10px]">{getInitials(authorName)}</AvatarFallback>
+                            <AvatarFallback className="text-[10px]">{getInitials(displayName || '?')}</AvatarFallback>
                           </Avatar>
                           <div className="min-w-0 flex-1">
                             <div className="text-[11px] text-muted-foreground">
-                              <span className="font-semibold text-foreground">{authorName}</span>
-                              {roleName && <span> · {roleName}</span>}
-                              <span> · {format(new Date(c.created_at), 'd MMM')}</span>
-                              {tag && (
+                              {displayName && <span>{displayName}</span>}
+                              {displayName && roleName && <span> · </span>}
+                              {roleName && <span>{roleName}</span>}
+                              {(displayName || roleName) && <span> · </span>}
+                              {showFormerFallback && <span>Former member · </span>}
+                              <span>{format(new Date(c.created_at), 'd MMM')}</span>
+                              {showTag && (
                                 <Badge
                                   variant="outline"
                                   className={cn(
                                     'ml-2 text-[9px] font-normal',
                                     tag === 'Accepted' && pillToneClass.green,
                                     tag === 'Returned' && pillToneClass.red,
-                                    tag === 'Completed' && pillToneClass.amber,
                                     tag === 'Qualification raised' && pillToneClass.purple,
                                   )}
                                 >
@@ -1522,7 +1532,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                                 </Badge>
                               )}
                             </div>
-                            <p className="text-[13px] text-foreground/90 mt-0.5 leading-relaxed whitespace-pre-wrap">
+                            <p className="text-[13px] text-foreground mt-0.5 leading-relaxed whitespace-pre-wrap">
                               {c.body}
                             </p>
                           </div>
@@ -1578,7 +1588,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                     Comments are locked while the item is awaiting approver review.
                   </p>
                 )}
-              </section>
+              </CollapsibleSection>
               )}
             </div>
           </ScrollArea>
