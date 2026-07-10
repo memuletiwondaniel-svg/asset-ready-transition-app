@@ -1831,5 +1831,6 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     </ReviewerSummaryContext.Provider>
     </P2AApprovalContext.Provider>
     </ORAApprovalContext.Provider>
+    </TitleCollisionContext.Provider>
   );
 };
