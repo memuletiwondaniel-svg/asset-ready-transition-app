@@ -83,6 +83,8 @@ export interface VCRInsights {
   sources?: { label: string; href: string }[];
   origin?: 'computed' | 'synthetic';
   computed_at?: string;
+  readiness_label?: string;
+  terminal?: boolean;
 }
 
 interface VCRItemDetailSheetProps {
