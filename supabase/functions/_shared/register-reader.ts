@@ -13,6 +13,8 @@ export interface TableRowSchema extends RegisterSchemaBase {
   row_unit: "table_row";
   record_key: string;
   closed_field: string;
+  /** Schema-level: closed cell must contain a recognisable date token */
+  requires_date?: boolean;
   labels: {
     docType: string;
     countLabel: string;
@@ -32,6 +34,7 @@ export const SCHEMA_SU_NOTIFICATION_OI: TableRowSchema = {
   row_unit: "table_row",
   record_key: "unit",
   closed_field: "acknowledged",
+  requires_date: true,
   labels: {
     docType: "notification sheet",
     countLabel: "Units acknowledged",
@@ -61,13 +64,32 @@ export const TABLE_ROW_SCHEMAS: Record<string, TableRowSchema> = {
   su_notification: SCHEMA_SU_NOTIFICATION_OI,
 };
 
-export function isRowClosed(row: Record<string, any>, field: string): boolean {
+const PLACEHOLDER_SUBSTRINGS = [
+  "pending", "tbd", "awaiting", "to follow", "n/a", "not yet", "outstanding", "none",
+];
+const DATE_TOKEN =
+  /(\b\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4}\b|\b\d{4}-\d{2}-\d{2}\b|\b\d{1,2}[\s\-\/](?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*[\s\-\/]?\d{2,4}\b|\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\s+\d{1,2},?\s*\d{2,4}\b)/i;
+
+export function isRowClosed(
+  row: Record<string, any>,
+  field: string,
+  opts?: { requiresDate?: boolean },
+): boolean {
   const v = row?.[field];
   if (v === true) return true;
   if (v == null) return false;
-  const s = String(v).trim().toLowerCase();
-  if (!s) return false;
-  return !["—", "-", "n/a", "na", "tbd", "pending", "outstanding", "none"].includes(s);
+  const raw = String(v).trim();
+  if (!raw) return false;
+  const s = raw.toLowerCase();
+  if (["—", "-", "na"].includes(s)) return false;
+  // Substring placeholder rejection anywhere in the cell
+  for (const p of PLACEHOLDER_SUBSTRINGS) {
+    if (s.includes(p)) return false;
+  }
+  if (opts?.requiresDate) {
+    if (!DATE_TOKEN.test(raw)) return false;
+  }
+  return true;
 }
 
 function bytesToBase64(bytes: Uint8Array): string {

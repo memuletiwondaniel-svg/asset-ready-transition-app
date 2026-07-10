@@ -3223,18 +3223,21 @@ export type Database = {
         Row: {
           aggregate: Json | null
           eval_status: string
+          note: string | null
           schema_key: string
           updated_at: string
         }
         Insert: {
           aggregate?: Json | null
           eval_status?: string
+          note?: string | null
           schema_key: string
           updated_at?: string
         }
         Update: {
           aggregate?: Json | null
           eval_status?: string
+          note?: string | null
           schema_key?: string
           updated_at?: string
         }

@@ -130,7 +130,8 @@ Deno.serve(async (req) => {
 
     const rows = dedupeByKey(raw, schema.record_key);
     const total = rows.length;
-    const closed = rows.filter((r) => isRowClosed(r, schema.closed_field)).length;
+    const closedOpts = { requiresDate: !!schema.requires_date };
+    const closed = rows.filter((r) => isRowClosed(r, schema.closed_field, closedOpts)).length;
 
     // Per-record scoring against ground truth by unit.
     // Precision: extracted units that (a) exist in GT AND (b) whose
@@ -141,7 +142,7 @@ Deno.serve(async (req) => {
     for (const r of rows) {
       const key = norm(r[schema.record_key]);
       const gtRec = gtByKey.get(key);
-      const extractedClosed = isRowClosed(r, schema.closed_field);
+      const extractedClosed = isRowClosed(r, schema.closed_field, closedOpts);
       if (gtRec && extractedClosed === gtRec.expected_ack) tp += 1;
       perRecord.push({
         unit: r[schema.record_key],
