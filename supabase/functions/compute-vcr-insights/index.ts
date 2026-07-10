@@ -1265,9 +1265,29 @@ function fmtNum(s: string): string {
 function sentenceForFact(f: Fact, ctx: SummaryCtx, allFacts: Fact[], consumed: Set<string>): string | null {
   const l = (f.label || "").toLowerCase();
   const v = fmtNum(f.value || "");
-  // Detail-tier percentage stats stay in facts[]/Details only; their amber tone
-  // is just "<100%" and would generate noise in the prose summary.
-  if (l.includes("avg completion %")) return null;
+  // Generalised exclusion: any fact whose value is a bare percentage and whose
+  // tone is amber SOLELY because it is <100 % is detail-tier — it belongs in
+  // facts[]/Details, not in the prose summary. This covers "Avg completion %"
+  // and any future percentage stat that lands with an amber tone.
+  if (f.tone === "amber" && /^\s*\d{1,3}(\.\d+)?\s*%\s*$/.test(f.value || "")) return null;
+  // Register-reader table-row schemas: friendly sentences using the schema
+  // labels. Deterministic, no LLM.
+  if (l === "units acknowledged") {
+    const m = /^(\d+)\s+of\s+(\d+)$/.exec(v);
+    if (m) {
+      const ack = Number(m[1]), total = Number(m[2]);
+      const outstandingFact = allFacts.find((x) => (x.label || "").toLowerCase() === "awaiting acknowledgement");
+      if (ack < total) {
+        const names = outstandingFact?.value || "";
+        consumed.add("Awaiting acknowledgement");
+        return names
+          ? `The notification sheet shows ${ack} of ${total} units have acknowledged; ${names} are still outstanding.`
+          : `The notification sheet shows ${ack} of ${total} units have acknowledged.`;
+      }
+      return `All ${total} affected units have acknowledged the start-up notification.`;
+    }
+  }
+
   if (l.includes("required evidence attached") && f.tone === "amber") {
     const req = ctx.requirementText && ctx.requirementText.trim()
       ? ctx.requirementText.trim()
