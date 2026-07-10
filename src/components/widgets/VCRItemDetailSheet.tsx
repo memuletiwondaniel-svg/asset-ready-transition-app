@@ -209,8 +209,12 @@ const InsightsBlock: React.FC<{
 
 
   // Readiness label — plain muted text in the header row, no pill.
+  // Terminal items carry a `readiness_label` from the engine ("Accepted",
+  // "Qualified", "Rejected") which wins over the severity-derived label.
   const readinessLabel =
-    severity === 'green'
+    insights?.readiness_label
+      ? insights.readiness_label
+      : severity === 'green'
       ? 'Ready'
       : severity === 'amber'
       ? 'Partially complete'
