@@ -3151,6 +3151,95 @@ export type Database = {
         }
         Relationships: []
       }
+      insight_eval_cases: {
+        Row: {
+          created_at: string
+          description: string | null
+          fixture_path: string
+          ground_truth: Json
+          id: string
+          schema_key: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          fixture_path: string
+          ground_truth: Json
+          id?: string
+          schema_key: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          fixture_path?: string
+          ground_truth?: Json
+          id?: string
+          schema_key?: string
+        }
+        Relationships: []
+      }
+      insight_eval_runs: {
+        Row: {
+          case_id: string
+          extracted: Json
+          headline_exact: boolean
+          id: string
+          precision_score: number
+          ran_at: string
+          recall_score: number
+          schema_key: string
+        }
+        Insert: {
+          case_id: string
+          extracted: Json
+          headline_exact: boolean
+          id?: string
+          precision_score: number
+          ran_at?: string
+          recall_score: number
+          schema_key: string
+        }
+        Update: {
+          case_id?: string
+          extracted?: Json
+          headline_exact?: boolean
+          id?: string
+          precision_score?: number
+          ran_at?: string
+          recall_score?: number
+          schema_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insight_eval_runs_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "insight_eval_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      insight_schema_status: {
+        Row: {
+          aggregate: Json | null
+          eval_status: string
+          schema_key: string
+          updated_at: string
+        }
+        Insert: {
+          aggregate?: Json | null
+          eval_status?: string
+          schema_key: string
+          updated_at?: string
+        }
+        Update: {
+          aggregate?: Json | null
+          eval_status?: string
+          schema_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       mdr_completeness_snapshots: {
         Row: {
           created_at: string | null

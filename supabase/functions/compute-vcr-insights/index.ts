@@ -3,6 +3,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { PDFDocument } from "npm:pdf-lib@1.17.1";
+import {
+  SCHEMA_SU_NOTIFICATION_OI,
+  tableRowExtract as sharedTableRowExtract,
+  isRowClosed as sharedIsRowClosed,
+  type RegisterSchema as SharedRegisterSchema,
+  type TableRowSchema as SharedTableRowSchema,
+  type PageRegisterSchema as SharedPageRegisterSchema,
+} from "../_shared/register-reader.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -672,31 +680,13 @@ async function ivanHempReader(sb: any, item: any, lovableKey: string): Promise<F
 // keeps its dedicated reader (ivanHempReader) so behaviour is byte-
 // identical; the schema entry aliases to it. Table-row schemas run here.
 // ─────────────────────────────────────────────────────────────────────────
+// Schemas + table-row extraction now live in ../_shared/register-reader.ts so
+// production (this function) and the eval harness (run-insight-eval) share
+// one code path. HEMP page-reader remains bespoke below.
 
-interface RegisterSchemaBase {
-  schema_key: string;
-  doc_match: RegExp;          // matches on file_name/evidence_type
-  row_unit: "page" | "table_row";
-  system_prompt: string;
-  record_shape: string;       // JSON shape hint used in the prompt
-}
-interface TableRowSchema extends RegisterSchemaBase {
-  row_unit: "table_row";
-  record_key: string;         // unique key field in each record (e.g. "unit")
-  closed_field: string;       // field that being non-empty marks the row "done"
-  labels: {
-    docType: string;          // human phrase e.g. "notification sheet"
-    countLabel: string;       // "Units acknowledged"
-    countUnit: string;        // "units"
-    outstandingLabel: string; // "Awaiting acknowledgement"
-    outstandingItem: string;  // "acknowledgement"
-  };
-}
-interface PageRegisterSchema extends RegisterSchemaBase {
-  row_unit: "page";
-  // Delegated to ivanHempReader — HEMP-specific fields live in that fn.
-}
-type RegisterSchema = TableRowSchema | PageRegisterSchema;
+type RegisterSchema = SharedRegisterSchema;
+type TableRowSchema = SharedTableRowSchema;
+type PageRegisterSchema = SharedPageRegisterSchema;
 
 const SCHEMA_HEMP_DI03: PageRegisterSchema = {
   schema_key: "hemp_di03",
@@ -706,89 +696,20 @@ const SCHEMA_HEMP_DI03: PageRegisterSchema = {
   record_shape: "IvanAction",
 };
 
-const SCHEMA_SU_NOTIFICATION_OI: TableRowSchema = {
-  schema_key: "su_notification",
-  doc_match: /(notification|acknowledg|start[\s_-]*up.*(comms|notice|ack))/i,
-  row_unit: "table_row",
-  record_key: "unit",
-  closed_field: "acknowledged",
-  labels: {
-    docType: "notification sheet",
-    countLabel: "Units acknowledged",
-    countUnit: "units",
-    outstandingLabel: "Awaiting acknowledgement",
-    outstandingItem: "acknowledgement",
-  },
-  record_shape:
-    '{"unit":"string","notified":"string (date or method, or empty)",' +
-    '"acknowledged":"string (acknowledger name + date, or empty if outstanding)",' +
-    '"source_page":"integer (1-based page in the PDF)"}',
-  system_prompt:
-    'You are extracting a start-up NOTIFICATION & ACKNOWLEDGMENT sheet from a ' +
-    'PDF. Each row is one affected unit or department (Operations, Maintenance, ' +
-    'HSE, Utilities, Marine, …). Columns typically include UNIT/DEPARTMENT, ' +
-    'NOTIFIED (date or method), and ACKNOWLEDGED (name + date). A unit counts ' +
-    'as ACKNOWLEDGED only when the acknowledgement cell carries a non-empty ' +
-    'value (name and/or date). Placeholders such as "—", "-", "N/A", "TBD", ' +
-    '"pending", or blank all count as NOT acknowledged. Do not invent units. ' +
-    'source_page is the 1-based page where you read the row. Return STRICT ' +
-    'JSON, no prose, no markdown:\n' +
-    '{"records":[{"unit":"string","notified":"string","acknowledged":"string",' +
-    '"source_page":number}]}',
-};
-
 const REGISTER_SCHEMAS: Record<string, RegisterSchema> = {
   hemp_di03: SCHEMA_HEMP_DI03,
   su_notification: SCHEMA_SU_NOTIFICATION_OI,
 };
 
-async function tableRowExtract(
+const tableRowExtract = (
   lovableKey: string,
   pdfBytes: Uint8Array,
   filename: string,
   schema: TableRowSchema,
-): Promise<Array<Record<string, any>> | null> {
-  const b64 = bytesToBase64(pdfBytes);
-  const r = await bounded<Response | null>("register_reader ai", AI_TIMEOUT_MS, null, (signal) =>
-    fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      signal,
-      headers: { "Content-Type": "application/json", "Lovable-API-Key": lovableKey },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: schema.system_prompt },
-          {
-            role: "user",
-            content: [
-              { type: "text", text: `Extract every row from this ${schema.labels.docType}.` },
-              { type: "file", file: { filename, file_data: `data:application/pdf;base64,${b64}` } },
-            ],
-          },
-        ],
-      }),
-    }),
-  );
-  if (!r || !r.ok) return null;
-  try {
-    const j = await r.json();
-    const txt = j.choices?.[0]?.message?.content || "{}";
-    const parsed = JSON.parse(typeof txt === "string" ? txt : "{}");
-    return Array.isArray(parsed?.records) ? parsed.records : [];
-  } catch (_e) {
-    return null;
-  }
-}
+) => sharedTableRowExtract(lovableKey, pdfBytes, filename, schema, AI_TIMEOUT_MS);
 
-function isRowClosed(row: Record<string, any>, field: string): boolean {
-  const v = row?.[field];
-  if (v === true) return true;
-  if (v == null) return false;
-  const s = String(v).trim().toLowerCase();
-  if (!s) return false;
-  return !["—", "-", "n/a", "na", "tbd", "pending", "outstanding", "none"].includes(s);
-}
+const isRowClosed = sharedIsRowClosed;
+
 
 async function registerReaderTableRow(
   sb: any,
@@ -1651,6 +1572,22 @@ serve(async (req) => {
     const evidenceFingerprint = (evRows || []).map((r: any) => `${r.id}:${r.created_at}`).join("|");
 
     // Cache lookup — include prereq status so any status change invalidates
+    // Phase 2C — reader eval status feeds the gate and the cache key so a
+    // 'passed' flip invalidates stale " (unvalidated reader)" facts.
+    const readerStatus = new Map<string, "passed" | "unproven">();
+    try {
+      const { data: statusRows } = await sb
+        .from("insight_schema_status")
+        .select("schema_key, eval_status");
+      for (const r of (statusRows || []) as Array<{ schema_key: string; eval_status: string }>) {
+        readerStatus.set(r.schema_key, r.eval_status === "passed" ? "passed" : "unproven");
+      }
+    } catch (_e) { /* status table optional at cold-boot */ }
+    const readerStatusFingerprint = Array.from(readerStatus.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([k, v]) => `${k}:${v}`)
+      .join("|");
+
     const hashInput = JSON.stringify({
       configVersion,
       templateVersion,
@@ -1663,6 +1600,7 @@ serve(async (req) => {
       day: new Date().toISOString().slice(0, 10),
       evidenceFingerprint,
       prereqStatus,
+      readerStatusFingerprint,
     });
 
     const inputsHash = await sha(hashInput);
@@ -1701,13 +1639,29 @@ serve(async (req) => {
       if (name === "ivan") return "register_reader:hemp_di03";
       return name;
     };
+    // Phase 2C gate — readerStatus loaded above (before hashInput). Unproven
+    // schemas get " (unvalidated reader)" appended and tone capped to neutral.
+    const applyReaderGate = (schemaKey: string, facts: Fact[]): Fact[] => {
+      const status = readerStatus.get(schemaKey) ?? "unproven";
+      if (status === "passed") return facts;
+      return facts.map((f) => {
+        if (f.confidence !== "ai_read") return f;
+        return {
+          ...f,
+          value: `${f.value} (unvalidated reader)`,
+          tone: "neutral" as Tone,
+        };
+      });
+    };
+
     const runAgent = async (name: string) => {
       try {
         if (name === "fred") allFacts.push(...(await fredCompletionsAggregator(sb, vcr_id)));
         else if (name === "source_rollup") allFacts.push(...(await sourceRollupEngine(sb, vcr_id, sourceRollupCfg)));
         else if (name.startsWith("register_reader:")) {
           const schemaKey = name.slice("register_reader:".length);
-          allFacts.push(...(await registerReaderEngine(sb, item, lovableKey, schemaKey)));
+          const facts = await registerReaderEngine(sb, item, lovableKey, schemaKey);
+          allFacts.push(...applyReaderGate(schemaKey, facts));
         }
         else if (name === "evidence_match") allFacts.push(...(await evidenceMatchEngine(sb, item, lovableKey)));
         else if (name === "workflow_signals") allFacts.push(...(await workflowSignalsEngine(sb, item, prereq)));
