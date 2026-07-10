@@ -66,7 +66,7 @@ export function useVcrBundleEnrichedItems(bundle: VCRBundleTask | null, opts: { 
         .in('id', prereqIds);
       if (error) throw error;
 
-      let ledgerMap: Record<string, 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'QUALIFIED'> = {};
+      let ledgerMap: Record<string, 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'QUALIFIED' | 'SUPERSEDED'> = {};
       if (opts.forApprover && user?.id) {
         const { data: led, error: le } = await (supabase as any)
           .from('vcr_prerequisite_approvals')
