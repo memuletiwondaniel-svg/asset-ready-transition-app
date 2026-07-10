@@ -814,21 +814,26 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   });
 
   // ── Comments query ─────────────────────────────────────────
-  const commentsQueryKey = ['vcr-item-comments', vcrId, item?.id];
+  // Comments are keyed by the canonical vcr_items.id (NOT the prerequisite id).
+  // item.id is a prerequisite id in this drawer's caller; the canonical id is
+  // resolved via vcrItemDetail.canonical_vcr_item_id above.
+  const canonicalVcrItemId: string | null =
+    (vcrItemDetail as any)?.canonical_vcr_item_id ?? null;
+  const commentsQueryKey = ['vcr-item-comments', vcrId, canonicalVcrItemId];
   const { data: thread = [] } = useQuery({
     queryKey: commentsQueryKey,
     queryFn: async (): Promise<CommentRow[]> => {
-      if (!item?.id || !vcrId) return [];
+      if (!canonicalVcrItemId || !vcrId) return [];
       const { data, error } = await supabase
         .from('vcr_item_comments')
         .select('id, author_user_id, body, action_tag, created_at')
         .eq('handover_point_id', vcrId)
-        .eq('vcr_item_id', item.id)
+        .eq('vcr_item_id', canonicalVcrItemId)
         .order('created_at', { ascending: true });
       if (error) throw error;
       return (data || []) as CommentRow[];
     },
-    enabled: open && !!item?.id && !!vcrId,
+    enabled: open && !!canonicalVcrItemId && !!vcrId,
   });
 
   // ── Author profiles for thread avatars ─────────────────────
@@ -970,10 +975,11 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
 
   const insertComment = useMutation({
     mutationFn: async ({ body, action_tag }: { body: string; action_tag: CommentRow['action_tag'] }) => {
-      if (!item?.id || !vcrId || !user?.id) throw new Error('Not ready');
+      if (!vcrId || !user?.id) throw new Error('Not ready');
+      if (!canonicalVcrItemId) throw new Error('Item is not linked to a canonical VCR item yet.');
       const { error } = await supabase.from('vcr_item_comments').insert({
         handover_point_id: vcrId,
-        vcr_item_id: item.id,
+        vcr_item_id: canonicalVcrItemId,
         author_user_id: user.id,
         body,
         action_tag,
