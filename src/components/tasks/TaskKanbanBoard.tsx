@@ -1636,8 +1636,10 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     <P2AApprovalContext.Provider value={p2aApprovalMap}>
     <ReviewerSummaryContext.Provider value={reviewerMap}>
     <>
-      {/* Lens toggle — My work / My reviews. Persisted per user. */}
-      <div className="flex items-center gap-2 mb-3">
+      {/* Lens toggle — portalled into the page toolbar so it shares a row
+          with the search field. Falls back to inline rendering if the slot
+          hasn't mounted yet. Persisted per user. */}
+      <LensTogglePortal>
         <div className="inline-flex rounded-md border border-border/60 bg-card/40 p-0.5">
           <button
             type="button"
@@ -1665,7 +1667,8 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
             )}
           </button>
         </div>
-      </div>
+      </LensTogglePortal>
+
 
       {lens === 'reviews' ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 items-stretch">
