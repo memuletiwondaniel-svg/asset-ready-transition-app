@@ -1526,14 +1526,19 @@ serve(async (req) => {
     // Alias engine names to a single identity so runOnce truly dedupes.
     // 'selma' (contrib in vcr_insights_agent_config) and 'currency_check'
     // (template engine) both invoke selmaRevisionPass — collapse to one id.
+    // 'ivan' is now a legacy alias for register_reader:hemp_di03.
     const canonicalEngine = (name: string): string => {
       if (name === "selma") return "currency_check";
+      if (name === "ivan") return "register_reader:hemp_di03";
       return name;
     };
     const runAgent = async (name: string) => {
       try {
         if (name === "fred") allFacts.push(...(await fredCompletionsAggregator(sb, vcr_id)));
-        else if (name === "ivan") allFacts.push(...(await ivanHempReader(sb, item, lovableKey)));
+        else if (name.startsWith("register_reader:")) {
+          const schemaKey = name.slice("register_reader:".length);
+          allFacts.push(...(await registerReaderEngine(sb, item, lovableKey, schemaKey)));
+        }
         else if (name === "evidence_match") allFacts.push(...(await evidenceMatchEngine(sb, item, lovableKey)));
         else if (name === "workflow_signals") allFacts.push(...(await workflowSignalsEngine(sb, item, prereq)));
         else if (name === "currency_check") allFacts.push(...(await selmaRevisionPass(sb, item)));
@@ -1543,6 +1548,7 @@ serve(async (req) => {
         allFacts.push({ label: `${name} agent`, value: `Error: ${(e as Error).message}`, confidence: "unavailable" });
       }
     };
+
 
     const ranSet = new Set<string>();
     const runOnce = async (name: string) => {
