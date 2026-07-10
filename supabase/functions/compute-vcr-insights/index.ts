@@ -1437,7 +1437,7 @@ serve(async (req) => {
       withAbort(
         sb
           .from("p2a_vcr_prerequisites")
-          .select("id, status")
+          .select("id, status, reviewed_at, updated_at")
           .eq("handover_point_id", vcr_id)
           .eq("vcr_item_id", vcr_item_id)
           .maybeSingle(),
