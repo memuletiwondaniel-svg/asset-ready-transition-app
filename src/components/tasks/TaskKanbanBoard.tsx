@@ -1588,15 +1588,11 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       ));
     }
 
-    // Default (no explicit grouping) — apply VCR clustering when tasks share
-    // a vcr_id; tasks without a VCR key fall to a trailing flat section.
-    const { groups: vcrGroups, flat: vcrFlat } = clusterByVcr(columnTasks);
+    // Default (no explicit grouping) — flat card list. VCR sub-clustering
+    // was removed in v3; project grouping is the sole grouping tier.
     return (
       <>
-        {vcrGroups.map(g => (
-          <VCRCluster key={g.key} group={g} onTaskClick={handleTaskClick} accentClass={col.accent} />
-        ))}
-        {vcrFlat.map(task => {
+        {columnTasks.map(task => {
           const meta = task.userTask?.metadata as Record<string, any> | undefined;
           const isRejected = meta?.outcome === 'rejected';
           return (
