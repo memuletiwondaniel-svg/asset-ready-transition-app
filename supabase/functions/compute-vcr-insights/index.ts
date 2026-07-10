@@ -962,6 +962,7 @@ const HEADLINE_PHRASES: Record<string, string> = {
   "required evidence attached": "required evidence not yet attached",
   "required documents attached": "required documents not yet attached",
   "cat-a punch items": "Cat-A punch items outstanding",
+  "cat-a punch outstanding": "Cat-A punch items outstanding",
   "outdated revision": "an attached document is on an outdated revision",
   "returned by approver": "item was returned by the approver",
   "unanswered approver comment": "an approver comment is awaiting a reply",
