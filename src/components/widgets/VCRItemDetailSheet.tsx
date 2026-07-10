@@ -522,10 +522,11 @@ const SectionLabel: React.FC<{ children: React.ReactNode; right?: React.ReactNod
 const CollapsibleSection: React.FC<{
   label: string;
   count?: number;
+  countNode?: React.ReactNode;
   defaultOpen?: boolean;
   right?: React.ReactNode;
   children: React.ReactNode;
-}> = ({ label, count, defaultOpen = true, right, children }) => {
+}> = ({ label, count, countNode, defaultOpen = true, right, children }) => {
   const [open, setOpen] = useState(defaultOpen);
   return (
     <section>
