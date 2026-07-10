@@ -522,10 +522,11 @@ const SectionLabel: React.FC<{ children: React.ReactNode; right?: React.ReactNod
 const CollapsibleSection: React.FC<{
   label: string;
   count?: number;
+  countNode?: React.ReactNode;
   defaultOpen?: boolean;
   right?: React.ReactNode;
   children: React.ReactNode;
-}> = ({ label, count, defaultOpen = true, right, children }) => {
+}> = ({ label, count, countNode, defaultOpen = true, right, children }) => {
   const [open, setOpen] = useState(defaultOpen);
   return (
     <section>
@@ -538,10 +539,14 @@ const CollapsibleSection: React.FC<{
         >
           <h3 className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground/80 font-semibold">
             {label}
-            {typeof count === 'number' && count > 0 && (
-              <span className="ml-1 text-muted-foreground/70 font-normal normal-case tracking-normal">
-                · {count}
-              </span>
+            {countNode !== undefined ? (
+              <span className="ml-1 font-normal normal-case tracking-normal">{countNode}</span>
+            ) : (
+              typeof count === 'number' && count > 0 && (
+                <span className="ml-1 text-muted-foreground/70 font-normal normal-case tracking-normal">
+                  · {count}
+                </span>
+              )
             )}
           </h3>
           {open ? (
@@ -1101,9 +1106,8 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   };
 
 
-  // Guidance/Required-evidence collapse state (declared before any early return for hooks-rules safety)
-  // Defaults: Guidance collapsed (verbose reference); Required Evidence expanded (action-relevant).
-  const [guidanceOpen, setGuidanceOpenLocal] = useState(false);
+  
+
   
   // B2B chip: which approving-role rows are toggled to the partner holder
   const [b2bExpandedRoleIds, setB2bExpandedRoleIds] = useState<Set<string>>(new Set());
@@ -1280,51 +1284,42 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
               )}
 
 
-              {/* Guidance notes — collapsed by default; chevron toggle */}
-              <section>
-                <button
-                  type="button"
-                  onClick={() => setGuidanceOpenLocal((v) => !v)}
-                  className="w-full flex items-center justify-between mb-2.5 group"
-                  aria-expanded={guidanceOpen}
-                >
-                  <h3 className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground/80 font-semibold">
-                    Guidance notes
-                  </h3>
-                  {guidanceOpen ? (
-                    <ChevronDown className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                  ) : (
-                    <ChevronRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                  )}
-                </button>
-                {guidanceOpen && (
-                  vcrItemDetail?.effective_guidance ? (
-                    <p className="text-[13px] text-foreground leading-relaxed mt-1 whitespace-pre-wrap">
-                      {vcrItemDetail.effective_guidance}
-                    </p>
-                  ) : (
-                    <p className="text-xs text-muted-foreground italic mt-1">No guidance notes for this item.</p>
-                  )
+              {/* Guidance notes — collapsed by default */}
+              <CollapsibleSection label="Guidance notes" defaultOpen={false}>
+                {vcrItemDetail?.effective_guidance ? (
+                  <p className="text-[13px] text-foreground leading-relaxed mt-1 whitespace-pre-wrap">
+                    {vcrItemDetail.effective_guidance}
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground italic mt-1">No guidance notes for this item.</p>
                 )}
-              </section>
-
-              {/* Required evidence — collapsed by default */}
-              <CollapsibleSection label="Required evidence" defaultOpen={false}>
-                <p className="text-[13px] text-foreground leading-relaxed mt-1">
-                  {requiredEvidenceText || (
-                    <span className="text-muted-foreground italic">No required evidence specified.</span>
-                  )}
-                </p>
               </CollapsibleSection>
 
-              {/* Evidence — execution-only (Part 0). Collapsible, expanded default. */}
+              {/* Evidence — merged with Required evidence caption. Execution-only. */}
               {isExecutionMode && (
               <CollapsibleSection
                 label="Evidence"
-                count={evidence.length}
+                countNode={
+                  evidence.length > 0
+                    ? <span className="text-muted-foreground/70">· {evidence.length}</span>
+                    : requiredEvidenceText
+                      ? <span className="text-amber-600 dark:text-amber-500">· 0 of 1</span>
+                      : undefined
+                }
                 defaultOpen={true}
                 right={viewer !== 'delivering' && evidence.length > 0 ? 'Submitted by delivering party' : undefined}
               >
+                {requiredEvidenceText && (
+                  <div className="mb-2.5 rounded-md bg-accent/40 px-3 py-2">
+                    <div className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground/80 font-semibold mb-0.5">
+                      Required
+                    </div>
+                    <div className="text-[13px] text-foreground leading-relaxed">
+                      {requiredEvidenceText}
+                    </div>
+                  </div>
+                )}
+
 
 
                 {/* Selma → Assai doc-number-first fetch.
