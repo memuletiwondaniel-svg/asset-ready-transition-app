@@ -1734,7 +1734,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
                   <div className={cn("flex items-center justify-between gap-2 px-3 pt-3 pb-2 border-b border-border/40", col.headerTint)}>
                     <div className="flex items-center gap-2 min-w-0">
                       <ColIcon className={cn("h-3.5 w-3.5 shrink-0", col.iconColor)} strokeWidth={2.25} />
-                      <span className="text-[13px] font-medium text-foreground truncate">{col.label}</span>
+                      <span className="text-sm font-semibold text-foreground truncate">{col.label}</span>
                       <span className="text-[11px] tabular-nums text-muted-foreground/70">{col.tasks.length}</span>
                     </div>
                     <DropdownMenu>
