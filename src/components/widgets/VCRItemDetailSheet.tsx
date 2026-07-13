@@ -503,7 +503,16 @@ const ConfirmDialog: React.FC<{
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent
+        className="sm:max-w-md !z-[1530]"
+        overlayClassName="!z-[1520]"
+        onPointerDownOutside={(e) => {
+          // Backdrop click closes THIS dialog only — don't let the event
+          // bubble to the underlying VCRItemDetailSheet's dismiss handler.
+          e.stopPropagation();
+        }}
+        onInteractOutside={(e) => { e.stopPropagation(); }}
+      >
         <DialogHeader>
           <DialogTitle>{cfg.title}</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground pt-1 leading-relaxed">
