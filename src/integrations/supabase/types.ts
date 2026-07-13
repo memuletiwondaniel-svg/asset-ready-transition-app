@@ -15388,6 +15388,14 @@ export type Database = {
         Args: { _prereq_id: string; _user_id: string }
         Returns: boolean
       }
+      is_vcr_item_approver_ledger: {
+        Args: {
+          _handover_point_id: string
+          _user_id: string
+          _vcr_item_id: string
+        }
+        Returns: boolean
+      }
       is_vcr_item_approving_party: {
         Args: {
           _handover_point_id: string
