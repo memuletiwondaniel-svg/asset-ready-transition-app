@@ -76,24 +76,16 @@ export const VCRItemsToReviewPanel: React.FC<Props> = ({ bundle, open, onOpenCha
   const vcrId = meta.vcr_id as string | undefined;
   const projectId = meta.project_id as string | undefined;
 
-  const total    = Number(meta.approver_total_items ?? bundle?.sub_items?.length ?? 0);
-  const decided  = Number(meta.approver_decided_items ?? 0);
-  const accepted = Number(meta.approver_accepted_items ?? 0);
-  const rejected = Number(meta.approver_rejected_items ?? 0);
-  // Trigger-maintained counter (PENDING ledger + submitted prereq). Fallback
-  // to derived value only if the field is missing on legacy rows.
-  const awaiting = meta.approver_awaiting_items != null
-    ? Number(meta.approver_awaiting_items)
-    : Math.max(0, total - decided);
-  const parties  = Number(meta.delivering_parties_count ?? 0);
-  const approvedPct = total > 0 ? (accepted / total) * 100 : 0;
-  const awaitingPct = total > 0 ? (awaiting / total) * 100 : 0;
-
-  const { data: items = [] } = useVcrBundleEnrichedItems(bundle, { forApprover: true });
+  const { data: rawItems = [] } = useVcrBundleEnrichedItems(bundle, { forApprover: true });
   const [selected, setSelected] = useState<VCRItemBasic | null>(null);
 
-
-
+  // Hide items where the current user has no ledger seat — the full picture
+  // lives behind "Open full VCR". Summary counts derive from visible items
+  // only so the header and the sections always agree.
+  const items = useMemo(
+    () => rawItems.filter((it) => it.ledger_status != null),
+    [rawItems],
+  );
 
   const groups = useMemo(() => {
     const buckets: Record<Group, VCRBundleEnrichedItem[]> = {
@@ -105,6 +97,13 @@ export const VCRItemsToReviewPanel: React.FC<Props> = ({ bundle, open, onOpenCha
     });
     return buckets;
   }, [items]);
+
+  const total    = items.length;
+  const accepted = groups.approved.length;
+  const rejected = groups.returned.length;
+  const awaiting = groups.awaitingYou.length;
+  const approvedPct = total > 0 ? (accepted / total) * 100 : 0;
+  const awaitingPct = total > 0 ? (awaiting / total) * 100 : 0;
 
   const openItem = (it: VCRBundleEnrichedItem) => {
     setSelected({
