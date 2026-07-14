@@ -11504,6 +11504,81 @@ export type Database = {
         }
         Relationships: []
       }
+      qaqc_checks: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          severity: string
+          sql: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          id: string
+          is_active?: boolean
+          severity?: string
+          sql: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          severity?: string
+          sql?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      qaqc_runs: {
+        Row: {
+          created_at: string
+          duration_ms: number
+          errored: number
+          failed: number
+          id: string
+          passed: number
+          results: Json
+          run_at: string
+          total_checks: number
+          triggered_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          duration_ms?: number
+          errored?: number
+          failed?: number
+          id?: string
+          passed?: number
+          results?: Json
+          run_at?: string
+          total_checks?: number
+          triggered_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          duration_ms?: number
+          errored?: number
+          failed?: number
+          id?: string
+          passed?: number
+          results?: Json
+          run_at?: string
+          total_checks?: number
+          triggered_by?: string | null
+        }
+        Relationships: []
+      }
       readiness_dependencies: {
         Row: {
           created_at: string
@@ -15446,6 +15521,7 @@ export type Database = {
         Args: { retention_days_param?: number }
         Returns: number
       }
+      qaqc_run_check: { Args: { p_sql: string }; Returns: Json }
       recall_vcr_plan: { Args: { p_handover_point_id: string }; Returns: Json }
       reconcile_ora_plan_tasks: { Args: { p_plan_id: string }; Returns: Json }
       reconcile_vcr_approval_bundles: {
