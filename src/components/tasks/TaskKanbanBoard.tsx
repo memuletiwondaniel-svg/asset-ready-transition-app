@@ -2028,6 +2028,36 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         submitting={withdrawSubmitting}
       />
 
+      {/* VCR interdisciplinary summary task launcher */}
+      {interTaskTarget && (
+        <InterdisciplinaryTaskModal
+          open={!!interTaskTarget}
+          onOpenChange={(o) => { if (!o) setInterTaskTarget(null); }}
+          handoverPointId={interTaskTarget.handoverPointId}
+          projectId={interTaskTarget.projectId}
+          vcrCode={interTaskTarget.vcrCode}
+          vcrName={interTaskTarget.vcrName}
+          projectPrefix={interTaskTarget.projectPrefix}
+          taskId={interTaskTarget.taskId}
+        />
+      )}
+
+      {/* Schedule SoF meeting task launcher */}
+      {sofTaskTarget && (
+        <ScheduleSofMeetingModal
+          open={!!sofTaskTarget}
+          onOpenChange={(o) => { if (!o) setSofTaskTarget(null); }}
+          handoverPointId={sofTaskTarget.handoverPointId}
+          projectId={sofTaskTarget.projectId}
+          vcrCode={sofTaskTarget.vcrCode}
+          vcrName={sofTaskTarget.vcrName}
+          projectPrefix={sofTaskTarget.projectPrefix}
+          taskId={sofTaskTarget.taskId}
+        />
+      )}
+
+
+
     </>
     </ReviewerSummaryContext.Provider>
     </P2AApprovalContext.Provider>
