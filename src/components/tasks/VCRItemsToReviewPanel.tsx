@@ -14,6 +14,7 @@ import { VCRItemDetailSheet, type VCRItemBasic } from '@/components/widgets/VCRI
 import { useVcrBundleEnrichedItems, type VCRBundleEnrichedItem } from './useVcrBundleEnrichedItems';
 import { PanelGroup, PanelRow } from './MyVCRItemsPanel';
 import { shortVCRCode } from '@/components/widgets/p2a-wizard/steps/phases/vcrDisplayUtils';
+import { useProjectRoleHolders } from '@/hooks/useProjectRoleHolders';
 import type { VCRBundleTask } from '@/hooks/useUserVCRBundleTasks';
 
 /**
@@ -78,13 +79,32 @@ export const VCRItemsToReviewPanel: React.FC<Props> = ({ bundle, open, onOpenCha
   const decided  = Number(meta.approver_decided_items ?? 0);
   const accepted = Number(meta.approver_accepted_items ?? 0);
   const rejected = Number(meta.approver_rejected_items ?? 0);
-  const awaiting = Math.max(0, total - decided);
+  // Trigger-maintained counter (PENDING ledger + submitted prereq). Fallback
+  // to derived value only if the field is missing on legacy rows.
+  const awaiting = meta.approver_awaiting_items != null
+    ? Number(meta.approver_awaiting_items)
+    : Math.max(0, total - decided);
   const parties  = Number(meta.delivering_parties_count ?? 0);
   const approvedPct = total > 0 ? (accepted / total) * 100 : 0;
   const awaitingPct = total > 0 ? (awaiting / total) * 100 : 0;
 
   const { data: items = [] } = useVcrBundleEnrichedItems(bundle, { forApprover: true });
   const [selected, setSelected] = useState<VCRItemBasic | null>(null);
+
+  // Resolve delivering-party role labels (e.g. "Process TA2 – Project") to the
+  // current holder person (e.g. "Anuarbek …"), mirroring VCRItemDetailSheet.
+  // Falls back to the role label when the resolver returns no holder.
+  const partyLabels = useMemo(() => {
+    const s = new Set<string>();
+    items.forEach((it) => { if (it.delivering_party_name) s.add(it.delivering_party_name); });
+    return Array.from(s);
+  }, [items]);
+  const { data: holdersByLabel = {} } = useProjectRoleHolders(projectId || undefined, partyLabels);
+  const resolveDeliverer = (label: string | null): string | null => {
+    if (!label) return null;
+    const holders = holdersByLabel[label];
+    return holders && holders.length > 0 ? holders[0].full_name : label;
+  };
 
   const groups = useMemo(() => {
     const buckets: Record<Group, VCRBundleEnrichedItem[]> = {
@@ -175,7 +195,7 @@ export const VCRItemsToReviewPanel: React.FC<Props> = ({ bundle, open, onOpenCha
                     key={it.prerequisite_id}
                     item={it}
                     right={chip('Review', 'amber')}
-                    secondary={it.delivering_party_name ? `Submitted by delivering party — ${it.delivering_party_name}` : null}
+                    secondary={it.delivering_party_name ? `Submitted by delivering party — ${resolveDeliverer(it.delivering_party_name)}` : null}
                     onClick={() => openItem(it)}
                   />
                 )}
@@ -189,7 +209,7 @@ export const VCRItemsToReviewPanel: React.FC<Props> = ({ bundle, open, onOpenCha
                     key={it.prerequisite_id}
                     item={it}
                     right={chip('Awaiting', 'grey')}
-                    secondary={it.delivering_party_name ? `Being worked by ${it.delivering_party_name} — awaiting submission` : 'Awaiting delivering party'}
+                    secondary={it.delivering_party_name ? `Being worked by ${resolveDeliverer(it.delivering_party_name)} — awaiting submission` : 'Awaiting delivering party'}
                     onClick={() => openItem(it)}
                   />
                 )}

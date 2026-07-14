@@ -1640,18 +1640,26 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
-    // Verify caller
-    const userClient = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: claims } = await userClient.auth.getClaims(authHeader.replace("Bearer ", ""));
-    if (!claims?.claims) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    // Parse body first so trigger-originated calls can be identified.
+    // Trigger calls carry {source:"pg_trigger"} and authenticate with the
+    // anon key. They come from trg_kick_vcr_insights_on_prereq_status and
+    // are trusted by construction (only Postgres can fire them). All other
+    // callers must present a valid user JWT via getClaims.
+    const body = await req.json();
+    const isTrigger = body?.source === "pg_trigger";
+    if (!isTrigger) {
+      const userClient = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+        global: { headers: { Authorization: authHeader } },
       });
+      const { data: claims } = await userClient.auth.getClaims(authHeader.replace("Bearer ", ""));
+      if (!claims?.claims) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
-    const { vcr_id, vcr_item_id, force } = await req.json();
+    const { vcr_id, vcr_item_id, force } = body;
     if (!vcr_id || !vcr_item_id) {
       return new Response(JSON.stringify({ error: "vcr_id and vcr_item_id required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
