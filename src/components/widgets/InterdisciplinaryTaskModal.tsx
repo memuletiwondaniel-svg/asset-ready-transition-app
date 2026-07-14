@@ -1,9 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { InterdisciplinarySummaryModal } from './InterdisciplinarySummaryModal';
 import { ScheduleSofMeetingModal } from './ScheduleSofMeetingModal';
+import { SchedulePacMeetingModal } from './SchedulePacMeetingModal';
 import { useVCRDisciplineAssurance } from './hooks/useVCRDisciplineAssurance';
 import { useVCRHydrocarbonStatus } from '@/hooks/useVCRHydrocarbonStatus';
 
@@ -19,9 +19,10 @@ interface Props {
 }
 
 /**
- * Task-click launcher: opens the Interdisciplinary Summary modal for a
- * `vcr_interdisciplinary_summary` task, and chains into the Schedule SoF
- * Meeting modal when the user confirms on a hydrocarbon VCR.
+ * Task-click launcher for `vcr_interdisciplinary_summary`. On confirm, chains
+ * into either the SoF meeting scheduler (HC VCR) or the PAC meeting scheduler
+ * (non-HC VCR) — mirroring the DB `trg_vcr_discipline_assurance_completion`
+ * branching so client and server agree on the closure path.
  */
 export const InterdisciplinaryTaskModal: React.FC<Props> = ({
   open,
@@ -35,6 +36,7 @@ export const InterdisciplinaryTaskModal: React.FC<Props> = ({
 }) => {
   const { toast } = useToast();
   const [sofOpen, setSofOpen] = useState(false);
+  const [pacOpen, setPacOpen] = useState(false);
 
   const { expectedDisciplines, submitAssurance, isSubmitting } = useVCRDisciplineAssurance(
     open ? handoverPointId : undefined,
@@ -53,7 +55,6 @@ export const InterdisciplinaryTaskModal: React.FC<Props> = ({
     [expectedDisciplines],
   );
 
-  // Best-effort completion of the interdisciplinary task; the DB trigger also completes it.
   const completeTask = async () => {
     if (!taskId) return;
     await (supabase as any)
@@ -85,11 +86,21 @@ export const InterdisciplinaryTaskModal: React.FC<Props> = ({
             toast({ title: 'Error', description: 'Failed to submit statement.', variant: 'destructive' });
           }
         }}
-        onScheduleSofMeeting={() => setSofOpen(true)}
+        onScheduleSofMeeting={isHydrocarbon ? () => setSofOpen(true) : undefined}
+        onSchedulePacMeeting={!isHydrocarbon ? () => setPacOpen(true) : undefined}
       />
       <ScheduleSofMeetingModal
         open={sofOpen}
         onOpenChange={setSofOpen}
+        handoverPointId={handoverPointId}
+        projectId={projectId}
+        vcrCode={vcrCode}
+        vcrName={vcrName}
+        projectPrefix={projectPrefix}
+      />
+      <SchedulePacMeetingModal
+        open={pacOpen}
+        onOpenChange={setPacOpen}
         handoverPointId={handoverPointId}
         projectId={projectId}
         vcrCode={vcrCode}
