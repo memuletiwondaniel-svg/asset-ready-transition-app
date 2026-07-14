@@ -217,20 +217,33 @@ export const MyVCRItemsPanel: React.FC<Props> = ({ bundle, open, onOpenChange })
 
 export const PanelGroup: React.FC<{
   title: string;
-  caption: string;
   items: any[];
   render: (it: any) => React.ReactNode;
-}> = ({ title, caption, items, render }) => {
+  defaultOpen?: boolean;
+}> = ({ title, items, render, defaultOpen = false }) => {
+  const [open, setOpen] = useState(defaultOpen);
   if (items.length === 0) return null;
   return (
     <section className="space-y-1">
-      <h4 className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground font-semibold flex items-center gap-1.5 mb-1">
-        <span>{title} ({items.length})</span>
-        {caption && <span className="text-muted-foreground/70 normal-case tracking-normal font-normal">· {caption}</span>}
-      </h4>
-      <ul className="divide-y divide-border/60">
-        {items.map(render)}
-      </ul>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-1.5 group mb-1"
+        aria-expanded={open}
+      >
+        <h4 className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground/80 font-semibold">
+          {title}
+          <span className="ml-1 text-muted-foreground/70 font-normal normal-case tracking-normal">· {items.length}</span>
+        </h4>
+        {open
+          ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+          : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />}
+      </button>
+      {open && (
+        <ul className="divide-y divide-border/60">
+          {items.map(render)}
+        </ul>
+      )}
     </section>
   );
 };
@@ -238,12 +251,10 @@ export const PanelGroup: React.FC<{
 export const PanelRow: React.FC<{
   item: VCRBundleEnrichedItem;
   right: React.ReactNode;
-  secondary?: React.ReactNode;
   onClick: () => void;
-}> = ({ item, right, secondary, onClick }) => {
-  // Primary text = the item question (same text the drawer title uses);
-  // topic renders as a small muted suffix when present.
+}> = ({ item, right, onClick }) => {
   const question = item.vcr_item_text || item.summary || '';
+  const categoryTopic = [item.category_name, item.topic].filter(Boolean).join(' · ');
   return (
     <li>
       <button
@@ -255,17 +266,15 @@ export const PanelRow: React.FC<{
           {item.item_code}
         </span>
         <div className="flex-1 min-w-0">
-          <div className="text-[13px] leading-snug text-foreground">
-            {question}
-            {item.topic && question && (
-              <span className="text-muted-foreground/70 ml-1.5">· {item.topic}</span>
-            )}
-          </div>
-          {secondary && <div className="text-[11px] text-muted-foreground mt-0.5">{secondary}</div>}
+          <div className="text-[13px] leading-snug text-foreground">{question}</div>
+          {categoryTopic && (
+            <div className="text-[11px] text-muted-foreground mt-0.5">{categoryTopic}</div>
+          )}
         </div>
         <div className="shrink-0 mt-0.5">{right}</div>
       </button>
     </li>
   );
 };
+
 
