@@ -159,8 +159,8 @@ export const MyVCRItemsPanel: React.FC<Props> = ({ bundle, open, onOpenChange })
             <div className="p-5 space-y-5">
               <PanelGroup
                 title="TO DELIVER"
-                caption="needs your action"
                 items={groups.todeliver}
+                defaultOpen
                 render={(it) => (
                   <PanelRow
                     key={it.prerequisite_id}
@@ -172,7 +172,6 @@ export const MyVCRItemsPanel: React.FC<Props> = ({ bundle, open, onOpenChange })
               />
               <PanelGroup
                 title="UNDER REVIEW"
-                caption="with approver"
                 items={groups.underreview}
                 render={(it) => (
                   <PanelRow
@@ -185,7 +184,6 @@ export const MyVCRItemsPanel: React.FC<Props> = ({ bundle, open, onOpenChange })
               />
               <PanelGroup
                 title="APPROVED"
-                caption=""
                 items={groups.approved}
                 render={(it) => (
                   <PanelRow
