@@ -1488,13 +1488,18 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   const reviewBundles = useMemo(() => tasks.filter(isReviewBundle), [tasks]);
 
   // Aggregate awaiting count across all review bundles (badge on the toggle).
+  // Reads the trigger-maintained `approver_awaiting_items` counter, which
+  // correctly excludes not-yet-submitted items and REJECTED prereqs. Falls
+  // back to (total - decided) only for legacy rows missing the field.
   const awaitingTotal = useMemo(() => {
     let n = 0;
     for (const u of reviewBundles) {
       const m = (u.bundleTask?.metadata || {}) as Record<string, any>;
       const total = Number(m.approver_total_items ?? 0);
       const decided = Number(m.approver_decided_items ?? 0);
-      n += Math.max(0, total - decided);
+      n += m.approver_awaiting_items != null
+        ? Number(m.approver_awaiting_items)
+        : Math.max(0, total - decided);
     }
     return n;
   }, [reviewBundles]);
