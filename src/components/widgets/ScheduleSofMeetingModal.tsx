@@ -66,9 +66,15 @@ export const ScheduleSofMeetingModal: React.FC<Props> = ({
   vcrName,
   projectPrefix,
   taskId,
+  variant = 'sof',
 }) => {
   const { toast } = useToast();
   const label = `${vcrCode || 'VCR'}${vcrName ? ` (${vcrName})` : ''}`;
+  const isPac = variant === 'pac';
+  const meetingKind = isPac ? 'PAC' : 'SoF';
+  const seatTable = isPac ? 'vcr_pac_approvers' : 'vcr_sof_approvers';
+  const activityType = isPac ? 'pac_meeting' : 'sof_meeting';
+  const scheduleAction = isPac ? 'schedule_pac_meeting' : 'schedule_sof_meeting';
   const [subject, setSubject] = useState('');
   const [date, setDate] = useState<Date | undefined>(new Date(Date.now() + 24 * 60 * 60 * 1000));
   const [startTime, setStartTime] = useState('10:00');
