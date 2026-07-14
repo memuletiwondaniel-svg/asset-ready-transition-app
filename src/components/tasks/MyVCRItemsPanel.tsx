@@ -135,11 +135,8 @@ export const MyVCRItemsPanel: React.FC<Props> = ({ bundle, open, onOpenChange })
             </div>
             <div>
               <SheetTitle className="text-[15px] leading-snug font-semibold">
-                My items
+                {vcrShortLabel} items
               </SheetTitle>
-              <SheetDescription className="text-xs text-muted-foreground">
-                Your delivering items in {vcrShortLabel}
-              </SheetDescription>
             </div>
 
             <div className="mt-3">
