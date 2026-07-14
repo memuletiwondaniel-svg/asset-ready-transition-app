@@ -209,7 +209,7 @@ export const VCRItemsToReviewPanel: React.FC<Props> = ({ bundle, open, onOpenCha
                     key={it.prerequisite_id}
                     item={it}
                     right={chip('Awaiting', 'grey')}
-                    secondary={it.delivering_party_name ? `Being worked by ${it.delivering_party_name} — awaiting submission` : 'Awaiting delivering party'}
+                    secondary={it.delivering_party_name ? `Being worked by ${resolveDeliverer(it.delivering_party_name)} — awaiting submission` : 'Awaiting delivering party'}
                     onClick={() => openItem(it)}
                   />
                 )}
