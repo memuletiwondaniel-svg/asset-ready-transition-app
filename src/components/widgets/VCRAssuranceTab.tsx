@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useToast } from '@/hooks/use-toast';
 import {
   Shield,
@@ -23,6 +24,7 @@ import {
   Clock,
   MessageSquare,
   CheckCircle2,
+  ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -31,6 +33,10 @@ import {
   ExpectedDiscipline,
 } from './hooks/useVCRDisciplineAssurance';
 import { format } from 'date-fns';
+import { DisciplineStatementDrawer } from './DisciplineStatementDrawer';
+import { InterdisciplinarySummaryModal } from './InterdisciplinarySummaryModal';
+import { ScheduleSofMeetingModal } from './ScheduleSofMeetingModal';
+import { useProjectRoleHolders } from '@/hooks/useProjectRoleHolders';
 
 interface VCRAssuranceTabProps {
   handoverPointId: string;
@@ -70,13 +76,21 @@ const disciplineMeta = (roleName: string): DisciplineMeta => {
 };
 
 // Tiled discipline summary card (mirrors SOF Discipline Comments Summary layout)
-const DisciplineTile: React.FC<{ assurance: DisciplineAssurance; profileAvatars: Map<string, string> }> = ({ assurance, profileAvatars }) => {
+const DisciplineTile: React.FC<{
+  assurance: DisciplineAssurance;
+  profileAvatars: Map<string, string>;
+  onClick?: () => void;
+}> = ({ assurance, profileAvatars, onClick }) => {
   const meta = disciplineMeta(assurance.discipline_role_name);
   const fullName = assurance.reviewer?.full_name || 'Unknown reviewer';
   const realAvatar = resolveAvatarUrl(assurance.reviewer?.avatar_url) || profileAvatars.get(fullName.toLowerCase()) || null;
   const initials = fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
   return (
-    <div className="group rounded-xl border border-border/60 bg-card p-4 flex flex-col gap-3 shadow-sm transition-all duration-200 hover:shadow-lg hover:border-primary/40 hover:-translate-y-0.5 cursor-default">
+    <button
+      type="button"
+      onClick={onClick}
+      className="group text-left rounded-xl border border-border/60 bg-card p-4 flex flex-col gap-3 shadow-sm transition-all duration-200 hover:shadow-lg hover:border-primary/40 hover:-translate-y-0.5 cursor-pointer"
+    >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2.5 min-w-0">
           <Avatar className="h-10 w-10 shrink-0 ring-2 ring-background shadow-sm">
@@ -100,7 +114,47 @@ const DisciplineTile: React.FC<{ assurance: DisciplineAssurance; profileAvatars:
       <div className="flex items-center justify-end pt-2 border-t border-border/40 text-[11px] text-muted-foreground">
         <span className="shrink-0">{format(new Date(assurance.submitted_at), 'dd MMM yyyy')}</span>
       </div>
-    </div>
+    </button>
+  );
+};
+
+// Pending tile — greyed variant when no statement yet for expected discipline
+const PendingDisciplineTile: React.FC<{
+  roleName: string;
+  holderName: string | null;
+  avatarUrl: string | null;
+  onClick?: () => void;
+}> = ({ roleName, holderName, avatarUrl, onClick }) => {
+  const meta = disciplineMeta(roleName);
+  const displayName = holderName || 'Unassigned';
+  const initials = displayName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '·';
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group text-left rounded-xl border border-dashed border-border/60 bg-muted/30 p-4 flex flex-col gap-3 transition-colors hover:border-primary/30 hover:bg-muted/50 cursor-pointer"
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <Avatar className="h-10 w-10 shrink-0 opacity-70">
+            {avatarUrl && <AvatarImage src={avatarUrl} alt={displayName} />}
+            <AvatarFallback className={cn('text-[11px] font-medium', meta.iconBg, meta.iconColor)}>
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+            <p className={cn('text-sm font-semibold truncate leading-tight', !holderName ? 'italic text-muted-foreground' : 'text-foreground/80')}>
+              {displayName}
+            </p>
+            <p className="text-[11px] text-muted-foreground truncate">{roleName}</p>
+          </div>
+        </div>
+        <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0 bg-muted text-muted-foreground border-border">
+          Pending
+        </Badge>
+      </div>
+      <p className="text-xs text-muted-foreground italic">Statement not yet submitted.</p>
+    </button>
   );
 };
 
@@ -158,6 +212,59 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
 
   const [interStatement, setInterStatement] = useState('');
   const [showInterForm, setShowInterForm] = useState(false);
+  const [interModalOpen, setInterModalOpen] = useState(false);
+  const [sofModalOpen, setSofModalOpen] = useState(false);
+  const [drawerFor, setDrawerFor] = useState<{
+    assurance: DisciplineAssurance | null;
+    roleName: string;
+    roleId: string | null;
+    fallbackHolderName: string | null;
+    fallbackAvatarUrl: string | null;
+  } | null>(null);
+
+  // Resolve VCR-level metadata (project id, prefix, hydrocarbon flag)
+  const { data: vcrMeta } = useQuery({
+    queryKey: ['vcr-assurance-meta', handoverPointId],
+    enabled: !!handoverPointId,
+    queryFn: async () => {
+      const { data: hp } = await (supabase as any)
+        .from('p2a_handover_points')
+        .select('id, name, vcr_code, handover_plan_id')
+        .eq('id', handoverPointId)
+        .single();
+      let projectId: string | null = null;
+      let projectPrefix: string | null = null;
+      if (hp?.handover_plan_id) {
+        const { data: pl } = await (supabase as any)
+          .from('p2a_handover_plans')
+          .select('project_id, project_code')
+          .eq('id', hp.handover_plan_id)
+          .single();
+        projectId = pl?.project_id || null;
+        projectPrefix = pl?.project_code || null;
+      }
+      const { data: sysLinks } = await (supabase as any)
+        .from('p2a_handover_point_systems')
+        .select('system_id')
+        .eq('handover_point_id', handoverPointId);
+      let isHydrocarbon = false;
+      const sysIds = (sysLinks || []).map((s: any) => s.system_id);
+      if (sysIds.length > 0) {
+        const { data: systems } = await (supabase as any)
+          .from('p2a_systems')
+          .select('is_hydrocarbon')
+          .in('id', sysIds);
+        isHydrocarbon = (systems || []).some((s: any) => s.is_hydrocarbon);
+      }
+      return {
+        projectId,
+        projectPrefix,
+        isHydrocarbon,
+        vcrCode: hp?.vcr_code as string | undefined,
+        vcrName: hp?.name as string | undefined,
+      };
+    },
+  });
 
   // Collect all reviewer names currently rendered so we can look up real profile avatars.
   const reviewerNames = useMemo(() => {
@@ -316,9 +423,25 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
       : expectedDisciplines;
 
   const submittedDisciplines = effectiveExpectedDisciplines.filter(d => d.submitted && d.assurance);
+  const pendingDisciplines = effectiveExpectedDisciplines.filter(d => !d.submitted);
   const effectiveSubmittedCount = submittedDisciplines.length;
   const effectiveTotalCount = effectiveExpectedDisciplines.length;
   const allDisciplinesSubmitted = effectiveTotalCount > 0 && effectiveSubmittedCount === effectiveTotalCount;
+
+  // Resolve pending-discipline holders via the plural resolver pattern
+  const pendingRoleLabels = useMemo(
+    () => Array.from(new Set(pendingDisciplines.map(d => d.role_name))),
+    [pendingDisciplines],
+  );
+  const { data: pendingHolders = {} } = useProjectRoleHolders(vcrMeta?.projectId ?? undefined, pendingRoleLabels);
+
+  const vcrLabel = `${vcrMeta?.vcrCode || vcrCode || 'VCR'}${vcrMeta?.vcrName ? ` (${vcrMeta.vcrName})` : ''}`;
+  const isHydrocarbon = !!vcrMeta?.isHydrocarbon;
+
+  const disciplineChips = effectiveExpectedDisciplines.map(d => ({
+    name: d.role_name,
+    complete: d.submitted,
+  }));
 
   return (
     <div className="space-y-5">
@@ -334,41 +457,24 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
       ) : (
         <Card className="border-dashed border-primary/30 bg-primary/5">
           <CardContent className="p-5">
-            {showInterForm ? (
-              <div className="space-y-3">
-                <Textarea
-                  value={interStatement}
-                  onChange={e => setInterStatement(e.target.value)}
-                  placeholder="Enter the interdisciplinary assurance statement confirming overall readiness for handover/start-up..."
-                  className="min-h-[100px] text-sm"
-                />
-                <div className="flex items-center gap-2 justify-end">
-                  <Button variant="ghost" size="sm" onClick={() => setShowInterForm(false)}>Cancel</Button>
-                  <Button size="sm" onClick={handleSubmitInterdisciplinary} disabled={!interStatement.trim() || isSubmitting}>
-                    <Send className="w-3.5 h-3.5 mr-1.5" /> Submit
-                  </Button>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
+                  <Clock className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-foreground">Interdisciplinary Summary — pending</p>
+                  <p className="text-xs text-muted-foreground">
+                    {allDisciplinesSubmitted
+                      ? 'All discipline statements received. The Snr ORA Engr can now provide the interdisciplinary statement.'
+                      : `Waiting for ${effectiveTotalCount - effectiveSubmittedCount} of ${effectiveTotalCount} discipline statement${effectiveTotalCount - effectiveSubmittedCount === 1 ? '' : 's'}.`}
+                  </p>
                 </div>
               </div>
-            ) : (
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
-                    <Clock className="w-5 h-5 text-muted-foreground" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Interdisciplinary Summary — pending</p>
-                    <p className="text-xs text-muted-foreground">
-                      {allDisciplinesSubmitted
-                        ? 'All discipline statements received. The VCR Lead can now provide the interdisciplinary statement.'
-                        : `Waiting for ${effectiveTotalCount - effectiveSubmittedCount} of ${effectiveTotalCount} discipline statement${effectiveTotalCount - effectiveSubmittedCount === 1 ? '' : 's'}.`}
-                    </p>
-                  </div>
-                </div>
-                <Button variant="outline" size="sm" onClick={() => setShowInterForm(true)} disabled={!allDisciplinesSubmitted}>
-                  Add Statement
-                </Button>
-              </div>
-            )}
+              <Button variant="outline" size="sm" onClick={() => setInterModalOpen(true)} disabled={!allDisciplinesSubmitted}>
+                Add Statement
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -393,11 +499,106 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {submittedDisciplines.map(disc => (
-              <DisciplineTile key={disc.role_id} assurance={disc.assurance!} profileAvatars={profileAvatars} />
+              <DisciplineTile
+                key={disc.role_id}
+                assurance={disc.assurance!}
+                profileAvatars={profileAvatars}
+                onClick={() =>
+                  setDrawerFor({
+                    assurance: disc.assurance!,
+                    roleName: disc.role_name,
+                    roleId: disc.role_id,
+                    fallbackHolderName: null,
+                    fallbackAvatarUrl: null,
+                  })
+                }
+              />
             ))}
           </div>
         )}
+
+        {/* PENDING section */}
+        {pendingDisciplines.length > 0 && (
+          <Collapsible className="mt-4">
+            <CollapsibleTrigger className="w-full flex items-center justify-between text-[11px] uppercase tracking-wide text-muted-foreground hover:text-foreground py-2">
+              <span>Pending ({pendingDisciplines.length})</span>
+              <ChevronDown className="h-3.5 w-3.5 transition-transform ui-open:rotate-180" />
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+                {pendingDisciplines.map(d => {
+                  const holder = (pendingHolders[d.role_name] || [])[0];
+                  return (
+                    <PendingDisciplineTile
+                      key={d.role_id}
+                      roleName={d.role_name}
+                      holderName={holder?.full_name || null}
+                      avatarUrl={holder?.avatar_url || null}
+                      onClick={() =>
+                        setDrawerFor({
+                          assurance: null,
+                          roleName: d.role_name,
+                          roleId: d.role_id,
+                          fallbackHolderName: holder?.full_name || null,
+                          fallbackAvatarUrl: holder?.avatar_url || null,
+                        })
+                      }
+                    />
+                  );
+                })}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        )}
       </div>
+
+      {/* Drawer */}
+      <DisciplineStatementDrawer
+        open={!!drawerFor}
+        onOpenChange={(o) => { if (!o) setDrawerFor(null); }}
+        assurance={drawerFor?.assurance ?? null}
+        handoverPointId={handoverPointId}
+        projectId={vcrMeta?.projectId ?? undefined}
+        roleName={drawerFor?.roleName}
+        roleId={drawerFor?.roleId ?? null}
+        fallbackHolderName={drawerFor?.fallbackHolderName ?? null}
+        fallbackAvatarUrl={drawerFor?.fallbackAvatarUrl ?? null}
+      />
+
+      {/* Interdisciplinary summary modal */}
+      <InterdisciplinarySummaryModal
+        open={interModalOpen}
+        onOpenChange={setInterModalOpen}
+        vcrLabel={vcrLabel}
+        disciplineChips={disciplineChips}
+        isHydrocarbon={isHydrocarbon}
+        isSubmitting={isSubmitting}
+        onConfirm={async (summary) => {
+          try {
+            await submitAssurance({
+              handoverPointId,
+              disciplineRoleName: 'Interdisciplinary',
+              assuranceStatement: summary,
+              statementType: 'interdisciplinary',
+            });
+            toast({ title: 'Submitted', description: 'Interdisciplinary summary recorded.' });
+          } catch {
+            toast({ title: 'Error', description: 'Failed to submit statement.', variant: 'destructive' });
+          }
+        }}
+        onScheduleSofMeeting={() => setSofModalOpen(true)}
+      />
+
+      {/* Schedule SoF meeting modal */}
+      <ScheduleSofMeetingModal
+        open={sofModalOpen}
+        onOpenChange={setSofModalOpen}
+        handoverPointId={handoverPointId}
+        projectId={vcrMeta?.projectId ?? undefined}
+        vcrCode={vcrMeta?.vcrCode || vcrCode}
+        vcrName={vcrMeta?.vcrName}
+        projectPrefix={vcrMeta?.projectPrefix ?? undefined}
+      />
     </div>
   );
 };

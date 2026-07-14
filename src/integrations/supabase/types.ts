@@ -14157,6 +14157,71 @@ export type Database = {
           },
         ]
       }
+      vcr_key_activities: {
+        Row: {
+          activity_type: string
+          attendees: Json
+          completed_at: string | null
+          created_at: string
+          handover_point_id: string
+          id: string
+          label: string
+          location: string | null
+          notes: string | null
+          outlook_event_id: string | null
+          scheduled_by: string | null
+          scheduled_date: string | null
+          scheduled_end_date: string | null
+          status: string
+          task_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          activity_type: string
+          attendees?: Json
+          completed_at?: string | null
+          created_at?: string
+          handover_point_id: string
+          id?: string
+          label: string
+          location?: string | null
+          notes?: string | null
+          outlook_event_id?: string | null
+          scheduled_by?: string | null
+          scheduled_date?: string | null
+          scheduled_end_date?: string | null
+          status?: string
+          task_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          activity_type?: string
+          attendees?: Json
+          completed_at?: string | null
+          created_at?: string
+          handover_point_id?: string
+          id?: string
+          label?: string
+          location?: string | null
+          notes?: string | null
+          outlook_event_id?: string | null
+          scheduled_by?: string | null
+          scheduled_date?: string | null
+          scheduled_end_date?: string | null
+          status?: string
+          task_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vcr_key_activities_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_points"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vcr_plan_approval_events: {
         Row: {
           actor_id: string | null
@@ -15649,6 +15714,7 @@ export type Database = {
         Args: { p_handover_point_id: string }
         Returns: string[]
       }
+      vcr_hp_is_hydrocarbon: { Args: { p_hp: string }; Returns: boolean }
       vcr_item_decide: {
         Args: { p_decision: string; p_note?: string; p_prereq_id: string }
         Returns: Json
