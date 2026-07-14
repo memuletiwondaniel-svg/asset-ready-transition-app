@@ -14,6 +14,7 @@ import { VCRItemDetailSheet, type VCRItemBasic } from '@/components/widgets/VCRI
 import { useVcrBundleEnrichedItems, type VCRBundleEnrichedItem } from './useVcrBundleEnrichedItems';
 import { PanelGroup, PanelRow } from './MyVCRItemsPanel';
 import { shortVCRCode } from '@/components/widgets/p2a-wizard/steps/phases/vcrDisplayUtils';
+import { useProjectRoleHolders } from '@/hooks/useProjectRoleHolders';
 import type { VCRBundleTask } from '@/hooks/useUserVCRBundleTasks';
 
 /**
