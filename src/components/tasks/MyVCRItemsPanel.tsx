@@ -4,11 +4,10 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetDescription,
 } from '@/components/ui/sheet';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ExternalLink } from 'lucide-react';
+import { ChevronDown, ChevronRight, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { VCRItemDetailSheet, type VCRItemBasic } from '@/components/widgets/VCRItemDetailSheet';
