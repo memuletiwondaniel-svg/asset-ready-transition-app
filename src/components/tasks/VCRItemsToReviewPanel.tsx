@@ -89,20 +89,8 @@ export const VCRItemsToReviewPanel: React.FC<Props> = ({ bundle, open, onOpenCha
   const { data: items = [] } = useVcrBundleEnrichedItems(bundle, { forApprover: true });
   const [selected, setSelected] = useState<VCRItemBasic | null>(null);
 
-  // Resolve delivering-party role labels (e.g. "Process TA2 – Project") to the
-  // current holder person (e.g. "Anuarbek …"), mirroring VCRItemDetailSheet.
-  // Falls back to the role label when the resolver returns no holder.
-  const partyLabels = useMemo(() => {
-    const s = new Set<string>();
-    items.forEach((it) => { if (it.delivering_party_name) s.add(it.delivering_party_name); });
-    return Array.from(s);
-  }, [items]);
-  const { data: holdersByLabel = {} } = useProjectRoleHolders(projectId || undefined, partyLabels);
-  const resolveDeliverer = (label: string | null): string | null => {
-    if (!label) return null;
-    const holders = holdersByLabel[label];
-    return holders && holders.length > 0 ? holders[0].full_name : label;
-  };
+
+
 
   const groups = useMemo(() => {
     const buckets: Record<Group, VCRBundleEnrichedItem[]> = {
