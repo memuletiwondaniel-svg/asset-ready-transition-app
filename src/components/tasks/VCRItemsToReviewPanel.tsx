@@ -40,15 +40,18 @@ interface Props {
 
 type Group = 'awaitingYou' | 'withDelivering' | 'returned' | 'approved';
 
+// Mirrors approver_awaiting_items server-side definition exactly:
+// PENDING ledger AND prereq IN (READY_FOR_REVIEW, QUALIFICATION_REQUESTED).
 const isSubmitted = (s: VCRBundleEnrichedItem['status']): boolean =>
-  s === 'READY_FOR_REVIEW' || s === 'QUALIFICATION_REQUESTED' ||
-  s === 'ACCEPTED' || s === 'REJECTED' || s === 'QUALIFICATION_APPROVED';
+  s === 'READY_FOR_REVIEW' || s === 'QUALIFICATION_REQUESTED';
 
 const classify = (it: VCRBundleEnrichedItem): Group => {
   const l = it.ledger_status;
   if (l === 'ACCEPTED' || l === 'QUALIFIED') return 'approved';
   if (l === 'REJECTED') return 'returned';
-  // PENDING or null
+  // PENDING seat: prereq REJECTED means the ball is back with the delivering
+  // party — show under RETURNED, not awaiting.
+  if (it.status === 'REJECTED') return 'returned';
   if (isSubmitted(it.status)) return 'awaitingYou';
   return 'withDelivering';
 };
