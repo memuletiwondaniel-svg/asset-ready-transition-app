@@ -195,7 +195,7 @@ export const VCRItemsToReviewPanel: React.FC<Props> = ({ bundle, open, onOpenCha
                     key={it.prerequisite_id}
                     item={it}
                     right={chip('Review', 'amber')}
-                    secondary={it.delivering_party_name ? `Submitted by delivering party — ${it.delivering_party_name}` : null}
+                    secondary={it.delivering_party_name ? `Submitted by delivering party — ${resolveDeliverer(it.delivering_party_name)}` : null}
                     onClick={() => openItem(it)}
                   />
                 )}
