@@ -4,7 +4,6 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetDescription,
 } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ExternalLink } from 'lucide-react';
@@ -14,7 +13,6 @@ import { VCRItemDetailSheet, type VCRItemBasic } from '@/components/widgets/VCRI
 import { useVcrBundleEnrichedItems, type VCRBundleEnrichedItem } from './useVcrBundleEnrichedItems';
 import { PanelGroup, PanelRow } from './MyVCRItemsPanel';
 import { shortVCRCode } from '@/components/widgets/p2a-wizard/steps/phases/vcrDisplayUtils';
-import { useProjectRoleHolders } from '@/hooks/useProjectRoleHolders';
 import type { VCRBundleTask } from '@/hooks/useUserVCRBundleTasks';
 
 /**
@@ -91,20 +89,8 @@ export const VCRItemsToReviewPanel: React.FC<Props> = ({ bundle, open, onOpenCha
   const { data: items = [] } = useVcrBundleEnrichedItems(bundle, { forApprover: true });
   const [selected, setSelected] = useState<VCRItemBasic | null>(null);
 
-  // Resolve delivering-party role labels (e.g. "Process TA2 – Project") to the
-  // current holder person (e.g. "Anuarbek …"), mirroring VCRItemDetailSheet.
-  // Falls back to the role label when the resolver returns no holder.
-  const partyLabels = useMemo(() => {
-    const s = new Set<string>();
-    items.forEach((it) => { if (it.delivering_party_name) s.add(it.delivering_party_name); });
-    return Array.from(s);
-  }, [items]);
-  const { data: holdersByLabel = {} } = useProjectRoleHolders(projectId || undefined, partyLabels);
-  const resolveDeliverer = (label: string | null): string | null => {
-    if (!label) return null;
-    const holders = holdersByLabel[label];
-    return holders && holders.length > 0 ? holders[0].full_name : label;
-  };
+
+
 
   const groups = useMemo(() => {
     const buckets: Record<Group, VCRBundleEnrichedItem[]> = {
@@ -158,11 +144,8 @@ export const VCRItemsToReviewPanel: React.FC<Props> = ({ bundle, open, onOpenCha
             </div>
             <div>
               <SheetTitle className="text-[15px] leading-snug font-semibold">
-                Items to review
+                {vcrShortLabel} items
               </SheetTitle>
-              <SheetDescription className="text-xs text-muted-foreground">
-                Items in {vcrShortLabel} awaiting your approval
-              </SheetDescription>
             </div>
 
             <div className="mt-3">
@@ -177,9 +160,6 @@ export const VCRItemsToReviewPanel: React.FC<Props> = ({ bundle, open, onOpenCha
               <p className="text-[11px] text-muted-foreground mt-1.5">
                 {accepted} approved · {awaiting} awaiting your review · {rejected} returned
               </p>
-              {parties > 1 && (
-                <p className="text-[10px] text-muted-foreground/80 italic mt-0.5">From {parties} delivering parties</p>
-              )}
             </div>
           </SheetHeader>
 
@@ -188,49 +168,43 @@ export const VCRItemsToReviewPanel: React.FC<Props> = ({ bundle, open, onOpenCha
             <div className="p-5 space-y-5">
               <PanelGroup
                 title="AWAITING YOUR REVIEW"
-                caption="needs your decision"
                 items={groups.awaitingYou}
+                defaultOpen
                 render={(it: VCRBundleEnrichedItem) => (
                   <PanelRow
                     key={it.prerequisite_id}
                     item={it}
                     right={chip('Review', 'amber')}
-                    secondary={it.delivering_party_name ? `Submitted by delivering party — ${resolveDeliverer(it.delivering_party_name)}` : null}
                     onClick={() => openItem(it)}
                   />
                 )}
               />
               <PanelGroup
-                title="WITH DELIVERING PARTY"
-                caption="not yet submitted"
+                title="NOT YET SUBMITTED"
                 items={groups.withDelivering}
                 render={(it: VCRBundleEnrichedItem) => (
                   <PanelRow
                     key={it.prerequisite_id}
                     item={it}
                     right={chip('Awaiting', 'grey')}
-                    secondary={it.delivering_party_name ? `Being worked by ${resolveDeliverer(it.delivering_party_name)} — awaiting submission` : 'Awaiting delivering party'}
                     onClick={() => openItem(it)}
                   />
                 )}
               />
               <PanelGroup
                 title="RETURNED"
-                caption="sent back for rework"
                 items={groups.returned}
                 render={(it: VCRBundleEnrichedItem) => (
                   <PanelRow
                     key={it.prerequisite_id}
                     item={it}
                     right={chip('Returned', 'red')}
-                    secondary="You returned this — awaiting re-submission"
                     onClick={() => openItem(it)}
                   />
                 )}
               />
               <PanelGroup
                 title="APPROVED"
-                caption=""
                 items={groups.approved}
                 render={(it: VCRBundleEnrichedItem) => (
                   <PanelRow
