@@ -158,11 +158,8 @@ export const VCRItemsToReviewPanel: React.FC<Props> = ({ bundle, open, onOpenCha
             </div>
             <div>
               <SheetTitle className="text-[15px] leading-snug font-semibold">
-                Items to review
+                {vcrShortLabel} items
               </SheetTitle>
-              <SheetDescription className="text-xs text-muted-foreground">
-                Items in {vcrShortLabel} awaiting your approval
-              </SheetDescription>
             </div>
 
             <div className="mt-3">
@@ -177,9 +174,6 @@ export const VCRItemsToReviewPanel: React.FC<Props> = ({ bundle, open, onOpenCha
               <p className="text-[11px] text-muted-foreground mt-1.5">
                 {accepted} approved · {awaiting} awaiting your review · {rejected} returned
               </p>
-              {parties > 1 && (
-                <p className="text-[10px] text-muted-foreground/80 italic mt-0.5">From {parties} delivering parties</p>
-              )}
             </div>
           </SheetHeader>
 
@@ -188,49 +182,43 @@ export const VCRItemsToReviewPanel: React.FC<Props> = ({ bundle, open, onOpenCha
             <div className="p-5 space-y-5">
               <PanelGroup
                 title="AWAITING YOUR REVIEW"
-                caption="needs your decision"
                 items={groups.awaitingYou}
+                defaultOpen
                 render={(it: VCRBundleEnrichedItem) => (
                   <PanelRow
                     key={it.prerequisite_id}
                     item={it}
                     right={chip('Review', 'amber')}
-                    secondary={it.delivering_party_name ? `Submitted by delivering party — ${resolveDeliverer(it.delivering_party_name)}` : null}
                     onClick={() => openItem(it)}
                   />
                 )}
               />
               <PanelGroup
-                title="WITH DELIVERING PARTY"
-                caption="not yet submitted"
+                title="NOT YET SUBMITTED"
                 items={groups.withDelivering}
                 render={(it: VCRBundleEnrichedItem) => (
                   <PanelRow
                     key={it.prerequisite_id}
                     item={it}
                     right={chip('Awaiting', 'grey')}
-                    secondary={it.delivering_party_name ? `Being worked by ${resolveDeliverer(it.delivering_party_name)} — awaiting submission` : 'Awaiting delivering party'}
                     onClick={() => openItem(it)}
                   />
                 )}
               />
               <PanelGroup
                 title="RETURNED"
-                caption="sent back for rework"
                 items={groups.returned}
                 render={(it: VCRBundleEnrichedItem) => (
                   <PanelRow
                     key={it.prerequisite_id}
                     item={it}
                     right={chip('Returned', 'red')}
-                    secondary="You returned this — awaiting re-submission"
                     onClick={() => openItem(it)}
                   />
                 )}
               />
               <PanelGroup
                 title="APPROVED"
-                caption=""
                 items={groups.approved}
                 render={(it: VCRBundleEnrichedItem) => (
                   <PanelRow
