@@ -24,6 +24,7 @@ import { P2AWorkspaceOverlay } from '@/components/widgets/P2AWorkspaceOverlay';
 import { VCRExecutionPlanWizard } from '@/components/widgets/vcr-wizard/VCRExecutionPlanWizard';
 import { InterdisciplinaryTaskModal } from '@/components/widgets/InterdisciplinaryTaskModal';
 import { ScheduleSofMeetingModal } from '@/components/widgets/ScheduleSofMeetingModal';
+import { SchedulePacMeetingModal } from '@/components/widgets/SchedulePacMeetingModal';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -1125,6 +1126,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   }
   const [interTaskTarget, setInterTaskTarget] = useState<VcrTaskTarget | null>(null);
   const [sofTaskTarget, setSofTaskTarget] = useState<VcrTaskTarget | null>(null);
+  const [pacTaskTarget, setPacTaskTarget] = useState<VcrTaskTarget | null>(null);
 
   const handleOpenP2AWizard = useCallback((projectId: string, projectCode: string, openWorkspace?: boolean) => {
     setP2aTarget({ projectId, projectCode });
@@ -1240,6 +1242,20 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       if (meta?.action === 'schedule_sof_meeting' && meta?.handover_point_id) {
         console.log('[TaskKanbanBoard] handleTaskClick:branch', { branch: 'schedule_sof_meeting' });
         setSofTaskTarget({
+          taskId: task.userTask.id,
+          handoverPointId: meta.handover_point_id as string,
+          projectId: meta.project_id as string | undefined,
+          vcrCode: meta.vcr_code as string | undefined,
+          vcrName: meta.vcr_name as string | undefined,
+          projectPrefix: meta.project_prefix as string | undefined,
+        });
+        return;
+      }
+
+      // Schedule PAC Meeting task — open the PAC scheduler modal directly.
+      if (meta?.action === 'schedule_pac_meeting' && meta?.handover_point_id) {
+        console.log('[TaskKanbanBoard] handleTaskClick:branch', { branch: 'schedule_pac_meeting' });
+        setPacTaskTarget({
           taskId: task.userTask.id,
           handoverPointId: meta.handover_point_id as string,
           projectId: meta.project_id as string | undefined,
@@ -2057,6 +2073,20 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       )}
 
 
+
+      {/* Schedule PAC meeting task launcher */}
+      {pacTaskTarget && (
+        <SchedulePacMeetingModal
+          open={!!pacTaskTarget}
+          onOpenChange={(o) => { if (!o) setPacTaskTarget(null); }}
+          handoverPointId={pacTaskTarget.handoverPointId}
+          projectId={pacTaskTarget.projectId}
+          vcrCode={pacTaskTarget.vcrCode}
+          vcrName={pacTaskTarget.vcrName}
+          projectPrefix={pacTaskTarget.projectPrefix}
+          taskId={pacTaskTarget.taskId}
+        />
+      )}
 
     </>
     </ReviewerSummaryContext.Provider>

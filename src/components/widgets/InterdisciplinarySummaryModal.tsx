@@ -14,6 +14,7 @@ interface Props {
   isSubmitting: boolean;
   onConfirm: (summary: string) => Promise<void> | void;
   onScheduleSofMeeting?: () => void;
+  onSchedulePacMeeting?: () => void;
 }
 
 const MIN_CHARS = 30;
@@ -27,6 +28,7 @@ export const InterdisciplinarySummaryModal: React.FC<Props> = ({
   isSubmitting,
   onConfirm,
   onScheduleSofMeeting,
+  onSchedulePacMeeting,
 }) => {
   const [summary, setSummary] = useState('');
   const [stage, setStage] = useState<'edit' | 'confirmed'>('edit');
@@ -147,7 +149,35 @@ export const InterdisciplinarySummaryModal: React.FC<Props> = ({
               </div>
             )}
 
-            {!isHydrocarbon && (
+            {!isHydrocarbon && onSchedulePacMeeting && (
+              <div className="mt-4 rounded-lg border border-neutral-800 bg-neutral-900/60 p-4 text-left">
+                <div className="flex items-start gap-3">
+                  <Users className="h-4 w-4 text-neutral-300 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-white">Schedule the PAC meeting?</p>
+                    <p className="text-[11px] text-neutral-400 mt-0.5">
+                      Task is already in your list either way.
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center justify-end gap-2">
+                  <Button variant="ghost" onClick={() => handleClose(false)} className="text-neutral-300 hover:text-white hover:bg-neutral-800">
+                    Later
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      handleClose(false);
+                      onSchedulePacMeeting?.();
+                    }}
+                    className="bg-white text-neutral-900 hover:bg-neutral-200"
+                  >
+                    Schedule PAC meeting
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {!isHydrocarbon && !onSchedulePacMeeting && (
               <Button onClick={() => handleClose(false)} className="bg-white text-neutral-900 hover:bg-neutral-200">
                 Close
               </Button>

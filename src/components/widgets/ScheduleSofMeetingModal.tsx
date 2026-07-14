@@ -27,6 +27,9 @@ interface Props {
   vcrName?: string;
   projectPrefix?: string;
   taskId?: string;
+  /** 'sof' (default) → reads vcr_sof_approvers seats and writes activity_type=sof_meeting.
+   *  'pac' → reads vcr_pac_approvers seats and writes activity_type=pac_meeting. */
+  variant?: 'sof' | 'pac';
 }
 
 interface AdHocAttendee {
@@ -63,9 +66,15 @@ export const ScheduleSofMeetingModal: React.FC<Props> = ({
   vcrName,
   projectPrefix,
   taskId,
+  variant = 'sof',
 }) => {
   const { toast } = useToast();
   const label = `${vcrCode || 'VCR'}${vcrName ? ` (${vcrName})` : ''}`;
+  const isPac = variant === 'pac';
+  const meetingKind = isPac ? 'PAC' : 'SoF';
+  const seatTable = isPac ? 'vcr_pac_approvers' : 'vcr_sof_approvers';
+  const activityType = isPac ? 'pac_meeting' : 'sof_meeting';
+  const scheduleAction = isPac ? 'schedule_pac_meeting' : 'schedule_sof_meeting';
   const [subject, setSubject] = useState('');
   const [date, setDate] = useState<Date | undefined>(new Date(Date.now() + 24 * 60 * 60 * 1000));
   const [startTime, setStartTime] = useState('10:00');
@@ -79,11 +88,11 @@ export const ScheduleSofMeetingModal: React.FC<Props> = ({
 
   // Load SoF approver seats for attendees
   const { data: seats = [] } = useQuery({
-    queryKey: ['vcr-sof-approvers-seats', handoverPointId],
+    queryKey: ['vcr-approvers-seats', variant, handoverPointId],
     enabled: open && !!handoverPointId,
     queryFn: async () => {
       const { data } = await (supabase as any)
-        .from('vcr_sof_approvers')
+        .from(seatTable)
         .select('id, approver_role, approver_level, user_id, approver_name')
         .eq('handover_point_id', handoverPointId)
         .order('approver_level', { ascending: true });
@@ -97,15 +106,15 @@ export const ScheduleSofMeetingModal: React.FC<Props> = ({
 
   useEffect(() => {
     if (open) {
-      setSubject(`SoF Meeting: ${projectPrefix ? projectPrefix + ' ' : ''}${label} Startup`);
+      setSubject(`${meetingKind} Meeting: ${projectPrefix ? projectPrefix + ' ' : ''}${label} Startup`);
       const dateStr = date ? format(date, 'PPP') : 'TBD';
       setBody(
-        `Dear Colleagues,\n\nYou are invited to the Statement of Fitness (SoF) meeting for ${label}.\n\n` +
+        `Dear Colleagues,\n\nYou are invited to the ${isPac ? 'Provisional Acceptance Certificate (PAC)' : 'Statement of Fitness (SoF)'} meeting for ${label}.\n\n` +
           `Context: All discipline assurance statements and the interdisciplinary summary have been recorded. ` +
           `We will review readiness for start-up and complete SoF sign-off.\n\n` +
           `Date: ${dateStr}\nDuration: ${duration} minutes\n\n` +
           `VCR overview: ${window.location.origin}/vcr/${handoverPointId}\n` +
-          `SoF tab: ${window.location.origin}/vcr/${handoverPointId}?tab=sof\n\n` +
+          `${isPac ? 'PAC tab' : 'SoF tab'}: ${window.location.origin}/vcr/${handoverPointId}?tab=${isPac ? 'pac' : 'sof'}\n\n` +
           `Best regards,\nORSH ORA Team`,
       );
       setRemovedRoles(new Set());
@@ -208,7 +217,7 @@ export const ScheduleSofMeetingModal: React.FC<Props> = ({
         .from('user_tasks')
         .update({ status: 'completed', updated_at: new Date().toISOString() })
         .eq('type', 'task')
-        .filter('metadata->>action', 'eq', 'schedule_sof_meeting')
+        .filter('metadata->>action', 'eq', scheduleAction)
         .filter('metadata->>handover_point_id', 'eq', handoverPointId)
         .neq('status', 'completed');
     } else {
@@ -224,7 +233,7 @@ export const ScheduleSofMeetingModal: React.FC<Props> = ({
     const { data: userData } = await supabase.auth.getUser();
     await (supabase as any).from('vcr_key_activities').insert({
       handover_point_id: handoverPointId,
-      activity_type: 'sof_meeting',
+      activity_type: activityType,
       label: subject,
       status: 'scheduled',
       scheduled_date: start.toISOString(),
@@ -248,7 +257,7 @@ export const ScheduleSofMeetingModal: React.FC<Props> = ({
       setSaving(true);
       await persistMeeting();
       await completeTask();
-      toast({ title: 'Scheduled', description: 'SoF meeting saved.' });
+      toast({ title: 'Scheduled', description: `${meetingKind} meeting saved.` });
       onOpenChange(false);
     } catch (e: any) {
       toast({ title: 'Error', description: e?.message || 'Failed to save meeting', variant: 'destructive' });
@@ -282,10 +291,10 @@ export const ScheduleSofMeetingModal: React.FC<Props> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
-        <DialogTitle className="sr-only">Schedule SoF Meeting</DialogTitle>
+        <DialogTitle className="sr-only">{`Schedule ${meetingKind} Meeting`}</DialogTitle>
         <div>
           <p className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</p>
-          <h2 className="text-lg font-semibold text-foreground mt-0.5">Schedule SoF Meeting</h2>
+          <h2 className="text-lg font-semibold text-foreground mt-0.5">{`Schedule ${meetingKind} Meeting`}</h2>
         </div>
 
         <div className="space-y-4 mt-4">
@@ -298,7 +307,7 @@ export const ScheduleSofMeetingModal: React.FC<Props> = ({
             <label className="text-xs font-medium text-foreground">Required attendees</label>
             <div className="mt-1 rounded-md border border-border divide-y">
               {rows.length === 0 && (
-                <p className="p-3 text-xs text-muted-foreground italic">No SoF approver seats defined for this VCR.</p>
+                <p className="p-3 text-xs text-muted-foreground italic">{`No ${meetingKind} approver seats defined for this VCR.`}</p>
               )}
               {rows.map((pair, i) => (
                 <div key={i} className="grid grid-cols-1 sm:grid-cols-2 divide-x">
