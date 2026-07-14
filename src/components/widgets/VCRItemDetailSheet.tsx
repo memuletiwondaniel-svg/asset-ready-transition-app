@@ -1184,19 +1184,44 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
       accept: 'Accepted',
       return: 'Returned',
     };
-    const statusMap: Record<ConfirmKind, string> = {
-      mark_complete: 'READY_FOR_REVIEW',
-      raise_qualification: 'QUALIFICATION_REQUESTED',
-      accept: 'ACCEPTED',
-      return: 'IN_PROGRESS',
-    };
     try {
-      await updateStatus.mutateAsync({ status: statusMap[confirmKind] });
-      const tag = tagMap[confirmKind];
-      const body = note?.trim()
-        ? note.trim()
-        : `(${(tag || '').toLowerCase()})`;
-      await insertComment.mutateAsync({ body, action_tag: tag });
+      // Approver decisions route through the atomic RPC — ledger + comment in
+      // ONE transaction; recompute_vcr_prerequisite_from_approvals owns
+      // p2a_vcr_prerequisites.status and supersede_partner_ledger_rows handles
+      // shared-seat partner rows. The legacy dual-write (direct prereq status
+      // + separate vcr_item_comments insert) is retired for these actions and
+      // was the root cause of the OI-19 ledger/prereq divergence.
+      if (confirmKind === 'accept' || confirmKind === 'return' || confirmKind === 'raise_qualification') {
+        if (!item?.prerequisite_id) throw new Error('No prerequisite linked to this item');
+        const decision =
+          confirmKind === 'accept' ? 'ACCEPTED' :
+          confirmKind === 'return' ? 'REJECTED' : 'QUALIFIED';
+        const { error } = await (supabase as any).rpc('vcr_item_decide', {
+          p_prereq_id: item.prerequisite_id,
+          p_decision: decision,
+          p_note: note?.trim() || null,
+        });
+        if (error) throw error;
+        // Refresh every surface that reads the ledger, prereq, or bundles.
+        queryClient.invalidateQueries({ queryKey: ['vcr-prereq-detail'] });
+        queryClient.invalidateQueries({ queryKey: ['vcr-progress-data'] });
+        queryClient.invalidateQueries({ queryKey: ['vcr-prerequisites'] });
+        queryClient.invalidateQueries({ queryKey: ['vcr-category-items'] });
+        queryClient.invalidateQueries({ queryKey: ['my-vcr-item-tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['vcr-bundle-enriched'] });
+        queryClient.invalidateQueries({ queryKey: ['user-vcr-bundle-tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['vcr-bundle-approval-counts'] });
+        queryClient.invalidateQueries({ queryKey: ['my-prereq-approval', item.prerequisite_id] });
+        queryClient.invalidateQueries({ queryKey: commentsQueryKey });
+        queryClient.invalidateQueries({ queryKey: ['vcr-item-ledger-seat-status', item.prerequisite_id] });
+      } else {
+        // Delivering-side mark_complete stays on the legacy prereq-status path.
+        await updateStatus.mutateAsync({ status: 'READY_FOR_REVIEW' });
+        const tag = tagMap[confirmKind];
+        const body = note?.trim() ? note.trim() : `(${(tag || '').toLowerCase()})`;
+        await insertComment.mutateAsync({ body, action_tag: tag });
+      }
       setConfirmKind(null);
       onOpenChange(false);
       toast({ title: 'Done' });

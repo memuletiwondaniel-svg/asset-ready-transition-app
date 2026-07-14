@@ -15569,6 +15569,10 @@ export type Database = {
         Args: { p_handover_point_id: string }
         Returns: string[]
       }
+      vcr_item_decide: {
+        Args: { p_decision: string; p_note?: string; p_prereq_id: string }
+        Returns: Json
+      }
       vcr_plan_is_approved: { Args: { _point_id: string }; Returns: boolean }
       vcr_plan_live_snapshot: {
         Args: { p_handover_point_id: string }
