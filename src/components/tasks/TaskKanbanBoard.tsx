@@ -1539,7 +1539,9 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       const m = (u.bundleTask?.metadata || {}) as Record<string, any>;
       const total = Number(m.approver_total_items ?? u.bundleTask?.sub_items?.length ?? 0);
       const decided = Number(m.approver_decided_items ?? 0);
-      const awaiting = Math.max(0, total - decided);
+      const awaiting = m.approver_awaiting_items != null
+        ? Number(m.approver_awaiting_items)
+        : Math.max(0, total - decided);
       if (awaiting > 0 && decided > 0) buckets.in_progress.push(u);
       else if (awaiting > 0) buckets.needs.push(u);
       else buckets.waiting.push(u);
