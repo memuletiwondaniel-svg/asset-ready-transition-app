@@ -520,9 +520,9 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
         {/* PENDING section */}
         {pendingDisciplines.length > 0 && (
           <Collapsible className="mt-4">
-            <CollapsibleTrigger className="w-full flex items-center justify-between text-[11px] uppercase tracking-wide text-muted-foreground hover:text-foreground py-2">
+            <CollapsibleTrigger className="w-full flex items-center justify-between text-[11px] uppercase tracking-wide text-muted-foreground hover:text-foreground py-2 group">
               <span>Pending ({pendingDisciplines.length})</span>
-              <ChevronDown className="h-3.5 w-3.5 transition-transform ui-open:rotate-180" />
+              <ChevronDown className="h-3.5 w-3.5 transition-transform group-data-[state=open]:rotate-180" />
             </CollapsibleTrigger>
             <CollapsibleContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
