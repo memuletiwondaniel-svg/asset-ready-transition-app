@@ -27,6 +27,9 @@ interface Props {
   vcrName?: string;
   projectPrefix?: string;
   taskId?: string;
+  /** 'sof' (default) → reads vcr_sof_approvers seats and writes activity_type=sof_meeting.
+   *  'pac' → reads vcr_pac_approvers seats and writes activity_type=pac_meeting. */
+  variant?: 'sof' | 'pac';
 }
 
 interface AdHocAttendee {
