@@ -39,7 +39,8 @@ export const InterdisciplinaryTaskModal: React.FC<Props> = ({
   const { expectedDisciplines, submitAssurance, isSubmitting } = useVCRDisciplineAssurance(
     open ? handoverPointId : undefined,
   );
-  const { data: isHydrocarbon = false } = useVCRHydrocarbonStatus(open ? handoverPointId : undefined);
+  const { data: hcStatus } = useVCRHydrocarbonStatus(open ? handoverPointId : undefined);
+  const isHydrocarbon = !!hcStatus?.hasHydrocarbon;
 
   const vcrLabel = `${vcrCode || 'VCR'}${vcrName ? ` (${vcrName})` : ''}`;
 
