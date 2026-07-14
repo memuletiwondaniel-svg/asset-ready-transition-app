@@ -15137,6 +15137,10 @@ export type Database = {
         Args: { p_task_id: string }
         Returns: undefined
       }
+      _recompute_vcr_checklist_bundle_row: {
+        Args: { p_task_id: string }
+        Returns: undefined
+      }
       _vcr_build_snapshot_payload: {
         Args: { p_handover_point_id: string }
         Returns: Json
