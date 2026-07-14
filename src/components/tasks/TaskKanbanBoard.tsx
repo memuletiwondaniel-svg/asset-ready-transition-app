@@ -1222,6 +1222,35 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         return;
       }
 
+      // VCR Interdisciplinary Summary task — open the summary modal directly.
+      if (task.userTask.type === 'vcr_interdisciplinary_summary' && meta?.handover_point_id) {
+        console.log('[TaskKanbanBoard] handleTaskClick:branch', { branch: 'vcr_interdisciplinary_summary' });
+        setInterTaskTarget({
+          taskId: task.userTask.id,
+          handoverPointId: meta.handover_point_id as string,
+          projectId: meta.project_id as string | undefined,
+          vcrCode: meta.vcr_code as string | undefined,
+          vcrName: meta.vcr_name as string | undefined,
+          projectPrefix: meta.project_prefix as string | undefined,
+        });
+        return;
+      }
+
+      // Schedule SoF Meeting task — open the scheduler modal directly.
+      if (meta?.action === 'schedule_sof_meeting' && meta?.handover_point_id) {
+        console.log('[TaskKanbanBoard] handleTaskClick:branch', { branch: 'schedule_sof_meeting' });
+        setSofTaskTarget({
+          taskId: task.userTask.id,
+          handoverPointId: meta.handover_point_id as string,
+          projectId: meta.project_id as string | undefined,
+          vcrCode: meta.vcr_code as string | undefined,
+          vcrName: meta.vcr_name as string | undefined,
+          projectPrefix: meta.project_prefix as string | undefined,
+        });
+        return;
+      }
+
+
       const isOraActivity = !isReviewTask && task.userTask.type !== 'vcr_plan_resubmit' && (task.userTask.type === 'ora_activity' || meta?.action === 'complete_ora_activity' || meta?.action === 'create_p2a_plan' || meta?.action === 'create_vcr_delivery_plan' || meta?.ora_plan_activity_id);
       console.log('[TaskKanbanBoard] handleTaskClick:userTaskBranchCheck', {
         isReviewTask,
