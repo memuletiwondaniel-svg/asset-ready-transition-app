@@ -22,6 +22,8 @@ import { ORAActivityTaskSheet } from './ORAActivityTaskSheet';
 import { P2APlanCreationWizard } from '@/components/widgets/p2a-wizard/P2APlanCreationWizard';
 import { P2AWorkspaceOverlay } from '@/components/widgets/P2AWorkspaceOverlay';
 import { VCRExecutionPlanWizard } from '@/components/widgets/vcr-wizard/VCRExecutionPlanWizard';
+import { InterdisciplinaryTaskModal } from '@/components/widgets/InterdisciplinaryTaskModal';
+import { ScheduleSofMeetingModal } from '@/components/widgets/ScheduleSofMeetingModal';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -1112,6 +1114,18 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   const [showVCRWizard, setShowVCRWizard] = useState(false);
   const [vcrWizardTarget, setVcrWizardTarget] = useState<{ id: string; vcr_code: string; name: string; projectCode: string } | null>(null);
 
+  // VCR interdisciplinary / SoF meeting task launchers
+  interface VcrTaskTarget {
+    taskId: string;
+    handoverPointId: string;
+    projectId?: string;
+    vcrCode?: string;
+    vcrName?: string;
+    projectPrefix?: string;
+  }
+  const [interTaskTarget, setInterTaskTarget] = useState<VcrTaskTarget | null>(null);
+  const [sofTaskTarget, setSofTaskTarget] = useState<VcrTaskTarget | null>(null);
+
   const handleOpenP2AWizard = useCallback((projectId: string, projectCode: string, openWorkspace?: boolean) => {
     setP2aTarget({ projectId, projectCode });
     if (openWorkspace) {
@@ -1207,6 +1221,35 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         );
         return;
       }
+
+      // VCR Interdisciplinary Summary task — open the summary modal directly.
+      if (task.userTask.type === 'vcr_interdisciplinary_summary' && meta?.handover_point_id) {
+        console.log('[TaskKanbanBoard] handleTaskClick:branch', { branch: 'vcr_interdisciplinary_summary' });
+        setInterTaskTarget({
+          taskId: task.userTask.id,
+          handoverPointId: meta.handover_point_id as string,
+          projectId: meta.project_id as string | undefined,
+          vcrCode: meta.vcr_code as string | undefined,
+          vcrName: meta.vcr_name as string | undefined,
+          projectPrefix: meta.project_prefix as string | undefined,
+        });
+        return;
+      }
+
+      // Schedule SoF Meeting task — open the scheduler modal directly.
+      if (meta?.action === 'schedule_sof_meeting' && meta?.handover_point_id) {
+        console.log('[TaskKanbanBoard] handleTaskClick:branch', { branch: 'schedule_sof_meeting' });
+        setSofTaskTarget({
+          taskId: task.userTask.id,
+          handoverPointId: meta.handover_point_id as string,
+          projectId: meta.project_id as string | undefined,
+          vcrCode: meta.vcr_code as string | undefined,
+          vcrName: meta.vcr_name as string | undefined,
+          projectPrefix: meta.project_prefix as string | undefined,
+        });
+        return;
+      }
+
 
       const isOraActivity = !isReviewTask && task.userTask.type !== 'vcr_plan_resubmit' && (task.userTask.type === 'ora_activity' || meta?.action === 'complete_ora_activity' || meta?.action === 'create_p2a_plan' || meta?.action === 'create_vcr_delivery_plan' || meta?.ora_plan_activity_id);
       console.log('[TaskKanbanBoard] handleTaskClick:userTaskBranchCheck', {
@@ -1984,6 +2027,36 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         onConfirm={handleWithdrawConfirm}
         submitting={withdrawSubmitting}
       />
+
+      {/* VCR interdisciplinary summary task launcher */}
+      {interTaskTarget && (
+        <InterdisciplinaryTaskModal
+          open={!!interTaskTarget}
+          onOpenChange={(o) => { if (!o) setInterTaskTarget(null); }}
+          handoverPointId={interTaskTarget.handoverPointId}
+          projectId={interTaskTarget.projectId}
+          vcrCode={interTaskTarget.vcrCode}
+          vcrName={interTaskTarget.vcrName}
+          projectPrefix={interTaskTarget.projectPrefix}
+          taskId={interTaskTarget.taskId}
+        />
+      )}
+
+      {/* Schedule SoF meeting task launcher */}
+      {sofTaskTarget && (
+        <ScheduleSofMeetingModal
+          open={!!sofTaskTarget}
+          onOpenChange={(o) => { if (!o) setSofTaskTarget(null); }}
+          handoverPointId={sofTaskTarget.handoverPointId}
+          projectId={sofTaskTarget.projectId}
+          vcrCode={sofTaskTarget.vcrCode}
+          vcrName={sofTaskTarget.vcrName}
+          projectPrefix={sofTaskTarget.projectPrefix}
+          taskId={sofTaskTarget.taskId}
+        />
+      )}
+
+
 
     </>
     </ReviewerSummaryContext.Provider>

@@ -22,6 +22,7 @@ export interface RoleHolder {
   user_id: string;
   full_name: string;
   avatar_url: string | null;
+  email: string | null;
   source: 'override' | 'roster' | 'org';
 }
 
@@ -105,6 +106,7 @@ async function fetchHolders(
         user_id: uid,
         full_name: (row?.full_name as string) || label,
         avatar_url: (row?.avatar_url as string | undefined) ?? null,
+        email: (row?.email as string | undefined) ?? null,
         source,
       } as RoleHolder;
     }),

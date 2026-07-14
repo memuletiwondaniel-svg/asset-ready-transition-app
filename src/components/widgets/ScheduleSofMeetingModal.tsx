@@ -9,12 +9,14 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CalendarIcon, Plus, X } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { CalendarIcon, Plus, X, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { openInTeams } from '@/lib/outlook-protocol';
 import { useProjectRoleHolders } from '@/hooks/useProjectRoleHolders';
+import { useProfileUsers, ProfileUser } from '@/hooks/useProfileUsers';
 
 interface Props {
   open: boolean;
@@ -25,6 +27,15 @@ interface Props {
   vcrName?: string;
   projectPrefix?: string;
   taskId?: string;
+}
+
+interface AdHocAttendee {
+  key: string;
+  userId: string;
+  name: string;
+  email: string | null;
+  avatar: string | null;
+  role: string;
 }
 
 const DURATIONS = [
@@ -39,6 +50,9 @@ const resolveAvatarUrl = (avatarUrl: string | null | undefined): string | null =
   if (avatarUrl.startsWith('http')) return avatarUrl;
   return supabase.storage.from('user-avatars').getPublicUrl(avatarUrl).data.publicUrl;
 };
+
+const initialsOf = (name: string) =>
+  (name || '·').split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
 
 export const ScheduleSofMeetingModal: React.FC<Props> = ({
   open,
@@ -58,6 +72,9 @@ export const ScheduleSofMeetingModal: React.FC<Props> = ({
   const [duration, setDuration] = useState<number>(60);
   const [body, setBody] = useState('');
   const [removedRoles, setRemovedRoles] = useState<Set<string>>(new Set());
+  const [adHoc, setAdHoc] = useState<AdHocAttendee[]>([]);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [search, setSearch] = useState('');
   const [saving, setSaving] = useState(false);
 
   // Load SoF approver seats for attendees
@@ -76,6 +93,7 @@ export const ScheduleSofMeetingModal: React.FC<Props> = ({
 
   const roleLabels = useMemo(() => Array.from(new Set(seats.map((s) => s.approver_role))).filter(Boolean), [seats]);
   const { data: holdersByRole = {} } = useProjectRoleHolders(projectId, roleLabels);
+  const { data: profileUsers } = useProfileUsers();
 
   useEffect(() => {
     if (open) {
@@ -91,11 +109,13 @@ export const ScheduleSofMeetingModal: React.FC<Props> = ({
           `Best regards,\nORSH ORA Team`,
       );
       setRemovedRoles(new Set());
+      setAdHoc([]);
+      setSearch('');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  const attendees = useMemo(() => {
+  const seatAttendees = useMemo(() => {
     return seats
       .filter((s) => !removedRoles.has(s.id))
       .map((s) => {
@@ -107,13 +127,72 @@ export const ScheduleSofMeetingModal: React.FC<Props> = ({
           name: holder?.full_name || s.approver_name || 'Unassigned',
           avatar: resolveAvatarUrl(holder?.avatar_url) || null,
           userId: holder?.user_id || s.user_id,
+          email: holder?.email || null,
+          kind: 'seat' as const,
         };
       });
   }, [seats, holdersByRole, removedRoles]);
 
+  const adHocAttendees = useMemo(
+    () =>
+      adHoc.map((a) => ({
+        seatId: a.key,
+        role: a.role,
+        name: a.name,
+        avatar: a.avatar,
+        userId: a.userId,
+        email: a.email,
+        kind: 'adhoc' as const,
+      })),
+    [adHoc],
+  );
+
+  const attendees = useMemo(() => [...seatAttendees, ...adHocAttendees], [seatAttendees, adHocAttendees]);
+
   // pair into rows of two
   const rows: (typeof attendees)[] = [];
   for (let i = 0; i < attendees.length; i += 2) rows.push(attendees.slice(i, i + 2));
+
+  const existingIds = useMemo(() => {
+    const ids = new Set<string>();
+    attendees.forEach((a) => a.userId && ids.add(a.userId));
+    return ids;
+  }, [attendees]);
+
+  const filteredProfiles = useMemo(() => {
+    if (!profileUsers) return [] as ProfileUser[];
+    const s = search.toLowerCase();
+    return profileUsers.filter((u) => {
+      if (!s) return true;
+      return (
+        u.full_name?.toLowerCase().includes(s) ||
+        u.position?.toLowerCase().includes(s) ||
+        u.email?.toLowerCase().includes(s)
+      );
+    });
+  }, [profileUsers, search]);
+
+  const addAdHoc = (u: ProfileUser) => {
+    if (existingIds.has(u.user_id)) return;
+    setAdHoc((prev) => [
+      ...prev,
+      {
+        key: `adhoc-${u.user_id}-${Date.now()}`,
+        userId: u.user_id,
+        name: u.full_name,
+        email: u.email || null,
+        avatar: u.avatar_url || null,
+        role: u.position || u.role || 'Attendee',
+      },
+    ]);
+    setSearch('');
+    setPickerOpen(false);
+  };
+
+  const removeAttendee = (a: (typeof attendees)[number]) => {
+    if (a.kind === 'seat') setRemovedRoles((s) => new Set(s).add(a.seatId));
+    else setAdHoc((prev) => prev.filter((x) => x.key !== a.seatId));
+  };
 
   const buildStartEnd = () => {
     const [hh, mm] = startTime.split(':').map(Number);
@@ -125,7 +204,6 @@ export const ScheduleSofMeetingModal: React.FC<Props> = ({
 
   const completeTask = async () => {
     if (!taskId) {
-      // best-effort: mark by handover_point_id + action
       await (supabase as any)
         .from('user_tasks')
         .update({ status: 'completed', updated_at: new Date().toISOString() })
@@ -152,7 +230,13 @@ export const ScheduleSofMeetingModal: React.FC<Props> = ({
       scheduled_date: start.toISOString(),
       scheduled_end_date: end.toISOString(),
       notes: body,
-      attendees: attendees.map((a) => ({ role: a.role, name: a.name, user_id: a.userId })),
+      attendees: attendees.map((a) => ({
+        role: a.role,
+        name: a.name,
+        user_id: a.userId,
+        email: a.email,
+        kind: a.kind,
+      })),
       outlook_event_id: outlookEventId || null,
       scheduled_by: userData?.user?.id || null,
       task_id: taskId || null,
@@ -175,12 +259,16 @@ export const ScheduleSofMeetingModal: React.FC<Props> = ({
 
   const handleTeams = async () => {
     const { start, end } = buildStartEnd();
+    // Teams deep link needs real emails; skip attendees without resolvable email.
+    const deepLinkAttendees = attendees
+      .filter((a) => a.email && a.email.includes('@'))
+      .map((a) => ({ name: a.name, email: a.email as string }));
     openInTeams({
       title: subject,
       description: body,
       startDateTime: start.toISOString(),
       endDateTime: end.toISOString(),
-      attendees: attendees.map((a) => ({ name: a.name, email: '' })),
+      attendees: deepLinkAttendees,
     });
     try {
       await persistMeeting();
@@ -218,18 +306,19 @@ export const ScheduleSofMeetingModal: React.FC<Props> = ({
                     <div key={a.seatId} className="group flex items-center gap-2 p-2.5 relative">
                       <Avatar className="h-8 w-8">
                         {a.avatar && <AvatarImage src={a.avatar} />}
-                        <AvatarFallback className="text-[10px]">
-                          {(a.name || '·').split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
+                        <AvatarFallback className="text-[10px]">{initialsOf(a.name)}</AvatarFallback>
                       </Avatar>
                       <div className="min-w-0 flex-1">
                         <p className={cn('text-xs font-medium truncate', a.name === 'Unassigned' && 'text-muted-foreground italic')}>
                           {a.name}
                         </p>
-                        <p className="text-[10.5px] text-muted-foreground truncate">{a.role}</p>
+                        <p className="text-[10.5px] text-muted-foreground truncate">
+                          {a.role}
+                          {!a.email && <span className="ml-1 italic">(no email)</span>}
+                        </p>
                       </div>
                       <button
-                        onClick={() => setRemovedRoles((s) => new Set(s).add(a.seatId))}
+                        onClick={() => removeAttendee(a)}
                         className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground p-1"
                         aria-label="Remove"
                       >
@@ -239,9 +328,62 @@ export const ScheduleSofMeetingModal: React.FC<Props> = ({
                   ))}
                 </div>
               ))}
-              <button className="w-full text-left px-3 py-2 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5">
-                <Plus className="h-3.5 w-3.5" /> Add attendee
-              </button>
+              <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+                <PopoverTrigger asChild>
+                  <button className="w-full text-left px-3 py-2 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5">
+                    <Plus className="h-3.5 w-3.5" /> Add attendee
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-0" align="start">
+                  <div className="p-3 border-b">
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search by name, role, or email..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="pl-8"
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+                  <ScrollArea className="h-64">
+                    {filteredProfiles.length === 0 ? (
+                      <div className="p-4 text-center text-xs text-muted-foreground">
+                        {search ? 'No users found' : 'Type to search…'}
+                      </div>
+                    ) : (
+                      <div className="p-2 space-y-1">
+                        {filteredProfiles.slice(0, 50).map((u) => {
+                          const already = existingIds.has(u.user_id);
+                          return (
+                            <button
+                              key={u.user_id}
+                              disabled={already}
+                              onClick={() => addAdHoc(u)}
+                              className={cn(
+                                'w-full flex items-center gap-2 p-2 rounded-md text-left transition-colors',
+                                already ? 'opacity-50 cursor-default' : 'hover:bg-muted',
+                              )}
+                            >
+                              <Avatar className="h-7 w-7 shrink-0">
+                                <AvatarImage src={u.avatar_url} alt={u.full_name} />
+                                <AvatarFallback className="text-[10px]">{initialsOf(u.full_name)}</AvatarFallback>
+                              </Avatar>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-xs font-medium truncate">{u.full_name}</p>
+                                <p className="text-[10px] text-muted-foreground truncate">
+                                  {u.position || u.role || u.email || '—'}
+                                </p>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </ScrollArea>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
 

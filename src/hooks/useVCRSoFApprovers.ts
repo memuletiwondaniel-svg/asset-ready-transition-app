@@ -38,6 +38,10 @@ export const useVCRSoFApprovers = (handoverPointId: string | undefined) => {
 
   const sign = useMutation({
     mutationFn: async (args: { approverId: string; signature_data: string; comments?: string }) => {
+      // Signing this row triggers trg_vcr_sof_approvers_cascade, which
+      // (a) unlocks the next approver level and
+      // (b) stamps the handover point as SIGNED once every row is SIGNED.
+      // No client-side cascade needed anymore.
       const { data, error } = await client()
         .from('vcr_sof_approvers')
         .update({
@@ -50,24 +54,6 @@ export const useVCRSoFApprovers = (handoverPointId: string | undefined) => {
         .select()
         .single();
       if (error) throw error;
-
-      // If everyone has signed, mark the VCR's SoF as signed
-      if (handoverPointId) {
-        const { data: all } = await client()
-          .from('vcr_sof_approvers')
-          .select('status')
-          .eq('handover_point_id', handoverPointId);
-        const everyoneSigned = (all || []).every((a: any) => a.status === 'SIGNED');
-        if (everyoneSigned) {
-          await client()
-            .from('p2a_handover_points')
-            .update({
-              sof_signed_at: new Date().toISOString(),
-              status: 'SIGNED',
-            })
-            .eq('id', handoverPointId);
-        }
-      }
       return data;
     },
     onSuccess: () => {
