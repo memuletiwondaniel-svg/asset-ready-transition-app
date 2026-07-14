@@ -307,7 +307,7 @@ export const ScheduleSofMeetingModal: React.FC<Props> = ({
             <label className="text-xs font-medium text-foreground">Required attendees</label>
             <div className="mt-1 rounded-md border border-border divide-y">
               {rows.length === 0 && (
-                <p className="p-3 text-xs text-muted-foreground italic">No ${meetingKind} approver seats defined for this VCR.</p>
+                <p className="p-3 text-xs text-muted-foreground italic">{`No ${meetingKind} approver seats defined for this VCR.`}</p>
               )}
               {rows.map((pair, i) => (
                 <div key={i} className="grid grid-cols-1 sm:grid-cols-2 divide-x">
