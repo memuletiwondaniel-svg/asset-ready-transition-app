@@ -22,6 +22,8 @@ import { ORAActivityTaskSheet } from './ORAActivityTaskSheet';
 import { P2APlanCreationWizard } from '@/components/widgets/p2a-wizard/P2APlanCreationWizard';
 import { P2AWorkspaceOverlay } from '@/components/widgets/P2AWorkspaceOverlay';
 import { VCRExecutionPlanWizard } from '@/components/widgets/vcr-wizard/VCRExecutionPlanWizard';
+import { InterdisciplinaryTaskModal } from '@/components/widgets/InterdisciplinaryTaskModal';
+import { ScheduleSofMeetingModal } from '@/components/widgets/ScheduleSofMeetingModal';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -1111,6 +1113,18 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   const [p2aTarget, setP2aTarget] = useState({ projectId: '', projectCode: '' });
   const [showVCRWizard, setShowVCRWizard] = useState(false);
   const [vcrWizardTarget, setVcrWizardTarget] = useState<{ id: string; vcr_code: string; name: string; projectCode: string } | null>(null);
+
+  // VCR interdisciplinary / SoF meeting task launchers
+  interface VcrTaskTarget {
+    taskId: string;
+    handoverPointId: string;
+    projectId?: string;
+    vcrCode?: string;
+    vcrName?: string;
+    projectPrefix?: string;
+  }
+  const [interTaskTarget, setInterTaskTarget] = useState<VcrTaskTarget | null>(null);
+  const [sofTaskTarget, setSofTaskTarget] = useState<VcrTaskTarget | null>(null);
 
   const handleOpenP2AWizard = useCallback((projectId: string, projectCode: string, openWorkspace?: boolean) => {
     setP2aTarget({ projectId, projectCode });
