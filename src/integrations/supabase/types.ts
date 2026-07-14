@@ -14222,6 +14222,59 @@ export type Database = {
           },
         ]
       }
+      vcr_pac_approvers: {
+        Row: {
+          approver_level: number
+          approver_name: string | null
+          approver_role: string
+          comments: string | null
+          created_at: string
+          handover_point_id: string
+          id: string
+          signature_data: string | null
+          signed_at: string | null
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          approver_level: number
+          approver_name?: string | null
+          approver_role: string
+          comments?: string | null
+          created_at?: string
+          handover_point_id: string
+          id?: string
+          signature_data?: string | null
+          signed_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          approver_level?: number
+          approver_name?: string | null
+          approver_role?: string
+          comments?: string | null
+          created_at?: string
+          handover_point_id?: string
+          id?: string
+          signature_data?: string | null
+          signed_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vcr_pac_approvers_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_points"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vcr_plan_approval_events: {
         Row: {
           actor_id: string | null
@@ -14418,7 +14471,7 @@ export type Database = {
           signed_at: string | null
           status: string
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           approver_level: number
@@ -14432,7 +14485,7 @@ export type Database = {
           signed_at?: string | null
           status?: string
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           approver_level?: number
@@ -14446,7 +14499,7 @@ export type Database = {
           signed_at?: string | null
           status?: string
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -15648,6 +15701,8 @@ export type Database = {
           user_position: string
         }[]
       }
+      seed_vcr_pac_approvers: { Args: { p_hp: string }; Returns: undefined }
+      seed_vcr_sof_approvers: { Args: { p_hp: string }; Returns: undefined }
       set_user_region_role_holders: {
         Args: { p_region_ids: string[]; p_role_id: string; p_user_id: string }
         Returns: undefined
@@ -15713,6 +15768,15 @@ export type Database = {
       vcr_active_item_ids: {
         Args: { p_handover_point_id: string }
         Returns: string[]
+      }
+      vcr_cert_number: {
+        Args: {
+          p_project_number: string
+          p_project_prefix: string
+          p_type: string
+          p_vcr_code: string
+        }
+        Returns: string
       }
       vcr_hp_is_hydrocarbon: { Args: { p_hp: string }; Returns: boolean }
       vcr_item_decide: {
