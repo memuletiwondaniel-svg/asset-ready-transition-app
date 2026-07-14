@@ -93,7 +93,14 @@ export const VCRBundleKanbanCard: React.FC<Props> = ({ bundle, onClick, isChild 
     const decided  = Number(meta.approver_decided_items ?? 0);
     const accepted = Number(meta.approver_accepted_items ?? 0);
     const rejected = Number(meta.approver_rejected_items ?? 0);
-    const awaiting = Math.max(0, total - decided);
+    // Read the trigger-maintained field directly. It counts PENDING ledger
+    // rows whose prereq is READY_FOR_REVIEW / QUALIFICATION_REQUESTED, so it
+    // (correctly) excludes not-yet-submitted items and REJECTED prereqs —
+    // unlike the old `total - decided` derivation which over-reported both.
+    // Fallback to the derived value only if the counter is absent (older tasks).
+    const awaiting = meta.approver_awaiting_items != null
+      ? Number(meta.approver_awaiting_items)
+      : Math.max(0, total - decided);
     const parties  = Number(meta.delivering_parties_count ?? 0);
 
     const approvedPct = total > 0 ? (accepted / total) * 100 : 0;
