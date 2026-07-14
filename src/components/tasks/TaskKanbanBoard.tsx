@@ -2074,6 +2074,20 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
 
 
 
+      {/* Schedule PAC meeting task launcher */}
+      {pacTaskTarget && (
+        <SchedulePacMeetingModal
+          open={!!pacTaskTarget}
+          onOpenChange={(o) => { if (!o) setPacTaskTarget(null); }}
+          handoverPointId={pacTaskTarget.handoverPointId}
+          projectId={pacTaskTarget.projectId}
+          vcrCode={pacTaskTarget.vcrCode}
+          vcrName={pacTaskTarget.vcrName}
+          projectPrefix={pacTaskTarget.projectPrefix}
+          taskId={pacTaskTarget.taskId}
+        />
+      )}
+
     </>
     </ReviewerSummaryContext.Provider>
     </P2AApprovalContext.Provider>
