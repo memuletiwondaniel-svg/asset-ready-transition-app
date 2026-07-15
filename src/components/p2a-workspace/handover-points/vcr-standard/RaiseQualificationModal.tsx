@@ -30,7 +30,8 @@ interface Approver {
   full_name: string;
   role: string;
   avatar_url?: string;
-  role_id?: string | null;
+  /** Stable seat key derived from the base role name (suffix-stripped). */
+  seat_key: string;
   /** Asset-side B2B partner for this seat, when applicable. */
   partner?: {
     user_id: string;
@@ -38,9 +39,6 @@ interface Approver {
     avatar_url?: string;
     role: string;
   } | null;
-  /** Set true when the seat had no project-side holder and we fell back to
-   *  the asset-side holder as the face. Surfaced to the reviewer. */
-  fallbackAsset?: boolean;
 }
 
 interface Props {
@@ -54,6 +52,17 @@ interface Props {
 }
 
 const CUSTOM_ID = '__custom__';
+
+/** Strip " - Project" / " - Asset" (or en-/em-dash variants) from a role name. */
+const stripSideSuffix = (name: string): string =>
+  (name || '').replace(/\s*[-–—]\s*(Project|Asset)\s*$/i, '').trim();
+
+/** Returns 'project' | 'asset' | null based on the role name suffix. */
+const sideOfRole = (name: string): 'project' | 'asset' | null => {
+  const m = (name || '').match(/\s*[-–—]\s*(Project|Asset)\s*$/i);
+  return m ? (m[1].toLowerCase() as 'project' | 'asset') : null;
+};
+
 
 /** Resolve a profile avatar URL from either a full https URL or a
  *  user-avatars storage path. Mirrors the canonical VCR wizard resolver. */
@@ -69,7 +78,7 @@ const getInitials = (name?: string) =>
 export const RaiseQualificationModal: React.FC<Props> = ({
   open, onOpenChange, handoverPointId, vcrCode, vcrName, lockedPrerequisiteId, prereqs,
 }) => {
-  const [prereqId, setPrereqId] = useState<string>(lockedPrerequisiteId || prereqs[0]?.id || '');
+  const [prereqId, setPrereqId] = useState<string>(lockedPrerequisiteId || '');
   const [customTitle, setCustomTitle] = useState('');
   const [reason, setReason] = useState('');
   const [mitigation, setMitigation] = useState('');
@@ -87,7 +96,7 @@ export const RaiseQualificationModal: React.FC<Props> = ({
 
   useEffect(() => {
     if (open) {
-      setPrereqId(lockedPrerequisiteId || prereqs[0]?.id || '');
+      setPrereqId(lockedPrerequisiteId || '');
       setCustomTitle('');
       setReason(''); setMitigation(''); setFollowUp('');
       setTargetDate(new Date(Date.now() + 14 * 86400000));
@@ -120,12 +129,16 @@ export const RaiseQualificationModal: React.FC<Props> = ({
   });
 
   /**
-   * Fetch approver SEATS for the selected item:
-   * - Group vcr_prerequisite_approvals rows by approver_role_id (the "seat")
-   * - Resolve each user's profile + role name
-   * - Face = project-side holder (present in project_team_members for this role)
-   * - Partner = other holders (asset-side)
-   * - Falls back to first holder + flag if no project-side match found
+   * Fetch approver SEATS for the selected item.
+   *
+   * B2B pairing rule (Round 3): 'Elect TA2 - Project' and 'Elect TA2 - Asset'
+   * are DIFFERENT roles.id values, so grouping by approver_role_id never
+   * merges them. Instead we group by the BASE role name — the role.name with
+   * any trailing ' - Project' / ' - Asset' (or en-/em-dash variants) stripped.
+   *   - Face  = the row whose role name ends in 'Project'
+   *   - Partner (B2B) = the row whose role name ends in 'Asset'
+   *   - Suffix-less roles (e.g. 'Civil TA2') stay as single cards with no B2B chip.
+   * Only the Project-side face is submitted as a qualification approver.
    */
   const { data: defaultSeats } = useQuery({
     queryKey: ['prereq-seats', prereqId, projectId],
@@ -151,65 +164,48 @@ export const RaiseQualificationModal: React.FC<Props> = ({
       const pMap = new Map<string, any>((profs || []).map((p: any) => [p.user_id, p]));
       const rMap = new Map<string, string>((rls || []).map((r: any) => [r.id, r.name]));
 
-      // Project-side membership: (project_id, role_name) → set of user_ids
-      const roleNames = Array.from(rMap.values());
-      const { data: ptmRows } = roleNames.length
-        ? await c.from('project_team_members')
-            .select('user_id, role')
-            .eq('project_id', projectId)
-            .in('role', roleNames)
-        : { data: [] as any[] };
-      const projectSideByRole = new Map<string, Set<string>>();
-      for (const r of ptmRows || []) {
-        const set = projectSideByRole.get(r.role as string) || new Set<string>();
-        set.add(r.user_id as string);
-        projectSideByRole.set(r.role as string, set);
-      }
-
-      // Group approvals by role_id (the seat). Rows without a role_id become
-      // their own single-seat entries keyed by user_id so we never drop them.
-      const seats = new Map<string, { role_id: string | null; role_name: string; user_ids: string[] }>();
+      // Group rows by BASE role name (suffix-stripped). Rows without a
+      // role_id become their own single-seat entries keyed by user_id.
+      type Row = { user_id: string; role_name: string; side: 'project' | 'asset' | null };
+      const groups = new Map<string, { base: string; rows: Row[] }>();
       for (const r of list) {
-        const key = r.approver_role_id || `user:${r.approver_user_id}`;
-        const existing = seats.get(key);
-        if (existing) {
-          if (!existing.user_ids.includes(r.approver_user_id)) existing.user_ids.push(r.approver_user_id);
-        } else {
-          seats.set(key, {
-            role_id: r.approver_role_id,
-            role_name: r.approver_role_id ? (rMap.get(r.approver_role_id) || '') : '',
-            user_ids: [r.approver_user_id],
-          });
+        const role_name = r.approver_role_id ? (rMap.get(r.approver_role_id) || '') : '';
+        const base = stripSideSuffix(role_name) || `user:${r.approver_user_id}`;
+        const side = sideOfRole(role_name);
+        const g = groups.get(base) || { base, rows: [] };
+        // Dedupe rows within a base group by (user_id, side).
+        if (!g.rows.some(x => x.user_id === r.approver_user_id && x.side === side)) {
+          g.rows.push({ user_id: r.approver_user_id, role_name, side });
         }
+        groups.set(base, g);
       }
 
       const out: Approver[] = [];
-      for (const seat of seats.values()) {
-        const projectSet = projectSideByRole.get(seat.role_name) || new Set<string>();
-        const projectSide = seat.user_ids.find(u => projectSet.has(u));
-        const faceId = projectSide || seat.user_ids[0];
-        const partnerIds = seat.user_ids.filter(u => u !== faceId);
-        const face = pMap.get(faceId);
-        const partnerId = partnerIds[0];
-        const partner = partnerId ? pMap.get(partnerId) : null;
+      for (const g of groups.values()) {
+        const projectRow = g.rows.find(r => r.side === 'project');
+        const assetRow   = g.rows.find(r => r.side === 'asset');
+        const faceRow    = projectRow || assetRow || g.rows[0];
+        const partnerRow = projectRow && assetRow ? assetRow : null;
+        const face = pMap.get(faceRow.user_id);
+        const partner = partnerRow ? pMap.get(partnerRow.user_id) : null;
         out.push({
-          user_id: faceId,
+          user_id: faceRow.user_id,
           full_name: face?.full_name || 'Unknown',
-          role: seat.role_name,
+          role: faceRow.role_name,
           avatar_url: face?.avatar_url || undefined,
-          role_id: seat.role_id,
-          partner: partner ? {
-            user_id: partnerId,
+          seat_key: g.base,
+          partner: partner && partnerRow ? {
+            user_id: partnerRow.user_id,
             full_name: partner.full_name || 'Unknown',
             avatar_url: partner.avatar_url || undefined,
-            role: seat.role_name,
+            role: partnerRow.role_name,
           } : null,
-          fallbackAsset: !projectSide && !!partnerIds.length,
         });
       }
       return out;
     },
   });
+
 
   // Reset approvers when item changes (unless user manually edited)
   useEffect(() => {
@@ -235,6 +231,7 @@ export const RaiseQualificationModal: React.FC<Props> = ({
       full_name: p.full_name,
       role: p.role || p.position || '',
       avatar_url: p.avatar_url,
+      seat_key: `user:${p.user_id}`,
       partner: null,
     }]);
     setPickerOpen(false);
@@ -288,18 +285,20 @@ export const RaiseQualificationModal: React.FC<Props> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-3xl !z-modal-critical overflow-x-hidden"
+        className="max-w-3xl !z-modal-critical overflow-hidden p-0 gap-0 flex flex-col max-h-[85vh]"
         overlayClassName="!z-overlay-critical"
       >
-        <DialogHeader className="space-y-1">
+        <DialogHeader className="space-y-1 px-6 pt-6 pb-4 border-b shrink-0">
           <div className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             {eyebrow}
           </div>
-          <DialogTitle className="text-lg">Raise qualification</DialogTitle>
+          <DialogTitle className="text-lg">Raise Qualification</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-5 py-2 overflow-x-hidden">
+
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-6 py-4 space-y-5">
           {/* VCR item — searchable combobox */}
+
           <div className="space-y-1.5">
             <Label>VCR item <span className="text-red-600">*</span></Label>
             <Popover open={itemPickerOpen} onOpenChange={setItemPickerOpen}>
@@ -327,8 +326,9 @@ export const RaiseQualificationModal: React.FC<Props> = ({
                         <span className="text-xs truncate">{selectedPrereq.summary}</span>
                       </>
                     ) : (
-                      <span className="text-xs text-muted-foreground">Select item…</span>
+                      <span className="text-xs text-muted-foreground">Select a VCR item or raise a custom qualification…</span>
                     )}
+
                   </span>
                   <ChevronsUpDown className="h-4 w-4 opacity-50 shrink-0" />
                 </Button>
@@ -393,15 +393,27 @@ export const RaiseQualificationModal: React.FC<Props> = ({
           {/* Approvers — one card per seat, B2B toggle reveals partner */}
           <div className="space-y-2">
             <Label>Qualification approvers <span className="text-red-600">*</span></Label>
+            {approvers.length === 0 && !isCustom && !prereqId && (
+              <div className="rounded-md border border-dashed bg-muted/20 p-3 text-[11px] text-muted-foreground">
+                Approvers populate from the selected item.
+              </div>
+            )}
+            {approvers.length === 0 && (isCustom || (!!prereqId && !isCustom)) && (
+              <div className="rounded-md border border-dashed bg-muted/20 p-3 text-[11px] text-muted-foreground">
+                {isCustom
+                  ? 'No approvers yet — add one below.'
+                  : 'No approvers resolved for this item yet.'}
+              </div>
+            )}
             <TooltipProvider delayDuration={150}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {approvers.map(a => {
-                  const seatKey = a.role_id || a.user_id;
+                  const seatKey = a.seat_key || a.user_id;
                   const flipped = flippedSeats.has(seatKey);
                   const shown = flipped && a.partner ? a.partner : a;
                   return (
                     <div
-                      key={a.user_id}
+                      key={seatKey}
                       className="group relative flex items-center gap-2 rounded-md border bg-muted/30 p-2 min-w-0"
                     >
                       <Avatar className="h-9 w-9 shrink-0">
@@ -436,18 +448,6 @@ export const RaiseQualificationModal: React.FC<Props> = ({
                               </TooltipContent>
                             </Tooltip>
                           )}
-                          {a.fallbackAsset && (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-orange-100 text-orange-800 border border-orange-200 shrink-0 cursor-help">
-                                  Asset
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="text-xs max-w-[240px]">
-                                No Project-side holder for this seat — fell back to the Asset holder.
-                              </TooltipContent>
-                            </Tooltip>
-                          )}
                         </div>
                         <div className="text-[10px] text-muted-foreground truncate">
                           {shown.role || '—'}
@@ -466,6 +466,7 @@ export const RaiseQualificationModal: React.FC<Props> = ({
                 })}
               </div>
             </TooltipProvider>
+
             <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
               <PopoverTrigger asChild>
                 <button
@@ -576,21 +577,23 @@ export const RaiseQualificationModal: React.FC<Props> = ({
           </div>
         </div>
 
-        <div className="pt-2 pb-1 text-[11px] text-muted-foreground">
-          * required · Submit activates when required fields are filled
+        <div className="border-t bg-background shrink-0 px-6 py-3">
+          <DialogFooter className="flex-row items-center justify-between sm:justify-between gap-2 m-0">
+            <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => submit(true)} disabled={raise.isPending}>
+                Save as draft
+              </Button>
+              <Button onClick={() => submit(false)} disabled={!canSubmit || raise.isPending}>
+                Submit for approval
+              </Button>
+            </div>
+          </DialogFooter>
+          <div className="pt-2 text-[11px] text-muted-foreground">
+            * required · Submit activates when required fields are filled
+          </div>
         </div>
 
-        <DialogFooter className="flex-row items-center justify-between sm:justify-between">
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => submit(true)} disabled={raise.isPending}>
-              Save as draft
-            </Button>
-            <Button onClick={() => submit(false)} disabled={!canSubmit || raise.isPending}>
-              Submit for approval
-            </Button>
-          </div>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

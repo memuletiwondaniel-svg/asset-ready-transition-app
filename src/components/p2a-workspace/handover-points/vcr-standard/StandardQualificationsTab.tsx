@@ -99,8 +99,9 @@ export const StandardQualificationsTab: React.FC<Props> = ({ handoverPointId, vc
           </div>
         </div>
         <Button size="sm" onClick={() => setRaiseOpen(true)} className="h-8 text-[12px] gap-1.5">
-          <Plus className="h-3.5 w-3.5" /> Raise qualification
+          <Plus className="h-3.5 w-3.5" /> Raise Qualification
         </Button>
+
       </div>
 
       {isLoading && <div className="text-sm text-muted-foreground">Loading…</div>}
