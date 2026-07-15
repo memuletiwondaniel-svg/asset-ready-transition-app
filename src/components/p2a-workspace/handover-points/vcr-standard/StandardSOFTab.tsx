@@ -10,7 +10,7 @@ import { vcrCertNumber } from '@/lib/vcrCertNumber';
 import { useCurrentUserRole } from '@/hooks/useCurrentUserRole';
 import { ScheduleSofMeetingModal } from '@/components/widgets/ScheduleSofMeetingModal';
 
-interface Props { handoverPoint: P2AHandoverPoint; projectCode?: string }
+interface Props { handoverPoint: P2AHandoverPoint; projectCode?: string; onNavigateOverview?: () => void }
 
 /**
  * SoF tab — rendered only for hydrocarbon VCRs (guarded by caller).
