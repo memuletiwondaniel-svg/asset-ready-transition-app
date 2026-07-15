@@ -1127,6 +1127,13 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   const [interTaskTarget, setInterTaskTarget] = useState<VcrTaskTarget | null>(null);
   const [sofTaskTarget, setSofTaskTarget] = useState<VcrTaskTarget | null>(null);
   const [pacTaskTarget, setPacTaskTarget] = useState<VcrTaskTarget | null>(null);
+  const [qualTaskTarget, setQualTaskTarget] = useState<{
+    taskId: string;
+    handoverPointId: string;
+    qualificationId: string;
+    vcrCode?: string;
+    vcrName?: string;
+  } | null>(null);
 
   const handleOpenP2AWizard = useCallback((projectId: string, projectCode: string, openWorkspace?: boolean) => {
     setP2aTarget({ projectId, projectCode });
