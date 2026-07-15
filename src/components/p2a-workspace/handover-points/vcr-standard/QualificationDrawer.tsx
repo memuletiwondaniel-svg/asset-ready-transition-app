@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { useAuth } from '@/hooks/useAuth' ;
+import { supabase } from '@/integrations/supabase/client';
 import { useProfileUsers } from '@/hooks/useProfileUsers';
 import { formatVcrItemCode } from '@/lib/vcrItemCode';
 import { normalizeCategoryCode } from './standardStatus';
