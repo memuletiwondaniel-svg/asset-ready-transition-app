@@ -50,7 +50,8 @@ export const StandardPACTab: React.FC<Props> = ({ handoverPoint, projectCode }) 
           )}
         </div>
       )}
-      <div className={locked ? 'pointer-events-none opacity-90' : undefined} aria-disabled={locked}>
+      {/* Edit / Print always usable; per-row Sign is gated by ledger status. */}
+      <div aria-disabled={locked}>
         <PACCertificate
           certificateNumber={certNo}
           projectCode={projectPrefix}

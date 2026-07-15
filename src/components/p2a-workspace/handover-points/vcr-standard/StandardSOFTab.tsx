@@ -50,7 +50,8 @@ export const StandardSOFTab: React.FC<Props> = ({ handoverPoint, projectCode }) 
           </div>
         )
       )}
-      <div className={!allApproved ? 'pointer-events-none opacity-90' : undefined} aria-disabled={!allApproved}>
+      {/* Edit / Print always usable; per-row Sign is gated by ledger status. */}
+      <div aria-disabled={!allApproved}>
         <SOFCertificate
           certificateNumber={certNo}
           plantName={ctx?.plantName || ''}
