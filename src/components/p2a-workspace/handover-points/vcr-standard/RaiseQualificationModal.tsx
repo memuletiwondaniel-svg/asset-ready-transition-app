@@ -131,14 +131,18 @@ export const RaiseQualificationModal: React.FC<Props> = ({
   /**
    * Fetch approver SEATS for the selected item.
    *
-   * B2B pairing rule (Round 3): 'Elect TA2 - Project' and 'Elect TA2 - Asset'
-   * are DIFFERENT roles.id values, so grouping by approver_role_id never
-   * merges them. Instead we group by the BASE role name — the role.name with
-   * any trailing ' - Project' / ' - Asset' (or en-/em-dash variants) stripped.
-   *   - Face  = the row whose role name ends in 'Project'
-   *   - Partner (B2B) = the row whose role name ends in 'Asset'
-   *   - Suffix-less roles (e.g. 'Civil TA2') stay as single cards with no B2B chip.
-   * Only the Project-side face is submitted as a qualification approver.
+   * Governance canon (Round 3 correction): Asset-side TA2 roles ("… - Asset")
+   * MUST NOT appear in qualification approvals — not as faces, not as B2B
+   * partners, not as deciders. We therefore:
+   *   1. Drop every vcr_prerequisite_approvals row whose role name ends in
+   *      "- Asset" (dash / en-dash / em-dash tolerated).
+   *   2. Group the surviving rows by approver_role_id (a true seat is a
+   *      single role). Multiple holders of the SAME role_id become a B2B
+   *      pair (e.g. two Dep. Plant Director holders). No cross-role pairing.
+   *   3. For every dropped Asset row whose base name has no surviving
+   *      Project-side counterpart, emit an "Unassigned" placeholder seat so
+   *      the reviewer sees the missing discipline instead of us silently
+   *      substituting the Asset holder.
    */
   const { data: defaultSeats } = useQuery({
     queryKey: ['prereq-seats', prereqId, projectId],
@@ -164,47 +168,73 @@ export const RaiseQualificationModal: React.FC<Props> = ({
       const pMap = new Map<string, any>((profs || []).map((p: any) => [p.user_id, p]));
       const rMap = new Map<string, string>((rls || []).map((r: any) => [r.id, r.name]));
 
-      // Group rows by BASE role name (suffix-stripped). Rows without a
-      // role_id become their own single-seat entries keyed by user_id.
-      type Row = { user_id: string; role_name: string; side: 'project' | 'asset' | null };
-      const groups = new Map<string, { base: string; rows: Row[] }>();
+      // Partition rows by side.
+      const nonAsset: Array<{ user_id: string; role_id: string | null; role_name: string }> = [];
+      const assetBases = new Set<string>();
+      const projectBases = new Set<string>();
       for (const r of list) {
         const role_name = r.approver_role_id ? (rMap.get(r.approver_role_id) || '') : '';
-        const base = stripSideSuffix(role_name) || `user:${r.approver_user_id}`;
         const side = sideOfRole(role_name);
-        const g = groups.get(base) || { base, rows: [] };
-        // Dedupe rows within a base group by (user_id, side).
-        if (!g.rows.some(x => x.user_id === r.approver_user_id && x.side === side)) {
-          g.rows.push({ user_id: r.approver_user_id, role_name, side });
+        const base = stripSideSuffix(role_name);
+        if (side === 'asset') {
+          if (base) assetBases.add(base);
+          continue; // Asset rows are dropped from qualification approvals.
         }
-        groups.set(base, g);
+        if (side === 'project' && base) projectBases.add(base);
+        nonAsset.push({ user_id: r.approver_user_id, role_id: r.approver_role_id, role_name });
+      }
+
+      // Group surviving rows by role_id (a seat = a single role).
+      type Seat = { role_id: string | null; role_name: string; user_ids: string[] };
+      const seats = new Map<string, Seat>();
+      for (const r of nonAsset) {
+        const key = r.role_id || `user:${r.user_id}`;
+        const existing = seats.get(key);
+        if (existing) {
+          if (!existing.user_ids.includes(r.user_id)) existing.user_ids.push(r.user_id);
+        } else {
+          seats.set(key, { role_id: r.role_id, role_name: r.role_name, user_ids: [r.user_id] });
+        }
       }
 
       const out: Approver[] = [];
-      for (const g of groups.values()) {
-        const projectRow = g.rows.find(r => r.side === 'project');
-        const assetRow   = g.rows.find(r => r.side === 'asset');
-        const faceRow    = projectRow || assetRow || g.rows[0];
-        const partnerRow = projectRow && assetRow ? assetRow : null;
-        const face = pMap.get(faceRow.user_id);
-        const partner = partnerRow ? pMap.get(partnerRow.user_id) : null;
+      for (const seat of seats.values()) {
+        const faceId = seat.user_ids[0];
+        const partnerId = seat.user_ids[1];
+        const face = pMap.get(faceId);
+        const partner = partnerId ? pMap.get(partnerId) : null;
         out.push({
-          user_id: faceRow.user_id,
+          user_id: faceId,
           full_name: face?.full_name || 'Unknown',
-          role: faceRow.role_name,
+          role: seat.role_name,
           avatar_url: face?.avatar_url || undefined,
-          seat_key: g.base,
-          partner: partner && partnerRow ? {
-            user_id: partnerRow.user_id,
+          seat_key: seat.role_id || `user:${faceId}`,
+          partner: partner ? {
+            user_id: partnerId!,
             full_name: partner.full_name || 'Unknown',
             avatar_url: partner.avatar_url || undefined,
-            role: partnerRow.role_name,
+            role: seat.role_name,
           } : null,
+        });
+      }
+
+      // Unassigned placeholders: Asset-only bases with no Project counterpart.
+      for (const base of assetBases) {
+        if (projectBases.has(base)) continue;
+        out.push({
+          user_id: `__unassigned__:${base}`,
+          full_name: 'Unassigned',
+          role: `${base} – Project`,
+          avatar_url: undefined,
+          seat_key: `unassigned:${base}`,
+          partner: null,
+          unassigned: true,
         });
       }
       return out;
     },
   });
+
 
 
   // Reset approvers when item changes (unless user manually edited)
