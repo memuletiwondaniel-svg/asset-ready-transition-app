@@ -222,17 +222,15 @@ export const QualificationDrawer: React.FC<Props> = ({ qual, vcrCode, vcrName, t
                         </Avatar>
                         <div className="min-w-0 flex-1">
                           <div className="text-[11px] text-muted-foreground">
-                            {p?.full_name || '—'} · {format(new Date(cm.created_at), 'dd-MMM-yyyy')}
-                            {cm.action_tag && (
-                              <span className={cn('ml-1.5 rounded-full border px-1.5 py-0.5 text-[9px] font-bold uppercase', 
-                                cm.action_tag === 'approved' ? approverChipStyle('APPROVED') :
-                                cm.action_tag === 'rejected' ? approverChipStyle('REJECTED') :
-                                'bg-muted text-muted-foreground border-slate-200')}>
-                                {cm.action_tag}
-                              </span>
-                            )}
+                            <span className="font-medium text-foreground/80">{p?.full_name || 'System'}</span>
+                            {cm.action_tag === 'approved' && ' approved'}
+                            {cm.action_tag === 'rejected' && ' requested rework'}
+                            {cm.action_tag && cm.action_tag !== 'approved' && cm.action_tag !== 'rejected' && ` ${cm.action_tag}`}
+                            {!cm.action_tag && ' commented'}
+                            {' · '}
+                            {format(new Date(cm.created_at), 'dd-MMM-yyyy')}
                           </div>
-                          <div className="text-xs whitespace-pre-wrap">{cm.body}</div>
+                          <div className="text-xs whitespace-pre-wrap mt-0.5">{cm.body}</div>
                         </div>
                       </div>
                     );
