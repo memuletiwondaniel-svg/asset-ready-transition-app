@@ -67,7 +67,7 @@ export const QualificationDrawer: React.FC<Props> = ({ qual, vcrCode, vcrName, t
   React.useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setCurrentUid(data.user?.id));
   }, []);
-  const [comment, setComment] = useState('');
+  const detail = useQualificationDetail(qual?.id);
   const [rejectComment, setRejectComment] = useState('');
   const [showReject, setShowReject] = useState(false);
   const [activityOpen, setActivityOpen] = useState(true);
