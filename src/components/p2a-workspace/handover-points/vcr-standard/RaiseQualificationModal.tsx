@@ -449,18 +449,26 @@ export const RaiseQualificationModal: React.FC<Props> = ({
                   return (
                     <div
                       key={seatKey}
-                      className="group relative flex items-center gap-2 rounded-md border bg-muted/30 p-2 min-w-0"
+                      className={cn(
+                        'group relative flex items-center gap-2 rounded-md border p-2 min-w-0',
+                        a.unassigned ? 'border-dashed bg-muted/10' : 'bg-muted/30',
+                      )}
                     >
-                      <Avatar className="h-9 w-9 shrink-0">
+                      <Avatar className={cn('h-9 w-9 shrink-0', a.unassigned && 'opacity-60')}>
                         <AvatarImage src={resolveAvatarUrl(shown.avatar_url)} alt={shown.full_name} />
                         <AvatarFallback className="text-[10px]">
-                          {getInitials(shown.full_name)}
+                          {a.unassigned ? '—' : getInitials(shown.full_name)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 min-w-0">
-                          <span className="text-xs font-medium truncate">{shown.full_name}</span>
-                          {a.partner && (
+                          <span className={cn(
+                            'text-xs font-medium truncate',
+                            a.unassigned && 'italic text-muted-foreground',
+                          )}>
+                            {shown.full_name}
+                          </span>
+                          {a.partner && !a.unassigned && (
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <button
@@ -472,14 +480,14 @@ export const RaiseQualificationModal: React.FC<Props> = ({
                                       ? 'bg-amber-200 text-amber-900 border-amber-300'
                                       : 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200',
                                   )}
-                                  aria-label={`Toggle B2B partner ${a.partner.full_name}`}
+                                  aria-label={`Toggle shared-seat partner ${a.partner.full_name}`}
                                 >
                                   B2B
                                 </button>
                               </TooltipTrigger>
                               <TooltipContent side="top" className="text-xs max-w-[240px]">
-                                Back-to-back pair — click to reveal Asset-side partner {a.partner.full_name}.
-                                Only the Project-side holder is seeded as a qualification approver.
+                                Shared seat — click to reveal partner {a.partner.full_name}.
+                                Both holders are seeded as qualification approvers.
                               </TooltipContent>
                             </Tooltip>
                           )}
@@ -488,15 +496,18 @@ export const RaiseQualificationModal: React.FC<Props> = ({
                           {shown.role || '—'}
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => removeApprover(a.user_id)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity absolute top-1 right-1 rounded-full bg-background border p-0.5 hover:bg-red-50 hover:text-red-600"
-                        aria-label={`Remove ${a.full_name}`}
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
+                      {!a.unassigned && (
+                        <button
+                          type="button"
+                          onClick={() => removeApprover(a.user_id)}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity absolute top-1 right-1 rounded-full bg-background border p-0.5 hover:bg-red-50 hover:text-red-600"
+                          aria-label={`Remove ${a.full_name}`}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      )}
                     </div>
+
                   );
                 })}
               </div>
