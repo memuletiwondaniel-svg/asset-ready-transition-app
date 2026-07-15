@@ -15835,6 +15835,10 @@ export type Database = {
         Args: { _prereq_id: string; _user_id: string }
         Returns: boolean
       }
+      is_project_snr_ora: {
+        Args: { _project_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_vcr_item_approver_ledger: {
         Args: {
           _handover_point_id: string
@@ -16043,6 +16047,14 @@ export type Database = {
         Returns: string
       }
       vcr_short_label: { Args: { p_vcr_code: string }; Returns: string }
+      wh_fanout_review_tasks: {
+        Args: { _itp_activity_id: string }
+        Returns: undefined
+      }
+      wh_restamp_bundles_for_point: {
+        Args: { _point_id: string }
+        Returns: undefined
+      }
       withdraw_vcr_plan_approval: {
         Args: { p_approver_row_id: string; p_reason: string }
         Returns: Json
