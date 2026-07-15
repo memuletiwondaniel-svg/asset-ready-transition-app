@@ -26,6 +26,7 @@ import { InterdisciplinaryTaskModal } from '@/components/widgets/Interdisciplina
 import { ScheduleSofMeetingModal } from '@/components/widgets/ScheduleSofMeetingModal';
 import { SchedulePacMeetingModal } from '@/components/widgets/SchedulePacMeetingModal';
 import { QualificationReviewLauncher } from './QualificationReviewLauncher';
+import { WitnessHoldTaskLauncher } from './WitnessHoldTaskLauncher';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
