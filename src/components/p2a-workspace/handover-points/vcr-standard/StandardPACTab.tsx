@@ -56,9 +56,17 @@ export const StandardPACTab: React.FC<Props> = ({ handoverPoint, projectCode, on
           certificateNumber={certNo}
           projectCode={projectPrefix}
           projectName={ctx?.projectName || ''}
+          projectDisplay={
+            projectPrefix && ctx?.projectName
+              ? `${projectPrefix} - ${ctx.projectName}`
+              : (projectPrefix || ctx?.projectName || '')
+          }
+          plantName={ctx?.plantName || ''}
+          scope={handoverPoint.description || handoverPoint.name}
           facilityName={handoverPoint.name}
           handoverPointId={handoverPoint.id}
           vcrCode={handoverPoint.vcr_code}
+          onNavigateVcrOverview={onNavigateOverview}
         />
       </div>
       <SchedulePacMeetingModal
