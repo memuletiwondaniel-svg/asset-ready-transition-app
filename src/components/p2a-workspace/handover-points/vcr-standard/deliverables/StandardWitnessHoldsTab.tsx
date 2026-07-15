@@ -1,145 +1,107 @@
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import React, { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { P2AHandoverPoint } from '../../../hooks/useP2AHandoverPoints';
-import { DeliverableList, DeliverableRow, EmptyDeliverable, ChipTone } from './DeliverableRow';
 import {
-  DeliverableDetailShell,
-  Section,
-  FieldGrid,
-  LabeledField,
-  InlineChip,
-} from '../../shared/deliverableDrawer';
+  DeliverableList,
+  DeliverableRow,
+  EmptyDeliverable,
+  ChipTone,
+} from './DeliverableRow';
+import {
+  useWHPoints,
+  WHPoint,
+  WH_STATUS_PRESENTATION,
+  sortByStatusBucket,
+  typeLabel,
+} from './useWHPoints';
+import { WitnessHoldDrawer } from './WitnessHoldDrawer';
+import { AddWitnessHoldPointModal } from '@/components/widgets/vcr-wizard/steps/witness-hold/AddWitnessHoldPointModal';
 
-interface ITPRow {
-  id: string;
-  activity_name: string;
-  inspection_type: 'WITNESS' | 'HOLD' | string;
-  notes: string | null;
-  system_id: string | null;
-}
+/**
+ * FE-1: Witness & Hold tab on the VCR handover point.
+ * Bucket order: REWORK_REQUESTED → UNDER_REVIEW → NOT_STARTED → SCHEDULED → COMPLETED.
+ * Sentence-case status pills, real system label (system_id · name), no uuid subtext.
+ */
+export const StandardWitnessHoldsTab: React.FC<{ handoverPoint: P2AHandoverPoint }> = ({
+  handoverPoint,
+}) => {
+  const { data, isLoading } = useWHPoints(handoverPoint.id);
+  const [selected, setSelected] = useState<WHPoint | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
-interface WHMeta {
-  witness_party?: string;
-  status?: string;
-  planned_date?: string;
-  completed_date?: string;
-  system_name?: string;
-}
+  const points = data?.points ?? [];
+  const projectId = data?.projectId ?? null;
 
-const parseMeta = (notes: string | null): WHMeta => {
-  if (!notes) return {};
-  try { return JSON.parse(notes); } catch { return { status: notes }; }
-};
+  const sorted = useMemo(() => [...points].sort(sortByStatusBucket), [points]);
 
-const statusTone = (status?: string): ChipTone => {
-  const s = (status || '').toLowerCase();
-  if (s.includes('complete')) return 'emerald';
-  if (s.includes('progress')) return 'blue';
-  if (s.includes('schedul')) return 'amber';
-  return 'slate';
-};
+  if (isLoading) {
+    return (
+      <div className="p-6 text-sm text-muted-foreground">
+        Loading witness &amp; hold points…
+      </div>
+    );
+  }
 
-const typeTone = (type: string): ChipTone => (type === 'HOLD' ? 'red' : 'blue');
-
-export const StandardWitnessHoldsTab: React.FC<{ handoverPoint: P2AHandoverPoint }> = ({ handoverPoint }) => {
-  const { data, isLoading } = useQuery({
-    queryKey: ['vcr-itp-activities', handoverPoint.id],
-    enabled: !!handoverPoint.id,
-    queryFn: async (): Promise<ITPRow[]> => {
-      const { data: rows, error } = await (supabase as any)
-        .from('p2a_itp_activities')
-        .select('id, activity_name, inspection_type, notes, system_id')
-        .eq('handover_point_id', handoverPoint.id)
-        .order('display_order');
-      if (error) throw error;
-      return rows || [];
-    },
-  });
-
-  const [selected, setSelected] = useState<ITPRow | null>(null);
-
-  if (isLoading) return <div className="p-6 text-sm text-muted-foreground">Loading witness &amp; hold points…</div>;
-  const rows = data || [];
-  if (!rows.length)
+  if (!sorted.length) {
     return (
       <EmptyDeliverable
         label="No witness or hold points recorded yet."
-        hint="Populates from OWL 3.1 (INT-1) once outstanding-work integration goes live."
+        hint="Add points from the VCR plan Inspection &amp; Test Plan step."
       />
     );
+  }
 
   return (
     <>
       <DeliverableList>
-        {rows.map((r) => {
-          const m = parseMeta(r.notes);
-          const status = m.status || (r.inspection_type === 'HOLD' ? 'Pending' : 'Scheduled');
+        {sorted.map((p) => {
+          const pres = WH_STATUS_PRESENTATION[p.status];
+          const contextParts = [
+            typeLabel(p.inspection_type),
+            p.system ? `${p.system.system_id} · ${p.system.name}` : null,
+          ].filter(Boolean);
           return (
             <DeliverableRow
-              key={r.id}
-              name={r.activity_name}
-              context={`${r.inspection_type === 'HOLD' ? 'Hold point' : 'Witness point'} · ${m.witness_party || '—'}`}
-              chipLabel={status}
-              chipTone={statusTone(status)}
-              onClick={() => setSelected(r)}
+              key={p.id}
+              name={p.activity_name}
+              context={contextParts.join(' · ')}
+              chipLabel={pres.label}
+              chipTone={pres.tone as ChipTone}
+              onClick={() => setSelected(p)}
             />
           );
         })}
       </DeliverableList>
-      {selected && (() => {
-        const m = parseMeta(selected.notes);
-        const status = m.status || (selected.inspection_type === 'HOLD' ? 'Pending' : 'Scheduled');
-        const typeLabel = selected.inspection_type === 'HOLD' ? 'Hold' : 'Witness';
-        return (
-          <DeliverableDetailShell
-            open={!!selected}
-            onOpenChange={(o) => !o && setSelected(null)}
-            kind={`${typeLabel} point`}
-            title={selected.activity_name}
-            subtitle={m.system_name || selected.system_id || null}
-            chipLabel={status}
-            chipTone={statusTone(status)}
-          >
-            <Section>
-              <FieldGrid>
-                <LabeledField
-                  label="System"
-                  value={m.system_name || selected.system_id || null}
-                />
-                <LabeledField label="Activity" value={selected.activity_name} />
-                <LabeledField
-                  label="Type"
-                  value={<InlineChip tone={typeTone(selected.inspection_type)}>{typeLabel}</InlineChip>}
-                />
-                <LabeledField
-                  label="Status"
-                  value={<InlineChip tone={statusTone(status)}>{status}</InlineChip>}
-                />
-                <LabeledField label="Witness party" value={m.witness_party || null} full />
-                <LabeledField
-                  label={m.completed_date ? 'Completed' : 'Planned'}
-                  value={m.completed_date || m.planned_date || null}
-                />
-              </FieldGrid>
-            </Section>
-            {(() => {
-              // Notes may be plain string when meta parse fell through
-              const rawNotes = (() => {
-                if (!selected.notes) return null;
-                try { JSON.parse(selected.notes); return null; } catch { return selected.notes; }
-              })();
-              return rawNotes ? (
-                <Section title="Notes">
-                  <div className="text-[12.5px] text-foreground leading-relaxed whitespace-pre-wrap">
-                    {rawNotes}
-                  </div>
-                </Section>
-              ) : null;
-            })()}
-          </DeliverableDetailShell>
-        );
-      })()}
+
+      <WitnessHoldDrawer
+        point={selected}
+        vcrCode={handoverPoint.vcr_code}
+        vcrName={handoverPoint.name}
+        projectId={projectId}
+        open={!!selected}
+        onOpenChange={(o) => !o && setSelected(null)}
+        onSchedule={() =>
+          toast.info('Schedule modal ships in FE-2.', { description: 'Coming next sub-turn.' })
+        }
+        onComplete={() =>
+          toast.info('Complete modal ships in FE-2.', { description: 'Coming next sub-turn.' })
+        }
+        onReview={() =>
+          toast.info('Review & Approve modal ships in FE-2.', { description: 'Coming next sub-turn.' })
+        }
+        onEditParties={(p) => setEditingId(p.id)}
+      />
+
+      {editingId && (
+        <AddWitnessHoldPointModal
+          vcrId={handoverPoint.id}
+          open={!!editingId}
+          onOpenChange={(o) => !o && setEditingId(null)}
+          editingActivityId={editingId}
+          onUpdated={() => setEditingId(null)}
+          onClose={() => setEditingId(null)}
+        />
+      )}
     </>
   );
 };
