@@ -231,6 +231,7 @@ export const RaiseQualificationModal: React.FC<Props> = ({
       full_name: p.full_name,
       role: p.role || p.position || '',
       avatar_url: p.avatar_url,
+      seat_key: `user:${p.user_id}`,
       partner: null,
     }]);
     setPickerOpen(false);
