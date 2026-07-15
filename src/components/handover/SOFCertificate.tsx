@@ -50,6 +50,12 @@ interface SOFCertificateProps {
   approvers?: SOFApprover[];
   /** VCR only: when supplied, approver blocks resolve from vcr_sof_approvers. */
   handoverPointId?: string;
+  /** VCR only: pre-composed "DP-300 - HM Additional Compressors". Falls back to projectName. */
+  projectDisplay?: string;
+  /** VCR only: plain-text scope block (sourced from p2a_handover_points.description). */
+  scope?: string;
+  /** VCR only: in-app navigation to the VCR Overview tab (click on Ref link). */
+  onNavigateVcrOverview?: () => void;
 }
 
 const SOFCertificate: React.FC<SOFCertificateProps> = ({
@@ -63,6 +69,9 @@ const SOFCertificate: React.FC<SOFCertificateProps> = ({
   sourceType = "PSSR",
   approvers: approversProp,
   handoverPointId,
+  projectDisplay,
+  scope,
+  onNavigateVcrOverview,
 }) => {
   // Live approvers roster (VCR path): mirrors vcr_sof_approvers seat order.
   // Uses the shared hook so we get the same `sign` mutation the PAC cert has.
