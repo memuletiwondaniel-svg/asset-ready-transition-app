@@ -18,7 +18,7 @@ interface Props { handoverPoint: P2AHandoverPoint; projectCode?: string; onNavig
  * after all VCR items closed via the discipline-assurance trigger).
  * The Snr ORA Engr sees a "Schedule PAC meeting" CTA once unlocked.
  */
-export const StandardPACTab: React.FC<Props> = ({ handoverPoint, projectCode }) => {
+export const StandardPACTab: React.FC<Props> = ({ handoverPoint, projectCode, onNavigateOverview }) => {
   const { data: pacRows = [] } = useVCRPACApprovers(handoverPoint.id);
   const { data: ctx } = useVCRCertContext(handoverPoint.handover_plan_id);
   const { data: currentUser } = useCurrentUserRole();
