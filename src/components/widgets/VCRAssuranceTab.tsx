@@ -440,12 +440,8 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
   const effectiveTotalCount = effectiveExpectedDisciplines.length;
   const allDisciplinesSubmitted = effectiveTotalCount > 0 && effectiveSubmittedCount === effectiveTotalCount;
 
-  // Resolve pending-discipline holders via the plural resolver pattern
-  const pendingRoleLabels = useMemo(
-    () => Array.from(new Set(pendingDisciplines.map(d => d.role_name))),
-    [pendingDisciplines],
-  );
-  const { data: pendingHolders = {} } = useProjectRoleHolders(vcrMeta?.projectId ?? undefined, pendingRoleLabels);
+  // pendingRoleLabels + pendingHolders are hoisted above the isLoading early return.
+
 
   const vcrLabel = `${vcrMeta?.vcrCode || vcrCode || 'VCR'}${vcrMeta?.vcrName ? ` (${vcrMeta.vcrName})` : ''}`;
   const isHydrocarbon = !!vcrMeta?.isHydrocarbon;
