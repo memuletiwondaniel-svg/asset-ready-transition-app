@@ -132,106 +132,114 @@ export const RaiseQualificationModal: React.FC<Props> = ({
   });
 
   /**
-   * Fetch approver SEATS for the selected item.
+   * Fetch approver SEATS for the selected item — sourced from the CATALOG.
    *
-   * Governance canon (Round 3 correction): Asset-side TA2 roles ("… - Asset")
-   * MUST NOT appear in qualification approvals — not as faces, not as B2B
-   * partners, not as deciders. We therefore:
-   *   1. Drop every vcr_prerequisite_approvals row whose role name ends in
-   *      "- Asset" (dash / en-dash / em-dash tolerated).
-   *   2. Group the surviving rows by approver_role_id (a true seat is a
-   *      single role). Multiple holders of the SAME role_id become a B2B
-   *      pair (e.g. two Dep. Plant Director holders). No cross-role pairing.
-   *   3. For every dropped Asset row whose base name has no surviving
-   *      Project-side counterpart, emit an "Unassigned" placeholder seat so
-   *      the reviewer sees the missing discipline instead of us silently
-   *      substituting the Asset holder.
+   * Governance canon: the standardized VCR items catalog
+   * (`vcr_items.approving_party_role_ids`, optionally overridden per HP via
+   * `p2a_vcr_item_overrides`) is the single source of truth for who approves.
+   * We must NOT read `vcr_prerequisite_approvals` for defaults — that ledger
+   * is a fan-out artefact and can contain historical rows on terminal prereqs
+   * (ACCEPTED / QUALIFICATION_APPROVED / NA) that predate later catalog
+   * edits. Deriving from the ledger silently narrows or widens the seat set
+   * relative to the current catalog.
+   *
+   * Pipeline (mirrors `public.reconcile_vcr_approvals`):
+   *   1. prereq → vcr_item_id
+   *   2. role_ids := override_for(hp, item) ?? vcr_items.approving_party_role_ids
+   *   3. drop every role whose name ends "- Asset" (Asset-side is excluded
+   *      from qualification approvals — canon).
+   *   4. resolve each surviving role to its Project-side holder(s) via
+   *      `resolve_project_role_users(project_id, role_name)` — same resolver
+   *      the reconcile fan-out uses (PTM → scoped roster → org holders).
+   *   5. group by role_id: 1 holder → single-face seat; 2+ holders on the
+   *      SAME role → face + B2B partner; 0 holders → "Unassigned" placeholder.
    */
   const { data: defaultSeats } = useQuery({
-    queryKey: ['prereq-seats', prereqId, projectId],
+    queryKey: ['prereq-seats-catalog', prereqId, projectId, handoverPointId],
     enabled: !isCustom && !!prereqId && !!projectId && open,
     queryFn: async (): Promise<Approver[]> => {
       const c = supabase as any;
-      const { data: rows } = await c
-        .from('vcr_prerequisite_approvals')
-        .select('approver_user_id, approver_role_id')
-        .eq('prerequisite_id', prereqId);
-      const list = (rows || []) as Array<{ approver_user_id: string; approver_role_id: string | null }>;
-      if (!list.length) return [];
 
-      const userIds = Array.from(new Set(list.map(r => r.approver_user_id).filter(Boolean)));
-      const roleIds = Array.from(new Set(list.map(r => r.approver_role_id).filter(Boolean) as string[]));
+      // 1. prereq → vcr_item_id
+      const { data: prereqRow } = await c
+        .from('p2a_vcr_prerequisites')
+        .select('vcr_item_id')
+        .eq('id', prereqId)
+        .maybeSingle();
+      const itemId: string | null = prereqRow?.vcr_item_id ?? null;
+      if (!itemId) return [];
 
-      const [{ data: profs }, { data: rls }] = await Promise.all([
-        c.from('profiles').select('user_id, full_name, avatar_url').in('user_id', userIds),
-        roleIds.length
-          ? c.from('roles').select('id, name').in('id', roleIds)
-          : Promise.resolve({ data: [] as any[] }),
+      // 2. override ?? catalog
+      const [{ data: itemRow }, { data: overrideRow }] = await Promise.all([
+        c.from('vcr_items').select('approving_party_role_ids').eq('id', itemId).maybeSingle(),
+        c.from('p2a_vcr_item_overrides')
+          .select('approving_party_role_ids_override')
+          .eq('handover_point_id', handoverPointId)
+          .eq('vcr_item_id', itemId)
+          .maybeSingle(),
       ]);
+      const roleIds: string[] =
+        (overrideRow?.approving_party_role_ids_override as string[] | null)
+        ?? (itemRow?.approving_party_role_ids as string[] | null)
+        ?? [];
+      if (!roleIds.length) return [];
+
+      // 3. Fetch role names, drop Asset-suffixed.
+      const { data: rls } = await c.from('roles').select('id, name').in('id', roleIds);
+      const roles = ((rls || []) as Array<{ id: string; name: string }>)
+        .filter(r => sideOfRole(r.name) !== 'asset');
+      if (!roles.length) return [];
+
+      // 4. Resolve project-side holders per role via the canonical RPC.
+      const resolved = await Promise.all(roles.map(async (r) => {
+        const { data: uids } = await c.rpc('resolve_project_role_users', {
+          p_project_id: projectId,
+          p_role_label: r.name,
+        });
+        const userIds = ((uids || []) as Array<string | { user_id: string }>)
+          .map((x: any) => (typeof x === 'string' ? x : x?.user_id))
+          .filter(Boolean) as string[];
+        return { role: r, userIds };
+      }));
+
+      // 5. Load profiles for the union of resolved holders.
+      const allUserIds = Array.from(new Set(resolved.flatMap(x => x.userIds)));
+      const { data: profs } = allUserIds.length
+        ? await c.from('profiles').select('user_id, full_name, avatar_url').in('user_id', allUserIds)
+        : { data: [] as any[] };
       const pMap = new Map<string, any>((profs || []).map((p: any) => [p.user_id, p]));
-      const rMap = new Map<string, string>((rls || []).map((r: any) => [r.id, r.name]));
 
-      // Partition rows by side.
-      const nonAsset: Array<{ user_id: string; role_id: string | null; role_name: string }> = [];
-      const assetBases = new Set<string>();
-      const projectBases = new Set<string>();
-      for (const r of list) {
-        const role_name = r.approver_role_id ? (rMap.get(r.approver_role_id) || '') : '';
-        const side = sideOfRole(role_name);
-        const base = stripSideSuffix(role_name);
-        if (side === 'asset') {
-          if (base) assetBases.add(base);
-          continue; // Asset rows are dropped from qualification approvals.
-        }
-        if (side === 'project' && base) projectBases.add(base);
-        nonAsset.push({ user_id: r.approver_user_id, role_id: r.approver_role_id, role_name });
-      }
-
-      // Group surviving rows by role_id (a seat = a single role).
-      type Seat = { role_id: string | null; role_name: string; user_ids: string[] };
-      const seats = new Map<string, Seat>();
-      for (const r of nonAsset) {
-        const key = r.role_id || `user:${r.user_id}`;
-        const existing = seats.get(key);
-        if (existing) {
-          if (!existing.user_ids.includes(r.user_id)) existing.user_ids.push(r.user_id);
-        } else {
-          seats.set(key, { role_id: r.role_id, role_name: r.role_name, user_ids: [r.user_id] });
-        }
-      }
-
+      // Build seats (one per role_id). 0 holders → Unassigned placeholder.
       const out: Approver[] = [];
-      for (const seat of seats.values()) {
-        const faceId = seat.user_ids[0];
-        const partnerId = seat.user_ids[1];
+      for (const { role, userIds } of resolved) {
+        if (userIds.length === 0) {
+          out.push({
+            user_id: `__unassigned__:${role.id}`,
+            full_name: 'Unassigned',
+            role: role.name,
+            avatar_url: undefined,
+            seat_key: `unassigned:${role.id}`,
+            partner: null,
+            unassigned: true,
+          });
+          continue;
+        }
+        const faceId = userIds[0];
+        const partnerId = userIds[1];
         const face = pMap.get(faceId);
         const partner = partnerId ? pMap.get(partnerId) : null;
         out.push({
           user_id: faceId,
           full_name: face?.full_name || 'Unknown',
-          role: seat.role_name,
+          role: role.name,
           avatar_url: face?.avatar_url || undefined,
-          seat_key: seat.role_id || `user:${faceId}`,
+          seat_key: role.id,
           partner: partner ? {
             user_id: partnerId!,
             full_name: partner.full_name || 'Unknown',
             avatar_url: partner.avatar_url || undefined,
-            role: seat.role_name,
+            role: role.name,
           } : null,
-        });
-      }
-
-      // Unassigned placeholders: Asset-only bases with no Project counterpart.
-      for (const base of assetBases) {
-        if (projectBases.has(base)) continue;
-        out.push({
-          user_id: `__unassigned__:${base}`,
-          full_name: 'Unassigned',
-          role: `${base} – Project`,
-          avatar_url: undefined,
-          seat_key: `unassigned:${base}`,
-          partner: null,
-          unassigned: true,
         });
       }
       return out;
