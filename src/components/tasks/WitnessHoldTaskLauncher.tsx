@@ -116,10 +116,9 @@ export const WitnessHoldTaskLauncher: React.FC<WitnessHoldTaskLauncherProps> = (
         onReview={(p) => setReviewFor(p)}
       />
 
-      {scheduleFor && projectId && (
+      {scheduleFor && (
         <ScheduleWitnessHoldModal
           point={scheduleFor}
-          projectId={projectId}
           vcrCode={vcrCode}
           vcrName={vcrName}
           open={!!scheduleFor}
