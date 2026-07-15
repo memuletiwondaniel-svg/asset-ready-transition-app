@@ -357,27 +357,98 @@ const SOFCertificate: React.FC<SOFCertificateProps> = ({
               </h3>
               <div className={`grid grid-cols-1 md:grid-cols-2 gap-8 mt-4 ${approvers.length <= 2 ? 'max-w-2xl' : 'max-w-3xl'} mx-auto`}>
                 {approvers.map((approver) => {
-                  const unassigned = !approver.name;
+                  const ledgerRow = (sofRows || []).find((r: any) => r.id === approver.id);
+                  const signed = ledgerRow?.status === 'SIGNED';
+                  const unassigned = isVCR ? (!!ledgerRow && !ledgerRow.user_id) : !approver.name;
+                  const canSign =
+                    !!ledgerRow &&
+                    ledgerRow.status === 'PENDING' &&
+                    !!currentUser?.id &&
+                    ledgerRow.user_id === currentUser.id;
                   return (
                   <div
                     key={approver.id}
-                    className={`border border-border rounded-lg p-4 bg-background ${unassigned ? 'opacity-60' : ''}`}
+                    className={`border rounded-lg p-4 bg-background ${signed ? 'border-emerald-500/60' : 'border-border'} ${unassigned ? 'opacity-60' : ''}`}
                   >
-                    <div className="mb-3">
-                      {unassigned ? (
-                        <p className="font-semibold italic text-muted-foreground">Unassigned</p>
-                      ) : (
-                        <p className="font-semibold text-foreground">{approver.name}</p>
-                      )}
-                      <p className="text-xs text-muted-foreground">{approver.role}</p>
+                    <div className="mb-3 flex items-start justify-between gap-2">
+                      <div>
+                        {unassigned ? (
+                          <p className="font-semibold italic text-muted-foreground">Unassigned</p>
+                        ) : (
+                          <p className="font-semibold text-foreground">{approver.name || approver.role}</p>
+                        )}
+                        <p className="text-xs text-muted-foreground">{approver.role}</p>
+                      </div>
+                      {signed ? (
+                        <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
+                          Signed
+                        </span>
+                      ) : ledgerRow?.status === 'PENDING' ? (
+                        <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300">
+                          Pending
+                        </span>
+                      ) : ledgerRow?.status === 'LOCKED' ? (
+                        <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-300">
+                          Locked
+                        </span>
+                      ) : null}
                     </div>
                     <div className="border-t border-dashed border-border pt-3 mt-3">
-                      <div className="h-12 flex items-center justify-center text-muted-foreground text-xs italic border-b border-dashed border-border">
-                        Signature
+                      <div className="h-14 flex items-end justify-center border-b border-dashed border-border pb-1">
+                        {signed && approver.name ? (
+                          (() => {
+                            const parts = approver.name.split(' ');
+                            const first = parts[0] || '';
+                            const lastInitial = parts[1]?.[0] || '';
+                            const seed = approver.name.split('').reduce((a: number, c: string) => a + c.charCodeAt(0), 0);
+                            const rotate = ((seed % 7) - 3);
+                            const scale = 0.95 + ((seed % 11) / 100);
+                            return (
+                              <span
+                                className="text-3xl text-foreground leading-none select-none"
+                                style={{
+                                  fontFamily:
+                                    '"Segoe Script", "Lucida Handwriting", "Brush Script MT", "Apple Chancery", cursive',
+                                  transform: `rotate(${rotate}deg) scale(${scale})`,
+                                  letterSpacing: '0.5px',
+                                }}
+                              >
+                                {first}
+                                {lastInitial && <span style={{ marginLeft: '4px' }}>{lastInitial}.</span>}
+                              </span>
+                            );
+                          })()
+                        ) : (
+                          <span className="text-muted-foreground text-xs italic">Signature</span>
+                        )}
                       </div>
                     </div>
-                    <div className="mt-2">
-                      <p className="text-xs text-muted-foreground">Date: ____________</p>
+                    <div className="mt-2 flex items-center justify-between gap-2">
+                      <p className="text-xs text-muted-foreground">
+                        Date: {signed && ledgerRow?.signed_at ? new Date(ledgerRow.signed_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '____________'}
+                      </p>
+                      {canSign && (
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className="print:hidden"
+                          onClick={async () => {
+                            try {
+                              await signSof.mutateAsync({
+                                approverId: ledgerRow.id,
+                                signature_data: approver.name || ledgerRow.approver_name || '',
+                              });
+                              toast.success('SoF signed');
+                            } catch (e: any) {
+                              toast.error(e?.message || 'Failed to sign');
+                            }
+                          }}
+                          disabled={signSof.isPending}
+                        >
+                          <PenLine className="w-3.5 h-3.5 mr-1.5" />
+                          Sign
+                        </Button>
+                      )}
                     </div>
                   </div>
                   );
