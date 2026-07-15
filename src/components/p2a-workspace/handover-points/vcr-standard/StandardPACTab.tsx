@@ -9,7 +9,7 @@ import { vcrCertNumber } from '@/lib/vcrCertNumber';
 import { useCurrentUserRole } from '@/hooks/useCurrentUserRole';
 import { SchedulePacMeetingModal } from '@/components/widgets/SchedulePacMeetingModal';
 
-interface Props { handoverPoint: P2AHandoverPoint; projectCode?: string }
+interface Props { handoverPoint: P2AHandoverPoint; projectCode?: string; onNavigateOverview?: () => void }
 
 /**
  * PAC tab wrapper.
