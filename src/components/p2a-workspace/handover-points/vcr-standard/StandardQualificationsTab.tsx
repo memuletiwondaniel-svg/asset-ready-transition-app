@@ -208,9 +208,8 @@ export const StandardQualificationsTab: React.FC<Props> = ({ handoverPointId, vc
                 </span>
               </div>
 
-              {/* Reason — one-line truncated on the card; full text in the drawer */}
+              {/* Reason — one-line truncated on the card; full text (labelled) in the drawer */}
               <div className="text-xs text-muted-foreground leading-relaxed truncate">
-                <span className="font-semibold text-muted-foreground/80">Reason: </span>
                 {q.reason}
               </div>
 
