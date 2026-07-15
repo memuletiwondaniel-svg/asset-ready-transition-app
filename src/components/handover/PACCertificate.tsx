@@ -432,12 +432,12 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
                     >
                       <div className="mb-3 flex items-start justify-between gap-2">
                         <div>
-                          <p className="font-semibold text-foreground">{approver.role}</p>
                           {unassigned ? (
-                            <p className="text-xs italic text-muted-foreground">Unassigned</p>
-                          ) : approver.name ? (
-                            <p className="text-xs text-muted-foreground">{approver.name}</p>
-                          ) : null}
+                            <p className="font-semibold italic text-muted-foreground">Unassigned</p>
+                          ) : (
+                            <p className="font-semibold text-foreground">{approver.name || approver.role}</p>
+                          )}
+                          <p className="text-xs text-muted-foreground">{approver.role}</p>
                         </div>
                         {signed ? (
                           <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
