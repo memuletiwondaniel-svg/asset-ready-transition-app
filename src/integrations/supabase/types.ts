@@ -8217,8 +8217,10 @@ export type Database = {
           action_owner_name: string | null
           created_at: string
           follow_up_action: string | null
+          handover_point_id: string | null
           id: string
           mitigation: string
+          q_number: number | null
           reason: string
           reviewed_at: string | null
           reviewed_by: string | null
@@ -8235,8 +8237,10 @@ export type Database = {
           action_owner_name?: string | null
           created_at?: string
           follow_up_action?: string | null
+          handover_point_id?: string | null
           id?: string
           mitigation: string
+          q_number?: number | null
           reason: string
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -8253,8 +8257,10 @@ export type Database = {
           action_owner_name?: string | null
           created_at?: string
           follow_up_action?: string | null
+          handover_point_id?: string | null
           id?: string
           mitigation?: string
+          q_number?: number | null
           reason?: string
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -8267,6 +8273,13 @@ export type Database = {
           vcr_prerequisite_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "p2a_vcr_qualifications_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_points"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "p2a_vcr_qualifications_vcr_prerequisite_id_fkey"
             columns: ["vcr_prerequisite_id"]
@@ -14458,6 +14471,85 @@ export type Database = {
           },
         ]
       }
+      vcr_qualification_approvers: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          decision_comment: string | null
+          id: string
+          qualification_id: string
+          role_label: string | null
+          status: Database["public"]["Enums"]["vcr_qualification_approver_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          decision_comment?: string | null
+          id?: string
+          qualification_id: string
+          role_label?: string | null
+          status?: Database["public"]["Enums"]["vcr_qualification_approver_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          decision_comment?: string | null
+          id?: string
+          qualification_id?: string
+          role_label?: string | null
+          status?: Database["public"]["Enums"]["vcr_qualification_approver_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vcr_qualification_approvers_qualification_id_fkey"
+            columns: ["qualification_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_vcr_qualifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vcr_qualification_comments: {
+        Row: {
+          action_tag: string | null
+          author_user_id: string | null
+          body: string
+          created_at: string
+          id: string
+          qualification_id: string
+        }
+        Insert: {
+          action_tag?: string | null
+          author_user_id?: string | null
+          body: string
+          created_at?: string
+          id?: string
+          qualification_id: string
+        }
+        Update: {
+          action_tag?: string | null
+          author_user_id?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          qualification_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vcr_qualification_comments_qualification_id_fkey"
+            columns: ["qualification_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_vcr_qualifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vcr_sof_approvers: {
         Row: {
           approver_level: number
@@ -16034,6 +16126,7 @@ export type Database = {
         | "REJECTED"
         | "QUALIFIED"
         | "SUPERSEDED"
+      vcr_qualification_approver_status: "PENDING" | "APPROVED" | "REJECTED"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -16407,6 +16500,7 @@ export const Constants = {
         "QUALIFIED",
         "SUPERSEDED",
       ],
+      vcr_qualification_approver_status: ["PENDING", "APPROVED", "REJECTED"],
     },
   },
 } as const
