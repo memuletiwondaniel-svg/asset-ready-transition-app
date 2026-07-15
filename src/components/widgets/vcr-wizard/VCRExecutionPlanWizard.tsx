@@ -190,12 +190,13 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       if (!project) return null;
       const code = [project.project_id_prefix, project.project_id_number]
         .filter(Boolean).join('-');
-      return { project_code: code, project_title: project.project_title };
+      return { project_id: plan.project_id, project_code: code, project_title: project.project_title };
     },
   });
 
   const effectiveProjectCode = projectCode || resolvedProject?.project_code || '';
   const effectiveProjectName = projectName || resolvedProject?.project_title || '';
+  const effectiveProjectId = resolvedProject?.project_id || undefined;
 
   // ── Progress sync (mirrors P2A pattern) — DISABLED in review mode ──
   const syncVCRProgress = useCallback(async (progress: number) => {
