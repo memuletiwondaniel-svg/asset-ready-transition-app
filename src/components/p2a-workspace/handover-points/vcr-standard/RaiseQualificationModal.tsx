@@ -96,7 +96,7 @@ export const RaiseQualificationModal: React.FC<Props> = ({
 
   useEffect(() => {
     if (open) {
-      setPrereqId(lockedPrerequisiteId || prereqs[0]?.id || '');
+      setPrereqId(lockedPrerequisiteId || '');
       setCustomTitle('');
       setReason(''); setMitigation(''); setFollowUp('');
       setTargetDate(new Date(Date.now() + 14 * 86400000));
