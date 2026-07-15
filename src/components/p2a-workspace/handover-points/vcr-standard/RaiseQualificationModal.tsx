@@ -30,7 +30,8 @@ interface Approver {
   full_name: string;
   role: string;
   avatar_url?: string;
-  role_id?: string | null;
+  /** Stable seat key derived from the base role name (suffix-stripped). */
+  seat_key: string;
   /** Asset-side B2B partner for this seat, when applicable. */
   partner?: {
     user_id: string;
@@ -38,9 +39,6 @@ interface Approver {
     avatar_url?: string;
     role: string;
   } | null;
-  /** Set true when the seat had no project-side holder and we fell back to
-   *  the asset-side holder as the face. Surfaced to the reviewer. */
-  fallbackAsset?: boolean;
 }
 
 interface Props {
@@ -54,6 +52,17 @@ interface Props {
 }
 
 const CUSTOM_ID = '__custom__';
+
+/** Strip " - Project" / " - Asset" (or en-/em-dash variants) from a role name. */
+const stripSideSuffix = (name: string): string =>
+  (name || '').replace(/\s*[-–—]\s*(Project|Asset)\s*$/i, '').trim();
+
+/** Returns 'project' | 'asset' | null based on the role name suffix. */
+const sideOfRole = (name: string): 'project' | 'asset' | null => {
+  const m = (name || '').match(/\s*[-–—]\s*(Project|Asset)\s*$/i);
+  return m ? (m[1].toLowerCase() as 'project' | 'asset') : null;
+};
+
 
 /** Resolve a profile avatar URL from either a full https URL or a
  *  user-avatars storage path. Mirrors the canonical VCR wizard resolver. */
