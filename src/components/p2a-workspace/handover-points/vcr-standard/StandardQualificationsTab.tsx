@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Plus, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useVCRQualifications, VCRQualification } from '../../hooks/useVCRQualifications';
@@ -10,6 +11,7 @@ import { formatVcrItemCode } from '@/lib/vcrItemCode';
 import { normalizeCategoryCode } from './standardStatus';
 import { QualificationDrawer } from './QualificationDrawer';
 import { RaiseQualificationModal } from './RaiseQualificationModal';
+
 
 
 interface Props {
