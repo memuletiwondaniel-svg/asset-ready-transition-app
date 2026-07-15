@@ -40,10 +40,14 @@ interface PACCertificateProps {
   projectCode?: string;
   facilityName?: string;
   projectName?: string;
+  projectDisplay?: string;
+  plantName?: string;
+  scope?: string;
   pacDate?: string;
   handoverPointId?: string;
   vcrCode?: string;
   approvers?: PACApprover[];
+  onNavigateVcrOverview?: () => void;
 }
 
 const defaultContent: PACContent = {
@@ -64,10 +68,14 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
   projectCode = "",
   facilityName = "",
   projectName = "",
+  projectDisplay = "",
+  plantName = "",
+  scope = "",
   pacDate = "",
   handoverPointId,
   vcrCode,
   approvers: approversProp,
+  onNavigateVcrOverview,
 }) => {
   const certificateRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
@@ -290,26 +298,62 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
 
           {/* Info Box */}
           <div className="bg-muted/50 border border-border rounded-lg p-4 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-              <div>
-                <span className="font-semibold text-foreground">Project ID:</span>
-                <span className="ml-2 text-muted-foreground">{projectCode || '[Project ID]'}</span>
+            {handoverPointId ? (
+              <dl className="text-sm space-y-2">
+                <div className="flex items-baseline">
+                  <dt className="w-[110px] shrink-0 text-muted-foreground">Plant:</dt>
+                  <dd className="text-foreground">{plantName || '[Plant Name]'}</dd>
+                </div>
+                <div className="flex items-baseline">
+                  <dt className="w-[110px] shrink-0 text-muted-foreground">Project:</dt>
+                  <dd className="text-foreground">{projectDisplay || projectName || '[Project Name]'}</dd>
+                </div>
+                <div className="flex items-baseline">
+                  <dt className="w-[110px] shrink-0 text-muted-foreground">Ref:</dt>
+                  <dd>
+                    {onNavigateVcrOverview ? (
+                      <button
+                        type="button"
+                        onClick={onNavigateVcrOverview}
+                        className="text-primary hover:underline focus:underline focus:outline-none print:text-foreground print:no-underline"
+                      >
+                        {vcrCode || '[VCR Ref]'}
+                      </button>
+                    ) : (
+                      <span className="text-foreground">{vcrCode || '[VCR Ref]'}</span>
+                    )}
+                  </dd>
+                </div>
+                {scope && (
+                  <>
+                    <div className="border-t border-border/50 my-2" />
+                    <div className="flex items-baseline">
+                      <dt className="w-[110px] shrink-0 text-muted-foreground">Scope:</dt>
+                      <dd className="text-foreground whitespace-pre-wrap">{scope}</dd>
+                    </div>
+                  </>
+                )}
+              </dl>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <span className="font-semibold text-foreground">Project ID:</span>
+                  <span className="ml-2 text-muted-foreground">{projectCode || '[Project ID]'}</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-foreground">Project:</span>
+                  <span className="ml-2 text-muted-foreground">{projectName || '[Project Name]'}</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-foreground">VCR Name:</span>
+                  <span className="ml-2 text-muted-foreground">{facilityName || '[VCR Name]'}</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-foreground">VCR Ref:</span>
+                  <span className="ml-2 text-muted-foreground">{vcrCode || '[VCR Ref]'}</span>
+                </div>
               </div>
-              <div>
-                <span className="font-semibold text-foreground">Project:</span>
-                <span className="ml-2 text-muted-foreground">{projectName || '[Project Name]'}</span>
-              </div>
-              <div>
-                <span className="font-semibold text-foreground">VCR Name:</span>
-                <span className="ml-2 text-muted-foreground">{facilityName || '[VCR Name]'}</span>
-              </div>
-              <div>
-                <span className="font-semibold text-foreground">VCR Ref:</span>
-                <span className="ml-2 text-muted-foreground">
-                  {vcrCode || '[VCR Ref]'}
-                </span>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Certificate Body */}

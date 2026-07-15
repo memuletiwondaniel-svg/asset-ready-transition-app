@@ -9,7 +9,7 @@ import { vcrCertNumber } from '@/lib/vcrCertNumber';
 import { useCurrentUserRole } from '@/hooks/useCurrentUserRole';
 import { SchedulePacMeetingModal } from '@/components/widgets/SchedulePacMeetingModal';
 
-interface Props { handoverPoint: P2AHandoverPoint; projectCode?: string }
+interface Props { handoverPoint: P2AHandoverPoint; projectCode?: string; onNavigateOverview?: () => void }
 
 /**
  * PAC tab wrapper.
@@ -18,7 +18,7 @@ interface Props { handoverPoint: P2AHandoverPoint; projectCode?: string }
  * after all VCR items closed via the discipline-assurance trigger).
  * The Snr ORA Engr sees a "Schedule PAC meeting" CTA once unlocked.
  */
-export const StandardPACTab: React.FC<Props> = ({ handoverPoint, projectCode }) => {
+export const StandardPACTab: React.FC<Props> = ({ handoverPoint, projectCode, onNavigateOverview }) => {
   const { data: pacRows = [] } = useVCRPACApprovers(handoverPoint.id);
   const { data: ctx } = useVCRCertContext(handoverPoint.handover_plan_id);
   const { data: currentUser } = useCurrentUserRole();
@@ -56,9 +56,17 @@ export const StandardPACTab: React.FC<Props> = ({ handoverPoint, projectCode }) 
           certificateNumber={certNo}
           projectCode={projectPrefix}
           projectName={ctx?.projectName || ''}
+          projectDisplay={
+            projectPrefix && ctx?.projectName
+              ? `${projectPrefix} - ${ctx.projectName}`
+              : (projectPrefix || ctx?.projectName || '')
+          }
+          plantName={ctx?.plantName || ''}
+          scope={handoverPoint.description || handoverPoint.name}
           facilityName={handoverPoint.name}
           handoverPointId={handoverPoint.id}
           vcrCode={handoverPoint.vcr_code}
+          onNavigateVcrOverview={onNavigateOverview}
         />
       </div>
       <SchedulePacMeetingModal
