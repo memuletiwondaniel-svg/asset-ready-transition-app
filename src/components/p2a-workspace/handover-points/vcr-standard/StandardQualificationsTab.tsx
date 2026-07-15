@@ -201,7 +201,7 @@ export const StandardQualificationsTab: React.FC<Props> = ({ handoverPointId, vc
               {/* Item chip + prereq question (or custom title) */}
               <div className="text-sm leading-snug mb-1.5 flex items-baseline gap-2 min-w-0">
                 {code && <ItemChip code={code} />}
-                <span className="font-medium truncate">
+                <span className="font-medium truncate min-w-0">
                   {q.prerequisite?.summary
                     || q.custom_title
                     || 'Ad-hoc qualification'}
