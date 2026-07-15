@@ -65,18 +65,14 @@ const SOFCertificate: React.FC<SOFCertificateProps> = ({
   handoverPointId,
 }) => {
   // Live approvers roster (VCR path): mirrors vcr_sof_approvers seat order.
-  const { data: sofRows = [] } = useQuery({
-    queryKey: ['vcr-sof-approvers-print', handoverPointId],
-    enabled: !!handoverPointId && sourceType === 'VCR',
-    queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from('vcr_sof_approvers')
-        .select('id, approver_name, approver_role, approver_level, user_id, status')
-        .eq('handover_point_id', handoverPointId)
-        .order('approver_level', { ascending: true });
-      if (error) throw error;
-      return data || [];
-    },
+  // Uses the shared hook so we get the same `sign` mutation the PAC cert has.
+  const { data: sofRowsData = [], sign: signSof } = useVCRSoFApprovers(
+    sourceType === 'VCR' ? handoverPointId : undefined,
+  );
+  const sofRows = sofRowsData as any[];
+  const { data: currentUser } = useQuery({
+    queryKey: ['sof-cert-current-user'],
+    queryFn: async () => (await supabase.auth.getUser()).data.user,
   });
 
   // Determine approvers based on sourceType and pssrReason
