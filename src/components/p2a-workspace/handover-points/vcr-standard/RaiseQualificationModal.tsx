@@ -58,9 +58,9 @@ export const RaiseQualificationModal: React.FC<Props> = ({
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from('vcr_prerequisite_approvals')
-        .select('user_id')
-        .eq('vcr_prerequisite_id', prereqId);
-      return Array.from(new Set((data || []).map((r: any) => r.user_id as string)));
+        .select('approver_user_id')
+        .eq('prerequisite_id', prereqId);
+      return Array.from(new Set((data || []).map((r: any) => r.approver_user_id as string)));
     },
   });
 
