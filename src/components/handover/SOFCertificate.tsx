@@ -80,10 +80,10 @@ const SOFCertificate: React.FC<SOFCertificateProps> = ({
 
   // Determine approvers based on sourceType and pssrReason
   const computedApprovers = React.useMemo(() => {
-    if (approversProp) return approversProp;
-
-    // Prefer live ledger for VCR when seeded.
-    if (sourceType === 'VCR' && sofRows.length > 0) {
+    // VCR path: ALWAYS use the ledger (no hardcoded fallback), so cert can never
+    // render both roster + role-only stub blocks. Empty ledger => empty roster.
+    if (sourceType === 'VCR') {
+      if (approversProp) return approversProp;
       return sofRows.map((r: any) => ({
         id: r.id,
         name: r.user_id ? (r.approver_name || '') : '',
@@ -91,26 +91,18 @@ const SOFCertificate: React.FC<SOFCertificateProps> = ({
       })) as SOFApprover[];
     }
 
+    if (approversProp) return approversProp;
+
     const baseApprovers: SOFApprover[] = [
       { id: '1', name: '', role: 'Plant Director' },
       { id: '2', name: '', role: 'HSE Director' },
     ];
-
     const normalizedReason = (pssrReason || '').toLowerCase();
-    const isVCR = sourceType === 'VCR';
     const isProcessSafetyIncident = normalizedReason.includes('process safety incidence') || normalizedReason.includes('near miss');
     const isTAR = normalizedReason.includes('turn around maintenance') || normalizedReason.includes('tar');
-
-    // P&E Director: only for VCR-based SoF
-    if (isVCR) {
-      baseApprovers.push({ id: '3', name: '', role: 'P&E Director' });
-    }
-
-    // P&M Director: VCR, or Process Safety Incident, or TAR
-    if (isVCR || isProcessSafetyIncident || isTAR) {
+    if (isProcessSafetyIncident || isTAR) {
       baseApprovers.push({ id: '4', name: '', role: 'P&M Director' });
     }
-
     return baseApprovers;
   }, [approversProp, sourceType, pssrReason, sofRows]);
 
