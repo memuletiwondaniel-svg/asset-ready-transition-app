@@ -144,6 +144,19 @@ export const StandardQualificationsTab: React.FC<Props> = ({ handoverPointId, vc
 
       </div>
 
+      {/* Search */}
+      {qualifications.length > 0 && (
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search qualifications — question, reason, item, item ID, Q-number…"
+            className="h-9 pl-8 text-[12px]"
+          />
+        </div>
+      )}
+
       {isLoading && <div className="text-sm text-muted-foreground">Loading…</div>}
 
       {!isLoading && qualifications.length === 0 && (
@@ -152,57 +165,68 @@ export const StandardQualificationsTab: React.FC<Props> = ({ handoverPointId, vc
         </Card>
       )}
 
-      {qualifications.map(q => {
-        const lc = lifecycleOf(q);
-        const isDraft = lc === 'DRAFT';
-        const qId = `Q-${String(q.q_number ?? 0).padStart(3, '0')}`;
-        const code = itemCodeFor(q);
-        const dateStr = lc === 'APPROVED' || lc === 'REJECTED'
-          ? q.reviewed_at
-          : q.submitted_at;
+      {!isLoading && qualifications.length > 0 && visibleQuals.length === 0 && (
+        <Card className="p-6 text-sm text-muted-foreground text-center">
+          No qualifications match “{search.trim()}”.
+        </Card>
+      )}
 
-        return (
-          <Card
-            key={q.id}
-            onClick={() => setOpenId(q.id)}
-            className={cn(
-              'p-4 cursor-pointer transition-colors hover:bg-muted/40',
-              isDraft && 'border-dashed opacity-70 bg-muted/20',
-            )}
-          >
-            {/* Q-number eyebrow + status chip */}
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-mono text-[10.5px] font-semibold text-muted-foreground/70">{qId}</span>
-              <div className="flex items-center gap-2">
-                {dateStr && (
-                  <span className="text-[10.5px] text-muted-foreground">
-                    {format(new Date(dateStr), 'dd-MMM-yyyy')}
-                  </span>
-                )}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+        {visibleQuals.map(q => {
+          const lc = lifecycleOf(q);
+          const isDraft = lc === 'DRAFT';
+          const qId = `Q-${String(q.q_number ?? 0).padStart(3, '0')}`;
+          const code = itemCodeFor(q);
+          const dateStr = lc === 'APPROVED' || lc === 'REJECTED'
+            ? q.reviewed_at
+            : q.submitted_at;
+
+          return (
+            <Card
+              key={q.id}
+              onClick={() => setOpenId(q.id)}
+              className={cn(
+                'p-4 cursor-pointer transition-colors hover:bg-muted/40 flex flex-col',
+                isDraft && 'border-dashed opacity-70 bg-muted/20',
+              )}
+            >
+              {/* Q-number eyebrow + status chip */}
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-mono text-[10.5px] font-semibold text-muted-foreground/70">{qId}</span>
                 <span className={cn('text-[10.5px] font-bold px-2 py-0.5 rounded-full border', chipStyle(lc))}>
                   {chipLabel(lc)}
                 </span>
               </div>
-            </div>
 
-            {/* Item chip + prereq question (or custom title) */}
-            <div className="text-sm leading-snug mb-1.5 flex items-baseline gap-2 flex-wrap min-w-0">
-              {code && <ItemChip code={code} />}
-              <span className="font-medium truncate">
-                {q.prerequisite?.summary
-                  || q.custom_title
-                  || 'Ad-hoc qualification'}
-              </span>
-            </div>
+              {/* Item chip + prereq question (or custom title) */}
+              <div className="text-sm leading-snug mb-1.5 flex items-baseline gap-2 min-w-0">
+                {code && <ItemChip code={code} />}
+                <span className="font-medium truncate">
+                  {q.prerequisite?.summary
+                    || q.custom_title
+                    || 'Ad-hoc qualification'}
+                </span>
+              </div>
 
-            {/* Reason */}
-            <div className="text-xs text-muted-foreground leading-relaxed">
-              <span className="font-semibold text-muted-foreground/80">Reason: </span>
-              {q.reason}
-            </div>
-          </Card>
-        );
-      })}
+              {/* Reason — one-line truncated on the card; full text in the drawer */}
+              <div className="text-xs text-muted-foreground leading-relaxed truncate">
+                <span className="font-semibold text-muted-foreground/80">Reason: </span>
+                {q.reason}
+              </div>
+
+              {/* Card foot — date, right-aligned */}
+              {dateStr && (
+                <div className="mt-2 flex justify-end">
+                  <span className="text-[10.5px] text-muted-foreground">
+                    {format(new Date(dateStr), 'dd-MMM-yyyy')}
+                  </span>
+                </div>
+              )}
+            </Card>
+          );
+        })}
+      </div>
+
 
 
       {/* Drawer */}
