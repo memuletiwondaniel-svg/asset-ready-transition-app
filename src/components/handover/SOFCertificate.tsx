@@ -265,39 +265,86 @@ const SOFCertificate: React.FC<SOFCertificateProps> = ({
 
           {/* Info Box */}
           <div className="bg-muted/50 border border-border rounded-lg p-4 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-              <div>
-                <span className="font-semibold text-foreground">Plant:</span>
-                <span className="ml-2 text-muted-foreground">{plantName || '[Plant Name]'}</span>
-              </div>
-              <div>
-                <span className="font-semibold text-foreground">Facility:</span>
-                <span className="ml-2 text-muted-foreground">{facilityName || '[Facility Name]'}</span>
-              </div>
-              <div>
-                <span className="font-semibold text-foreground">Project:</span>
-                <span className="ml-2 text-muted-foreground">{projectName || '[Project Name]'}</span>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mt-3 pt-3 border-t border-border/50">
-              <div>
-                <span className="font-semibold text-foreground">{isVCR ? 'VCR Ref:' : 'PSSR Ref:'}</span>
-                <span className="ml-2 text-muted-foreground">{pssrNumber || (isVCR ? '[VCR Ref]' : '[PSSR Ref]')}</span>
-              </div>
-              <div>
-                <span className="font-semibold text-foreground">SoF Reason:</span>
-                <span className="ml-2 text-muted-foreground">
-                  {isVCR ? 'Start-up of a new Project or Facility' : (pssrReason || '[SoF Reason]')}
-                </span>
-              </div>
-              {!isVCR && (
-                <div>
-                  <span className="font-semibold text-foreground">SoF Date:</span>
-                  <span className="ml-2 text-muted-foreground">{sofDate || '[SoF Date]'}</span>
+            {isVCR ? (
+              <>
+                {/* Row 1: Plant + Project (Facility removed per SoF header revision) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-semibold text-foreground">Plant:</span>
+                    <span className="ml-2 text-muted-foreground">{plantName || '[Plant Name]'}</span>
+                  </div>
+                  <div>
+                    <span className="font-semibold text-foreground">Project:</span>
+                    <span className="ml-2 text-muted-foreground">
+                      {projectDisplay || projectName || '[Project Name]'}
+                    </span>
+                  </div>
                 </div>
-              )}
-            </div>
+                {/* Row 2: Ref (clickable) + SoF Reason (single line, ellipsis on overflow) */}
+                <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2 text-sm mt-3 pt-3 border-t border-border/50">
+                  <div className="shrink-0">
+                    <span className="font-semibold text-foreground">Ref:</span>
+                    {onNavigateVcrOverview ? (
+                      <button
+                        type="button"
+                        onClick={onNavigateVcrOverview}
+                        className="ml-2 text-primary hover:underline focus:underline focus:outline-none print:text-muted-foreground print:no-underline"
+                      >
+                        {pssrNumber || '[VCR Ref]'}
+                      </button>
+                    ) : (
+                      <span className="ml-2 text-muted-foreground">{pssrNumber || '[VCR Ref]'}</span>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0 flex items-baseline">
+                    <span className="font-semibold text-foreground shrink-0">SoF Reason:</span>
+                    <span className="ml-2 text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis min-w-0">
+                      Start-up of a new Project or Facility
+                    </span>
+                  </div>
+                </div>
+                {/* Scope — plain text block, sourced from p2a_handover_points.description */}
+                {scope && (
+                  <div className="mt-3 pt-3 border-t border-border/50 text-sm">
+                    <div className="font-semibold text-foreground mb-1">Scope</div>
+                    <p className="text-muted-foreground whitespace-pre-wrap">{scope}</p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div>
+                    <span className="font-semibold text-foreground">Plant:</span>
+                    <span className="ml-2 text-muted-foreground">{plantName || '[Plant Name]'}</span>
+                  </div>
+                  <div>
+                    <span className="font-semibold text-foreground">Facility:</span>
+                    <span className="ml-2 text-muted-foreground">{facilityName || '[Facility Name]'}</span>
+                  </div>
+                  <div>
+                    <span className="font-semibold text-foreground">Project:</span>
+                    <span className="ml-2 text-muted-foreground">{projectName || '[Project Name]'}</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mt-3 pt-3 border-t border-border/50">
+                  <div>
+                    <span className="font-semibold text-foreground">PSSR Ref:</span>
+                    <span className="ml-2 text-muted-foreground">{pssrNumber || '[PSSR Ref]'}</span>
+                  </div>
+                  <div>
+                    <span className="font-semibold text-foreground">SoF Reason:</span>
+                    <span className="ml-2 text-muted-foreground">{pssrReason || '[SoF Reason]'}</span>
+                  </div>
+                  <div>
+                    <span className="font-semibold text-foreground">SoF Date:</span>
+                    <span className="ml-2 text-muted-foreground">{sofDate || '[SoF Date]'}</span>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
+
 
           {/* Certificate Body */}
           <div className="space-y-6 text-sm leading-relaxed">
