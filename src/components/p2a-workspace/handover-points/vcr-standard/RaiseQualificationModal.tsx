@@ -30,16 +30,19 @@ interface Approver {
   full_name: string;
   role: string;
   avatar_url?: string;
-  /** Stable seat key derived from the base role name (suffix-stripped). */
+  /** Stable seat key derived from the role id (or base name for placeholders). */
   seat_key: string;
-  /** Asset-side B2B partner for this seat, when applicable. */
+  /** Same-role shared-seat B2B partner (e.g. two holders of the SAME role.id). */
   partner?: {
     user_id: string;
     full_name: string;
     avatar_url?: string;
     role: string;
   } | null;
+  /** Placeholder seat where the discipline has no Project-side holder. */
+  unassigned?: boolean;
 }
+
 
 interface Props {
   open: boolean;
