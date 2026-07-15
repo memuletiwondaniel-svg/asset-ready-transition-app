@@ -2148,6 +2148,21 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         />
       )}
 
+      {/* Witness & Hold task launcher (delivery bundle + review) */}
+      {whTaskTarget && (
+        <WitnessHoldTaskLauncher
+          open={!!whTaskTarget}
+          onOpenChange={(o) => { if (!o) setWhTaskTarget(null); }}
+          taskType={whTaskTarget.taskType}
+          handoverPointId={whTaskTarget.handoverPointId}
+          itpActivityId={whTaskTarget.itpActivityId}
+          deliveringPartyRoleId={whTaskTarget.deliveringPartyRoleId}
+          subItemActivityIds={whTaskTarget.subItemActivityIds}
+          vcrCode={whTaskTarget.vcrCode}
+          vcrName={whTaskTarget.vcrName}
+        />
+      )}
+
     </>
     </ReviewerSummaryContext.Provider>
     </P2AApprovalContext.Provider>
