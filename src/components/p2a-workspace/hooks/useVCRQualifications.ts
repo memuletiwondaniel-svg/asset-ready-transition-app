@@ -5,13 +5,15 @@ import { useToast } from '@/hooks/use-toast';
 export interface VCRQualification {
   id: string;
   vcr_prerequisite_id: string;
+  handover_point_id?: string;
+  q_number?: number;
   reason: string;
   mitigation: string;
   follow_up_action?: string;
   target_date: string;
   action_owner_id?: string;
   action_owner_name?: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED';
   reviewer_comments?: string;
   submitted_by?: string;
   reviewed_by?: string;
@@ -27,6 +29,13 @@ export interface VCRQualification {
     display_order?: number;
     category?: string | null;
   };
+  approvers?: Array<{
+    id: string;
+    user_id: string;
+    role_label: string | null;
+    status: 'PENDING' | 'APPROVED' | 'REJECTED';
+    decided_at: string | null;
+  }>;
   evidence?: QualificationEvidence[];
 }
 
