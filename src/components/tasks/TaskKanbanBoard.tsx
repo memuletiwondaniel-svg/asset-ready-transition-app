@@ -25,6 +25,7 @@ import { VCRExecutionPlanWizard } from '@/components/widgets/vcr-wizard/VCRExecu
 import { InterdisciplinaryTaskModal } from '@/components/widgets/InterdisciplinaryTaskModal';
 import { ScheduleSofMeetingModal } from '@/components/widgets/ScheduleSofMeetingModal';
 import { SchedulePacMeetingModal } from '@/components/widgets/SchedulePacMeetingModal';
+import { QualificationReviewLauncher } from './QualificationReviewLauncher';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -1127,6 +1128,13 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
   const [interTaskTarget, setInterTaskTarget] = useState<VcrTaskTarget | null>(null);
   const [sofTaskTarget, setSofTaskTarget] = useState<VcrTaskTarget | null>(null);
   const [pacTaskTarget, setPacTaskTarget] = useState<VcrTaskTarget | null>(null);
+  const [qualTaskTarget, setQualTaskTarget] = useState<{
+    taskId: string;
+    handoverPointId: string;
+    qualificationId: string;
+    vcrCode?: string;
+    vcrName?: string;
+  } | null>(null);
 
   const handleOpenP2AWizard = useCallback((projectId: string, projectCode: string, openWorkspace?: boolean) => {
     setP2aTarget({ projectId, projectCode });
@@ -1265,6 +1273,20 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         });
         return;
       }
+
+      // Qualification review task — open the qualification drawer via a dedicated launcher.
+      if ((meta?.action === 'review_qualification' || task.userTask.type === 'qualification_review') && meta?.qualification_id) {
+        console.log('[TaskKanbanBoard] handleTaskClick:branch', { branch: 'qualification_review' });
+        setQualTaskTarget({
+          taskId: task.userTask.id,
+          handoverPointId: meta.handover_point_id as string,
+          qualificationId: meta.qualification_id as string,
+          vcrCode: meta.vcr_code as string | undefined,
+          vcrName: meta.vcr_name as string | undefined,
+        });
+        return;
+      }
+
 
 
       const isOraActivity = !isReviewTask && task.userTask.type !== 'vcr_plan_resubmit' && (task.userTask.type === 'ora_activity' || meta?.action === 'complete_ora_activity' || meta?.action === 'create_p2a_plan' || meta?.action === 'create_vcr_delivery_plan' || meta?.ora_plan_activity_id);
@@ -2085,6 +2107,18 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
           vcrName={pacTaskTarget.vcrName}
           projectPrefix={pacTaskTarget.projectPrefix}
           taskId={pacTaskTarget.taskId}
+        />
+      )}
+
+      {/* Qualification review task launcher */}
+      {qualTaskTarget && (
+        <QualificationReviewLauncher
+          open={!!qualTaskTarget}
+          onOpenChange={(o) => { if (!o) setQualTaskTarget(null); }}
+          qualificationId={qualTaskTarget.qualificationId}
+          taskId={qualTaskTarget.taskId}
+          vcrCode={qualTaskTarget.vcrCode}
+          vcrName={qualTaskTarget.vcrName}
         />
       )}
 

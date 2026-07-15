@@ -5,13 +5,15 @@ import { useToast } from '@/hooks/use-toast';
 export interface VCRQualification {
   id: string;
   vcr_prerequisite_id: string;
+  handover_point_id?: string;
+  q_number?: number;
   reason: string;
   mitigation: string;
   follow_up_action?: string;
   target_date: string;
   action_owner_id?: string;
   action_owner_name?: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED';
   reviewer_comments?: string;
   submitted_by?: string;
   reviewed_by?: string;
@@ -27,6 +29,13 @@ export interface VCRQualification {
     display_order?: number;
     category?: string | null;
   };
+  approvers?: Array<{
+    id: string;
+    user_id: string;
+    role_label: string | null;
+    status: 'PENDING' | 'APPROVED' | 'REJECTED';
+    decided_at: string | null;
+  }>;
   evidence?: QualificationEvidence[];
 }
 
@@ -68,14 +77,30 @@ export const useVCRQualifications = (handoverPointId: string) => {
 
       const prereqIds = prerequisites.map((p: any) => p.id);
 
-      // Get all qualifications for these prerequisites
+      // Get all qualifications for these prerequisites (include q_number)
       const { data: quals, error } = await supabase
         .from('p2a_vcr_qualifications')
         .select('*')
         .in('vcr_prerequisite_id', prereqIds)
-        .order('submitted_at', { ascending: false });
+        .order('q_number', { ascending: true });
 
       if (error) throw error;
+
+      // Load approver rows for these quals
+      const qualIds = (quals || []).map((q: any) => q.id);
+      const { data: approverRows } = qualIds.length
+        ? await (supabase as any)
+            .from('vcr_qualification_approvers')
+            .select('id, qualification_id, user_id, role_label, status, decided_at')
+            .in('qualification_id', qualIds)
+        : { data: [] as any[] };
+
+      const byQual = new Map<string, any[]>();
+      (approverRows || []).forEach((r: any) => {
+        const arr = byQual.get(r.qualification_id) || [];
+        arr.push(r);
+        byQual.set(r.qualification_id, arr);
+      });
 
       // Map prerequisite info to each qualification
       const prereqMap = new Map(
@@ -91,6 +116,7 @@ export const useVCRQualifications = (handoverPointId: string) => {
       return (quals || []).map((qual: any) => ({
         ...qual,
         prerequisite: prereqMap.get(qual.vcr_prerequisite_id),
+        approvers: byQual.get(qual.id) || [],
       })) as VCRQualification[];
     },
     enabled: !!handoverPointId,
