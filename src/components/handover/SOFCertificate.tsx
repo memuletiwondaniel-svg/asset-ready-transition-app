@@ -359,16 +359,20 @@ const SOFCertificate: React.FC<SOFCertificateProps> = ({
                 APPROVALS
               </h3>
               <div className={`grid grid-cols-1 md:grid-cols-2 gap-8 mt-4 ${approvers.length <= 2 ? 'max-w-2xl' : 'max-w-3xl'} mx-auto`}>
-                {approvers.map((approver) => (
+                {approvers.map((approver) => {
+                  const unassigned = !approver.name;
+                  return (
                   <div
                     key={approver.id}
-                    className="border border-border rounded-lg p-4 bg-background"
+                    className={`border border-border rounded-lg p-4 bg-background ${unassigned ? 'opacity-60' : ''}`}
                   >
                     <div className="mb-3">
-                      <p className="font-semibold text-foreground">{approver.role}</p>
-                      {approver.name && (
-                        <p className="text-xs text-muted-foreground">{approver.name}</p>
+                      {unassigned ? (
+                        <p className="font-semibold italic text-muted-foreground">Unassigned</p>
+                      ) : (
+                        <p className="font-semibold text-foreground">{approver.name}</p>
                       )}
+                      <p className="text-xs text-muted-foreground">{approver.role}</p>
                     </div>
                     <div className="border-t border-dashed border-border pt-3 mt-3">
                       <div className="h-12 flex items-center justify-center text-muted-foreground text-xs italic border-b border-dashed border-border">
