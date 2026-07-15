@@ -296,8 +296,9 @@ export const RaiseQualificationModal: React.FC<Props> = ({
         </DialogHeader>
 
 
-        <div className="space-y-5 py-2 overflow-x-hidden">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-6 py-4 space-y-5">
           {/* VCR item — searchable combobox */}
+
           <div className="space-y-1.5">
             <Label>VCR item <span className="text-red-600">*</span></Label>
             <Popover open={itemPickerOpen} onOpenChange={setItemPickerOpen}>
