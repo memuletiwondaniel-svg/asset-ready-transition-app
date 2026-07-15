@@ -20,6 +20,7 @@ interface Props { handoverPoint: P2AHandoverPoint; projectCode?: string; onNavig
  */
 export const StandardSOFTab: React.FC<Props> = ({ handoverPoint, projectCode, onNavigateOverview }) => {
   const { prerequisites } = useVCRPrerequisites(handoverPoint.id);
+  const { data: sofRows = [] } = useVCRSoFApprovers(handoverPoint.id);
   const { data: ctx } = useVCRCertContext(handoverPoint.handover_plan_id);
   const { data: currentUser } = useCurrentUserRole();
   const [scheduleOpen, setScheduleOpen] = useState(false);
@@ -29,6 +30,13 @@ export const StandardSOFTab: React.FC<Props> = ({ handoverPoint, projectCode, on
     standardPill(p.status as PrereqStatus).bucket === 'terminal'
   ).length;
   const allApproved = total > 0 && terminal === total;
+
+  // Ledger-driven CTA gate: the discipline-assurance trigger seeds L1 once the
+  // interdisciplinary summary is complete; don't show the CTA earlier.
+  const totalSofSeats = sofRows.length;
+  const anySofPending = sofRows.some(r => r.status === 'PENDING' || r.status === 'SIGNED');
+  const sofLedgerUnlocked = totalSofSeats > 0 && anySofPending;
+
   const isSnrOra = (currentUser?.role || '').toLowerCase().includes('snr ora engr');
 
   const projectPrefix = ctx?.projectPrefix || projectCode || '';
