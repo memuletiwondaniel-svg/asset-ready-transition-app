@@ -299,14 +299,16 @@ const SOFCertificate: React.FC<SOFCertificateProps> = ({
                       Start-up of a new Project or Facility
                     </dd>
                   </div>
+                  {scope && (
+                    <>
+                      <div className="border-t border-border/50 my-2" />
+                      <div className="flex items-baseline">
+                        <dt className="w-[110px] shrink-0 text-muted-foreground">Scope:</dt>
+                        <dd className="text-foreground whitespace-pre-wrap">{scope}</dd>
+                      </div>
+                    </>
+                  )}
                 </dl>
-                {/* Scope — plain text block, sourced from p2a_handover_points.description */}
-                {scope && (
-                  <div className="mt-3 pt-3 border-t border-border/50 text-sm">
-                    <div className="font-semibold text-foreground mb-1">Scope</div>
-                    <p className="text-muted-foreground whitespace-pre-wrap">{scope}</p>
-                  </div>
-                )}
               </>
 
             ) : (
