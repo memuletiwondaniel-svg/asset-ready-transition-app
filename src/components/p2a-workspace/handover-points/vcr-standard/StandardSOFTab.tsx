@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import SOFCertificate from '@/components/handover/SOFCertificate';
 import { P2AHandoverPoint } from '../../hooks/useP2AHandoverPoints';
 import { useVCRPrerequisites } from '../../hooks/useVCRPrerequisites';
+import { useVCRSoFApprovers } from '@/hooks/useVCRSoFApprovers';
 import { PrereqStatus, standardPill } from './standardStatus';
 import { useVCRCertContext } from './useVCRCertContext';
 import { vcrCertNumber } from '@/lib/vcrCertNumber';
