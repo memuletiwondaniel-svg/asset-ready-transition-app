@@ -90,6 +90,42 @@ export const StandardQualificationsTab: React.FC<Props> = ({ handoverPointId, vc
 
   const openQual = qualifications.find(q => q.id === openId) || null;
 
+  // Group order: REJECTED → PENDING → APPROVED → DRAFT (Daniel canon).
+  const GROUP_ORDER: Record<Lifecycle, number> = { REJECTED: 0, PENDING: 1, APPROVED: 2, DRAFT: 3 };
+
+  const searchMatches = (q: VCRQualification, needle: string): boolean => {
+    if (!needle) return true;
+    const n = needle.toLowerCase().trim();
+    const qNum = q.q_number ?? 0;
+    const qId = `Q-${String(qNum).padStart(3, '0')}`;
+    const code = itemCodeFor(q) || '';
+    const hay = [
+      q.prerequisite?.summary,
+      q.custom_title,
+      q.reason,
+      (q as any).mitigation,
+      code,
+      qId,
+      String(qNum),
+    ].filter(Boolean).map(s => String(s).toLowerCase());
+    // Also match numeric-only Q lookups like '2' → matches q_number.
+    if (/^\d+$/.test(n) && parseInt(n, 10) === qNum) return true;
+    return hay.some(s => s.includes(n));
+  };
+
+  const visibleQuals = useMemo(() => {
+    const filtered = qualifications.filter(q => searchMatches(q, search));
+    return [...filtered].sort((a, b) => {
+      const ga = GROUP_ORDER[lifecycleOf(a)];
+      const gb = GROUP_ORDER[lifecycleOf(b)];
+      if (ga !== gb) return ga - gb;
+      // Newest first within group — q_number monotonic proxy.
+      return (b.q_number ?? 0) - (a.q_number ?? 0);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [qualifications, search]);
+
+
   return (
     <div className="space-y-4">
       {/* Header */}
