@@ -41,7 +41,7 @@ const chipLabel = (lc: Lifecycle) =>
   lc === 'PENDING' ? 'Under review' : lc === 'DRAFT' ? 'Draft' : lc === 'APPROVED' ? 'Approved' : 'Rejected';
 
 const ItemChip: React.FC<{ code: string }> = ({ code }) => (
-  <span className="inline-flex items-center rounded-md px-1.5 py-0.5 font-mono text-[11px] font-semibold text-slate-600"
+  <span className="inline-flex items-center rounded-md px-1.5 py-0.5 font-mono text-[11px] font-semibold text-slate-600 whitespace-nowrap shrink-0"
         style={{ background: '#EEF2F7' }}>{code}</span>
 );
 
