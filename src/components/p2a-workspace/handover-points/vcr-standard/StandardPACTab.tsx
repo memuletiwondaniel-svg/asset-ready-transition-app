@@ -1,47 +1,74 @@
-import React from 'react';
-import { Card } from '@/components/ui/card';
-import { Lock } from 'lucide-react';
+import React, { useState } from 'react';
+import { Lock, Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import PACCertificate from '@/components/handover/PACCertificate';
 import { P2AHandoverPoint } from '../../hooks/useP2AHandoverPoints';
-import { useVCRPrerequisites } from '../../hooks/useVCRPrerequisites';
-import { PrereqStatus, standardPill } from './standardStatus';
+import { useVCRPACApprovers } from '@/hooks/useVCRPACApprovers';
+import { useVCRCertContext } from './useVCRCertContext';
+import { vcrCertNumber } from '@/lib/vcrCertNumber';
+import { useCurrentUserRole } from '@/hooks/useCurrentUserRole';
+import { SchedulePacMeetingModal } from '@/components/widgets/SchedulePacMeetingModal';
 
 interface Props { handoverPoint: P2AHandoverPoint; projectCode?: string }
 
 /**
  * PAC tab wrapper.
- * Locked state until all VCR items are approved (terminal). Once unlocked,
- * re-parents the existing PACCertificate component unchanged.
- *
- * FAC/PAC naming drift: PACCertificate lives under src/components/handover/
- * alongside FACCertificate (a genuinely separate Final Acceptance component).
- * Not renamed in this build — logged for cleanup.
+ * Ledger-driven lock: locked while every `vcr_pac_approvers` row is LOCKED,
+ * unlocked once at least one row is PENDING (i.e. the cascade lifted level 1
+ * after all VCR items closed via the discipline-assurance trigger).
+ * The Snr ORA Engr sees a "Schedule PAC meeting" CTA once unlocked.
  */
 export const StandardPACTab: React.FC<Props> = ({ handoverPoint, projectCode }) => {
-  const { prerequisites } = useVCRPrerequisites(handoverPoint.id);
+  const { data: pacRows = [] } = useVCRPACApprovers(handoverPoint.id);
+  const { data: ctx } = useVCRCertContext(handoverPoint.handover_plan_id);
+  const { data: currentUser } = useCurrentUserRole();
+  const [scheduleOpen, setScheduleOpen] = useState(false);
 
-  const total = prerequisites.length;
-  const terminal = prerequisites.filter(p =>
-    standardPill(p.status as PrereqStatus).bucket === 'terminal'
-  ).length;
-  const allApproved = total > 0 && terminal === total;
+  const totalSeats = pacRows.length;
+  const anyPending = pacRows.some(r => r.status === 'PENDING' || r.status === 'SIGNED');
+  const locked = totalSeats === 0 || !anyPending;
+  const isSnrOra = (currentUser?.role || '').toLowerCase().includes('snr ora engr');
+
+  const projectPrefix = ctx?.projectPrefix || projectCode || '';
+  const certNo = vcrCertNumber('PAC', projectPrefix, handoverPoint.vcr_code);
 
   return (
     <div className="space-y-3">
-      {!allApproved && (
+      {locked ? (
         <div className="flex items-center gap-2 text-sm text-muted-foreground bg-slate-100 border border-border rounded-lg px-3 py-2">
           <Lock className="w-3.5 h-3.5" />
-          <span>Read-only preview · signing unlocks at VCR approval ({terminal}/{total} items closed)</span>
+          <span>Read-only preview · signing unlocks once VCR items close and the PAC ledger is seeded.</span>
+        </div>
+      ) : (
+        <div className="flex items-center justify-between gap-2 text-sm bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-lg px-3 py-2">
+          <span>Unlocked · PAC ledger seeded ({totalSeats} approvers).</span>
+          {isSnrOra && (
+            <Button size="sm" variant="outline" onClick={() => setScheduleOpen(true)}>
+              <Calendar className="w-3.5 h-3.5 mr-1.5" />
+              Schedule PAC meeting
+            </Button>
+          )}
         </div>
       )}
-      <div className={!allApproved ? 'pointer-events-none opacity-90' : undefined} aria-disabled={!allApproved}>
+      <div className={locked ? 'pointer-events-none opacity-90' : undefined} aria-disabled={locked}>
         <PACCertificate
-          certificateNumber={`PAC-${projectCode || 'DP-300'}-${handoverPoint.vcr_code}`}
-          projectCode={projectCode}
+          certificateNumber={certNo}
+          projectCode={projectPrefix}
+          projectName={ctx?.projectName || ''}
+          facilityName={handoverPoint.name}
           handoverPointId={handoverPoint.id}
           vcrCode={handoverPoint.vcr_code}
         />
       </div>
+      <SchedulePacMeetingModal
+        open={scheduleOpen}
+        onOpenChange={setScheduleOpen}
+        handoverPointId={handoverPoint.id}
+        projectId={ctx?.projectId || undefined}
+        vcrCode={handoverPoint.vcr_code}
+        vcrName={handoverPoint.name}
+        projectPrefix={projectPrefix}
+      />
     </div>
   );
 };
