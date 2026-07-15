@@ -379,10 +379,11 @@ export const RaiseQualificationModal: React.FC<Props> = ({
               <PopoverContent
                 align="start"
                 className="p-0 pointer-events-auto w-[--radix-popover-trigger-width] max-w-[640px]"
+                onWheel={(e) => e.stopPropagation()}
               >
                 <Command>
                   <CommandInput placeholder="Search by code, question, category…" />
-                  <CommandList>
+                  <CommandList className="max-h-[320px] overflow-y-auto overscroll-contain">
                     <CommandEmpty>No items found.</CommandEmpty>
                     <CommandGroup>
                       <CommandItem
@@ -530,10 +531,14 @@ export const RaiseQualificationModal: React.FC<Props> = ({
                   <Plus className="h-3.5 w-3.5" /> Add approver
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="w-80 p-0 pointer-events-auto" align="start">
+              <PopoverContent
+                className="w-80 p-0 pointer-events-auto"
+                align="start"
+                onWheel={(e) => e.stopPropagation()}
+              >
                 <Command>
                   <CommandInput placeholder="Search people…" />
-                  <CommandList>
+                  <CommandList className="max-h-[320px] overflow-y-auto overscroll-contain">
                     <CommandEmpty>No people found.</CommandEmpty>
                     <CommandGroup>
                       {pickerCandidates.slice(0, 50).map((p: any) => (
