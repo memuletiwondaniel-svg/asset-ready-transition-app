@@ -119,12 +119,6 @@ export const useVCRQualifications = (handoverPointId: string) => {
         approvers: byQual.get(qual.id) || [],
       })) as VCRQualification[];
     },
-
-      return (quals || []).map((qual: any) => ({
-        ...qual,
-        prerequisite: prereqMap.get(qual.vcr_prerequisite_id),
-      })) as VCRQualification[];
-    },
     enabled: !!handoverPointId,
   });
 
