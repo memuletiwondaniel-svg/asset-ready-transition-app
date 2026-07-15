@@ -285,15 +285,16 @@ export const RaiseQualificationModal: React.FC<Props> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-3xl !z-modal-critical overflow-x-hidden"
+        className="max-w-3xl !z-modal-critical overflow-hidden p-0 gap-0 flex flex-col max-h-[85vh]"
         overlayClassName="!z-overlay-critical"
       >
-        <DialogHeader className="space-y-1">
+        <DialogHeader className="space-y-1 px-6 pt-6 pb-4 border-b shrink-0">
           <div className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             {eyebrow}
           </div>
-          <DialogTitle className="text-lg">Raise qualification</DialogTitle>
+          <DialogTitle className="text-lg">Raise Qualification</DialogTitle>
         </DialogHeader>
+
 
         <div className="space-y-5 py-2 overflow-x-hidden">
           {/* VCR item — searchable combobox */}
