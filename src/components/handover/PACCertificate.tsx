@@ -40,10 +40,14 @@ interface PACCertificateProps {
   projectCode?: string;
   facilityName?: string;
   projectName?: string;
+  projectDisplay?: string;
+  plantName?: string;
+  scope?: string;
   pacDate?: string;
   handoverPointId?: string;
   vcrCode?: string;
   approvers?: PACApprover[];
+  onNavigateVcrOverview?: () => void;
 }
 
 const defaultContent: PACContent = {
@@ -64,10 +68,14 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
   projectCode = "",
   facilityName = "",
   projectName = "",
+  projectDisplay = "",
+  plantName = "",
+  scope = "",
   pacDate = "",
   handoverPointId,
   vcrCode,
   approvers: approversProp,
+  onNavigateVcrOverview,
 }) => {
   const certificateRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
