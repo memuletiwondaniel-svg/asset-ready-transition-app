@@ -67,16 +67,41 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
   pacDate = "",
   handoverPointId,
   vcrCode,
-  approvers = [
-    { id: '1', name: '', role: 'Plant Director' },
-    { id: '2', name: '', role: 'Project Hub Lead' }
-  ]
+  approvers: approversProp,
 }) => {
   const certificateRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [content, setContent] = useState<PACContent>(defaultContent);
   const [editContent, setEditContent] = useState<PACContent>(defaultContent);
+
+  // Live PAC approver ledger (only when handoverPointId is provided).
+  const { data: pacRows = [], sign: signPac } = useVCRPACApprovers(handoverPointId);
+  const { data: currentUser } = useQuery({
+    queryKey: ['pac-cert-current-user'],
+    queryFn: async () => (await supabase.auth.getUser()).data.user,
+  });
+
+  const ledgerApprovers: PACApprover[] = React.useMemo(
+    () =>
+      (pacRows || []).map((r) => ({
+        id: r.id,
+        name: r.user_id ? (r.approver_name || '') : '',
+        role: r.approver_role,
+        status:
+          r.status === 'SIGNED' ? ('approved' as const) : ('pending' as const),
+        approvedDate: r.signed_at || undefined,
+      })),
+    [pacRows],
+  );
+
+  const approvers: PACApprover[] =
+    handoverPointId && ledgerApprovers.length > 0
+      ? ledgerApprovers
+      : (approversProp || [
+          { id: '1', name: '', role: 'Plant Director' },
+          { id: '2', name: '', role: 'Project Hub Lead' },
+        ]);
 
   // Fetch saved PAC template content from database
   const { data: templateData } = useQuery({
