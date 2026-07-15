@@ -35,7 +35,7 @@ export const QualificationReviewLauncher: React.FC<Props> = ({
 
       const { data: pr } = await c
         .from('p2a_vcr_prerequisites')
-        .select('id, summary, display_order, handover_point_id, vcr_items:vcr_item_id ( category:category_id ( code ) )')
+        .select('id, summary, display_order, handover_point_id, vcr_items:vcr_item_id ( display_order, category:category_id ( code ) )')
         .eq('id', q.vcr_prerequisite_id)
         .maybeSingle();
 
@@ -45,7 +45,7 @@ export const QualificationReviewLauncher: React.FC<Props> = ({
           id: pr.id,
           summary: pr.summary,
           handover_point_id: pr.handover_point_id,
-          display_order: pr.display_order,
+          display_order: pr.vcr_items?.display_order ?? pr.display_order,
           category: pr.vcr_items?.category?.code ?? null,
         } : undefined,
       } as VCRQualification;
