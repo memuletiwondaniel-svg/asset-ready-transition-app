@@ -129,12 +129,16 @@ export const RaiseQualificationModal: React.FC<Props> = ({
   });
 
   /**
-   * Fetch approver SEATS for the selected item:
-   * - Group vcr_prerequisite_approvals rows by approver_role_id (the "seat")
-   * - Resolve each user's profile + role name
-   * - Face = project-side holder (present in project_team_members for this role)
-   * - Partner = other holders (asset-side)
-   * - Falls back to first holder + flag if no project-side match found
+   * Fetch approver SEATS for the selected item.
+   *
+   * B2B pairing rule (Round 3): 'Elect TA2 - Project' and 'Elect TA2 - Asset'
+   * are DIFFERENT roles.id values, so grouping by approver_role_id never
+   * merges them. Instead we group by the BASE role name — the role.name with
+   * any trailing ' - Project' / ' - Asset' (or en-/em-dash variants) stripped.
+   *   - Face  = the row whose role name ends in 'Project'
+   *   - Partner (B2B) = the row whose role name ends in 'Asset'
+   *   - Suffix-less roles (e.g. 'Civil TA2') stay as single cards with no B2B chip.
+   * Only the Project-side face is submitted as a qualification approver.
    */
   const { data: defaultSeats } = useQuery({
     queryKey: ['prereq-seats', prereqId, projectId],
@@ -160,65 +164,48 @@ export const RaiseQualificationModal: React.FC<Props> = ({
       const pMap = new Map<string, any>((profs || []).map((p: any) => [p.user_id, p]));
       const rMap = new Map<string, string>((rls || []).map((r: any) => [r.id, r.name]));
 
-      // Project-side membership: (project_id, role_name) → set of user_ids
-      const roleNames = Array.from(rMap.values());
-      const { data: ptmRows } = roleNames.length
-        ? await c.from('project_team_members')
-            .select('user_id, role')
-            .eq('project_id', projectId)
-            .in('role', roleNames)
-        : { data: [] as any[] };
-      const projectSideByRole = new Map<string, Set<string>>();
-      for (const r of ptmRows || []) {
-        const set = projectSideByRole.get(r.role as string) || new Set<string>();
-        set.add(r.user_id as string);
-        projectSideByRole.set(r.role as string, set);
-      }
-
-      // Group approvals by role_id (the seat). Rows without a role_id become
-      // their own single-seat entries keyed by user_id so we never drop them.
-      const seats = new Map<string, { role_id: string | null; role_name: string; user_ids: string[] }>();
+      // Group rows by BASE role name (suffix-stripped). Rows without a
+      // role_id become their own single-seat entries keyed by user_id.
+      type Row = { user_id: string; role_name: string; side: 'project' | 'asset' | null };
+      const groups = new Map<string, { base: string; rows: Row[] }>();
       for (const r of list) {
-        const key = r.approver_role_id || `user:${r.approver_user_id}`;
-        const existing = seats.get(key);
-        if (existing) {
-          if (!existing.user_ids.includes(r.approver_user_id)) existing.user_ids.push(r.approver_user_id);
-        } else {
-          seats.set(key, {
-            role_id: r.approver_role_id,
-            role_name: r.approver_role_id ? (rMap.get(r.approver_role_id) || '') : '',
-            user_ids: [r.approver_user_id],
-          });
+        const role_name = r.approver_role_id ? (rMap.get(r.approver_role_id) || '') : '';
+        const base = stripSideSuffix(role_name) || `user:${r.approver_user_id}`;
+        const side = sideOfRole(role_name);
+        const g = groups.get(base) || { base, rows: [] };
+        // Dedupe rows within a base group by (user_id, side).
+        if (!g.rows.some(x => x.user_id === r.approver_user_id && x.side === side)) {
+          g.rows.push({ user_id: r.approver_user_id, role_name, side });
         }
+        groups.set(base, g);
       }
 
       const out: Approver[] = [];
-      for (const seat of seats.values()) {
-        const projectSet = projectSideByRole.get(seat.role_name) || new Set<string>();
-        const projectSide = seat.user_ids.find(u => projectSet.has(u));
-        const faceId = projectSide || seat.user_ids[0];
-        const partnerIds = seat.user_ids.filter(u => u !== faceId);
-        const face = pMap.get(faceId);
-        const partnerId = partnerIds[0];
-        const partner = partnerId ? pMap.get(partnerId) : null;
+      for (const g of groups.values()) {
+        const projectRow = g.rows.find(r => r.side === 'project');
+        const assetRow   = g.rows.find(r => r.side === 'asset');
+        const faceRow    = projectRow || assetRow || g.rows[0];
+        const partnerRow = projectRow && assetRow ? assetRow : null;
+        const face = pMap.get(faceRow.user_id);
+        const partner = partnerRow ? pMap.get(partnerRow.user_id) : null;
         out.push({
-          user_id: faceId,
+          user_id: faceRow.user_id,
           full_name: face?.full_name || 'Unknown',
-          role: seat.role_name,
+          role: faceRow.role_name,
           avatar_url: face?.avatar_url || undefined,
-          role_id: seat.role_id,
-          partner: partner ? {
-            user_id: partnerId,
+          seat_key: g.base,
+          partner: partner && partnerRow ? {
+            user_id: partnerRow.user_id,
             full_name: partner.full_name || 'Unknown',
             avatar_url: partner.avatar_url || undefined,
-            role: seat.role_name,
+            role: partnerRow.role_name,
           } : null,
-          fallbackAsset: !projectSide && !!partnerIds.length,
         });
       }
       return out;
     },
   });
+
 
   // Reset approvers when item changes (unless user manually edited)
   useEffect(() => {
