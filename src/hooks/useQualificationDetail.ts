@@ -171,6 +171,20 @@ export const useRaiseQualification = () => {
       const { data: auth } = await c().auth.getUser();
       const uid = auth?.user?.id ?? null;
 
+      // Integrity guard: prerequisite must exist AND belong to the same handover
+      // point. Blocks the class of bug that produced cross-VCR / fake-item quals.
+      if (!args.vcr_prerequisite_id) throw new Error('Missing prerequisite');
+      const { data: prereqRow, error: prereqErr } = await c()
+        .from('p2a_vcr_prerequisites')
+        .select('id, handover_point_id')
+        .eq('id', args.vcr_prerequisite_id)
+        .maybeSingle();
+      if (prereqErr) throw prereqErr;
+      if (!prereqRow) throw new Error('Prerequisite not found');
+      if (prereqRow.handover_point_id !== args.handover_point_id) {
+        throw new Error('Prerequisite does not belong to this VCR');
+      }
+
       const { data: qual, error: qErr } = await c()
         .from('p2a_vcr_qualifications')
         .insert({
@@ -188,6 +202,7 @@ export const useRaiseQualification = () => {
         .select()
         .single();
       if (qErr) throw qErr;
+
 
       if (args.draft) {
         // Draft = record only, no approvers/tasks
