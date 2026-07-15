@@ -107,7 +107,7 @@ export const QualificationDrawer: React.FC<Props> = ({ qual, vcrCode, vcrName, t
             <span className="text-muted-foreground/70 font-mono text-xs">QUALIFICATION</span>
             <span>·</span>
             <span className="font-mono">{qId}</span>
-            <span className={cn('ml-auto text-[10.5px] font-bold rounded-full border px-2 py-0.5', chipStyle(lc))}>
+            <span className={cn('ml-auto text-[10.5px] font-bold rounded-full border px-2 py-0.5 whitespace-nowrap shrink-0', chipStyle(lc))}>
               {chipLabel(lc)}
             </span>
           </div>
@@ -116,13 +116,13 @@ export const QualificationDrawer: React.FC<Props> = ({ qual, vcrCode, vcrName, t
         <ScrollArea className="flex-1">
           <div className="px-5 py-4 space-y-5 text-sm">
             {/* Item chip + question (or custom title for ad-hoc quals) */}
-            <div className="flex items-baseline gap-2 flex-wrap min-w-0">
+            <div className="flex items-baseline gap-2 min-w-0">
               {code && (
-                <span className="inline-flex items-center rounded-md px-1.5 py-0.5 font-mono text-[11px] font-semibold text-slate-600 whitespace-nowrap" style={{ background: '#EEF2F7' }}>
+                <span className="inline-flex items-center rounded-md px-1.5 py-0.5 font-mono text-[11px] font-semibold text-slate-600 whitespace-nowrap shrink-0" style={{ background: '#EEF2F7' }}>
                   {code}
                 </span>
               )}
-              <span className="font-medium leading-snug break-words">
+              <span className="font-medium leading-snug truncate min-w-0">
                 {qual.prerequisite?.summary
                   || qual.custom_title
                   || 'Ad-hoc qualification'}
