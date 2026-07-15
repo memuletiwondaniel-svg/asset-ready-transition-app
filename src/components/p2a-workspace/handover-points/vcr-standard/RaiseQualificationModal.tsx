@@ -577,21 +577,23 @@ export const RaiseQualificationModal: React.FC<Props> = ({
           </div>
         </div>
 
-        <div className="pt-2 pb-1 text-[11px] text-muted-foreground">
-          * required · Submit activates when required fields are filled
+        <div className="border-t bg-background shrink-0 px-6 py-3">
+          <DialogFooter className="flex-row items-center justify-between sm:justify-between gap-2 m-0">
+            <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => submit(true)} disabled={raise.isPending}>
+                Save as draft
+              </Button>
+              <Button onClick={() => submit(false)} disabled={!canSubmit || raise.isPending}>
+                Submit for approval
+              </Button>
+            </div>
+          </DialogFooter>
+          <div className="pt-2 text-[11px] text-muted-foreground">
+            * required · Submit activates when required fields are filled
+          </div>
         </div>
 
-        <DialogFooter className="flex-row items-center justify-between sm:justify-between">
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => submit(true)} disabled={raise.isPending}>
-              Save as draft
-            </Button>
-            <Button onClick={() => submit(false)} disabled={!canSubmit || raise.isPending}>
-              Submit for approval
-            </Button>
-          </div>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
