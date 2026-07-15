@@ -93,7 +93,7 @@ export const RaiseQualificationModal: React.FC<Props> = ({
         out.push({
           user_id: r.approver_user_id,
           full_name: p?.full_name || 'Unknown',
-          role: (r.approver_role_id && rMap.get(r.approver_role_id)) || '',
+          role: (r.approver_role_id ? (rMap.get(r.approver_role_id) as string | undefined) : '') || '',
           avatar_url: p?.avatar_url || undefined,
         });
       }
