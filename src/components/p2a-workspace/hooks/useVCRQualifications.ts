@@ -78,11 +78,12 @@ export const useVCRQualifications = (handoverPointId: string) => {
 
       const prereqIds = prerequisites.map((p: any) => p.id);
 
-      // Get all qualifications for these prerequisites (include q_number)
+      // Get all qualifications for this handover point (custom quals have
+      // NULL vcr_prerequisite_id but handover_point_id is always populated).
       const { data: quals, error } = await supabase
         .from('p2a_vcr_qualifications')
         .select('*')
-        .in('vcr_prerequisite_id', prereqIds)
+        .eq('handover_point_id', handoverPointId)
         .order('q_number', { ascending: true });
 
       if (error) throw error;
