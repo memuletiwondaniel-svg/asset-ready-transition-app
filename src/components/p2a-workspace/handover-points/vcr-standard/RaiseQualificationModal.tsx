@@ -326,8 +326,9 @@ export const RaiseQualificationModal: React.FC<Props> = ({
                         <span className="text-xs truncate">{selectedPrereq.summary}</span>
                       </>
                     ) : (
-                      <span className="text-xs text-muted-foreground">Select item…</span>
+                      <span className="text-xs text-muted-foreground">Select a VCR item or raise a custom qualification…</span>
                     )}
+
                   </span>
                   <ChevronsUpDown className="h-4 w-4 opacity-50 shrink-0" />
                 </Button>
