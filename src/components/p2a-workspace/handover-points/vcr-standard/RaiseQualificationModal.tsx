@@ -278,20 +278,22 @@ export const RaiseQualificationModal: React.FC<Props> = ({
     });
   };
 
+  // Only real (non-placeholder) approvers count toward submission.
+  const realApprovers = approvers.filter(a => !a.unassigned);
   const canSubmit =
     (!!prereqId && !isCustom
       ? true
       : isCustom && customTitle.trim().length > 2) &&
     reason.trim().length > 5 && mitigation.trim().length > 5 &&
-    !!targetDate && approvers.length > 0;
+    !!targetDate && realApprovers.length > 0;
 
   const submit = (draft: boolean) => {
     if (!targetDate) return;
-    // For B2B seats, seed only the project-side holder (the face). Asset TA2s
-    // are never qualification deciders.
-    const submitUserIds = approvers.map(a => a.user_id);
+    // Placeholder "Unassigned" seats are never seeded as deciders.
+    const submitUserIds = realApprovers.map(a => a.user_id);
     const roleLabels: Record<string, string> = {};
-    for (const a of approvers) roleLabels[a.user_id] = a.role;
+    for (const a of realApprovers) roleLabels[a.user_id] = a.role;
+
 
     raise.mutate({
       vcr_prerequisite_id: isCustom ? null : prereqId,
