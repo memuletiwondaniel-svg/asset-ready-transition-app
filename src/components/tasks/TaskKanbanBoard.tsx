@@ -25,6 +25,7 @@ import { VCRExecutionPlanWizard } from '@/components/widgets/vcr-wizard/VCRExecu
 import { InterdisciplinaryTaskModal } from '@/components/widgets/InterdisciplinaryTaskModal';
 import { ScheduleSofMeetingModal } from '@/components/widgets/ScheduleSofMeetingModal';
 import { SchedulePacMeetingModal } from '@/components/widgets/SchedulePacMeetingModal';
+import { QualificationReviewLauncher } from './QualificationReviewLauncher';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
