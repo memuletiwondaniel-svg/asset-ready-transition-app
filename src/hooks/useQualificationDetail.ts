@@ -156,8 +156,9 @@ export const useRaiseQualification = () => {
 
   const raise = useMutation({
     mutationFn: async (args: {
-      vcr_prerequisite_id: string;
+      vcr_prerequisite_id?: string | null;
       handover_point_id: string;
+      custom_title?: string;
       vcr_code?: string;
       vcr_name?: string;
       reason: string;
@@ -171,25 +172,32 @@ export const useRaiseQualification = () => {
       const { data: auth } = await c().auth.getUser();
       const uid = auth?.user?.id ?? null;
 
-      // Integrity guard: prerequisite must exist AND belong to the same handover
-      // point. Blocks the class of bug that produced cross-VCR / fake-item quals.
-      if (!args.vcr_prerequisite_id) throw new Error('Missing prerequisite');
-      const { data: prereqRow, error: prereqErr } = await c()
-        .from('p2a_vcr_prerequisites')
-        .select('id, handover_point_id')
-        .eq('id', args.vcr_prerequisite_id)
-        .maybeSingle();
-      if (prereqErr) throw prereqErr;
-      if (!prereqRow) throw new Error('Prerequisite not found');
-      if (prereqRow.handover_point_id !== args.handover_point_id) {
-        throw new Error('Prerequisite does not belong to this VCR');
+      if (!args.handover_point_id) throw new Error('Missing handover point');
+
+      // Integrity guard: when a prerequisite is provided it must belong to the
+      // same handover point. NULL prereq is allowed for custom qualifications,
+      // in which case a custom_title is required.
+      if (args.vcr_prerequisite_id) {
+        const { data: prereqRow, error: prereqErr } = await c()
+          .from('p2a_vcr_prerequisites')
+          .select('id, handover_point_id')
+          .eq('id', args.vcr_prerequisite_id)
+          .maybeSingle();
+        if (prereqErr) throw prereqErr;
+        if (!prereqRow) throw new Error('Prerequisite not found');
+        if (prereqRow.handover_point_id !== args.handover_point_id) {
+          throw new Error('Prerequisite does not belong to this VCR');
+        }
+      } else if (!args.custom_title || !args.custom_title.trim()) {
+        throw new Error('Custom qualification requires a title');
       }
 
       const { data: qual, error: qErr } = await c()
         .from('p2a_vcr_qualifications')
         .insert({
-          vcr_prerequisite_id: args.vcr_prerequisite_id,
+          vcr_prerequisite_id: args.vcr_prerequisite_id || null,
           handover_point_id: args.handover_point_id,
+          custom_title: args.custom_title?.trim() || null,
           reason: args.reason,
           mitigation: args.mitigation,
           follow_up_action: args.follow_up_action || null,
@@ -202,6 +210,7 @@ export const useRaiseQualification = () => {
         .select()
         .single();
       if (qErr) throw qErr;
+
 
 
       if (args.draft) {
