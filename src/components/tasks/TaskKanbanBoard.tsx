@@ -1273,6 +1273,20 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         return;
       }
 
+      // Qualification review task — open the qualification drawer via a dedicated launcher.
+      if ((meta?.action === 'review_qualification' || task.userTask.type === 'qualification_review') && meta?.qualification_id) {
+        console.log('[TaskKanbanBoard] handleTaskClick:branch', { branch: 'qualification_review' });
+        setQualTaskTarget({
+          taskId: task.userTask.id,
+          handoverPointId: meta.handover_point_id as string,
+          qualificationId: meta.qualification_id as string,
+          vcrCode: meta.vcr_code as string | undefined,
+          vcrName: meta.vcr_name as string | undefined,
+        });
+        return;
+      }
+
+
 
       const isOraActivity = !isReviewTask && task.userTask.type !== 'vcr_plan_resubmit' && (task.userTask.type === 'ora_activity' || meta?.action === 'complete_ora_activity' || meta?.action === 'create_p2a_plan' || meta?.action === 'create_vcr_delivery_plan' || meta?.ora_plan_activity_id);
       console.log('[TaskKanbanBoard] handleTaskClick:userTaskBranchCheck', {
