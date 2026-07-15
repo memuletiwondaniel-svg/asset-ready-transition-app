@@ -100,7 +100,7 @@ export const RaiseQualificationModal: React.FC<Props> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl !z-modal-critical" overlayClassName="!z-overlay-critical">
         <DialogHeader>
           <DialogTitle>Raise Qualification — {vcrCode || 'VCR'}{vcrName ? ` (${vcrName})` : ''}</DialogTitle>
         </DialogHeader>

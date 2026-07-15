@@ -1,18 +1,16 @@
 import React, { useMemo, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
 import { Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useVCRQualifications, VCRQualification } from '../../hooks/useVCRQualifications';
 import { useVCRPrerequisites } from '../../hooks/useVCRPrerequisites';
-import { useProfileUsers } from '@/hooks/useProfileUsers';
 import { formatVcrItemCode } from '@/lib/vcrItemCode';
 import { normalizeCategoryCode } from './standardStatus';
 import { QualificationDrawer } from './QualificationDrawer';
 import { RaiseQualificationModal } from './RaiseQualificationModal';
+
 
 interface Props {
   handoverPointId: string;
@@ -55,18 +53,11 @@ const itemCodeFor = (q: VCRQualification): string | null => {
 export const StandardQualificationsTab: React.FC<Props> = ({ handoverPointId, vcrCode, vcrName }) => {
   const { qualifications, isLoading } = useVCRQualifications(handoverPointId);
   const { prerequisites } = useVCRPrerequisites(handoverPointId);
-  const { data: profiles } = useProfileUsers();
   const [openId, setOpenId] = useState<string | null>(null);
   const [raiseOpen, setRaiseOpen] = useState(false);
 
-  const profileById = useMemo(() => {
-    const m = new Map<string, any>();
-    (profiles || []).forEach((p: any) => m.set(p.user_id, p));
-    return m;
-  }, [profiles]);
-
   const prereqOptions = useMemo(() => (prerequisites || []).map((p: any) => {
-    const cat = normalizeCategoryCode(p.vcr_items?.category?.code);
+    const cat = normalizeCategoryCode(p.vcr_items?.category?.code ?? p.category);
     const code = cat === 'XX' ? '' : formatVcrItemCode(cat, p.display_order ?? 0);
     return { id: p.id, code, summary: p.summary as string };
   }), [prerequisites]);
@@ -119,11 +110,9 @@ export const StandardQualificationsTab: React.FC<Props> = ({ handoverPointId, vc
         const isDraft = lc === 'DRAFT';
         const qId = `Q-${String(q.q_number ?? 0).padStart(3, '0')}`;
         const code = itemCodeFor(q);
-
-        const approvers = q.approvers || [];
-        const firstApprover = approvers[0];
-        const extraCount = Math.max(0, approvers.length - 1);
-        const firstProfile = firstApprover ? profileById.get(firstApprover.user_id) : null;
+        const dateStr = lc === 'APPROVED' || lc === 'REJECTED'
+          ? q.reviewed_at
+          : q.submitted_at;
 
         return (
           <Card
@@ -137,9 +126,16 @@ export const StandardQualificationsTab: React.FC<Props> = ({ handoverPointId, vc
             {/* Q-number eyebrow + status chip */}
             <div className="flex items-center justify-between mb-2">
               <span className="font-mono text-[10.5px] font-semibold text-muted-foreground/70">{qId}</span>
-              <span className={cn('text-[10.5px] font-bold px-2 py-0.5 rounded-full border', chipStyle(lc))}>
-                {chipLabel(lc)}
-              </span>
+              <div className="flex items-center gap-2">
+                {dateStr && (
+                  <span className="text-[10.5px] text-muted-foreground">
+                    {format(new Date(dateStr), 'dd-MMM-yyyy')}
+                  </span>
+                )}
+                <span className={cn('text-[10.5px] font-bold px-2 py-0.5 rounded-full border', chipStyle(lc))}>
+                  {chipLabel(lc)}
+                </span>
+              </div>
             </div>
 
             {/* Item chip + prereq question */}
@@ -155,53 +151,10 @@ export const StandardQualificationsTab: React.FC<Props> = ({ handoverPointId, vc
               <span className="font-semibold text-muted-foreground/80">Reason: </span>
               {q.reason}
             </div>
-
-            {/* Two-line resolved approver footer (first + '+N' for multi) */}
-            {!isDraft && approvers.length > 0 && (
-              <>
-                <Separator className="mt-3 mb-2.5" />
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Avatar className="h-6 w-6">
-                      {firstProfile?.avatar_url && <AvatarImage src={firstProfile.avatar_url} />}
-                      <AvatarFallback className="text-[9px]">
-                        {(firstProfile?.full_name || '?').slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0">
-                      <div className="text-[11.5px] font-medium truncate">
-                        {firstProfile?.full_name || 'Awaiting approver'}
-                        {extraCount > 0 && (
-                          <span className="text-muted-foreground"> +{extraCount}</span>
-                        )}
-                      </div>
-                      {firstApprover?.role_label && (
-                        <div className="text-[10.5px] text-muted-foreground truncate">
-                          {firstApprover.role_label}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  {lc === 'APPROVED' && q.reviewed_at && (
-                    <div className="text-[11px] text-muted-foreground shrink-0">
-                      {format(new Date(q.reviewed_at), 'dd-MMM-yyyy')}
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-
-            {isDraft && (
-              <>
-                <Separator className="mt-3 mb-2.5" />
-                <div className="text-[11px] text-muted-foreground italic">
-                  Draft — not yet submitted for review.
-                </div>
-              </>
-            )}
           </Card>
         );
       })}
+
 
       {/* Drawer */}
       <QualificationDrawer
