@@ -68,7 +68,7 @@ export const useVCRQualifications = (handoverPointId: string) => {
           summary,
           display_order,
           handover_point_id,
-          vcr_items:vcr_item_id ( category:category_id ( code ) )
+          vcr_items:vcr_item_id ( display_order, category:category_id ( code ) )
         `)
         .eq('handover_point_id', handoverPointId);
 
@@ -108,7 +108,9 @@ export const useVCRQualifications = (handoverPointId: string) => {
           id: p.id,
           summary: p.summary,
           handover_point_id: p.handover_point_id,
-          display_order: p.display_order,
+          // Chip must reflect the CANONICAL item code (category + item.display_order),
+          // not the prereq's own display_order which is inflated in seeds.
+          display_order: p.vcr_items?.display_order ?? p.display_order,
           category: p.vcr_items?.category?.code ?? null,
         }]),
       );
