@@ -6984,41 +6984,123 @@ export type Database = {
           },
         ]
       }
+      p2a_itp_accepting_parties: {
+        Row: {
+          comment: string | null
+          created_at: string
+          decided_at: string | null
+          id: string
+          itp_activity_id: string
+          role_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          itp_activity_id: string
+          role_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          itp_activity_id?: string
+          role_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_itp_accepting_parties_itp_activity_id_fkey"
+            columns: ["itp_activity_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_itp_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_itp_accepting_parties_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       p2a_itp_activities: {
         Row: {
           activity_name: string
+          completed_at: string | null
           created_at: string
+          delivering_party_role_id: string | null
           display_order: number
           handover_point_id: string
           id: string
           inspection_type: string
+          location: string | null
           notes: string | null
+          outcome_summary: string | null
+          scheduled_at: string | null
+          scheduled_end: string | null
+          status: Database["public"]["Enums"]["wh_status"]
+          submitted_at: string | null
           system_id: string
           updated_at: string
         }
         Insert: {
           activity_name: string
+          completed_at?: string | null
           created_at?: string
+          delivering_party_role_id?: string | null
           display_order?: number
           handover_point_id: string
           id?: string
           inspection_type?: string
+          location?: string | null
           notes?: string | null
+          outcome_summary?: string | null
+          scheduled_at?: string | null
+          scheduled_end?: string | null
+          status?: Database["public"]["Enums"]["wh_status"]
+          submitted_at?: string | null
           system_id: string
           updated_at?: string
         }
         Update: {
           activity_name?: string
+          completed_at?: string | null
           created_at?: string
+          delivering_party_role_id?: string | null
           display_order?: number
           handover_point_id?: string
           id?: string
           inspection_type?: string
+          location?: string | null
           notes?: string | null
+          outcome_summary?: string | null
+          scheduled_at?: string | null
+          scheduled_end?: string | null
+          status?: Database["public"]["Enums"]["wh_status"]
+          submitted_at?: string | null
           system_id?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "p2a_itp_activities_delivering_party_role_id_fkey"
+            columns: ["delivering_party_role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "p2a_itp_activities_handover_point_id_fkey"
             columns: ["handover_point_id"]
@@ -7031,6 +7113,79 @@ export type Database = {
             columns: ["system_id"]
             isOneToOne: false
             referencedRelation: "p2a_systems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      p2a_itp_activity_log: {
+        Row: {
+          action: string
+          comment: string | null
+          created_at: string
+          id: string
+          itp_activity_id: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          itp_activity_id: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          itp_activity_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_itp_activity_log_itp_activity_id_fkey"
+            columns: ["itp_activity_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_itp_activities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      p2a_itp_attachments: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_path: string
+          id: string
+          itp_activity_id: string
+          kind: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_path: string
+          id?: string
+          itp_activity_id: string
+          kind: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          id?: string
+          itp_activity_id?: string
+          kind?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_itp_attachments_itp_activity_id_fkey"
+            columns: ["itp_activity_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_itp_activities"
             referencedColumns: ["id"]
           },
         ]
@@ -16130,6 +16285,12 @@ export type Database = {
         | "QUALIFIED"
         | "SUPERSEDED"
       vcr_qualification_approver_status: "PENDING" | "APPROVED" | "REJECTED"
+      wh_status:
+        | "NOT_STARTED"
+        | "SCHEDULED"
+        | "UNDER_REVIEW"
+        | "COMPLETED"
+        | "REWORK_REQUESTED"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -16504,6 +16665,13 @@ export const Constants = {
         "SUPERSEDED",
       ],
       vcr_qualification_approver_status: ["PENDING", "APPROVED", "REJECTED"],
+      wh_status: [
+        "NOT_STARTED",
+        "SCHEDULED",
+        "UNDER_REVIEW",
+        "COMPLETED",
+        "REWORK_REQUESTED",
+      ],
     },
   },
 } as const
