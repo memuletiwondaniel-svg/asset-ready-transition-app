@@ -17,7 +17,7 @@ interface Props { handoverPoint: P2AHandoverPoint; projectCode?: string; onNavig
  * Toolbar surfaces a "Schedule SoF meeting" CTA for the Snr ORA Engr once
  * VCR items are terminal (mirrors PAC gate for non-HC path).
  */
-export const StandardSOFTab: React.FC<Props> = ({ handoverPoint, projectCode }) => {
+export const StandardSOFTab: React.FC<Props> = ({ handoverPoint, projectCode, onNavigateOverview }) => {
   const { prerequisites } = useVCRPrerequisites(handoverPoint.id);
   const { data: ctx } = useVCRCertContext(handoverPoint.handover_plan_id);
   const { data: currentUser } = useCurrentUserRole();
