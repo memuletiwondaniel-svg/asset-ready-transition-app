@@ -80,10 +80,10 @@ const SOFCertificate: React.FC<SOFCertificateProps> = ({
 
   // Determine approvers based on sourceType and pssrReason
   const computedApprovers = React.useMemo(() => {
-    if (approversProp) return approversProp;
-
-    // Prefer live ledger for VCR when seeded.
-    if (sourceType === 'VCR' && sofRows.length > 0) {
+    // VCR path: ALWAYS use the ledger (no hardcoded fallback), so cert can never
+    // render both roster + role-only stub blocks. Empty ledger => empty roster.
+    if (sourceType === 'VCR') {
+      if (approversProp) return approversProp;
       return sofRows.map((r: any) => ({
         id: r.id,
         name: r.user_id ? (r.approver_name || '') : '',
@@ -91,26 +91,18 @@ const SOFCertificate: React.FC<SOFCertificateProps> = ({
       })) as SOFApprover[];
     }
 
+    if (approversProp) return approversProp;
+
     const baseApprovers: SOFApprover[] = [
       { id: '1', name: '', role: 'Plant Director' },
       { id: '2', name: '', role: 'HSE Director' },
     ];
-
     const normalizedReason = (pssrReason || '').toLowerCase();
-    const isVCR = sourceType === 'VCR';
     const isProcessSafetyIncident = normalizedReason.includes('process safety incidence') || normalizedReason.includes('near miss');
     const isTAR = normalizedReason.includes('turn around maintenance') || normalizedReason.includes('tar');
-
-    // P&E Director: only for VCR-based SoF
-    if (isVCR) {
-      baseApprovers.push({ id: '3', name: '', role: 'P&E Director' });
-    }
-
-    // P&M Director: VCR, or Process Safety Incident, or TAR
-    if (isVCR || isProcessSafetyIncident || isTAR) {
+    if (isProcessSafetyIncident || isTAR) {
       baseApprovers.push({ id: '4', name: '', role: 'P&M Director' });
     }
-
     return baseApprovers;
   }, [approversProp, sourceType, pssrReason, sofRows]);
 
@@ -367,16 +359,20 @@ const SOFCertificate: React.FC<SOFCertificateProps> = ({
                 APPROVALS
               </h3>
               <div className={`grid grid-cols-1 md:grid-cols-2 gap-8 mt-4 ${approvers.length <= 2 ? 'max-w-2xl' : 'max-w-3xl'} mx-auto`}>
-                {approvers.map((approver) => (
+                {approvers.map((approver) => {
+                  const unassigned = !approver.name;
+                  return (
                   <div
                     key={approver.id}
-                    className="border border-border rounded-lg p-4 bg-background"
+                    className={`border border-border rounded-lg p-4 bg-background ${unassigned ? 'opacity-60' : ''}`}
                   >
                     <div className="mb-3">
-                      <p className="font-semibold text-foreground">{approver.role}</p>
-                      {approver.name && (
-                        <p className="text-xs text-muted-foreground">{approver.name}</p>
+                      {unassigned ? (
+                        <p className="font-semibold italic text-muted-foreground">Unassigned</p>
+                      ) : (
+                        <p className="font-semibold text-foreground">{approver.name}</p>
                       )}
+                      <p className="text-xs text-muted-foreground">{approver.role}</p>
                     </div>
                     <div className="border-t border-dashed border-border pt-3 mt-3">
                       <div className="h-12 flex items-center justify-center text-muted-foreground text-xs italic border-b border-dashed border-border">
@@ -387,7 +383,8 @@ const SOFCertificate: React.FC<SOFCertificateProps> = ({
                       <p className="text-xs text-muted-foreground">Date: ____________</p>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
