@@ -1135,6 +1135,15 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     vcrCode?: string;
     vcrName?: string;
   } | null>(null);
+  const [whTaskTarget, setWhTaskTarget] = useState<{
+    taskType: 'wh_delivery_bundle' | 'wh_review';
+    handoverPointId: string;
+    itpActivityId?: string;
+    deliveringPartyRoleId?: string;
+    subItemActivityIds?: string[];
+    vcrCode: string;
+    vcrName: string;
+  } | null>(null);
 
   const handleOpenP2AWizard = useCallback((projectId: string, projectCode: string, openWorkspace?: boolean) => {
     setP2aTarget({ projectId, projectCode });
