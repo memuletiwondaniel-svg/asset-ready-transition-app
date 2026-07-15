@@ -240,11 +240,14 @@ export const useRaiseQualification = () => {
         action_tag: 'submitted',
       });
 
-      // Fire prereq -> QUALIFICATION_REQUESTED (advance-only)
-      await c().from('p2a_vcr_prerequisites')
-        .update({ status: 'QUALIFICATION_REQUESTED' })
-        .eq('id', args.vcr_prerequisite_id)
-        .in('status', ['NOT_STARTED', 'IN_PROGRESS', 'READY_FOR_REVIEW']);
+      // Fire prereq -> QUALIFICATION_REQUESTED (advance-only). Only when the
+      // qualification is tied to a specific prerequisite; custom quals skip this.
+      if (args.vcr_prerequisite_id) {
+        await c().from('p2a_vcr_prerequisites')
+          .update({ status: 'QUALIFICATION_REQUESTED' })
+          .eq('id', args.vcr_prerequisite_id)
+          .in('status', ['NOT_STARTED', 'IN_PROGRESS', 'READY_FOR_REVIEW']);
+      }
 
       // Create qualification_review tasks per approver (dedupe via dedupe_key)
       const qNum = qual.q_number ?? 0;
