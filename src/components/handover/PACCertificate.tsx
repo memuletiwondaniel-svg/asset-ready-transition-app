@@ -2,12 +2,13 @@ import React, { useRef, useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Edit2, Save, X, Printer } from "lucide-react";
+import { Edit2, Save, X, Printer, PenLine } from "lucide-react";
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useVCRPACApprovers } from '@/hooks/useVCRPACApprovers';
 // PREVIEW CANDIDATE — Gulf Gas Company anonymized brand mark.
 // Rolled only onto PAC preview for Daniel's approval before cascading to SoF/FAC.
 import gulfGasLogo from '@/assets/gulf-gas-company-logo.png';
