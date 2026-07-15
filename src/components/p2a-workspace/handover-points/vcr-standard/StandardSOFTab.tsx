@@ -10,14 +10,14 @@ import { vcrCertNumber } from '@/lib/vcrCertNumber';
 import { useCurrentUserRole } from '@/hooks/useCurrentUserRole';
 import { ScheduleSofMeetingModal } from '@/components/widgets/ScheduleSofMeetingModal';
 
-interface Props { handoverPoint: P2AHandoverPoint; projectCode?: string }
+interface Props { handoverPoint: P2AHandoverPoint; projectCode?: string; onNavigateOverview?: () => void }
 
 /**
  * SoF tab — rendered only for hydrocarbon VCRs (guarded by caller).
  * Toolbar surfaces a "Schedule SoF meeting" CTA for the Snr ORA Engr once
  * VCR items are terminal (mirrors PAC gate for non-HC path).
  */
-export const StandardSOFTab: React.FC<Props> = ({ handoverPoint, projectCode }) => {
+export const StandardSOFTab: React.FC<Props> = ({ handoverPoint, projectCode, onNavigateOverview }) => {
   const { prerequisites } = useVCRPrerequisites(handoverPoint.id);
   const { data: ctx } = useVCRCertContext(handoverPoint.handover_plan_id);
   const { data: currentUser } = useCurrentUserRole();
@@ -57,10 +57,18 @@ export const StandardSOFTab: React.FC<Props> = ({ handoverPoint, projectCode }) 
           plantName={ctx?.plantName || ''}
           facilityName={handoverPoint.name}
           projectName={ctx?.projectName || ''}
+          projectDisplay={
+            projectPrefix && ctx?.projectName
+              ? `${projectPrefix} - ${ctx.projectName}`
+              : (projectPrefix || ctx?.projectName || '')
+          }
+          scope={handoverPoint.description || handoverPoint.name}
           pssrNumber={handoverPoint.vcr_code}
           sourceType="VCR"
           handoverPointId={handoverPoint.id}
+          onNavigateVcrOverview={onNavigateOverview}
         />
+
       </div>
       <ScheduleSofMeetingModal
         open={scheduleOpen}
