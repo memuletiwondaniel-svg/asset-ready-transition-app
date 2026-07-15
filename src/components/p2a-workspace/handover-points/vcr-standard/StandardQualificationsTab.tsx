@@ -59,7 +59,13 @@ export const StandardQualificationsTab: React.FC<Props> = ({ handoverPointId, vc
   const prereqOptions = useMemo(() => (prerequisites || []).map((p: any) => {
     const cat = normalizeCategoryCode(p.vcr_items?.category?.code ?? p.category);
     const code = cat === 'XX' ? '' : formatVcrItemCode(cat, p.display_order ?? 0);
-    return { id: p.id, code, summary: p.summary as string };
+    return {
+      id: p.id,
+      code,
+      summary: p.summary as string,
+      category: cat,
+      description: (p.description as string) || '',
+    };
   }), [prerequisites]);
 
   const total = qualifications.length;
