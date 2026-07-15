@@ -267,42 +267,39 @@ const SOFCertificate: React.FC<SOFCertificateProps> = ({
           <div className="bg-muted/50 border border-border rounded-lg p-4 mb-6">
             {isVCR ? (
               <>
-                {/* Row 1: Plant + Project (Facility removed per SoF header revision) */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="font-semibold text-foreground">Plant:</span>
-                    <span className="ml-2 text-muted-foreground">{plantName || '[Plant Name]'}</span>
+                {/* Stacked label-value rows: one field per row, values aligned. */}
+                <dl className="text-sm space-y-2">
+                  <div className="flex items-baseline">
+                    <dt className="w-[110px] shrink-0 text-muted-foreground">Plant:</dt>
+                    <dd className="text-foreground">{plantName || '[Plant Name]'}</dd>
                   </div>
-                  <div>
-                    <span className="font-semibold text-foreground">Project:</span>
-                    <span className="ml-2 text-muted-foreground">
-                      {projectDisplay || projectName || '[Project Name]'}
-                    </span>
+                  <div className="flex items-baseline">
+                    <dt className="w-[110px] shrink-0 text-muted-foreground">Project:</dt>
+                    <dd className="text-foreground">{projectDisplay || projectName || '[Project Name]'}</dd>
                   </div>
-                </div>
-                {/* Row 2: Ref (clickable) + SoF Reason (single line, ellipsis on overflow) */}
-                <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2 text-sm mt-3 pt-3 border-t border-border/50">
-                  <div className="shrink-0">
-                    <span className="font-semibold text-foreground">Ref:</span>
-                    {onNavigateVcrOverview ? (
-                      <button
-                        type="button"
-                        onClick={onNavigateVcrOverview}
-                        className="ml-2 text-primary hover:underline focus:underline focus:outline-none print:text-muted-foreground print:no-underline"
-                      >
-                        {pssrNumber || '[VCR Ref]'}
-                      </button>
-                    ) : (
-                      <span className="ml-2 text-muted-foreground">{pssrNumber || '[VCR Ref]'}</span>
-                    )}
+                  <div className="flex items-baseline">
+                    <dt className="w-[110px] shrink-0 text-muted-foreground">Ref:</dt>
+                    <dd>
+                      {onNavigateVcrOverview ? (
+                        <button
+                          type="button"
+                          onClick={onNavigateVcrOverview}
+                          className="text-primary hover:underline focus:underline focus:outline-none print:text-foreground print:no-underline"
+                        >
+                          {pssrNumber || '[VCR Ref]'}
+                        </button>
+                      ) : (
+                        <span className="text-foreground">{pssrNumber || '[VCR Ref]'}</span>
+                      )}
+                    </dd>
                   </div>
-                  <div className="flex-1 min-w-0 flex items-baseline">
-                    <span className="font-semibold text-foreground shrink-0">SoF Reason:</span>
-                    <span className="ml-2 text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis min-w-0">
+                  <div className="flex items-baseline min-w-0">
+                    <dt className="w-[110px] shrink-0 text-muted-foreground">SoF Reason:</dt>
+                    <dd className="text-foreground whitespace-nowrap overflow-hidden text-ellipsis min-w-0">
                       Start-up of a new Project or Facility
-                    </span>
+                    </dd>
                   </div>
-                </div>
+                </dl>
                 {/* Scope — plain text block, sourced from p2a_handover_points.description */}
                 {scope && (
                   <div className="mt-3 pt-3 border-t border-border/50 text-sm">
@@ -311,6 +308,7 @@ const SOFCertificate: React.FC<SOFCertificateProps> = ({
                   </div>
                 )}
               </>
+
             ) : (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
