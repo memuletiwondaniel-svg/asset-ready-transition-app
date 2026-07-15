@@ -393,15 +393,27 @@ export const RaiseQualificationModal: React.FC<Props> = ({
           {/* Approvers — one card per seat, B2B toggle reveals partner */}
           <div className="space-y-2">
             <Label>Qualification approvers <span className="text-red-600">*</span></Label>
+            {approvers.length === 0 && !isCustom && !prereqId && (
+              <div className="rounded-md border border-dashed bg-muted/20 p-3 text-[11px] text-muted-foreground">
+                Approvers populate from the selected item.
+              </div>
+            )}
+            {approvers.length === 0 && (isCustom || (!!prereqId && !isCustom)) && (
+              <div className="rounded-md border border-dashed bg-muted/20 p-3 text-[11px] text-muted-foreground">
+                {isCustom
+                  ? 'No approvers yet — add one below.'
+                  : 'No approvers resolved for this item yet.'}
+              </div>
+            )}
             <TooltipProvider delayDuration={150}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {approvers.map(a => {
-                  const seatKey = a.role_id || a.user_id;
+                  const seatKey = a.seat_key || a.user_id;
                   const flipped = flippedSeats.has(seatKey);
                   const shown = flipped && a.partner ? a.partner : a;
                   return (
                     <div
-                      key={a.user_id}
+                      key={seatKey}
                       className="group relative flex items-center gap-2 rounded-md border bg-muted/30 p-2 min-w-0"
                     >
                       <Avatar className="h-9 w-9 shrink-0">
@@ -436,18 +448,6 @@ export const RaiseQualificationModal: React.FC<Props> = ({
                               </TooltipContent>
                             </Tooltip>
                           )}
-                          {a.fallbackAsset && (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-orange-100 text-orange-800 border border-orange-200 shrink-0 cursor-help">
-                                  Asset
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="text-xs max-w-[240px]">
-                                No Project-side holder for this seat — fell back to the Asset holder.
-                              </TooltipContent>
-                            </Tooltip>
-                          )}
                         </div>
                         <div className="text-[10px] text-muted-foreground truncate">
                           {shown.role || '—'}
@@ -466,6 +466,7 @@ export const RaiseQualificationModal: React.FC<Props> = ({
                 })}
               </div>
             </TooltipProvider>
+
             <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
               <PopoverTrigger asChild>
                 <button
