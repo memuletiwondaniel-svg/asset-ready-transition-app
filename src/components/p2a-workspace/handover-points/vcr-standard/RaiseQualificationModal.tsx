@@ -379,10 +379,11 @@ export const RaiseQualificationModal: React.FC<Props> = ({
               <PopoverContent
                 align="start"
                 className="p-0 pointer-events-auto w-[--radix-popover-trigger-width] max-w-[640px]"
+                onWheel={(e) => e.stopPropagation()}
               >
                 <Command>
                   <CommandInput placeholder="Search by code, question, category…" />
-                  <CommandList>
+                  <CommandList className="max-h-[320px] overflow-y-auto overscroll-contain">
                     <CommandEmpty>No items found.</CommandEmpty>
                     <CommandGroup>
                       <CommandItem
