@@ -74,9 +74,9 @@ export const useVCRQualifications = (handoverPointId: string) => {
         .eq('handover_point_id', handoverPointId);
 
       if (prereqError) throw prereqError;
-      if (!prerequisites?.length) return [];
+      // Do NOT early-return on empty prereqs — custom qualifications don't
+      // require a prereq and are keyed on handover_point_id below.
 
-      const prereqIds = prerequisites.map((p: any) => p.id);
 
       // Get all qualifications for this handover point (custom quals have
       // NULL vcr_prerequisite_id but handover_point_id is always populated).
