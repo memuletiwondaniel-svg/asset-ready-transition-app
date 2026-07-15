@@ -26,6 +26,7 @@ import { InterdisciplinaryTaskModal } from '@/components/widgets/Interdisciplina
 import { ScheduleSofMeetingModal } from '@/components/widgets/ScheduleSofMeetingModal';
 import { SchedulePacMeetingModal } from '@/components/widgets/SchedulePacMeetingModal';
 import { QualificationReviewLauncher } from './QualificationReviewLauncher';
+import { WitnessHoldTaskLauncher } from './WitnessHoldTaskLauncher';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -1135,6 +1136,15 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     vcrCode?: string;
     vcrName?: string;
   } | null>(null);
+  const [whTaskTarget, setWhTaskTarget] = useState<{
+    taskType: 'wh_delivery_bundle' | 'wh_review';
+    handoverPointId: string;
+    itpActivityId?: string;
+    deliveringPartyRoleId?: string;
+    subItemActivityIds?: string[];
+    vcrCode: string;
+    vcrName: string;
+  } | null>(null);
 
   const handleOpenP2AWizard = useCallback((projectId: string, projectCode: string, openWorkspace?: boolean) => {
     setP2aTarget({ projectId, projectCode });
@@ -1287,7 +1297,23 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         return;
       }
 
-
+      // Witness & Hold task routing — bundle (delivering party) or review (accepting party).
+      if ((task.userTask.type === 'wh_delivery_bundle' || task.userTask.type === 'wh_review') && meta?.point_id) {
+        console.log('[TaskKanbanBoard] handleTaskClick:branch', { branch: task.userTask.type });
+        const subs = Array.isArray((task.userTask as any).sub_items)
+          ? ((task.userTask as any).sub_items as Array<{ itp_activity_id?: string }>)
+          : [];
+        setWhTaskTarget({
+          taskType: task.userTask.type as 'wh_delivery_bundle' | 'wh_review',
+          handoverPointId: meta.point_id as string,
+          itpActivityId: (meta.itp_activity_id as string | undefined) ?? undefined,
+          deliveringPartyRoleId: (meta.delivering_party_role_id as string | undefined) ?? undefined,
+          subItemActivityIds: subs.map((s) => s.itp_activity_id).filter((v): v is string => !!v),
+          vcrCode: (meta.vcr_code as string) || '',
+          vcrName: (meta.vcr_name as string) || '',
+        });
+        return;
+      }
 
       const isOraActivity = !isReviewTask && task.userTask.type !== 'vcr_plan_resubmit' && (task.userTask.type === 'ora_activity' || meta?.action === 'complete_ora_activity' || meta?.action === 'create_p2a_plan' || meta?.action === 'create_vcr_delivery_plan' || meta?.ora_plan_activity_id);
       console.log('[TaskKanbanBoard] handleTaskClick:userTaskBranchCheck', {
@@ -2119,6 +2145,21 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
           taskId={qualTaskTarget.taskId}
           vcrCode={qualTaskTarget.vcrCode}
           vcrName={qualTaskTarget.vcrName}
+        />
+      )}
+
+      {/* Witness & Hold task launcher (delivery bundle + review) */}
+      {whTaskTarget && (
+        <WitnessHoldTaskLauncher
+          open={!!whTaskTarget}
+          onOpenChange={(o) => { if (!o) setWhTaskTarget(null); }}
+          taskType={whTaskTarget.taskType}
+          handoverPointId={whTaskTarget.handoverPointId}
+          itpActivityId={whTaskTarget.itpActivityId}
+          deliveringPartyRoleId={whTaskTarget.deliveringPartyRoleId}
+          subItemActivityIds={whTaskTarget.subItemActivityIds}
+          vcrCode={whTaskTarget.vcrCode}
+          vcrName={whTaskTarget.vcrName}
         />
       )}
 
