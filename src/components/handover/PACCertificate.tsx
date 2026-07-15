@@ -419,23 +419,41 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-16 mt-4 max-w-2xl mx-auto">
                 {approvers.map((approver) => {
                   const signed = approver.status === 'approved';
+                  // Match the underlying ledger row by id (when ledger-driven).
+                  const ledgerRow = (pacRows || []).find((r) => r.id === approver.id);
+                  const unassigned = !!ledgerRow && !ledgerRow.user_id;
+                  const canSign =
+                    !!ledgerRow &&
+                    ledgerRow.status === 'PENDING' &&
+                    !!currentUser?.id &&
+                    ledgerRow.user_id === currentUser.id;
                   return (
                     <div
                       key={approver.id}
-                      className={`border rounded-lg p-4 bg-background ${signed ? 'border-emerald-500/60' : 'border-border'}`}
+                      className={`border rounded-lg p-4 bg-background ${signed ? 'border-emerald-500/60' : 'border-border'} ${unassigned ? 'opacity-60' : ''}`}
                     >
                       <div className="mb-3 flex items-start justify-between gap-2">
                         <div>
                           <p className="font-semibold text-foreground">{approver.role}</p>
-                          {approver.name && (
+                          {unassigned ? (
+                            <p className="text-xs italic text-muted-foreground">Unassigned</p>
+                          ) : approver.name ? (
                             <p className="text-xs text-muted-foreground">{approver.name}</p>
-                          )}
+                          ) : null}
                         </div>
-                        {signed && (
+                        {signed ? (
                           <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
                             Signed
                           </span>
-                        )}
+                        ) : ledgerRow?.status === 'PENDING' ? (
+                          <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300">
+                            Pending
+                          </span>
+                        ) : ledgerRow?.status === 'LOCKED' ? (
+                          <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-300">
+                            Locked
+                          </span>
+                        ) : null}
                       </div>
                       <div className="border-t border-dashed border-border pt-3 mt-3">
                         <div className="h-14 flex items-end justify-center border-b border-dashed border-border pb-1">
@@ -444,12 +462,9 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
                               const parts = approver.name.split(' ');
                               const first = parts[0] || '';
                               const lastInitial = parts[1]?.[0] || '';
-                              // Deterministic slight rotation per name for realism
-                              const seed = approver.name
-                                .split('')
-                                .reduce((a, c) => a + c.charCodeAt(0), 0);
-                              const rotate = ((seed % 7) - 3); // -3..+3 deg
-                              const scale = 0.95 + ((seed % 11) / 100); // 0.95..1.05
+                              const seed = approver.name.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+                              const rotate = ((seed % 7) - 3);
+                              const scale = 0.95 + ((seed % 11) / 100);
                               return (
                                 <span
                                   className="text-3xl text-foreground leading-none select-none"
@@ -461,9 +476,7 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
                                   }}
                                 >
                                   {first}
-                                  {lastInitial && (
-                                    <span style={{ marginLeft: '4px' }}>{lastInitial}.</span>
-                                  )}
+                                  {lastInitial && <span style={{ marginLeft: '4px' }}>{lastInitial}.</span>}
                                 </span>
                               );
                             })()
@@ -473,10 +486,32 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
                         </div>
                       </div>
 
-                      <div className="mt-2">
+                      <div className="mt-2 flex items-center justify-between gap-2">
                         <p className="text-xs text-muted-foreground">
                           Date: {signed && approver.approvedDate ? new Date(approver.approvedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '____________'}
                         </p>
+                        {canSign && (
+                          <Button
+                            size="sm"
+                            variant="default"
+                            className="print:hidden"
+                            onClick={async () => {
+                              try {
+                                await signPac.mutateAsync({
+                                  approverId: ledgerRow.id,
+                                  signature_data: approver.name || ledgerRow.approver_name || '',
+                                });
+                                toast.success('PAC signed');
+                              } catch (e: any) {
+                                toast.error(e?.message || 'Failed to sign');
+                              }
+                            }}
+                            disabled={signPac.isPending}
+                          >
+                            <PenLine className="w-3.5 h-3.5 mr-1.5" />
+                            Sign
+                          </Button>
+                        )}
                       </div>
                     </div>
                   );
