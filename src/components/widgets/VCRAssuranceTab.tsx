@@ -296,6 +296,18 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
     },
   });
 
+  // Hoisted above the isLoading early return to keep hook order stable across renders.
+  // (Previously these two hooks were declared after `if (isLoading) return ...`, causing
+  // React error #310 "Rendered more hooks than during the previous render" when the
+  // Comments tab flipped from loading -> loaded.)
+  const isVCR04MockForHooks = vcrCode === 'VCR-04';
+  const pendingRoleLabels = useMemo(() => {
+    if (isVCR04MockForHooks && expectedDisciplines.length === 0) return [];
+    const pending = expectedDisciplines.filter(d => !d.submitted).map(d => d.role_name);
+    return Array.from(new Set(pending));
+  }, [expectedDisciplines, isVCR04MockForHooks]);
+  const { data: pendingHolders = {} } = useProjectRoleHolders(vcrMeta?.projectId ?? undefined, pendingRoleLabels);
+
   const handleSubmitInterdisciplinary = async () => {
     if (!interStatement.trim()) return;
     try {
@@ -428,12 +440,8 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
   const effectiveTotalCount = effectiveExpectedDisciplines.length;
   const allDisciplinesSubmitted = effectiveTotalCount > 0 && effectiveSubmittedCount === effectiveTotalCount;
 
-  // Resolve pending-discipline holders via the plural resolver pattern
-  const pendingRoleLabels = useMemo(
-    () => Array.from(new Set(pendingDisciplines.map(d => d.role_name))),
-    [pendingDisciplines],
-  );
-  const { data: pendingHolders = {} } = useProjectRoleHolders(vcrMeta?.projectId ?? undefined, pendingRoleLabels);
+  // pendingRoleLabels + pendingHolders are hoisted above the isLoading early return.
+
 
   const vcrLabel = `${vcrMeta?.vcrCode || vcrCode || 'VCR'}${vcrMeta?.vcrName ? ` (${vcrMeta.vcrName})` : ''}`;
   const isHydrocarbon = !!vcrMeta?.isHydrocarbon;
