@@ -267,7 +267,7 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
 
           {/* Info Box */}
           <div className="bg-muted/50 border border-border rounded-lg p-4 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 text-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
               <div>
                 <span className="font-semibold text-foreground">Project ID:</span>
                 <span className="ml-2 text-muted-foreground">{projectCode || '[Project ID]'}</span>
@@ -285,10 +285,6 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
                 <span className="ml-2 text-muted-foreground">
                   {vcrCode || '[VCR Ref]'}
                 </span>
-              </div>
-              <div>
-                <span className="font-semibold text-foreground">PAC Date:</span>
-                <span className="ml-2 text-muted-foreground">{pacDate || 'Pending Approval'}</span>
               </div>
             </div>
           </div>
