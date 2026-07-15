@@ -78,7 +78,7 @@ const getInitials = (name?: string) =>
 export const RaiseQualificationModal: React.FC<Props> = ({
   open, onOpenChange, handoverPointId, vcrCode, vcrName, lockedPrerequisiteId, prereqs,
 }) => {
-  const [prereqId, setPrereqId] = useState<string>(lockedPrerequisiteId || prereqs[0]?.id || '');
+  const [prereqId, setPrereqId] = useState<string>(lockedPrerequisiteId || '');
   const [customTitle, setCustomTitle] = useState('');
   const [reason, setReason] = useState('');
   const [mitigation, setMitigation] = useState('');
