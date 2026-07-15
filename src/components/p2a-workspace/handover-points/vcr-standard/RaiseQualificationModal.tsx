@@ -531,10 +531,14 @@ export const RaiseQualificationModal: React.FC<Props> = ({
                   <Plus className="h-3.5 w-3.5" /> Add approver
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="w-80 p-0 pointer-events-auto" align="start">
+              <PopoverContent
+                className="w-80 p-0 pointer-events-auto"
+                align="start"
+                onWheel={(e) => e.stopPropagation()}
+              >
                 <Command>
                   <CommandInput placeholder="Search people…" />
-                  <CommandList>
+                  <CommandList className="max-h-[320px] overflow-y-auto overscroll-contain">
                     <CommandEmpty>No people found.</CommandEmpty>
                     <CommandGroup>
                       {pickerCandidates.slice(0, 50).map((p: any) => (
