@@ -4,9 +4,10 @@ import { useToast } from '@/hooks/use-toast';
 
 export interface VCRQualification {
   id: string;
-  vcr_prerequisite_id: string;
+  vcr_prerequisite_id?: string | null;
   handover_point_id?: string;
   q_number?: number;
+  custom_title?: string | null;
   reason: string;
   mitigation: string;
   follow_up_action?: string;
