@@ -47,6 +47,8 @@ interface SOFCertificateProps {
   pssrReason?: string;
   sourceType?: 'PSSR' | 'VCR';
   approvers?: SOFApprover[];
+  /** VCR only: when supplied, approver blocks resolve from vcr_sof_approvers. */
+  handoverPointId?: string;
 }
 
 const SOFCertificate: React.FC<SOFCertificateProps> = ({
@@ -59,10 +61,35 @@ const SOFCertificate: React.FC<SOFCertificateProps> = ({
   pssrReason = "",
   sourceType = "PSSR",
   approvers: approversProp,
+  handoverPointId,
 }) => {
+  // Live approvers roster (VCR path): mirrors vcr_sof_approvers seat order.
+  const { data: sofRows = [] } = useQuery({
+    queryKey: ['vcr-sof-approvers-print', handoverPointId],
+    enabled: !!handoverPointId && sourceType === 'VCR',
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from('vcr_sof_approvers')
+        .select('id, approver_name, approver_role, approver_level, user_id, status')
+        .eq('handover_point_id', handoverPointId)
+        .order('approver_level', { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   // Determine approvers based on sourceType and pssrReason
   const computedApprovers = React.useMemo(() => {
     if (approversProp) return approversProp;
+
+    // Prefer live ledger for VCR when seeded.
+    if (sourceType === 'VCR' && sofRows.length > 0) {
+      return sofRows.map((r: any) => ({
+        id: r.id,
+        name: r.user_id ? (r.approver_name || '') : '',
+        role: r.approver_role,
+      })) as SOFApprover[];
+    }
 
     const baseApprovers: SOFApprover[] = [
       { id: '1', name: '', role: 'Plant Director' },
@@ -85,9 +112,10 @@ const SOFCertificate: React.FC<SOFCertificateProps> = ({
     }
 
     return baseApprovers;
-  }, [approversProp, sourceType, pssrReason]);
+  }, [approversProp, sourceType, pssrReason, sofRows]);
 
   const approvers = computedApprovers;
+  const isVCR = sourceType === 'VCR';
   const certificateRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
@@ -255,19 +283,21 @@ const SOFCertificate: React.FC<SOFCertificateProps> = ({
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mt-3 pt-3 border-t border-border/50">
               <div>
-                <span className="font-semibold text-foreground">{sourceType === 'VCR' ? 'VCR Ref:' : 'PSSR Ref:'}</span>
-                <span className="ml-2 text-muted-foreground">{pssrNumber || (sourceType === 'VCR' ? '[VCR Ref]' : '[PSSR Ref]')}</span>
+                <span className="font-semibold text-foreground">{isVCR ? 'VCR Ref:' : 'PSSR Ref:'}</span>
+                <span className="ml-2 text-muted-foreground">{pssrNumber || (isVCR ? '[VCR Ref]' : '[PSSR Ref]')}</span>
               </div>
               <div>
                 <span className="font-semibold text-foreground">SoF Reason:</span>
                 <span className="ml-2 text-muted-foreground">
-                  {pssrReason || (sourceType === 'VCR' ? 'Start-up of a new Project or Facility' : '[SoF Reason]')}
+                  {isVCR ? 'Start-up of a new Project or Facility' : (pssrReason || '[SoF Reason]')}
                 </span>
               </div>
-              <div>
-                <span className="font-semibold text-foreground">SoF Date:</span>
-                <span className="ml-2 text-muted-foreground">{sofDate || '[SoF Date]'}</span>
-              </div>
+              {!isVCR && (
+                <div>
+                  <span className="font-semibold text-foreground">SoF Date:</span>
+                  <span className="ml-2 text-muted-foreground">{sofDate || '[SoF Date]'}</span>
+                </div>
+              )}
             </div>
           </div>
 

@@ -57,6 +57,7 @@ import { useVCRSoFApprovers } from '@/hooks/useVCRSoFApprovers';
 import { useUserSignature } from '@/hooks/useUserSignature';
 
 import PACCertificate from '@/components/handover/PACCertificate';
+import { vcrCertNumber } from '@/lib/vcrCertNumber';
 import { SystemDetailSheet } from '@/components/p2a-workspace/systems/SystemDetailSheet';
 import { VCRTrainingTab } from '@/components/p2a-workspace/handover-points/VCRTrainingTab';
 import { VCRExecutionPlanWizard } from './vcr-wizard/VCRExecutionPlanWizard';
@@ -1412,7 +1413,7 @@ const VCRSoFTabContent: React.FC<{
   return (
     <div className="space-y-4">
       <SOFCertificateInteractive
-        certificateNumber={`SOF-${displayCode}`}
+        certificateNumber={vcrCertNumber('SOF', '', vcr.vcr_code)}
         plantName={projectName}
         facilityName={vcr.name}
         projectName={projectName}
@@ -2199,7 +2200,7 @@ const VCRDetailOverlayWidgetLegacy: React.FC<VCRDetailOverlayProps> = ({
           : undefined;
         return (
           <PACCertificate
-            certificateNumber={`PAC-${projectCode}-VCR-${displayCode.replace('VCR-', '')}`}
+            certificateNumber={vcrCertNumber('PAC', projectCode || '', vcr.vcr_code)}
             projectCode={projectCode}
             facilityName={vcr.name}
             projectName={projectName}
