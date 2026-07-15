@@ -63,9 +63,10 @@ const Section: React.FC<{ label: string; children: React.ReactNode }> = ({ label
 
 export const QualificationDrawer: React.FC<Props> = ({ qual, vcrCode, vcrName, taskId, open, onOpenChange }) => {
   const { data: profiles } = useProfileUsers();
-  const auth = (useAuth as any)?.() as any;
-  const currentUid: string | undefined = auth?.user?.id;
-  const detail = useQualificationDetail(qual?.id);
+  const [currentUid, setCurrentUid] = useState<string | undefined>();
+  React.useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setCurrentUid(data.user?.id));
+  }, []);
   const [comment, setComment] = useState('');
   const [rejectComment, setRejectComment] = useState('');
   const [showReject, setShowReject] = useState(false);
