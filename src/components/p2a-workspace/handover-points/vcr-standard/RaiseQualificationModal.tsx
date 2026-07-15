@@ -66,7 +66,7 @@ export const RaiseQualificationModal: React.FC<Props> = ({
 
   useEffect(() => {
     if (defaultApprovers && approverIds.length === 0) {
-      setApproverIds(defaultApprovers);
+      setApproverIds(defaultApprovers as string[]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [defaultApprovers]);
