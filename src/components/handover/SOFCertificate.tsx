@@ -383,7 +383,8 @@ const SOFCertificate: React.FC<SOFCertificateProps> = ({
                       <p className="text-xs text-muted-foreground">Date: ____________</p>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
