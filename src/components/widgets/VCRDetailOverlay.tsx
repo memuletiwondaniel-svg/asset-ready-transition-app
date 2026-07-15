@@ -1413,7 +1413,7 @@ const VCRSoFTabContent: React.FC<{
   return (
     <div className="space-y-4">
       <SOFCertificateInteractive
-        certificateNumber={`SOF-${displayCode}`}
+        certificateNumber={vcrCertNumber('SOF', '', vcr.vcr_code)}
         plantName={projectName}
         facilityName={vcr.name}
         projectName={projectName}
