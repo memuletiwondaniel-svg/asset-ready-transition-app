@@ -283,19 +283,21 @@ const SOFCertificate: React.FC<SOFCertificateProps> = ({
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mt-3 pt-3 border-t border-border/50">
               <div>
-                <span className="font-semibold text-foreground">{sourceType === 'VCR' ? 'VCR Ref:' : 'PSSR Ref:'}</span>
-                <span className="ml-2 text-muted-foreground">{pssrNumber || (sourceType === 'VCR' ? '[VCR Ref]' : '[PSSR Ref]')}</span>
+                <span className="font-semibold text-foreground">{isVCR ? 'VCR Ref:' : 'PSSR Ref:'}</span>
+                <span className="ml-2 text-muted-foreground">{pssrNumber || (isVCR ? '[VCR Ref]' : '[PSSR Ref]')}</span>
               </div>
               <div>
                 <span className="font-semibold text-foreground">SoF Reason:</span>
                 <span className="ml-2 text-muted-foreground">
-                  {pssrReason || (sourceType === 'VCR' ? 'Start-up of a new Project or Facility' : '[SoF Reason]')}
+                  {isVCR ? 'Start-up of a new Project or Facility' : (pssrReason || '[SoF Reason]')}
                 </span>
               </div>
-              <div>
-                <span className="font-semibold text-foreground">SoF Date:</span>
-                <span className="ml-2 text-muted-foreground">{sofDate || '[SoF Date]'}</span>
-              </div>
+              {!isVCR && (
+                <div>
+                  <span className="font-semibold text-foreground">SoF Date:</span>
+                  <span className="ml-2 text-muted-foreground">{sofDate || '[SoF Date]'}</span>
+                </div>
+              )}
             </div>
           </div>
 
