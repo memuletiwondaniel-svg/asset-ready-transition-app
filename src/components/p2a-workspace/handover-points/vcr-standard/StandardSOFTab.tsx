@@ -49,16 +49,17 @@ export const StandardSOFTab: React.FC<Props> = ({ handoverPoint, projectCode, on
           <Lock className="w-3.5 h-3.5" />
           <span>Read-only preview · signing unlocks at VCR approval ({terminal}/{total} items closed)</span>
         </div>
-      ) : (
-        isSnrOra && (
-          <div className="flex items-center justify-end">
+      ) : sofLedgerUnlocked ? (
+        <div className="flex items-center justify-between gap-2 text-sm bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-lg px-3 py-2">
+          <span>Unlocked · SoF ledger seeded ({totalSofSeats} approvers).</span>
+          {isSnrOra && (
             <Button size="sm" variant="outline" onClick={() => setScheduleOpen(true)}>
               <Calendar className="w-3.5 h-3.5 mr-1.5" />
               Schedule SoF meeting
             </Button>
-          </div>
-        )
-      )}
+          )}
+        </div>
+      ) : null}
       {/* Edit / Print always usable; per-row Sign is gated by ledger status. */}
       <div aria-disabled={!allApproved}>
         <SOFCertificate
