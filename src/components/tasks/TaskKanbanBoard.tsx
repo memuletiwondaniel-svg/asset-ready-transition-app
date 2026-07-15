@@ -2110,6 +2110,18 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         />
       )}
 
+      {/* Qualification review task launcher */}
+      {qualTaskTarget && (
+        <QualificationReviewLauncher
+          open={!!qualTaskTarget}
+          onOpenChange={(o) => { if (!o) setQualTaskTarget(null); }}
+          qualificationId={qualTaskTarget.qualificationId}
+          taskId={qualTaskTarget.taskId}
+          vcrCode={qualTaskTarget.vcrCode}
+          vcrName={qualTaskTarget.vcrName}
+        />
+      )}
+
     </>
     </ReviewerSummaryContext.Provider>
     </P2AApprovalContext.Provider>
