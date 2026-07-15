@@ -8216,6 +8216,7 @@ export type Database = {
           action_owner_id: string | null
           action_owner_name: string | null
           created_at: string
+          custom_title: string | null
           follow_up_action: string | null
           handover_point_id: string | null
           id: string
@@ -8230,12 +8231,13 @@ export type Database = {
           submitted_by: string | null
           target_date: string
           updated_at: string
-          vcr_prerequisite_id: string
+          vcr_prerequisite_id: string | null
         }
         Insert: {
           action_owner_id?: string | null
           action_owner_name?: string | null
           created_at?: string
+          custom_title?: string | null
           follow_up_action?: string | null
           handover_point_id?: string | null
           id?: string
@@ -8250,12 +8252,13 @@ export type Database = {
           submitted_by?: string | null
           target_date: string
           updated_at?: string
-          vcr_prerequisite_id: string
+          vcr_prerequisite_id?: string | null
         }
         Update: {
           action_owner_id?: string | null
           action_owner_name?: string | null
           created_at?: string
+          custom_title?: string | null
           follow_up_action?: string | null
           handover_point_id?: string | null
           id?: string
@@ -8270,7 +8273,7 @@ export type Database = {
           submitted_by?: string | null
           target_date?: string
           updated_at?: string
-          vcr_prerequisite_id?: string
+          vcr_prerequisite_id?: string | null
         }
         Relationships: [
           {

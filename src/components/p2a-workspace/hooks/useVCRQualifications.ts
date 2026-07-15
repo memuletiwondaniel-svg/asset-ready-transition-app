@@ -4,9 +4,10 @@ import { useToast } from '@/hooks/use-toast';
 
 export interface VCRQualification {
   id: string;
-  vcr_prerequisite_id: string;
+  vcr_prerequisite_id?: string | null;
   handover_point_id?: string;
   q_number?: number;
+  custom_title?: string | null;
   reason: string;
   mitigation: string;
   follow_up_action?: string;
@@ -73,15 +74,16 @@ export const useVCRQualifications = (handoverPointId: string) => {
         .eq('handover_point_id', handoverPointId);
 
       if (prereqError) throw prereqError;
-      if (!prerequisites?.length) return [];
+      // Do NOT early-return on empty prereqs — custom qualifications don't
+      // require a prereq and are keyed on handover_point_id below.
 
-      const prereqIds = prerequisites.map((p: any) => p.id);
 
-      // Get all qualifications for these prerequisites (include q_number)
+      // Get all qualifications for this handover point (custom quals have
+      // NULL vcr_prerequisite_id but handover_point_id is always populated).
       const { data: quals, error } = await supabase
         .from('p2a_vcr_qualifications')
         .select('*')
-        .in('vcr_prerequisite_id', prereqIds)
+        .eq('handover_point_id', handoverPointId)
         .order('q_number', { ascending: true });
 
       if (error) throw error;

@@ -59,7 +59,13 @@ export const StandardQualificationsTab: React.FC<Props> = ({ handoverPointId, vc
   const prereqOptions = useMemo(() => (prerequisites || []).map((p: any) => {
     const cat = normalizeCategoryCode(p.vcr_items?.category?.code ?? p.category);
     const code = cat === 'XX' ? '' : formatVcrItemCode(cat, p.display_order ?? 0);
-    return { id: p.id, code, summary: p.summary as string };
+    return {
+      id: p.id,
+      code,
+      summary: p.summary as string,
+      category: cat,
+      description: (p.description as string) || '',
+    };
   }), [prerequisites]);
 
   const total = qualifications.length;
@@ -138,11 +144,13 @@ export const StandardQualificationsTab: React.FC<Props> = ({ handoverPointId, vc
               </div>
             </div>
 
-            {/* Item chip + prereq question */}
-            <div className="text-sm leading-snug mb-1.5 flex items-baseline gap-2 flex-wrap">
+            {/* Item chip + prereq question (or custom title) */}
+            <div className="text-sm leading-snug mb-1.5 flex items-baseline gap-2 flex-wrap min-w-0">
               {code && <ItemChip code={code} />}
-              <span className="font-medium">
-                {q.prerequisite?.summary || 'Ad-hoc qualification'}
+              <span className="font-medium truncate">
+                {q.prerequisite?.summary
+                  || q.custom_title
+                  || 'Ad-hoc qualification'}
               </span>
             </div>
 

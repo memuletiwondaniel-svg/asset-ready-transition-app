@@ -115,15 +115,17 @@ export const QualificationDrawer: React.FC<Props> = ({ qual, vcrCode, vcrName, t
 
         <ScrollArea className="flex-1">
           <div className="px-5 py-4 space-y-5 text-sm">
-            {/* Item chip + question */}
-            <div className="flex items-baseline gap-2 flex-wrap">
+            {/* Item chip + question (or custom title for ad-hoc quals) */}
+            <div className="flex items-baseline gap-2 flex-wrap min-w-0">
               {code && (
-                <span className="inline-flex items-center rounded-md px-1.5 py-0.5 font-mono text-[11px] font-semibold text-slate-600" style={{ background: '#EEF2F7' }}>
+                <span className="inline-flex items-center rounded-md px-1.5 py-0.5 font-mono text-[11px] font-semibold text-slate-600 whitespace-nowrap" style={{ background: '#EEF2F7' }}>
                   {code}
                 </span>
               )}
-              <span className="font-medium leading-snug">
-                {qual.prerequisite?.summary || 'Ad-hoc qualification'}
+              <span className="font-medium leading-snug break-words">
+                {qual.prerequisite?.summary
+                  || qual.custom_title
+                  || 'Ad-hoc qualification'}
               </span>
             </div>
 
