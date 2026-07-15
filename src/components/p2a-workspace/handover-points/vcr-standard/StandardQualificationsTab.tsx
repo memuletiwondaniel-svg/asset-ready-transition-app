@@ -57,6 +57,8 @@ export const StandardQualificationsTab: React.FC<Props> = ({ handoverPointId, vc
   const { prerequisites } = useVCRPrerequisites(handoverPointId);
   const [openId, setOpenId] = useState<string | null>(null);
   const [raiseOpen, setRaiseOpen] = useState(false);
+  const [search, setSearch] = useState('');
+
 
   const prereqOptions = useMemo(() => (prerequisites || []).map((p: any) => {
     const cat = normalizeCategoryCode(p.vcr_items?.category?.code ?? p.category);
