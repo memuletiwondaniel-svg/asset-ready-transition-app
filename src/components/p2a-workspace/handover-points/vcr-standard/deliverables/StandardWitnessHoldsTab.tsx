@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import { P2AHandoverPoint } from '../../../hooks/useP2AHandoverPoints';
 import {
   DeliverableList,
@@ -16,11 +17,14 @@ import {
 } from './useWHPoints';
 import { WitnessHoldDrawer } from './WitnessHoldDrawer';
 import { AddWitnessHoldPointModal } from '@/components/widgets/vcr-wizard/steps/witness-hold/AddWitnessHoldPointModal';
+import { ScheduleWitnessHoldModal } from '@/components/widgets/vcr-wizard/steps/witness-hold/ScheduleWitnessHoldModal';
+import { CompleteWitnessHoldModal } from '@/components/widgets/vcr-wizard/steps/witness-hold/CompleteWitnessHoldModal';
+import { ReviewWitnessHoldModal } from '@/components/widgets/vcr-wizard/steps/witness-hold/ReviewWitnessHoldModal';
 
 /**
- * FE-1: Witness & Hold tab on the VCR handover point.
- * Bucket order: REWORK_REQUESTED → UNDER_REVIEW → NOT_STARTED → SCHEDULED → COMPLETED.
- * Sentence-case status pills, real system label (system_id · name), no uuid subtext.
+ * FE-1 + FE-2: Witness & Hold tab.
+ * Bucket order REWORK_REQUESTED → UNDER_REVIEW → NOT_STARTED → SCHEDULED → COMPLETED.
+ * Wires the 3 workflow modals (Schedule / Complete / Review & Approve) via the drawer footer CTA.
  */
 export const StandardWitnessHoldsTab: React.FC<{ handoverPoint: P2AHandoverPoint }> = ({
   handoverPoint,
@@ -28,11 +32,27 @@ export const StandardWitnessHoldsTab: React.FC<{ handoverPoint: P2AHandoverPoint
   const { data, isLoading } = useWHPoints(handoverPoint.id);
   const [selected, setSelected] = useState<WHPoint | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [scheduleFor, setScheduleFor] = useState<WHPoint | null>(null);
+  const [completeFor, setCompleteFor] = useState<WHPoint | null>(null);
+  const [reviewFor, setReviewFor] = useState<WHPoint | null>(null);
+  const [currentUid, setCurrentUid] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setCurrentUid(data.user?.id ?? null));
+  }, []);
 
   const points = data?.points ?? [];
   const projectId = data?.projectId ?? null;
 
   const sorted = useMemo(() => [...points].sort(sortByStatusBucket), [points]);
+
+  // Refresh `selected` from server-fresh points so status-transitioning modals
+  // update the drawer footer without closing/re-opening.
+  useEffect(() => {
+    if (!selected) return;
+    const fresh = points.find((p) => p.id === selected.id) || null;
+    if (fresh && fresh !== selected) setSelected(fresh);
+  }, [points, selected]);
 
   if (isLoading) {
     return (
@@ -80,26 +100,49 @@ export const StandardWitnessHoldsTab: React.FC<{ handoverPoint: P2AHandoverPoint
         projectId={projectId}
         open={!!selected}
         onOpenChange={(o) => !o && setSelected(null)}
-        onSchedule={() =>
-          toast.info('Schedule modal ships in FE-2.', { description: 'Coming next sub-turn.' })
-        }
-        onComplete={() =>
-          toast.info('Complete modal ships in FE-2.', { description: 'Coming next sub-turn.' })
-        }
-        onReview={() =>
-          toast.info('Review & Approve modal ships in FE-2.', { description: 'Coming next sub-turn.' })
-        }
+        onSchedule={(p) => setScheduleFor(p)}
+        onComplete={(p) => setCompleteFor(p)}
+        onReview={(p) => setReviewFor(p)}
         onEditParties={(p) => setEditingId(p.id)}
       />
 
       {editingId && (
         <AddWitnessHoldPointModal
           vcrId={handoverPoint.id}
+          projectId={projectId}
           open={!!editingId}
           onOpenChange={(o) => !o && setEditingId(null)}
           editingActivityId={editingId}
           onUpdated={() => setEditingId(null)}
           onClose={() => setEditingId(null)}
+        />
+      )}
+
+      {scheduleFor && (
+        <ScheduleWitnessHoldModal
+          point={scheduleFor}
+          vcrCode={handoverPoint.vcr_code}
+          vcrName={handoverPoint.name}
+          open={!!scheduleFor}
+          onOpenChange={(o) => !o && setScheduleFor(null)}
+        />
+      )}
+
+      {completeFor && (
+        <CompleteWitnessHoldModal
+          point={completeFor}
+          open={!!completeFor}
+          onOpenChange={(o) => !o && setCompleteFor(null)}
+        />
+      )}
+
+      {reviewFor && (
+        <ReviewWitnessHoldModal
+          point={reviewFor}
+          currentUserId={currentUid}
+          deliveringPartyLabel={reviewFor.delivering_party_role_name || 'delivering party'}
+          open={!!reviewFor}
+          onOpenChange={(o) => !o && setReviewFor(null)}
         />
       )}
     </>

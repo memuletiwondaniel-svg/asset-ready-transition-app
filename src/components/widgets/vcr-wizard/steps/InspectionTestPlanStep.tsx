@@ -17,6 +17,7 @@ import { AddWitnessHoldPointModal } from './witness-hold/AddWitnessHoldPointModa
 
 interface InspectionTestPlanStepProps {
   vcrId: string;
+  projectId?: string;
   projectCode?: string;
 }
 
@@ -37,7 +38,7 @@ interface MappedSystem {
 
 const pluralize = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
-export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ vcrId }) => {
+export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ vcrId, projectId }) => {
   const queryClient = useQueryClient();
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -273,6 +274,7 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
 
         <AddWitnessHoldPointModal
           vcrId={vcrId}
+          projectId={projectId}
           systems={systems.map((s) => ({ id: s.systemId, name: s.name, code: s.systemCode }))}
           open={modalOpen}
           onOpenChange={setModalOpen}
