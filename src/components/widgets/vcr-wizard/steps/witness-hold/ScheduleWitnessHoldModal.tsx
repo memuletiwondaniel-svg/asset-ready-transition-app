@@ -18,6 +18,7 @@ import {
   typeLabel,
   type WHPoint,
 } from '@/components/p2a-workspace/handover-points/vcr-standard/deliverables/useWHPoints';
+import { useProjectRoleHolders } from '@/hooks/useProjectRoleHolders';
 
 /**
  * FE-2: Schedule modal for a W&H point (NOT_STARTED → SCHEDULED).
@@ -31,12 +32,13 @@ export interface ScheduleWitnessHoldModalProps {
   onOpenChange: (o: boolean) => void;
   onScheduled?: () => void;
   /**
-   * When false, the modal renders in read-only mode: the "Open in Teams" and
-   * "Send invite" CTAs are hidden and inputs are disabled. Only the activity
-   * owner (a holder of the delivering-party role) can dispatch invites.
-   * Defaults to true for backward compatibility.
+   * Project id for resolving delivering-party role holders. When provided,
+   * the modal computes ownership internally (holder of the delivering-party
+   * role) and hides the "Open in Teams" / "Send invite" CTAs for everyone
+   * else. When omitted, the modal defaults to read-only (safer) — pass
+   * `projectId` from any authenticated call site to enable invite CTAs.
    */
-  isOwner?: boolean;
+  projectId?: string | null;
 }
 
 const initials = (n: string) =>
@@ -57,8 +59,21 @@ interface Invitee {
 }
 
 export const ScheduleWitnessHoldModal: React.FC<ScheduleWitnessHoldModalProps> = ({
-  point, vcrCode, vcrName, open, onOpenChange, onScheduled, isOwner = true,
+  point, vcrCode, vcrName, open, onOpenChange, onScheduled, projectId,
 }) => {
+  const [currentUid, setCurrentUid] = useState<string | null>(null);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setCurrentUid(data.user?.id ?? null));
+  }, []);
+  const roleLabel = point.delivering_party_role_name || '';
+  const ownershipLabels = useMemo(() => (roleLabel ? [roleLabel] : []), [roleLabel]);
+  const { data: ownershipHoldersMap, isLoading: ownershipLoading } =
+    useProjectRoleHolders(projectId || undefined, ownershipLabels);
+  const ownershipResolved =
+    !!projectId && !!roleLabel && !ownershipLoading && currentUid !== null;
+  const isOwner =
+    ownershipResolved &&
+    (ownershipHoldersMap?.[roleLabel] || []).some((h) => h.user_id === currentUid);
   const qc = useQueryClient();
 
   const [date, setDate] = useState<Date | undefined>();
