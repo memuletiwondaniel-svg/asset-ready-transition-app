@@ -234,6 +234,8 @@ export const WitnessHoldDrawer: React.FC<WitnessHoldDrawerProps> = ({
               )}
             </div>
 
+            <Separator className="bg-border/40" />
+
             {/* Witnessed & accepted by */}
             <div className="space-y-2">
               <SectionLabel>Witnessed &amp; accepted by</SectionLabel>
