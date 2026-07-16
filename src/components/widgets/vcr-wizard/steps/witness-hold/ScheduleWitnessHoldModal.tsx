@@ -288,9 +288,6 @@ export const ScheduleWitnessHoldModal: React.FC<ScheduleWitnessHoldModalProps> =
                 ))}
               </div>
             )}
-            <div className="text-[10.5px] text-muted-foreground/60">
-              Defaults to the accepting parties · hover to remove
-            </div>
           </div>
 
           {/* Notes */}
@@ -298,14 +295,14 @@ export const ScheduleWitnessHoldModal: React.FC<ScheduleWitnessHoldModalProps> =
             <label className="text-[10.5px] font-bold tracking-[0.1em] uppercase text-muted-foreground/80">
               Notes
             </label>
-            <div className="rounded-md border border-input bg-background overflow-hidden">
+            <div className="rounded-md border border-input bg-muted/20 overflow-hidden">
               <Textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                className="text-[12.5px] min-h-[96px] border-0 rounded-none focus-visible:ring-0 resize-none"
+                className="text-[12.5px] min-h-[96px] border-0 rounded-none bg-transparent focus-visible:ring-0 resize-none"
                 placeholder="Add a short message for the invitees…"
               />
-              <div className="border-t bg-muted/30 px-3 py-2.5 space-y-1 text-[11.5px]">
+              <div className="px-3 pb-3 pl-6 space-y-1 text-[11.5px]">
                 <div className="flex gap-2">
                   <span className="text-muted-foreground w-14 shrink-0">Activity</span>
                   <span className="text-foreground truncate">{point.activity_name}</span>
@@ -343,38 +340,40 @@ export const ScheduleWitnessHoldModal: React.FC<ScheduleWitnessHoldModalProps> =
             </div>
           </div>
 
-          {/* Attachments */}
-          <div className="space-y-1.5">
-            <label className="text-[10.5px] font-bold tracking-[0.1em] uppercase text-muted-foreground/80">
-              Attachments
-            </label>
-            <label className="flex items-center gap-2 rounded-md border border-dashed border-border/60 px-3 py-2 text-xs text-muted-foreground cursor-pointer hover:bg-muted/40">
-              <Upload className="w-3.5 h-3.5" />
-              Drop files or click to attach
-              <input
-                type="file"
-                multiple
-                className="hidden"
-                onChange={(e) => onFiles(e.target.files)}
-              />
-            </label>
-            {attachments.length > 0 && (
-              <div className="space-y-1">
-                {attachments.map((f, i) => (
-                  <div key={i} className="flex items-center gap-2 text-[12px]">
-                    <Paperclip className="w-3 h-3 text-muted-foreground" />
-                    <span className="truncate flex-1">{f.name}</span>
-                    <button
-                      onClick={() => setAttachments((a) => a.filter((_, j) => j !== i))}
-                      className="text-muted-foreground hover:text-destructive"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Attachments — owner only */}
+          {isOwner && (
+            <div className="space-y-1.5">
+              <label className="text-[10.5px] font-bold tracking-[0.1em] uppercase text-muted-foreground/80">
+                Attachments
+              </label>
+              <label className="flex items-center gap-2 rounded-md border border-dashed border-border/60 px-3 py-2 text-xs text-muted-foreground cursor-pointer hover:bg-muted/40">
+                <Upload className="w-3.5 h-3.5" />
+                Drop files or click to attach
+                <input
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => onFiles(e.target.files)}
+                />
+              </label>
+              {attachments.length > 0 && (
+                <div className="space-y-1">
+                  {attachments.map((f, i) => (
+                    <div key={i} className="flex items-center gap-2 text-[12px]">
+                      <Paperclip className="w-3 h-3 text-muted-foreground" />
+                      <span className="truncate flex-1">{f.name}</span>
+                      <button
+                        onClick={() => setAttachments((a) => a.filter((_, j) => j !== i))}
+                        className="text-muted-foreground hover:text-destructive"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="px-6 py-3 border-t flex items-center justify-between gap-2">
