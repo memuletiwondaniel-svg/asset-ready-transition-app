@@ -53,9 +53,9 @@ const Field: React.FC<{ label: string; value?: React.ReactNode; full?: boolean }
 
 const accStatusChip = (s: 'PENDING' | 'APPROVED' | 'REJECTED') =>
   s === 'APPROVED'
-    ? { label: 'Approved', tone: 'emerald' as const }
+    ? { label: 'Accepted', tone: 'blue' as const }
     : s === 'REJECTED'
-    ? { label: 'Rejected', tone: 'red' as const }
+    ? { label: 'Rework', tone: 'red' as const }
     : { label: 'Pending',  tone: 'amber' as const };
 
 const humanAction = (action: string): string => {
@@ -103,7 +103,7 @@ export const WitnessHoldDrawer: React.FC<WitnessHoldDrawerProps> = ({
 
   const pres = WH_STATUS_PRESENTATION[point.status];
   const isHold = point.inspection_type === 'HOLD';
-  const typeTone = isHold ? 'red' : 'blue';
+  const typeTone = isHold ? 'amber' : 'blue';
   const deliveringHolders = holders?.[point.delivering_party_role_name || ''] || [];
   const snrOraHolders = holders?.['Snr ORA Engr'] || [];
   const isSnrOra = !!uid && snrOraHolders.some((h) => h.user_id === uid);
