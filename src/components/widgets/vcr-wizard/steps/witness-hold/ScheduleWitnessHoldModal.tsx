@@ -210,14 +210,14 @@ export const ScheduleWitnessHoldModal: React.FC<ScheduleWitnessHoldModalProps> =
                   type="time"
                   value={startTime}
                   onChange={(e) => setStartTime(e.target.value)}
-                  className="bg-transparent outline-none w-[70px] text-sm"
+                  className="wh-time bg-transparent outline-none w-[60px] text-sm"
                 />
                 <span className="text-muted-foreground">–</span>
                 <input
                   type="time"
                   value={endTime}
                   onChange={(e) => setEndTime(e.target.value)}
-                  className="bg-transparent outline-none w-[70px] text-sm"
+                  className="wh-time bg-transparent outline-none w-[60px] text-sm"
                 />
               </div>
             </div>
