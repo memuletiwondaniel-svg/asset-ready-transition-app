@@ -141,21 +141,18 @@ export const WitnessHoldDrawer: React.FC<WitnessHoldDrawerProps> = ({
         side="right"
         className="!z-modal-critical w-full sm:max-w-lg p-0 flex flex-col [&>button]:hidden"
       >
-        {/* Header */}
+        {/* Header — title first, breadcrumb as subtext */}
         <div className="px-5 pt-5 pb-3 border-b shrink-0 bg-background">
-          <div className="text-[10.5px] font-bold tracking-[0.14em] uppercase text-muted-foreground mb-1">
-            {vcrCode}{vcrName ? ` · ${vcrName}` : ''} · {typeLabel(point.inspection_type)}
-          </div>
-          <div className="flex items-start justify-between gap-3">
-            <div className="text-[15px] leading-snug font-semibold min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3 mb-1">
+            <h2 className="text-[16px] leading-tight font-bold tracking-tight text-foreground min-w-0 flex-1">
               {point.activity_name}
-            </div>
+            </h2>
             {point.status === 'SCHEDULED' && onSchedule ? (
               <button
                 type="button"
                 onClick={() => onSchedule(point)}
                 className={cn(
-                  'flex-none text-[10.5px] font-bold rounded-full border px-2 py-0.5 mt-0.5 whitespace-nowrap hover:brightness-95 cursor-pointer',
+                  'flex-none text-[10.5px] font-bold rounded-full border px-2 py-0.5 mt-0.5 whitespace-nowrap hover:brightness-95 cursor-pointer uppercase tracking-wider',
                   CHIP_TONES[pres.tone],
                 )}
                 aria-label="View schedule details"
@@ -165,13 +162,16 @@ export const WitnessHoldDrawer: React.FC<WitnessHoldDrawerProps> = ({
             ) : (
               <span
                 className={cn(
-                  'flex-none text-[10.5px] font-bold rounded-full border px-2 py-0.5 mt-0.5 whitespace-nowrap',
+                  'flex-none text-[10.5px] font-bold rounded-full border px-2 py-0.5 mt-0.5 whitespace-nowrap uppercase tracking-wider',
                   CHIP_TONES[pres.tone],
                 )}
               >
                 {pres.label}
               </span>
             )}
+          </div>
+          <div className="text-[10px] font-bold tracking-[0.14em] uppercase text-muted-foreground/70">
+            {vcrCode}{vcrName ? ` · ${vcrName}` : ''} · {typeLabel(point.inspection_type)}
           </div>
         </div>
 
