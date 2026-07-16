@@ -209,32 +209,53 @@ export const QualificationDrawer: React.FC<Props> = ({ qual, vcrCode, vcrName, t
                 Activity ({detail.comments.length})
               </button>
               {activityOpen && (
-                <div className="space-y-2">
-                  {detail.comments.map(cm => {
-                    const p = cm.author_user_id ? profileById.get(cm.author_user_id) : null;
-                    return (
-                      <div key={cm.id} className="flex gap-2">
-                        <Avatar className="h-6 w-6 mt-0.5">
-                          {p?.avatar_url && <AvatarImage src={p.avatar_url} />}
-                          <AvatarFallback className="text-[9px]">
-                            {(p?.full_name || '?').slice(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0 flex-1">
-                          <div className="text-[11px] text-muted-foreground">
-                            <span className="font-medium text-foreground/80">{p?.full_name || 'System'}</span>
-                            {cm.action_tag === 'approved' && ' approved'}
-                            {cm.action_tag === 'rejected' && ' requested rework'}
-                            {cm.action_tag && cm.action_tag !== 'approved' && cm.action_tag !== 'rejected' && ` ${cm.action_tag}`}
-                            {!cm.action_tag && ' commented'}
-                            {' · '}
-                            {format(new Date(cm.created_at), 'dd-MMM-yyyy')}
+                <div className="space-y-3">
+                  <div className="space-y-4">
+                    {detail.comments.map(cm => {
+                      const p = cm.author_user_id ? profileById.get(cm.author_user_id) : null;
+                      const actionPhrase =
+                        cm.action_tag === 'approved' ? 'approved'
+                        : cm.action_tag === 'rejected' ? 'requested rework'
+                        : cm.action_tag ? cm.action_tag
+                        : 'commented';
+                      const actionClass =
+                        cm.action_tag === 'approved'
+                          ? 'text-emerald-700 font-medium italic'
+                          : cm.action_tag === 'rejected'
+                          ? 'text-red-700 font-medium italic'
+                          : 'text-muted-foreground italic';
+                      const hasBody = !!cm.body;
+                      return (
+                        <div key={cm.id} className="flex gap-3">
+                          <Avatar className="h-8 w-8 shrink-0">
+                            {p?.avatar_url && <AvatarImage src={p.avatar_url} />}
+                            <AvatarFallback className="text-[10px]">
+                              {(p?.full_name || '?').slice(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex justify-between items-baseline gap-2 mb-0.5">
+                              <span className="text-[13px] font-semibold truncate">
+                                {p?.full_name || 'System'}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
+                                {format(new Date(cm.created_at), 'dd-MMM-yyyy HH:mm')}
+                              </span>
+                            </div>
+                            <div className="text-[12px] leading-relaxed">
+                              <span className={cn(actionClass)}>{actionPhrase}</span>
+                              {hasBody && (
+                                <>
+                                  <span className="text-muted-foreground">:</span>{' '}
+                                  <span className="text-foreground">{cm.body}</span>
+                                </>
+                              )}
+                            </div>
                           </div>
-                          <div className="text-xs whitespace-pre-wrap mt-0.5">{cm.body}</div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                   <div className="flex gap-2 pt-1">
                     <Textarea
                       value={comment}
