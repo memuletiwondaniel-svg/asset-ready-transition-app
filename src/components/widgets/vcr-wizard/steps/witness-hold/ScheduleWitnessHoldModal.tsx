@@ -51,7 +51,7 @@ interface Invitee {
 }
 
 export const ScheduleWitnessHoldModal: React.FC<ScheduleWitnessHoldModalProps> = ({
-  point, vcrCode, vcrName, open, onOpenChange, onScheduled,
+  point, vcrCode, vcrName, open, onOpenChange, onScheduled, isOwner = true,
 }) => {
   const qc = useQueryClient();
 
