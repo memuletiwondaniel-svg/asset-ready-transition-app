@@ -120,12 +120,12 @@ export const StandardWitnessHoldsTab: React.FC<{ handoverPoint: P2AHandoverPoint
       )}
 
       {scheduleFor && (
-        <ScheduleWitnessHoldModalWithOwnership
+        <ScheduleWitnessHoldModal
           point={scheduleFor}
           vcrCode={handoverPoint.vcr_code}
           vcrName={handoverPoint.name}
           projectId={projectId}
-          currentUid={currentUid}
+          open
           onOpenChange={(o) => !o && setScheduleFor(null)}
         />
       )}
