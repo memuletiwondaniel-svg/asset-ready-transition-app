@@ -1382,6 +1382,35 @@ export type Database = {
         }
         Relationships: []
       }
+      discipline_responsible_ta_role: {
+        Row: {
+          created_at: string
+          discipline_id: string
+          id: string
+          role_name: string
+        }
+        Insert: {
+          created_at?: string
+          discipline_id: string
+          id?: string
+          role_name: string
+        }
+        Update: {
+          created_at?: string
+          discipline_id?: string
+          id?: string
+          role_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discipline_responsible_ta_role_discipline_id_fkey"
+            columns: ["discipline_id"]
+            isOneToOne: true
+            referencedRelation: "discipline"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dms_disciplines: {
         Row: {
           code: string
@@ -8657,54 +8686,105 @@ export type Database = {
       }
       p2a_vcr_training: {
         Row: {
+          attendance_provided_at: string | null
+          attendance_provided_by: string | null
+          completed_at: string | null
+          completed_by: string | null
           created_at: string
           created_by: string | null
           delivery_method: string[] | null
           description: string | null
+          discipline_id: string | null
           display_order: number | null
           duration_hours: number | null
           estimated_cost: number | null
           handover_point_id: string
           id: string
-          status: string
+          outcome_summary: string | null
+          po_number: string | null
+          po_provided_at: string | null
+          po_provided_by: string | null
+          scheduled_at: string | null
+          scheduled_by: string | null
+          scheduled_date: string | null
+          scheduled_end_time: string | null
+          scheduled_location: string | null
+          scheduled_notes: string | null
+          scheduled_start_time: string | null
+          status: Database["public"]["Enums"]["training_status"]
           system_ids: string[] | null
           target_audience: string[] | null
+          target_date: string | null
           tentative_date: string | null
           title: string
           training_provider: string | null
           updated_at: string
         }
         Insert: {
+          attendance_provided_at?: string | null
+          attendance_provided_by?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
           created_at?: string
           created_by?: string | null
           delivery_method?: string[] | null
           description?: string | null
+          discipline_id?: string | null
           display_order?: number | null
           duration_hours?: number | null
           estimated_cost?: number | null
           handover_point_id: string
           id?: string
-          status?: string
+          outcome_summary?: string | null
+          po_number?: string | null
+          po_provided_at?: string | null
+          po_provided_by?: string | null
+          scheduled_at?: string | null
+          scheduled_by?: string | null
+          scheduled_date?: string | null
+          scheduled_end_time?: string | null
+          scheduled_location?: string | null
+          scheduled_notes?: string | null
+          scheduled_start_time?: string | null
+          status?: Database["public"]["Enums"]["training_status"]
           system_ids?: string[] | null
           target_audience?: string[] | null
+          target_date?: string | null
           tentative_date?: string | null
           title: string
           training_provider?: string | null
           updated_at?: string
         }
         Update: {
+          attendance_provided_at?: string | null
+          attendance_provided_by?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
           created_at?: string
           created_by?: string | null
           delivery_method?: string[] | null
           description?: string | null
+          discipline_id?: string | null
           display_order?: number | null
           duration_hours?: number | null
           estimated_cost?: number | null
           handover_point_id?: string
           id?: string
-          status?: string
+          outcome_summary?: string | null
+          po_number?: string | null
+          po_provided_at?: string | null
+          po_provided_by?: string | null
+          scheduled_at?: string | null
+          scheduled_by?: string | null
+          scheduled_date?: string | null
+          scheduled_end_time?: string | null
+          scheduled_location?: string | null
+          scheduled_notes?: string | null
+          scheduled_start_time?: string | null
+          status?: Database["public"]["Enums"]["training_status"]
           system_ids?: string[] | null
           target_audience?: string[] | null
+          target_date?: string | null
           tentative_date?: string | null
           title?: string
           training_provider?: string | null
@@ -8712,10 +8792,165 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "p2a_vcr_training_discipline_id_fkey"
+            columns: ["discipline_id"]
+            isOneToOne: false
+            referencedRelation: "discipline"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "p2a_vcr_training_handover_point_id_fkey"
             columns: ["handover_point_id"]
             isOneToOne: false
             referencedRelation: "p2a_handover_points"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      p2a_vcr_training_activity_log: {
+        Row: {
+          action: string
+          comment: string | null
+          created_at: string
+          from_status: Database["public"]["Enums"]["training_status"] | null
+          id: string
+          to_status: Database["public"]["Enums"]["training_status"] | null
+          training_id: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          comment?: string | null
+          created_at?: string
+          from_status?: Database["public"]["Enums"]["training_status"] | null
+          id?: string
+          to_status?: Database["public"]["Enums"]["training_status"] | null
+          training_id: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          comment?: string | null
+          created_at?: string
+          from_status?: Database["public"]["Enums"]["training_status"] | null
+          id?: string
+          to_status?: Database["public"]["Enums"]["training_status"] | null
+          training_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_vcr_training_activity_log_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_vcr_training"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      p2a_vcr_training_attachments: {
+        Row: {
+          description: string | null
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          kind: string
+          linked_reviewer_id: string | null
+          training_id: string
+          uploaded_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          description?: string | null
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          kind: string
+          linked_reviewer_id?: string | null
+          training_id: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          description?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          kind?: string
+          linked_reviewer_id?: string | null
+          training_id?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_vcr_training_attachments_linked_reviewer_id_fkey"
+            columns: ["linked_reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_vcr_training_reviewers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_training_attachments_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_vcr_training"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      p2a_vcr_training_reviewers: {
+        Row: {
+          added_by: string | null
+          created_at: string
+          decided_at: string | null
+          decision: string | null
+          decision_comment: string | null
+          id: string
+          markup_attachment_id: string | null
+          role_label: string | null
+          training_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          added_by?: string | null
+          created_at?: string
+          decided_at?: string | null
+          decision?: string | null
+          decision_comment?: string | null
+          id?: string
+          markup_attachment_id?: string | null
+          role_label?: string | null
+          training_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          added_by?: string | null
+          created_at?: string
+          decided_at?: string | null
+          decision?: string | null
+          decision_comment?: string | null
+          id?: string
+          markup_attachment_id?: string | null
+          role_label?: string | null
+          training_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_vcr_training_reviewers_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_vcr_training"
             referencedColumns: ["id"]
           },
         ]
@@ -16263,6 +16498,15 @@ export type Database = {
         | "PACO"
         | "Process"
         | "Technical Safety"
+      training_status:
+        | "NOT_STARTED"
+        | "AWAITING_PO"
+        | "AWAITING_MATERIALS"
+        | "MATERIALS_UNDER_REVIEW"
+        | "AWAITING_ATTENDANCE_LIST"
+        | "READY_TO_SCHEDULE"
+        | "SCHEDULED"
+        | "COMPLETED"
       user_company: "BGC" | "KENT"
       user_privilege:
         | "view_only"
@@ -16638,6 +16882,16 @@ export const Constants = {
         "PACO",
         "Process",
         "Technical Safety",
+      ],
+      training_status: [
+        "NOT_STARTED",
+        "AWAITING_PO",
+        "AWAITING_MATERIALS",
+        "MATERIALS_UNDER_REVIEW",
+        "AWAITING_ATTENDANCE_LIST",
+        "READY_TO_SCHEDULE",
+        "SCHEDULED",
+        "COMPLETED",
       ],
       user_company: ["BGC", "KENT"],
       user_privilege: [
