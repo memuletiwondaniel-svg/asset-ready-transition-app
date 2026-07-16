@@ -4,7 +4,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Paperclip } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Paperclip, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -140,21 +141,18 @@ export const WitnessHoldDrawer: React.FC<WitnessHoldDrawerProps> = ({
         side="right"
         className="!z-modal-critical w-full sm:max-w-lg p-0 flex flex-col [&>button]:hidden"
       >
-        {/* Header */}
+        {/* Header — title first, breadcrumb as subtext */}
         <div className="px-5 pt-5 pb-3 border-b shrink-0 bg-background">
-          <div className="text-[10.5px] font-bold tracking-[0.14em] uppercase text-muted-foreground mb-1">
-            {vcrCode}{vcrName ? ` · ${vcrName}` : ''} · {typeLabel(point.inspection_type)}
-          </div>
-          <div className="flex items-start justify-between gap-3">
-            <div className="text-[15px] leading-snug font-semibold min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3 mb-1">
+            <h2 className="text-[16px] leading-tight font-bold tracking-tight text-foreground min-w-0 flex-1">
               {point.activity_name}
-            </div>
+            </h2>
             {point.status === 'SCHEDULED' && onSchedule ? (
               <button
                 type="button"
                 onClick={() => onSchedule(point)}
                 className={cn(
-                  'flex-none text-[10.5px] font-bold rounded-full border px-2 py-0.5 mt-0.5 whitespace-nowrap hover:brightness-95 cursor-pointer',
+                  'flex-none text-[10.5px] font-bold rounded-full border px-2 py-0.5 mt-0.5 whitespace-nowrap hover:brightness-95 cursor-pointer uppercase tracking-wider',
                   CHIP_TONES[pres.tone],
                 )}
                 aria-label="View schedule details"
@@ -164,13 +162,16 @@ export const WitnessHoldDrawer: React.FC<WitnessHoldDrawerProps> = ({
             ) : (
               <span
                 className={cn(
-                  'flex-none text-[10.5px] font-bold rounded-full border px-2 py-0.5 mt-0.5 whitespace-nowrap',
+                  'flex-none text-[10.5px] font-bold rounded-full border px-2 py-0.5 mt-0.5 whitespace-nowrap uppercase tracking-wider',
                   CHIP_TONES[pres.tone],
                 )}
               >
                 {pres.label}
               </span>
             )}
+          </div>
+          <div className="text-[10px] font-bold tracking-[0.14em] uppercase text-muted-foreground/70">
+            {vcrCode}{vcrName ? ` · ${vcrName}` : ''} · {typeLabel(point.inspection_type)}
           </div>
         </div>
 
@@ -318,58 +319,62 @@ export const WitnessHoldDrawer: React.FC<WitnessHoldDrawerProps> = ({
 
             <Separator />
 
-            {/* Activity thread — chipless split-header */}
-            <div className="space-y-2">
-              <SectionLabel>Activity</SectionLabel>
-              {point.activity_log.length === 0 ? (
-                <div className="text-[12px] text-muted-foreground/70">
-                  No activity yet.
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {point.activity_log.map((entry) => {
-                    const actionClass =
-                      entry.action === 'approved'
-                        ? 'text-emerald-700 font-medium italic'
-                        : entry.action === 'rejected'
-                        ? 'text-red-700 font-medium italic'
-                        : 'text-muted-foreground italic';
-                    const hasComment = !!entry.comment;
-                    return (
-                      <div key={entry.id} className="flex gap-3">
-                        <Avatar className="h-8 w-8 shrink-0">
-                          {entry.user_avatar_url && <AvatarImage src={entry.user_avatar_url} />}
-                          <AvatarFallback className="text-[10px]">
-                            {initials(entry.user_full_name || '?')}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex justify-between items-baseline gap-2 mb-0.5">
-                            <span className="text-[13px] font-semibold truncate">
-                              {entry.user_full_name || 'System'}
-                            </span>
-                            <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
-                              {format(new Date(entry.created_at), 'dd-MMM-yyyy HH:mm')}
-                            </span>
-                          </div>
-                          <div className="text-[12px] leading-relaxed">
-                            <span className={cn(actionClass)}>
-                              {humanAction(entry.action)}
-                            </span>
-                            {hasComment && (
-                              <>
-                                <span className="text-muted-foreground">:</span>{' '}
-                                <span className="text-foreground">{entry.comment}</span>
-                              </>
-                            )}
+            {/* Activity thread — collapsible, chipless split-header */}
+            <Collapsible defaultOpen>
+              <CollapsibleTrigger className="group flex w-full items-center justify-between py-1">
+                <span className="text-[10.5px] font-bold tracking-[0.14em] uppercase text-muted-foreground/80">
+                  Activity
+                </span>
+                <ChevronDown className="w-4 h-4 text-muted-foreground/70 transition-transform group-data-[state=closed]:-rotate-90" />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-3">
+                {point.activity_log.length === 0 ? (
+                  <div className="text-[12px] text-muted-foreground/70">
+                    No activity yet.
+                  </div>
+                ) : (
+                  <div className="space-y-5">
+                    {point.activity_log.map((entry) => {
+                      const actionClass =
+                        entry.action === 'approved'
+                          ? 'text-emerald-700 font-medium italic'
+                          : entry.action === 'rejected'
+                          ? 'text-red-700 font-medium italic'
+                          : 'italic text-muted-foreground/70';
+                      const hasComment = !!entry.comment;
+                      return (
+                        <div key={entry.id} className="flex gap-3">
+                          <Avatar className="h-8 w-8 shrink-0">
+                            {entry.user_avatar_url && <AvatarImage src={entry.user_avatar_url} />}
+                            <AvatarFallback className="text-[10px]">
+                              {initials(entry.user_full_name || '?')}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex justify-between items-baseline gap-2 mb-1">
+                              <span className="text-[12px] font-bold text-foreground truncate">
+                                {entry.user_full_name || 'System'}
+                              </span>
+                              <span className="text-[10px] font-medium text-muted-foreground/70 tabular-nums shrink-0">
+                                {format(new Date(entry.created_at), 'dd-MMM-yyyy HH:mm')}
+                              </span>
+                            </div>
+                            <div className="text-[12px] leading-snug">
+                              <span className={cn(actionClass, 'mr-1')}>
+                                {humanAction(entry.action)}{hasComment ? ':' : ''}
+                              </span>
+                              {hasComment && (
+                                <span className="text-foreground/80">{entry.comment}</span>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CollapsibleContent>
+            </Collapsible>
           </div>
         </ScrollArea>
 
