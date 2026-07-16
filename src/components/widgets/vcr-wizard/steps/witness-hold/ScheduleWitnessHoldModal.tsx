@@ -136,7 +136,7 @@ export const ScheduleWitnessHoldModal: React.FC<ScheduleWitnessHoldModalProps> =
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px] p-0 gap-0" overlayClassName="bg-black/80 backdrop-blur-sm">
+      <DialogContent className="sm:max-w-[520px] p-0 gap-0 !z-[1600]" overlayClassName="bg-black/80 backdrop-blur-sm !z-[1600]">
         <DialogHeader className="px-6 pt-5 pb-3 space-y-1">
           <DialogTitle className="text-base font-medium flex items-center gap-2">
             Schedule witness &amp; hold point

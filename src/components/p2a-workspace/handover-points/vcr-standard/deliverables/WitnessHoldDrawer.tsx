@@ -4,7 +4,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Paperclip, Pencil } from 'lucide-react';
+import { Paperclip } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -149,14 +149,28 @@ export const WitnessHoldDrawer: React.FC<WitnessHoldDrawerProps> = ({
             <div className="text-[15px] leading-snug font-semibold min-w-0 flex-1">
               {point.activity_name}
             </div>
-            <span
-              className={cn(
-                'flex-none text-[10.5px] font-bold rounded-full border px-2 py-0.5 mt-0.5 whitespace-nowrap',
-                CHIP_TONES[pres.tone],
-              )}
-            >
-              {pres.label}
-            </span>
+            {point.status === 'SCHEDULED' && onSchedule ? (
+              <button
+                type="button"
+                onClick={() => onSchedule(point)}
+                className={cn(
+                  'flex-none text-[10.5px] font-bold rounded-full border px-2 py-0.5 mt-0.5 whitespace-nowrap hover:brightness-95 cursor-pointer',
+                  CHIP_TONES[pres.tone],
+                )}
+                aria-label="View schedule details"
+              >
+                {pres.label}
+              </button>
+            ) : (
+              <span
+                className={cn(
+                  'flex-none text-[10.5px] font-bold rounded-full border px-2 py-0.5 mt-0.5 whitespace-nowrap',
+                  CHIP_TONES[pres.tone],
+                )}
+              >
+                {pres.label}
+              </span>
+            )}
           </div>
         </div>
 
@@ -180,54 +194,38 @@ export const WitnessHoldDrawer: React.FC<WitnessHoldDrawerProps> = ({
                 label={completedValue ? 'Completed' : 'Scheduled'}
                 value={completedValue || scheduleValue}
               />
-              <Field label="Location" value={point.location} full />
             </div>
 
             <Separator />
 
             {/* Delivered by */}
             <div className="space-y-2">
-              <SectionLabel
-                action={
-                  isSnrOra && onEditParties ? (
-                    <button
-                      type="button"
-                      onClick={() => onEditParties(point)}
-                      className="text-muted-foreground/70 hover:text-foreground"
-                      aria-label="Edit parties"
-                    >
-                      <Pencil className="h-3 w-3" />
-                    </button>
-                  ) : null
-                }
-              >
-                Delivered by
-              </SectionLabel>
+              <SectionLabel>Delivered by</SectionLabel>
               {point.delivering_party_role_name ? (
-                <div className="space-y-1.5">
-                  <div className="text-[11px] text-muted-foreground">
-                    {point.delivering_party_role_name}
-                  </div>
-                  {deliveringHolders.length ? (
-                    <div className="space-y-1.5">
-                      {deliveringHolders.map((h) => (
-                        <div key={h.user_id} className="flex items-center gap-2">
-                          <Avatar className="h-7 w-7">
-                            {h.avatar_url && <AvatarImage src={h.avatar_url} />}
-                            <AvatarFallback className="text-[10px]">
-                              {initials(h.full_name)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="text-[12.5px] font-medium">{h.full_name}</div>
+                deliveringHolders.length ? (
+                  <div className="space-y-1.5">
+                    {deliveringHolders.map((h) => (
+                      <div key={h.user_id} className="flex items-center gap-2">
+                        <Avatar className="h-7 w-7">
+                          {h.avatar_url && <AvatarImage src={h.avatar_url} />}
+                          <AvatarFallback className="text-[10px]">
+                            {initials(h.full_name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0">
+                          <div className="text-[12.5px] font-medium truncate">{h.full_name}</div>
+                          <div className="text-[11px] text-muted-foreground truncate">
+                            {point.delivering_party_role_name}
+                          </div>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-[12px] text-muted-foreground/70">
-                      No holder resolved
-                    </div>
-                  )}
-                </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-[12px] text-muted-foreground/70">
+                    {point.delivering_party_role_name} — no holder resolved
+                  </div>
+                )
               ) : (
                 <div className="text-[12px] text-muted-foreground/70">
                   Delivering party not yet assigned
@@ -307,13 +305,10 @@ export const WitnessHoldDrawer: React.FC<WitnessHoldDrawerProps> = ({
               ) : (
                 <div className="space-y-1.5">
                   {point.attachments.map((a) => (
-                    <div key={a.id} className="flex items-center gap-2 rounded-md border border-border/60 px-3 py-2">
+                    <div key={a.id} className="flex items-center gap-2 px-1 py-1">
                       <Paperclip className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                       <div className="min-w-0 flex-1">
                         <div className="text-[12.5px] font-medium truncate">{a.file_name}</div>
-                        <div className="text-[10.5px] text-muted-foreground truncate capitalize">
-                          {a.kind}
-                        </div>
                       </div>
                     </div>
                   ))}

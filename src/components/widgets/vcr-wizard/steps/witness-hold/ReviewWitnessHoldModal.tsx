@@ -84,7 +84,7 @@ export const ReviewWitnessHoldModal: React.FC<ReviewWitnessHoldModalProps> = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[520px] p-0 gap-0" overlayClassName="bg-black/80 backdrop-blur-sm">
+        <DialogContent className="sm:max-w-[520px] p-0 gap-0 !z-[1600]" overlayClassName="bg-black/80 backdrop-blur-sm !z-[1600]">
           <DialogHeader className="px-6 pt-5 pb-3">
             <DialogTitle className="text-base font-medium">Review &amp; approve</DialogTitle>
             <DialogDescription className="text-xs">{point.activity_name}</DialogDescription>
@@ -170,7 +170,7 @@ export const ReviewWitnessHoldModal: React.FC<ReviewWitnessHoldModalProps> = ({
       </Dialog>
 
       <AlertDialog open={confirmReject} onOpenChange={setConfirmReject}>
-        <AlertDialogContent className="max-w-sm" overlayClassName="bg-black/80 backdrop-blur-sm">
+        <AlertDialogContent className="max-w-sm !z-[1610]" overlayClassName="bg-black/80 backdrop-blur-sm !z-[1610]">
           <AlertDialogHeader>
             <AlertDialogTitle>Return for rework?</AlertDialogTitle>
             <AlertDialogDescription>
