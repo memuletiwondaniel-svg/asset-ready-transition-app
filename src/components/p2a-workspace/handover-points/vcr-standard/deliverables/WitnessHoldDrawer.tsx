@@ -353,7 +353,7 @@ export const WitnessHoldDrawer: React.FC<WitnessHoldDrawerProps> = ({
                             </AvatarFallback>
                           </Avatar>
                           <div className="min-w-0 flex-1">
-                            <div className="flex justify-between items-baseline gap-2 mb-1">
+                            <div className="flex justify-between items-baseline gap-2 mb-0">
                               <span className="text-[12px] font-bold text-foreground truncate">
                                 {entry.user_full_name || 'System'}
                               </span>
