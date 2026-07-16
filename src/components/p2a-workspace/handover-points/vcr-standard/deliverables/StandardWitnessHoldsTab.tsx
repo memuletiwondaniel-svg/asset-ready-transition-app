@@ -20,6 +20,7 @@ import { AddWitnessHoldPointModal } from '@/components/widgets/vcr-wizard/steps/
 import { ScheduleWitnessHoldModal } from '@/components/widgets/vcr-wizard/steps/witness-hold/ScheduleWitnessHoldModal';
 import { CompleteWitnessHoldModal } from '@/components/widgets/vcr-wizard/steps/witness-hold/CompleteWitnessHoldModal';
 import { ReviewWitnessHoldModal } from '@/components/widgets/vcr-wizard/steps/witness-hold/ReviewWitnessHoldModal';
+import { useProjectRoleHolders } from '@/hooks/useProjectRoleHolders';
 
 /**
  * FE-1 + FE-2: Witness & Hold tab.
