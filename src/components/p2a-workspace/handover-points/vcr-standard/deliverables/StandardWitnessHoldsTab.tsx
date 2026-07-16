@@ -20,6 +20,7 @@ import { AddWitnessHoldPointModal } from '@/components/widgets/vcr-wizard/steps/
 import { ScheduleWitnessHoldModal } from '@/components/widgets/vcr-wizard/steps/witness-hold/ScheduleWitnessHoldModal';
 import { CompleteWitnessHoldModal } from '@/components/widgets/vcr-wizard/steps/witness-hold/CompleteWitnessHoldModal';
 import { ReviewWitnessHoldModal } from '@/components/widgets/vcr-wizard/steps/witness-hold/ReviewWitnessHoldModal';
+import { useProjectRoleHolders } from '@/hooks/useProjectRoleHolders';
 
 /**
  * FE-1 + FE-2: Witness & Hold tab.
@@ -119,11 +120,12 @@ export const StandardWitnessHoldsTab: React.FC<{ handoverPoint: P2AHandoverPoint
       )}
 
       {scheduleFor && (
-        <ScheduleWitnessHoldModal
+        <ScheduleWitnessHoldModalWithOwnership
           point={scheduleFor}
           vcrCode={handoverPoint.vcr_code}
           vcrName={handoverPoint.name}
-          open={!!scheduleFor}
+          projectId={projectId}
+          currentUid={currentUid}
           onOpenChange={(o) => !o && setScheduleFor(null)}
         />
       )}
@@ -146,5 +148,34 @@ export const StandardWitnessHoldsTab: React.FC<{ handoverPoint: P2AHandoverPoint
         />
       )}
     </>
+  );
+};
+
+/**
+ * Resolves the delivering-party role holders for the given W&H point and passes
+ * `isOwner` into the modal so only holders see the "Send invite" CTAs.
+ */
+const ScheduleWitnessHoldModalWithOwnership: React.FC<{
+  point: WHPoint;
+  vcrCode: string;
+  vcrName: string;
+  projectId: string | null;
+  currentUid: string | null;
+  onOpenChange: (open: boolean) => void;
+}> = ({ point, vcrCode, vcrName, projectId, currentUid, onOpenChange }) => {
+  const roleLabel = point.delivering_party_role_name || '';
+  const labels = roleLabel ? [roleLabel] : [];
+  const { data: holdersMap } = useProjectRoleHolders(projectId || undefined, labels);
+  const holders = (roleLabel && holdersMap?.[roleLabel]) || [];
+  const isOwner = !!currentUid && holders.some((h) => h.user_id === currentUid);
+  return (
+    <ScheduleWitnessHoldModal
+      point={point}
+      vcrCode={vcrCode}
+      vcrName={vcrName}
+      open
+      onOpenChange={onOpenChange}
+      isOwner={isOwner}
+    />
   );
 };

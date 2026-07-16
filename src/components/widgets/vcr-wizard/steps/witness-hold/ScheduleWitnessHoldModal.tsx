@@ -30,6 +30,13 @@ export interface ScheduleWitnessHoldModalProps {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   onScheduled?: () => void;
+  /**
+   * When false, the modal renders in read-only mode: the "Open in Teams" and
+   * "Send invite" CTAs are hidden and inputs are disabled. Only the activity
+   * owner (a holder of the delivering-party role) can dispatch invites.
+   * Defaults to true for backward compatibility.
+   */
+  isOwner?: boolean;
 }
 
 const initials = (n: string) =>
@@ -44,7 +51,7 @@ interface Invitee {
 }
 
 export const ScheduleWitnessHoldModal: React.FC<ScheduleWitnessHoldModalProps> = ({
-  point, vcrCode, vcrName, open, onOpenChange, onScheduled,
+  point, vcrCode, vcrName, open, onOpenChange, onScheduled, isOwner = true,
 }) => {
   const qc = useQueryClient();
 
@@ -369,28 +376,34 @@ export const ScheduleWitnessHoldModal: React.FC<ScheduleWitnessHoldModalProps> =
 
         <div className="px-6 py-3 border-t flex items-center justify-between gap-2">
           <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
-            Cancel
+            {isOwner ? 'Cancel' : 'Close'}
           </Button>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                toast.info('Teams meeting deep-link generation lands with the calendar integration turn.')
-              }
-              className="gap-1.5"
-            >
-              <Video className="w-3.5 h-3.5" /> Open in Teams
-            </Button>
-            <Button
-              size="sm"
-              disabled={scheduling.isPending || !date}
-              onClick={() => scheduling.mutate()}
-            >
-              {scheduling.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
-              Send invite
-            </Button>
-          </div>
+          {isOwner ? (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  toast.info('Teams meeting deep-link generation lands with the calendar integration turn.')
+                }
+                className="gap-1.5"
+              >
+                <Video className="w-3.5 h-3.5" /> Open in Teams
+              </Button>
+              <Button
+                size="sm"
+                disabled={scheduling.isPending || !date}
+                onClick={() => scheduling.mutate()}
+              >
+                {scheduling.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+                Send invite
+              </Button>
+            </div>
+          ) : (
+            <span className="text-[11px] text-muted-foreground/70 italic">
+              Only the activity owner can send the invite
+            </span>
+          )}
         </div>
       </DialogContent>
     </Dialog>
