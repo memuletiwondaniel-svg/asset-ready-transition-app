@@ -200,47 +200,32 @@ export const WitnessHoldDrawer: React.FC<WitnessHoldDrawerProps> = ({
 
             {/* Delivered by */}
             <div className="space-y-2">
-              <SectionLabel
-                action={
-                  isSnrOra && onEditParties ? (
-                    <button
-                      type="button"
-                      onClick={() => onEditParties(point)}
-                      className="text-muted-foreground/70 hover:text-foreground"
-                      aria-label="Edit parties"
-                    >
-                      <Pencil className="h-3 w-3" />
-                    </button>
-                  ) : null
-                }
-              >
-                Delivered by
-              </SectionLabel>
+              <SectionLabel>Delivered by</SectionLabel>
               {point.delivering_party_role_name ? (
-                <div className="space-y-1.5">
-                  <div className="text-[11px] text-muted-foreground">
-                    {point.delivering_party_role_name}
-                  </div>
-                  {deliveringHolders.length ? (
-                    <div className="space-y-1.5">
-                      {deliveringHolders.map((h) => (
-                        <div key={h.user_id} className="flex items-center gap-2">
-                          <Avatar className="h-7 w-7">
-                            {h.avatar_url && <AvatarImage src={h.avatar_url} />}
-                            <AvatarFallback className="text-[10px]">
-                              {initials(h.full_name)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="text-[12.5px] font-medium">{h.full_name}</div>
+                deliveringHolders.length ? (
+                  <div className="space-y-1.5">
+                    {deliveringHolders.map((h) => (
+                      <div key={h.user_id} className="flex items-center gap-2">
+                        <Avatar className="h-7 w-7">
+                          {h.avatar_url && <AvatarImage src={h.avatar_url} />}
+                          <AvatarFallback className="text-[10px]">
+                            {initials(h.full_name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0">
+                          <div className="text-[12.5px] font-medium truncate">{h.full_name}</div>
+                          <div className="text-[11px] text-muted-foreground truncate">
+                            {point.delivering_party_role_name}
+                          </div>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-[12px] text-muted-foreground/70">
-                      No holder resolved
-                    </div>
-                  )}
-                </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-[12px] text-muted-foreground/70">
+                    {point.delivering_party_role_name} — no holder resolved
+                  </div>
+                )
               ) : (
                 <div className="text-[12px] text-muted-foreground/70">
                   Delivering party not yet assigned
