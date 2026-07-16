@@ -172,7 +172,10 @@ export const ScheduleWitnessHoldModal: React.FC<ScheduleWitnessHoldModalProps> =
           </div>
         </DialogHeader>
 
-        <div className="px-6 py-4 space-y-4 max-h-[70vh] overflow-y-auto border-t">
+        <div className="px-6 py-4 space-y-4 max-h-[70vh] overflow-y-auto border-t [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border/60 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-border">
+          <style>{`
+            input[type="time"].wh-time::-webkit-calendar-picker-indicator { display: none; -webkit-appearance: none; }
+          `}</style>
           {/* Date & time */}
           <div className="space-y-1.5">
             <label className="text-[10.5px] font-bold tracking-[0.1em] uppercase text-muted-foreground/80">
