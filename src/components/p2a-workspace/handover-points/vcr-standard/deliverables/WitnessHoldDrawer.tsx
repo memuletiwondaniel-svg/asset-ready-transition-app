@@ -318,7 +318,7 @@ export const WitnessHoldDrawer: React.FC<WitnessHoldDrawerProps> = ({
 
             <Separator />
 
-            {/* Activity thread — chipless */}
+            {/* Activity thread — chipless split-header */}
             <div className="space-y-2">
               <SectionLabel>Activity</SectionLabel>
               {point.activity_log.length === 0 ? (
@@ -326,32 +326,47 @@ export const WitnessHoldDrawer: React.FC<WitnessHoldDrawerProps> = ({
                   No activity yet.
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {point.activity_log.map((entry) => (
-                    <div key={entry.id} className="flex gap-2">
-                      <Avatar className="h-6 w-6 mt-0.5">
-                        {entry.user_avatar_url && <AvatarImage src={entry.user_avatar_url} />}
-                        <AvatarFallback className="text-[9px]">
-                          {initials(entry.user_full_name || '?')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <div className="text-[11px] text-muted-foreground">
-                          <span className="font-medium text-foreground/80">
-                            {entry.user_full_name || 'System'}
-                          </span>{' '}
-                          {humanAction(entry.action)}
-                          {' · '}
-                          {format(new Date(entry.created_at), 'dd-MMM-yyyy HH:mm')}
-                        </div>
-                        {entry.comment && (
-                          <div className="text-[12.5px] whitespace-pre-wrap mt-0.5">
-                            {entry.comment}
+                <div className="space-y-4">
+                  {point.activity_log.map((entry) => {
+                    const actionClass =
+                      entry.action === 'approved'
+                        ? 'text-emerald-700 font-medium italic'
+                        : entry.action === 'rejected'
+                        ? 'text-red-700 font-medium italic'
+                        : 'text-muted-foreground italic';
+                    const hasComment = !!entry.comment;
+                    return (
+                      <div key={entry.id} className="flex gap-3">
+                        <Avatar className="h-8 w-8 shrink-0">
+                          {entry.user_avatar_url && <AvatarImage src={entry.user_avatar_url} />}
+                          <AvatarFallback className="text-[10px]">
+                            {initials(entry.user_full_name || '?')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex justify-between items-baseline gap-2 mb-0.5">
+                            <span className="text-[13px] font-semibold truncate">
+                              {entry.user_full_name || 'System'}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
+                              {format(new Date(entry.created_at), 'dd-MMM-yyyy HH:mm')}
+                            </span>
                           </div>
-                        )}
+                          <div className="text-[12px] leading-relaxed">
+                            <span className={cn(actionClass)}>
+                              {humanAction(entry.action)}
+                            </span>
+                            {hasComment && (
+                              <>
+                                <span className="text-muted-foreground">:</span>{' '}
+                                <span className="text-foreground">{entry.comment}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
