@@ -30,6 +30,13 @@ export interface ScheduleWitnessHoldModalProps {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   onScheduled?: () => void;
+  /**
+   * When false, the modal renders in read-only mode: the "Open in Teams" and
+   * "Send invite" CTAs are hidden and inputs are disabled. Only the activity
+   * owner (a holder of the delivering-party role) can dispatch invites.
+   * Defaults to true for backward compatibility.
+   */
+  isOwner?: boolean;
 }
 
 const initials = (n: string) =>
