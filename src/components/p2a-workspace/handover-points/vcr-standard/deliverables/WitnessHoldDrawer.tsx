@@ -234,7 +234,7 @@ export const WitnessHoldDrawer: React.FC<WitnessHoldDrawerProps> = ({
               )}
             </div>
 
-            <Separator className="bg-border/40" />
+            <Separator />
 
             {/* Witnessed & accepted by */}
             <div className="space-y-2">
