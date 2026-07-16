@@ -305,13 +305,10 @@ export const WitnessHoldDrawer: React.FC<WitnessHoldDrawerProps> = ({
               ) : (
                 <div className="space-y-1.5">
                   {point.attachments.map((a) => (
-                    <div key={a.id} className="flex items-center gap-2 rounded-md border border-border/60 px-3 py-2">
+                    <div key={a.id} className="flex items-center gap-2 px-1 py-1">
                       <Paperclip className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                       <div className="min-w-0 flex-1">
                         <div className="text-[12.5px] font-medium truncate">{a.file_name}</div>
-                        <div className="text-[10.5px] text-muted-foreground truncate capitalize">
-                          {a.kind}
-                        </div>
                       </div>
                     </div>
                   ))}
