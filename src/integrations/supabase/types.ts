@@ -1654,6 +1654,13 @@ export type Database = {
             referencedRelation: "projects_enriched"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "dms_external_sync_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["project_id"]
+          },
         ]
       }
       dms_field_mappings: {
@@ -1931,6 +1938,13 @@ export type Database = {
             referencedRelation: "projects_enriched"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "dms_reserved_numbers_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["project_id"]
+          },
         ]
       }
       dms_sites: {
@@ -2200,6 +2214,13 @@ export type Database = {
             referencedRelation: "projects_enriched"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "dms_sync_logs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["project_id"]
+          },
         ]
       }
       dms_units: {
@@ -2312,6 +2333,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "dms_vendor_packages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["project_id"]
+          },
+          {
             foreignKeyName: "dms_vendor_packages_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
@@ -2375,6 +2403,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "projects_enriched"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_ingest_queue_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["project_id"]
           },
         ]
       }
@@ -2451,6 +2486,13 @@ export type Database = {
             referencedRelation: "projects_enriched"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "document_packages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["project_id"]
+          },
         ]
       }
       document_po_structure: {
@@ -2498,6 +2540,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "projects_enriched"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_po_structure_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["project_id"]
           },
         ]
       }
@@ -3334,6 +3383,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "mdr_completeness_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["project_id"]
+          },
+          {
             foreignKeyName: "mdr_completeness_snapshots_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
@@ -3420,6 +3476,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "projects_enriched"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mdr_register_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "mdr_register_tenant_id_fkey"
@@ -3526,6 +3589,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "projects_enriched"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "moc_register_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["project_id"]
           },
         ]
       }
@@ -4424,6 +4494,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "ora_training_system_mappings_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["handover_point_id"]
+          },
+          {
             foreignKeyName: "ora_training_system_mappings_system_id_fkey"
             columns: ["system_id"]
             isOneToOne: false
@@ -4561,6 +4638,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "projects_enriched"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ori_scores_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "ori_scores_tenant_id_fkey"
@@ -5037,6 +5121,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "projects_enriched"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orm_plans_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "orm_plans_tenant_id_fkey"
@@ -5893,6 +5984,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "orp_plans_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["project_id"]
+          },
+          {
             foreignKeyName: "orp_plans_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
@@ -6200,6 +6298,13 @@ export type Database = {
             referencedRelation: "projects_enriched"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "outstanding_work_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["project_id"]
+          },
         ]
       }
       override_register: {
@@ -6268,6 +6373,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "projects_enriched"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "override_register_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["project_id"]
           },
         ]
       }
@@ -6547,6 +6659,13 @@ export type Database = {
             referencedRelation: "p2a_handover_points"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "p2a_handover_approvers_point_id_fkey"
+            columns: ["point_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["handover_point_id"]
+          },
         ]
       }
       p2a_handover_deliverables: {
@@ -6693,6 +6812,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "p2a_handover_plans_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["project_id"]
+          },
+          {
             foreignKeyName: "p2a_handover_plans_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
@@ -6733,6 +6859,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "p2a_handover_points"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_handover_point_systems_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["handover_point_id"]
           },
           {
             foreignKeyName: "p2a_handover_point_systems_subsystem_id_fkey"
@@ -6998,6 +7131,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "p2a_handovers_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["project_id"]
+          },
+          {
             foreignKeyName: "p2a_handovers_template_id_fkey"
             columns: ["template_id"]
             isOneToOne: false
@@ -7136,6 +7276,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "p2a_handover_points"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_itp_activities_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["handover_point_id"]
           },
           {
             foreignKeyName: "p2a_itp_activities_system_id_fkey"
@@ -7721,6 +7868,13 @@ export type Database = {
             referencedRelation: "p2a_handover_points"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "p2a_vcr_cmms_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["handover_point_id"]
+          },
         ]
       }
       p2a_vcr_critical_docs: {
@@ -7859,6 +8013,13 @@ export type Database = {
             referencedRelation: "p2a_handover_points"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "p2a_vcr_deliverables_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["handover_point_id"]
+          },
         ]
       }
       p2a_vcr_doc_catalog: {
@@ -7953,6 +8114,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "p2a_handover_points"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_documentation_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["handover_point_id"]
           },
         ]
       }
@@ -8083,6 +8251,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "p2a_vcr_item_overrides_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["handover_point_id"]
+          },
+          {
             foreignKeyName: "p2a_vcr_item_overrides_vcr_item_id_fkey"
             columns: ["vcr_item_id"]
             isOneToOne: false
@@ -8190,6 +8365,13 @@ export type Database = {
             referencedRelation: "p2a_handover_points"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "p2a_vcr_maintenance_deliverables_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["handover_point_id"]
+          },
         ]
       }
       p2a_vcr_operational_registers: {
@@ -8242,6 +8424,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "p2a_handover_points"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_operational_registers_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["handover_point_id"]
           },
         ]
       }
@@ -8321,6 +8510,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "p2a_vcr_prerequisites_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["handover_point_id"]
+          },
+          {
             foreignKeyName: "p2a_vcr_prerequisites_pac_prerequisite_id_fkey"
             columns: ["pac_prerequisite_id"]
             isOneToOne: false
@@ -8392,6 +8588,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "p2a_handover_points"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_procedures_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["handover_point_id"]
           },
         ]
       }
@@ -8466,6 +8669,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "p2a_handover_points"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_qualifications_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["handover_point_id"]
           },
           {
             foreignKeyName: "p2a_vcr_qualifications_vcr_prerequisite_id_fkey"
@@ -8620,11 +8830,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "p2a_vcr_relationships_source_vcr_id_fkey"
+            columns: ["source_vcr_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["handover_point_id"]
+          },
+          {
             foreignKeyName: "p2a_vcr_relationships_target_vcr_id_fkey"
             columns: ["target_vcr_id"]
             isOneToOne: false
             referencedRelation: "p2a_handover_points"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_relationships_target_vcr_id_fkey"
+            columns: ["target_vcr_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["handover_point_id"]
           },
         ]
       }
@@ -8681,6 +8905,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "p2a_handover_points"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_spares_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["handover_point_id"]
           },
         ]
       }
@@ -8805,6 +9036,13 @@ export type Database = {
             referencedRelation: "p2a_handover_points"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "p2a_vcr_training_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["handover_point_id"]
+          },
         ]
       }
       p2a_vcr_training_activity_log: {
@@ -8845,6 +9083,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "p2a_vcr_training"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_training_activity_log_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["training_id"]
           },
         ]
       }
@@ -8903,6 +9148,13 @@ export type Database = {
             referencedRelation: "p2a_vcr_training"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "p2a_vcr_training_attachments_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["training_id"]
+          },
         ]
       }
       p2a_vcr_training_reviewers: {
@@ -8952,6 +9204,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "p2a_vcr_training"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_training_reviewers_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["training_id"]
           },
         ]
       }
@@ -9942,6 +10201,13 @@ export type Database = {
             referencedRelation: "projects_enriched"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "project_documents_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["project_id"]
+          },
         ]
       }
       project_drafts: {
@@ -10042,6 +10308,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "project_locations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["project_id"]
+          },
+          {
             foreignKeyName: "project_locations_station_id_fkey"
             columns: ["station_id"]
             isOneToOne: false
@@ -10134,6 +10407,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "projects_enriched"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_milestones_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["project_id"]
           },
         ]
       }
@@ -10286,6 +10566,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "project_team_members_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["project_id"]
+          },
+          {
             foreignKeyName: "project_team_members_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
@@ -10324,6 +10611,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "projects_enriched"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_user_hides_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["project_id"]
           },
         ]
       }
@@ -12042,6 +12336,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "readiness_dependencies_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["project_id"]
+          },
+          {
             foreignKeyName: "readiness_dependencies_to_node_id_fkey"
             columns: ["to_node_id"]
             isOneToOne: false
@@ -12135,6 +12436,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "projects_enriched"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "readiness_nodes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "readiness_nodes_tenant_id_fkey"
@@ -12410,6 +12718,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "sdr_completeness_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["project_id"]
+          },
+          {
             foreignKeyName: "sdr_completeness_snapshots_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
@@ -12502,6 +12817,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "projects_enriched"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sdr_register_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "sdr_register_tenant_id_fkey"
@@ -13102,6 +13424,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "projects_enriched"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stq_register_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["project_id"]
           },
         ]
       }
@@ -14151,6 +14480,13 @@ export type Database = {
             referencedRelation: "p2a_handover_points"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "vcr_discipline_assurance_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["handover_point_id"]
+          },
         ]
       }
       vcr_document_requirements: {
@@ -14234,6 +14570,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "p2a_handover_points"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vcr_document_requirements_vcr_id_fkey"
+            columns: ["vcr_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["handover_point_id"]
           },
         ]
       }
@@ -14360,6 +14703,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "vcr_item_comments_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["handover_point_id"]
+          },
+          {
             foreignKeyName: "vcr_item_comments_vcr_item_id_fkey"
             columns: ["vcr_item_id"]
             isOneToOne: false
@@ -14403,6 +14753,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "p2a_handover_points"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vcr_item_delivering_parties_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["handover_point_id"]
           },
           {
             foreignKeyName: "vcr_item_delivering_parties_prerequisite_id_fkey"
@@ -14626,6 +14983,13 @@ export type Database = {
             referencedRelation: "p2a_handover_points"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "vcr_key_activities_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["handover_point_id"]
+          },
         ]
       }
       vcr_pac_approvers: {
@@ -14679,6 +15043,13 @@ export type Database = {
             referencedRelation: "p2a_handover_points"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "vcr_pac_approvers_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["handover_point_id"]
+          },
         ]
       }
       vcr_plan_approval_events: {
@@ -14713,6 +15084,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "p2a_handover_points"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vcr_plan_approval_events_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["handover_point_id"]
           },
         ]
       }
@@ -14770,6 +15148,13 @@ export type Database = {
             referencedRelation: "p2a_handover_points"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "vcr_plan_approvers_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["handover_point_id"]
+          },
         ]
       }
       vcr_plan_snapshots: {
@@ -14810,6 +15195,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "p2a_handover_points"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vcr_plan_snapshots_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["handover_point_id"]
           },
         ]
       }
@@ -14993,6 +15385,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "p2a_handover_points"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vcr_sof_approvers_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["handover_point_id"]
           },
         ]
       }
@@ -15679,6 +16078,22 @@ export type Database = {
           },
         ]
       }
+      v_training_workflow_state: {
+        Row: {
+          expected_owner_user_id: string | null
+          handover_point_id: string | null
+          open_owner_task_count: number | null
+          open_reviewer_task_count: number | null
+          owner_role: string | null
+          pending_reviewer_row_count: number | null
+          project_id: string | null
+          training_id: string | null
+          training_status: Database["public"]["Enums"]["training_status"] | null
+          training_title: string | null
+          vcr_code: string | null
+        }
+        Relationships: []
+      }
       v_vcr_plan_approver_tasks: {
         Row: {
           any_rejected: boolean | null
@@ -15726,11 +16141,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "p2a_handover_plans_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["project_id"]
+          },
+          {
             foreignKeyName: "vcr_plan_approvers_handover_point_id_fkey"
             columns: ["handover_point_id"]
             isOneToOne: false
             referencedRelation: "p2a_handover_points"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vcr_plan_approvers_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "v_training_workflow_state"
+            referencedColumns: ["handover_point_id"]
           },
         ]
       }
@@ -15743,6 +16172,60 @@ export type Database = {
       _recompute_vcr_checklist_bundle_row: {
         Args: { p_task_id: string }
         Returns: undefined
+      }
+      _training_close_open_tasks: {
+        Args: { p_training_id: string }
+        Returns: undefined
+      }
+      _training_context: {
+        Args: { p_training_id: string }
+        Returns: {
+          handover_point_id: string
+          project_code: string
+          project_id: string
+          status: Database["public"]["Enums"]["training_status"]
+          tenant_id: string
+          title: string
+          training_id: string
+          vcr_code: string
+        }[]
+      }
+      _training_create_owner_task: {
+        Args: {
+          p_hp_id: string
+          p_project_code: string
+          p_project_id: string
+          p_status: Database["public"]["Enums"]["training_status"]
+          p_tenant_id: string
+          p_title: string
+          p_training_id: string
+          p_vcr_code: string
+        }
+        Returns: undefined
+      }
+      _training_create_reviewer_tasks: {
+        Args: {
+          p_hp_id: string
+          p_project_code: string
+          p_project_id: string
+          p_tenant_id: string
+          p_title: string
+          p_training_id: string
+          p_vcr_code: string
+        }
+        Returns: undefined
+      }
+      _training_owner_role: {
+        Args: { p_status: Database["public"]["Enums"]["training_status"] }
+        Returns: string
+      }
+      _training_task_title: {
+        Args: {
+          p_status: Database["public"]["Enums"]["training_status"]
+          p_title: string
+          p_vcr_code: string
+        }
+        Returns: string
       }
       _vcr_build_snapshot_payload: {
         Args: { p_handover_point_id: string }
@@ -15765,6 +16248,10 @@ export type Database = {
       admin_hard_delete_project: {
         Args: { _project_id: string }
         Returns: undefined
+      }
+      advance_training_status: {
+        Args: { p_action: string; p_payload?: Json; p_training_id: string }
+        Returns: Json
       }
       approve_user_account: {
         Args: { target_user_id: string }
