@@ -319,58 +319,62 @@ export const WitnessHoldDrawer: React.FC<WitnessHoldDrawerProps> = ({
 
             <Separator />
 
-            {/* Activity thread — chipless split-header */}
-            <div className="space-y-2">
-              <SectionLabel>Activity</SectionLabel>
-              {point.activity_log.length === 0 ? (
-                <div className="text-[12px] text-muted-foreground/70">
-                  No activity yet.
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {point.activity_log.map((entry) => {
-                    const actionClass =
-                      entry.action === 'approved'
-                        ? 'text-emerald-700 font-medium italic'
-                        : entry.action === 'rejected'
-                        ? 'text-red-700 font-medium italic'
-                        : 'text-muted-foreground italic';
-                    const hasComment = !!entry.comment;
-                    return (
-                      <div key={entry.id} className="flex gap-3">
-                        <Avatar className="h-8 w-8 shrink-0">
-                          {entry.user_avatar_url && <AvatarImage src={entry.user_avatar_url} />}
-                          <AvatarFallback className="text-[10px]">
-                            {initials(entry.user_full_name || '?')}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex justify-between items-baseline gap-2 mb-0.5">
-                            <span className="text-[13px] font-semibold truncate">
-                              {entry.user_full_name || 'System'}
-                            </span>
-                            <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
-                              {format(new Date(entry.created_at), 'dd-MMM-yyyy HH:mm')}
-                            </span>
-                          </div>
-                          <div className="text-[12px] leading-relaxed">
-                            <span className={cn(actionClass)}>
-                              {humanAction(entry.action)}
-                            </span>
-                            {hasComment && (
-                              <>
-                                <span className="text-muted-foreground">:</span>{' '}
-                                <span className="text-foreground">{entry.comment}</span>
-                              </>
-                            )}
+            {/* Activity thread — collapsible, chipless split-header */}
+            <Collapsible defaultOpen>
+              <CollapsibleTrigger className="group flex w-full items-center justify-between py-1">
+                <span className="text-[10.5px] font-bold tracking-[0.14em] uppercase text-muted-foreground/80">
+                  Activity
+                </span>
+                <ChevronDown className="w-4 h-4 text-muted-foreground/70 transition-transform group-data-[state=closed]:-rotate-90" />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-3">
+                {point.activity_log.length === 0 ? (
+                  <div className="text-[12px] text-muted-foreground/70">
+                    No activity yet.
+                  </div>
+                ) : (
+                  <div className="space-y-5">
+                    {point.activity_log.map((entry) => {
+                      const actionClass =
+                        entry.action === 'approved'
+                          ? 'text-emerald-700 font-medium italic'
+                          : entry.action === 'rejected'
+                          ? 'text-red-700 font-medium italic'
+                          : 'italic text-muted-foreground/70';
+                      const hasComment = !!entry.comment;
+                      return (
+                        <div key={entry.id} className="flex gap-3">
+                          <Avatar className="h-8 w-8 shrink-0">
+                            {entry.user_avatar_url && <AvatarImage src={entry.user_avatar_url} />}
+                            <AvatarFallback className="text-[10px]">
+                              {initials(entry.user_full_name || '?')}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex justify-between items-baseline gap-2 mb-1">
+                              <span className="text-[12px] font-bold text-foreground truncate">
+                                {entry.user_full_name || 'System'}
+                              </span>
+                              <span className="text-[10px] font-medium text-muted-foreground/70 tabular-nums shrink-0">
+                                {format(new Date(entry.created_at), 'dd-MMM-yyyy HH:mm')}
+                              </span>
+                            </div>
+                            <div className="text-[12px] leading-snug">
+                              <span className={cn(actionClass, 'mr-1')}>
+                                {humanAction(entry.action)}{hasComment ? ':' : ''}
+                              </span>
+                              {hasComment && (
+                                <span className="text-foreground/80">{entry.comment}</span>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CollapsibleContent>
+            </Collapsible>
           </div>
         </ScrollArea>
 
