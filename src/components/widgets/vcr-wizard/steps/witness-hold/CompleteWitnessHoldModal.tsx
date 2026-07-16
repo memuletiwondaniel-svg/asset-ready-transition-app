@@ -97,7 +97,7 @@ export const CompleteWitnessHoldModal: React.FC<CompleteWitnessHoldModalProps> =
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px] p-0 gap-0" overlayClassName="bg-black/80 backdrop-blur-sm">
+      <DialogContent className="sm:max-w-[480px] p-0 gap-0 !z-[1600]" overlayClassName="bg-black/80 backdrop-blur-sm !z-[1600]">
         <DialogHeader className="px-6 pt-5 pb-3">
           <DialogTitle className="text-base font-medium">
             {point.status === 'REWORK_REQUESTED' ? 'Resubmit for review' : 'Complete point'}
