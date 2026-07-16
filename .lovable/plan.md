@@ -1,75 +1,76 @@
-## VCR Comments + Closure + SoF Chain
+# Procedures Rebuild — Staged Plan
 
-Scope guard confirmed: no prereq/ledger decision-semantics changes, no PSSR SoF changes, no VCR SoF certificate entity.
+Scoped against the previous groundwork report. Mirrors the W&H / Training staging discipline.
 
-Validated against code:
-- `VCRAssuranceTab.tsx` (403 lines) holds banner + discipline cards + client-side `checkAndCreateFinalizationTask`.
-- `useVCRDisciplineAssurance.ts` calls `checkAndCreateFinalizationTask` (also re-exported as `checkVCRFinalizationReadiness`) after each upsert — this is the fragile client path we replace.
-- `useVCRSoFApprovers.ts` cascade (all-level-N SIGNED → unlock N+1) runs client-side today.
-- `outlook-protocol.ts` exposes `openInTeams` used by PSSR `ScheduleWalkdownModal`.
-- `pssr_key_activities` is the analogous per-VCR meeting store — we'll add a VCR-scoped counterpart.
+## Blockers & proposals (flag before touching code)
 
-### 1. Discipline drawer (Fix 1 + 2)
-- New `DisciplineStatementDrawer` (right-side Sheet): avatar + reviewer + role in header; muted statement panel with date right-aligned underneath; `DECISIONS (N)` section listing each prereq whose `delivering_party_id` matches this discipline — row = item code + title + muted `{Category} · {Topic}` + status chip; click → existing `VCRItemDetailSheet`.
-- `VCRAssuranceTab` discipline cards become clickable → open drawer.
-- Under complete cards, add collapsed `PENDING (N)` block. Expected set = `DISTINCT delivering_party_id` from `p2a_vcr_prerequisites` for the handover point, minus those with an assurance row. Resolve holder via `useProjectRoleHolders` (fallback role label), two-line row matching complete cards.
+1. **No `author` / `responsible_user_id`.** Current `p2a_vcr_procedures.responsible_person` is free-text and `created_by` is NULL on every row. The lifecycle pins CTAs and one-owner-per-state RLS on the Author identity.  
+   **Proposal:** add `author_user_id uuid REFERENCES profiles(id)`; keep `responsible_person` for legacy display. Backfill by resolving `responsible_person` to a profile where an unambiguous match exists; otherwise leave NULL and, per canon, resolve author via project role at seed time (never invent names).
 
-### 2. Server-side task pipeline (Fix 3 + 5a)
-One migration adding:
-- `trg_vcr_discipline_assurance_completion` AFTER INSERT/UPDATE on `vcr_discipline_assurance`:
-  - When `statement_type='discipline'` and count of discipline rows == `COUNT(DISTINCT delivering_party_id)` from prereqs for that HP → insert `user_tasks` (`type='vcr_interdisciplinary_summary'`, `action='enter_interdisciplinary_summary'`, title `Enter Interdisciplinary Summary for {vcr label}`), assignee via `resolve_project_role_users('Snr ORA Engr.', variants…)`. Dedupe: existing open row on same `handover_point_id` + type.
-  - When `statement_type='interdisciplinary'` INSERT → mark that same open task `completed`; then run closure side-effects:
-    - If HP has any linked `p2a_systems.is_hydrocarbon` via `p2a_handover_point_systems`:
-      - Flip level-1 `vcr_sof_approvers` rows `LOCKED → PENDING` for the HP.
-      - Insert `user_tasks` (`type='task'`, `action='schedule_sof_meeting'`, title `Schedule SoF Meeting for {vcr label}`, Snr ORA Engr, dedupe per HP).
-- `trg_vcr_sof_approvers_cascade` AFTER UPDATE on `vcr_sof_approvers`: when all rows at `approver_level=N` for an HP are `SIGNED`, flip `LOCKED → PENDING` at level `N+1`. Moves the frontend cascade server-side.
+2. **No discipline linkage on `p2a_vcr_procedures`.** Groundwork confirmed the table has no `discipline_id`. Daniel's spec allows "defaults per discipline if available"; without it, the Submit-for-review modal opens with an empty Approvers list for the Author to add manually (same fallback as Training).  
+   **Proposal:** add nullable `discipline_id uuid REFERENCES discipline(id)`; when set, default approvers to the resolved holder of `"<Discipline> TA2 – Project"` via `resolve_project_role_user` (already exists from Training DB-2). Never auto-substitute an Asset TA.
 
-Retire the task-insert in `checkAndCreateFinalizationTask`; keep the function returning readiness signal only (still used by `useVCRLifecycle` UI). Report the remaining role after.
+3. **Assai link target.** No real Assai URL contract for E4 (`dms_external_sync` empty, no per-project base URL stored). Groundwork shows the long doc-number convention `6529-BGC-DP300-<DISC>-OA-6039-<seq>-00001` (plus WGEL `PR-SU10/CO10/SD10` variants).  
+   **Proposal:** introduce a single configured base pattern `https://client.assaisoftware.com/documents/{doc_number}` (existing `AssaiLink` helper), used for the hyperlink on the Assai doc number itself. Flagged as placeholder base URL; real Assai deep-link contract is a follow-up when Assai integration lands.
 
-### 3. Add Statement overlay (Fix 4)
-New `InterdisciplinarySummaryModal` — dark overlay per mockup: eyebrow VCR code, title, subtitle with completed-N, chip row of disciplines with checks, textarea (min 30 chars enables `Confirm and complete VCR`). Existing banner CTA and its enable rules unchanged; CTA opens this modal instead of the current small dialog. On confirm → existing interdisciplinary `upsertAssurance` (the new trigger completes the task).
+4. **Assai-only fields.** Drawer previously read `assai_doc_code`, `doc_code`, `doc_status`, `approval_log` — none exist. The new drawer removes Assai Link / Download / Current Status fields entirely (per spec) and hyperlinks the Assai doc number using `document_number` (real column). No new Assai columns needed.
 
-### 4. Closure confirmation state (Fix 5)
-After confirm, modal swaps to a success view: green check, `{vcr label} completed`, subtitle `Summary recorded — SoF certificate unlocked for approval` (hydrocarbon) or just the completion line (non-hydrocarbon). Hydrocarbon variant shows optional next-step block `Schedule the SoF meeting?` with Later / Schedule SoF meeting buttons; note "task is already in your list either way". Later → close. Schedule → open ScheduleSofMeetingModal.
+5. **Free-text drift.** Current `status`: `APPROVED`(6), `complete`(5), `approved`(2), `issued`(2), `to_develop`(2), `in_review`(1). Backfill mapping to the 5-state enum:
+   - `to_develop` → `NOT_STARTED`
+   - `in_review` → `UNDER_REVIEW`
+   - `approved` / `APPROVED` / `complete` / `issued` → `APPROVED`
+   - (no legacy value maps to `DRAFT` or `REWORK_REQUESTED`)
+   Reported per-row after the migration runs.
 
-### 5. Schedule SoF Meeting modal (Fix 6)
-New `ScheduleSofMeetingModal`, entry points:
-- Confirmation modal (hydrocarbon)
-- Task tile with `action='schedule_sof_meeting'` (wired through existing task-action registry)
+6. **`procedure_type` drift** (`startup` vs `STARTUP`, `commissioning` vs `COMMISSIONING`, etc.). Not part of the lifecycle, but the drawer's TYPE row needs consistent casing.  
+   **Proposal:** normalise to uppercase tokens (`STARTUP / OPERATING / COMMISSIONING / SHUTDOWN / TESTING`) in the same DB-1 migration; UI renders title-case.
 
-Fields per mockup: subject prefilled `SoF Meeting: {project prefix-number} {VCR name} Startup`; required attendees derived from `vcr_sof_approvers` seats resolved via `useProjectRoleHolders`; date/start/duration; invitation body prefilled (project, VCR scope, workspace + SoF-tab links).
+## Staging
 
-Persistence: new table `vcr_key_activities` mirroring `pssr_key_activities` shape (handover_point_id, activity_type='sof_meeting', scheduled_at, duration_minutes, subject, body, attendees jsonb, created_by). Save → insert row + complete `schedule_sof_meeting` task. Open in Teams → `openInTeams()` + complete task.
+### DB-1 — structural (schema + backfill only, permissive RLS placeholders)
+- New enum `procedure_status` (`NOT_STARTED, DRAFT, UNDER_REVIEW, REWORK_REQUESTED, APPROVED`).
+- `p2a_vcr_procedures`: add `author_user_id`, `discipline_id`, `submitted_at`, `submitted_by`, `approved_at`, `change_type` (`NEW | UPDATE`, default `UPDATE`), normalise `procedure_type`, backfill `status` per §5 with per-row report, then convert column to the enum.
+- New tables (all with grants + RLS enabled, placeholder policies):
+  - `p2a_vcr_procedure_approvers` (unique `(procedure_id, user_id)`, `decision APPROVED|REJECTED|null`, `comment`, `decided_at`, `markup_attachment_id`).
+  - `p2a_vcr_procedure_attachments` (`kind ∈ {draft, markup, evidence}`, `linked_approver_id`).
+  - `p2a_vcr_procedure_activity_log` (`action`, `comment`, `from_status`, `to_status`).
+- Report: per-row status backfill, per-row `procedure_type` normalisation, count of `author_user_id` resolved vs NULL.
 
-Migration will include GRANTs + RLS (project-team-scoped read/write via existing helpers).
+### DB-2 — behaviour + seeds + QAQC
+- RPC `advance_procedure_status(procedure_id, action, payload)` — state machine with one-owner-per-state task lifecycle: closes current owner's `user_tasks` row, opens next owner's (dedupe on `procedure_id + step + user`). Reuses `resolve_project_role_user` from Training DB-2.
+- Approver fan-in: one review task per approver; ALL approve → `APPROVED`; ANY reject → `REWORK_REQUESTED`, remaining review tasks cancelled, Author gets rework task, approver rows reset on resubmit.
+- Owner-gated RLS replaces placeholders: decide → own PENDING approver row; transitions → status owner (Author for `NOT_STARTED/DRAFT/REWORK_REQUESTED`, each approver for `UNDER_REVIEW`).
+- **VCR-DP300-02 seeds** — one procedure per status (5 total, absorb existing DP300-02 rows, no duplicates): `NOT_STARTED`, `DRAFT`, `UNDER_REVIEW` (with pending approver tasks), `REWORK_REQUESTED` (with rework task for author), `APPROVED` (with full Option-A activity thread: submit → review comment → revision → approvals). Real resolved holders only; Assai doc numbers per §3.
+- QAQC **P-family**: status ↔ exactly-one-open-task ↔ correct-owner per procedure; approver rows consistent with review tasks; no legacy status values remain.
 
-### 6. QAQC + summary (Fix 7)
-Run QAQC suite once and report totals. New surfaces to add to Task Type Reference:
-- `type='vcr_interdisciplinary_summary'` / `action='enter_interdisciplinary_summary'`
-- `action='schedule_sof_meeting'` (on `type='task'`)
-- Triggers: `trg_vcr_discipline_assurance_completion`, `trg_vcr_sof_approvers_cascade`
-- Table: `vcr_key_activities`
+### FE-1 — Procedures tab list + drawer shell
+- New `ProcedureStatusChip` (5 enum values, single source of truth) — fixes current bug where `complete` renders "To deliver".
+- List ordering: `NOT_STARTED → DRAFT → REWORK_REQUESTED → UNDER_REVIEW → APPROVED`, then `display_order`.
+- Drawer shell rebuilt from mockup: eyebrow `PROCEDURE` + title + single status pill top-right; remove close X, remove type subtext, remove `OVERVIEW` header, remove duplicate Status field.
+- ~18px section rhythm; row TYPE + `Change type` (values `New` / `Update to existing`) / `Reason` / `Applicable systems` (SYS-code chip + name, never uuid — resolve via `p2a_systems`) / `Delivered` date when `APPROVED`.
+- DOCUMENT section: document title (medium) + Assai doc number as hyperlink (`https://client.assaisoftware.com/documents/{document_number}`, flagged placeholder base). No Assai Link / Download / Current Status fields.
 
-### Technical notes
-- Hydrocarbon detection in SQL: `EXISTS (select 1 from p2a_handover_point_systems hps join p2a_systems s on s.id=hps.system_id where hps.handover_point_id = _hp and s.is_hydrocarbon)`.
-- All new triggers use `SECURITY DEFINER` with `SET search_path = public`.
-- Task inserts use `resolve_project_role_users` with canonical `'Snr ORA Engr.'` + the existing variant fallback pattern used elsewhere in migrations.
-- Frontend SoF flip in `useVCRSoFApprovers.sign` becomes redundant — leave in place (harmless idempotent), note in the summary.
-- Dedupe rule for new task inserts: `WHERE handover_point_id = _hp AND type = ? AND status NOT IN ('completed','cancelled')`.
+### FE-2 — Author + Approvers block + Activity
+- AUTHOR row (avatar + name + role).
+- APPROVERS label with muted `N of M decided`; approver rows stacked full-width, no separators (spacing only), avatar + name-over-role left, decision chip right (Pending neutral outline, Approved green, Rejected red).
+- ACTIVITY section (renamed from "Approval log"), collapsible, collapsed by default, Option-A thread standard (per `mem://design/activity-log-layout.md`).
 
-### Diff surface
-Frontend:
-- `src/components/widgets/VCRAssuranceTab.tsx` (cards clickable, PENDING block, open new modal)
-- new `src/components/widgets/DisciplineStatementDrawer.tsx`
-- new `src/components/widgets/InterdisciplinarySummaryModal.tsx`
-- new `src/components/widgets/ScheduleSofMeetingModal.tsx`
-- `src/components/widgets/hooks/useVCRDisciplineAssurance.ts` (drop task-insert)
-- task-action registry hookup for `schedule_sof_meeting` + `enter_interdisciplinary_summary`
+### FE-3 — Owner-gated CTAs + modals
+- `Start draft` (Author, `NOT_STARTED`).
+- `Submit for review` modal (Author, `DRAFT`): approver multi-select defaulting to discipline TA2-Project holder when discipline set, else empty; optional comment.
+- `Review` modal (Approver, `UNDER_REVIEW`): identical pattern to Training review — read-only document context, `Comments*` mandatory for BOTH decisions, Approve/Reject muted until comments entered with colour-on-hover, Reject red with slim confirm "Return to `<author>` for rework?", optional attachments.
+- `Resubmit for review` (Author, `REWORK_REQUESTED`): reopens Submit-for-review flow, resets approver decisions.
+- Every CTA gated on resolved-owner check — verified against RLS.
 
-DB (one migration):
-- 2 triggers + supporting SQL functions
-- `vcr_key_activities` table (with GRANTs + RLS)
+### FE-4 — Task-chip routing + W&H retrofit
+- `InboxTaskLauncher` recognises `procedure_action` / `procedure_review` task types and routes into the new drawer.
+- **Retrofit:** W&H drawer's WITNESSED & ACCEPTED BY section adopts the same stacked, no-separator approver-row treatment (replacing its 2-col grid). Isolated to that section; no behaviour change.
 
-No PSSR files touched. No changes to prereq or ledger logic.
+## QAQC + verification per sub-turn
+- Full QAQC + typecheck after each of DB-1, DB-2, FE-1..FE-4.
+- Per-section reports: schema diff, backfill map, task/RLS matrix, seed manifest, P-family results.
 
-Confirm to proceed and I'll ship it in one pass.
+## Out of scope
+- Real Assai deep-link contract / sync (flagged blocker §3 — placeholder base URL only).
+- Author identity resolution for legacy rows where `responsible_person` doesn't match a profile (left NULL; seeds use real resolved holders only).
+- Procedure creation UI (`AddProcedureSheet`) — untouched this pass.
