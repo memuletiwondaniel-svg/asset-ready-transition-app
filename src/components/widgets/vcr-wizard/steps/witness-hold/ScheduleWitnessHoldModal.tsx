@@ -42,6 +42,12 @@ export interface ScheduleWitnessHoldModalProps {
 const initials = (n: string) =>
   n.split(/\s+/).map((s) => s[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || '?';
 
+const normalizeTime = (value: string) => {
+  const digits = value.replace(/\D/g, '').slice(0, 4);
+  if (digits.length <= 2) return digits;
+  return `${digits.slice(0, 2)}:${digits.slice(2)}`;
+};
+
 interface Invitee {
   id: string;
   user_id?: string | null;
@@ -173,9 +179,6 @@ export const ScheduleWitnessHoldModal: React.FC<ScheduleWitnessHoldModalProps> =
         </DialogHeader>
 
         <div className="px-6 py-4 space-y-4 max-h-[70vh] overflow-y-auto border-t [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border/60 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-border">
-          <style>{`
-            input[type="time"].wh-time::-webkit-calendar-picker-indicator { display: none; -webkit-appearance: none; }
-          `}</style>
           {/* Date & time */}
           <div className="space-y-1.5">
             <label className="text-[10.5px] font-bold tracking-[0.1em] uppercase text-muted-foreground/80">
@@ -187,7 +190,7 @@ export const ScheduleWitnessHoldModal: React.FC<ScheduleWitnessHoldModalProps> =
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-9 px-3 gap-2 font-normal text-sm justify-start min-w-[160px]"
+                    className="h-9 px-3 gap-2 font-normal text-sm justify-start min-w-[160px] bg-muted/40"
                   >
                     <CalendarIcon className="w-3.5 h-3.5 text-muted-foreground" />
                     {date ? format(date, 'dd MMM yyyy') : <span className="text-muted-foreground">Pick a date</span>}
@@ -204,20 +207,24 @@ export const ScheduleWitnessHoldModal: React.FC<ScheduleWitnessHoldModalProps> =
                 </PopoverContent>
               </Popover>
 
-              <div className="h-9 flex items-center gap-1.5 rounded-md border border-input px-3 text-sm">
+              <div className="h-9 flex items-center gap-1.5 rounded-md border border-input px-3 text-sm bg-muted/40">
                 <Clock className="w-3.5 h-3.5 text-muted-foreground" />
                 <input
-                  type="time"
+                  type="text"
                   value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                  className="wh-time bg-transparent outline-none w-[60px] text-sm"
+                  onChange={(e) => setStartTime(normalizeTime(e.target.value))}
+                  maxLength={5}
+                  placeholder="00:00"
+                  className="bg-transparent outline-none w-[60px] text-sm text-center"
                 />
                 <span className="text-muted-foreground">–</span>
                 <input
-                  type="time"
+                  type="text"
                   value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                  className="wh-time bg-transparent outline-none w-[60px] text-sm"
+                  onChange={(e) => setEndTime(normalizeTime(e.target.value))}
+                  maxLength={5}
+                  placeholder="00:00"
+                  className="bg-transparent outline-none w-[60px] text-sm text-center"
                 />
               </div>
             </div>
@@ -234,7 +241,7 @@ export const ScheduleWitnessHoldModal: React.FC<ScheduleWitnessHoldModalProps> =
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="e.g. Compressor House A / MS Teams"
-                className="h-9 text-sm pl-8"
+                className="h-9 text-sm pl-8 bg-muted/40"
               />
             </div>
           </div>
@@ -295,7 +302,7 @@ export const ScheduleWitnessHoldModal: React.FC<ScheduleWitnessHoldModalProps> =
             <label className="text-[10.5px] font-bold tracking-[0.1em] uppercase text-muted-foreground/80">
               Notes
             </label>
-            <div className="rounded-md border border-input bg-muted/20 overflow-hidden">
+            <div className="rounded-md border border-input bg-muted/40 overflow-hidden">
               <Textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
@@ -377,7 +384,12 @@ export const ScheduleWitnessHoldModal: React.FC<ScheduleWitnessHoldModalProps> =
         </div>
 
         <div className="px-6 py-3 border-t flex items-center justify-between gap-2">
-          <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onOpenChange(false)}
+            className="hover:bg-muted hover:text-foreground transition-colors"
+          >
             {isOwner ? 'Cancel' : 'Close'}
           </Button>
           {isOwner ? (
@@ -401,11 +413,7 @@ export const ScheduleWitnessHoldModal: React.FC<ScheduleWitnessHoldModalProps> =
                 Send invite
               </Button>
             </div>
-          ) : (
-            <span className="text-[11px] text-muted-foreground/70 italic">
-              Only the activity owner can send the invite
-            </span>
-          )}
+          ) : null}
         </div>
       </DialogContent>
     </Dialog>
