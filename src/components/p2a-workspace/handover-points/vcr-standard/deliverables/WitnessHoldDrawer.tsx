@@ -149,14 +149,28 @@ export const WitnessHoldDrawer: React.FC<WitnessHoldDrawerProps> = ({
             <div className="text-[15px] leading-snug font-semibold min-w-0 flex-1">
               {point.activity_name}
             </div>
-            <span
-              className={cn(
-                'flex-none text-[10.5px] font-bold rounded-full border px-2 py-0.5 mt-0.5 whitespace-nowrap',
-                CHIP_TONES[pres.tone],
-              )}
-            >
-              {pres.label}
-            </span>
+            {point.status === 'SCHEDULED' && onSchedule ? (
+              <button
+                type="button"
+                onClick={() => onSchedule(point)}
+                className={cn(
+                  'flex-none text-[10.5px] font-bold rounded-full border px-2 py-0.5 mt-0.5 whitespace-nowrap hover:brightness-95 cursor-pointer',
+                  CHIP_TONES[pres.tone],
+                )}
+                aria-label="View schedule details"
+              >
+                {pres.label}
+              </button>
+            ) : (
+              <span
+                className={cn(
+                  'flex-none text-[10.5px] font-bold rounded-full border px-2 py-0.5 mt-0.5 whitespace-nowrap',
+                  CHIP_TONES[pres.tone],
+                )}
+              >
+                {pres.label}
+              </span>
+            )}
           </div>
         </div>
 
@@ -180,7 +194,6 @@ export const WitnessHoldDrawer: React.FC<WitnessHoldDrawerProps> = ({
                 label={completedValue ? 'Completed' : 'Scheduled'}
                 value={completedValue || scheduleValue}
               />
-              <Field label="Location" value={point.location} full />
             </div>
 
             <Separator />
