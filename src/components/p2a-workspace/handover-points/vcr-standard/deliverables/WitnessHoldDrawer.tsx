@@ -320,7 +320,7 @@ export const WitnessHoldDrawer: React.FC<WitnessHoldDrawerProps> = ({
             <Separator />
 
             {/* Activity thread — collapsible, chipless split-header */}
-            <Collapsible defaultOpen>
+            <Collapsible>
               <CollapsibleTrigger className="group flex w-full items-center justify-between py-1">
                 <span className="text-[10.5px] font-bold tracking-[0.14em] uppercase text-muted-foreground/80">
                   Activity
