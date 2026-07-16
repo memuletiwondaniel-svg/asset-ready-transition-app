@@ -170,7 +170,7 @@ export const ReviewWitnessHoldModal: React.FC<ReviewWitnessHoldModalProps> = ({
       </Dialog>
 
       <AlertDialog open={confirmReject} onOpenChange={setConfirmReject}>
-        <AlertDialogContent className="max-w-sm" overlayClassName="bg-black/80 backdrop-blur-sm">
+        <AlertDialogContent className="max-w-sm !z-[1610]" overlayClassName="bg-black/80 backdrop-blur-sm !z-[1610]">
           <AlertDialogHeader>
             <AlertDialogTitle>Return for rework?</AlertDialogTitle>
             <AlertDialogDescription>
