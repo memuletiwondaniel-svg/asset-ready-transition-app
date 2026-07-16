@@ -8532,11 +8532,202 @@ export type Database = {
           },
         ]
       }
+      p2a_vcr_procedure_activity_log: {
+        Row: {
+          action: string
+          comment: string | null
+          created_at: string
+          from_status: Database["public"]["Enums"]["procedure_status"] | null
+          id: string
+          procedure_id: string
+          to_status: Database["public"]["Enums"]["procedure_status"] | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          comment?: string | null
+          created_at?: string
+          from_status?: Database["public"]["Enums"]["procedure_status"] | null
+          id?: string
+          procedure_id: string
+          to_status?: Database["public"]["Enums"]["procedure_status"] | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          comment?: string | null
+          created_at?: string
+          from_status?: Database["public"]["Enums"]["procedure_status"] | null
+          id?: string
+          procedure_id?: string
+          to_status?: Database["public"]["Enums"]["procedure_status"] | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_vcr_procedure_activity_log_procedure_id_fkey"
+            columns: ["procedure_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_vcr_procedures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_procedure_activity_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_procedure_activity_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      p2a_vcr_procedure_approvers: {
+        Row: {
+          comment: string | null
+          created_at: string
+          decided_at: string | null
+          decision: string | null
+          id: string
+          markup_attachment_id: string | null
+          procedure_id: string
+          role_label: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          decided_at?: string | null
+          decision?: string | null
+          id?: string
+          markup_attachment_id?: string | null
+          procedure_id: string
+          role_label?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          decided_at?: string | null
+          decision?: string | null
+          id?: string
+          markup_attachment_id?: string | null
+          procedure_id?: string
+          role_label?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_vcr_procedure_approvers_procedure_id_fkey"
+            columns: ["procedure_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_vcr_procedures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_procedure_approvers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_procedure_approvers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      p2a_vcr_procedure_attachments: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_size: number | null
+          file_url: string | null
+          id: string
+          kind: string
+          linked_approver_id: string | null
+          mime_type: string | null
+          procedure_id: string
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          kind: string
+          linked_approver_id?: string | null
+          mime_type?: string | null
+          procedure_id: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          kind?: string
+          linked_approver_id?: string | null
+          mime_type?: string | null
+          procedure_id?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_vcr_procedure_attachments_linked_approver_id_fkey"
+            columns: ["linked_approver_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_vcr_procedure_approvers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_procedure_attachments_procedure_id_fkey"
+            columns: ["procedure_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_vcr_procedures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_procedure_attachments_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_procedure_attachments_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       p2a_vcr_procedures: {
         Row: {
+          approved_at: string | null
+          author_user_id: string | null
+          change_type: string
           created_at: string
           created_by: string | null
           description: string | null
+          discipline_id: string | null
           display_order: number | null
           document_number: string | null
           document_number_assigned_at: string | null
@@ -8544,15 +8735,21 @@ export type Database = {
           id: string
           procedure_type: string
           responsible_person: string | null
-          status: string
+          status: Database["public"]["Enums"]["procedure_status"]
+          submitted_at: string | null
+          submitted_by: string | null
           target_date: string | null
           title: string
           updated_at: string
         }
         Insert: {
+          approved_at?: string | null
+          author_user_id?: string | null
+          change_type?: string
           created_at?: string
           created_by?: string | null
           description?: string | null
+          discipline_id?: string | null
           display_order?: number | null
           document_number?: string | null
           document_number_assigned_at?: string | null
@@ -8560,15 +8757,21 @@ export type Database = {
           id?: string
           procedure_type?: string
           responsible_person?: string | null
-          status?: string
+          status?: Database["public"]["Enums"]["procedure_status"]
+          submitted_at?: string | null
+          submitted_by?: string | null
           target_date?: string | null
           title: string
           updated_at?: string
         }
         Update: {
+          approved_at?: string | null
+          author_user_id?: string | null
+          change_type?: string
           created_at?: string
           created_by?: string | null
           description?: string | null
+          discipline_id?: string | null
           display_order?: number | null
           document_number?: string | null
           document_number_assigned_at?: string | null
@@ -8576,12 +8779,35 @@ export type Database = {
           id?: string
           procedure_type?: string
           responsible_person?: string | null
-          status?: string
+          status?: Database["public"]["Enums"]["procedure_status"]
+          submitted_at?: string | null
+          submitted_by?: string | null
           target_date?: string | null
           title?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "p2a_vcr_procedures_author_user_id_fkey"
+            columns: ["author_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_procedures_author_user_id_fkey"
+            columns: ["author_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_procedures_discipline_id_fkey"
+            columns: ["discipline_id"]
+            isOneToOne: false
+            referencedRelation: "discipline"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "p2a_vcr_procedures_handover_point_id_fkey"
             columns: ["handover_point_id"]
@@ -8595,6 +8821,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_training_workflow_state"
             referencedColumns: ["handover_point_id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_procedures_submitted_by_fkey"
+            columns: ["submitted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_procedures_submitted_by_fkey"
+            columns: ["submitted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -16951,6 +17191,12 @@ export type Database = {
         | "QUALIFICATION_REQUESTED"
         | "QUALIFICATION_APPROVED"
         | "NA"
+      procedure_status:
+        | "NOT_STARTED"
+        | "DRAFT"
+        | "UNDER_REVIEW"
+        | "REWORK_REQUESTED"
+        | "APPROVED"
       pssr_action_status: "open" | "in_progress" | "closed"
       pssr_item_approval_status:
         | "pending"
@@ -17331,6 +17577,13 @@ export const Constants = {
         "QUALIFICATION_REQUESTED",
         "QUALIFICATION_APPROVED",
         "NA",
+      ],
+      procedure_status: [
+        "NOT_STARTED",
+        "DRAFT",
+        "UNDER_REVIEW",
+        "REWORK_REQUESTED",
+        "APPROVED",
       ],
       pssr_action_status: ["open", "in_progress", "closed"],
       pssr_item_approval_status: [
