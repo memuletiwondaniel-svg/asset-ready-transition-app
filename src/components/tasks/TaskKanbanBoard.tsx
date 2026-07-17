@@ -2190,6 +2190,15 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         />
       )}
 
+      {/* Procedure task launcher (owner action + reviewer decision) */}
+      {procedureTaskTarget && (
+        <ProcedureTaskLauncher
+          open={!!procedureTaskTarget}
+          onOpenChange={(o) => { if (!o) setProcedureTaskTarget(null); }}
+          procedureId={procedureTaskTarget.procedureId}
+        />
+      )}
+
     </>
     </ReviewerSummaryContext.Provider>
     </P2AApprovalContext.Provider>
