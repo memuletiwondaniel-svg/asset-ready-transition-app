@@ -164,7 +164,7 @@ export const ReviewDecisionModal: React.FC<Props> = ({
       </Dialog>
 
       <AlertDialog open={confirmReject} onOpenChange={setConfirmReject}>
-        <AlertDialogContent className="max-w-sm z-[1520]">
+        <AlertDialogContent overlayClassName="z-[1500]" className="max-w-sm z-[1520]">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-[14px]">Reject training materials?</AlertDialogTitle>
             <AlertDialogDescription className="text-[12px]">
