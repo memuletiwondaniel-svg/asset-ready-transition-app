@@ -404,7 +404,7 @@ export const TrainingDrawer: React.FC<TrainingDrawerProps> = ({
         {/* Footer — owner-only CTA slot (populated by FE-3). */}
         {training && footerSlot && (
           <div className="border-t px-5 py-3 shrink-0 bg-background">
-            {footerSlot({ training, currentUserId })}
+            {footerSlot({ data, currentUserId })}
           </div>
         )}
       </SheetContent>
