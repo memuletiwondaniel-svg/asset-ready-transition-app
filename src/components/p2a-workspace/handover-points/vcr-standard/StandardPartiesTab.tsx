@@ -110,16 +110,17 @@ interface GroupProps {
   b2bPositions?: Set<string>;
   onPersonClick?: (p: PartyPerson) => void;
   personClickable?: boolean;
+  muted?: boolean;
 }
 
 const Group: React.FC<GroupProps> = ({
   title, count, defaultOpen, locked, lockCaption, lockTooltip, emptyText,
-  people, b2bPositions, onPersonClick, personClickable,
+  people, b2bPositions, onPersonClick, personClickable, muted,
 }) => {
   const [open, setOpen] = useState(defaultOpen);
   const Icon = open ? ChevronDown : ChevronRight;
   return (
-    <Card className="overflow-hidden">
+    <Card className={cn('overflow-hidden', muted && 'opacity-[0.45]')}>
       <button
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-muted/30"
@@ -144,7 +145,7 @@ const Group: React.FC<GroupProps> = ({
         </span>
         <span className="text-[10.5px] font-medium text-muted-foreground/60">{count}</span>
         {locked && lockCaption && (
-          <span className="text-[10.5px] text-muted-foreground/70 italic">{lockCaption}</span>
+          <span className="text-[10.5px] text-muted-foreground/70 italic ml-1">{lockCaption}</span>
         )}
       </button>
       {open && (
