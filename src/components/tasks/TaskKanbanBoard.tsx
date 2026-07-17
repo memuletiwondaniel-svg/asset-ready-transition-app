@@ -28,6 +28,7 @@ import { SchedulePacMeetingModal } from '@/components/widgets/SchedulePacMeeting
 import { QualificationReviewLauncher } from './QualificationReviewLauncher';
 import { WitnessHoldTaskLauncher } from './WitnessHoldTaskLauncher';
 import { TrainingTaskLauncher } from './TrainingTaskLauncher';
+import { ProcedureTaskLauncher } from './ProcedureTaskLauncher';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
