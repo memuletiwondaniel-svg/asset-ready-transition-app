@@ -8699,38 +8699,334 @@ export type Database = {
         }
         Relationships: []
       }
+      p2a_vcr_maint_activity_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          batch_id: string | null
+          comment: string | null
+          created_at: string
+          deliverable_id: string | null
+          id: string
+          metadata: Json | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          batch_id?: string | null
+          comment?: string | null
+          created_at?: string
+          deliverable_id?: string | null
+          id?: string
+          metadata?: Json | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          batch_id?: string | null
+          comment?: string | null
+          created_at?: string
+          deliverable_id?: string | null
+          id?: string
+          metadata?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_vcr_maint_activity_log_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_maint_activity_log_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_maint_activity_log_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_vcr_maint_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_maint_activity_log_deliverable_id_fkey"
+            columns: ["deliverable_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_vcr_maintenance_deliverables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      p2a_vcr_maint_attachments: {
+        Row: {
+          attachment_kind: string
+          batch_id: string | null
+          content_type: string | null
+          created_at: string
+          deliverable_id: string | null
+          file_name: string
+          file_path: string
+          file_size: number | null
+          id: string
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          attachment_kind?: string
+          batch_id?: string | null
+          content_type?: string | null
+          created_at?: string
+          deliverable_id?: string | null
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          attachment_kind?: string
+          batch_id?: string | null
+          content_type?: string | null
+          created_at?: string
+          deliverable_id?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_vcr_maint_attachments_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_vcr_maint_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_maint_attachments_deliverable_id_fkey"
+            columns: ["deliverable_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_vcr_maintenance_deliverables"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_maint_attachments_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_maint_attachments_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      p2a_vcr_maint_batches: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          deliverable_id: string
+          id: string
+          item_count: number
+          load_file_path: string | null
+          name: string
+          seq: number
+          status: Database["public"]["Enums"]["p2a_maint_batch_status"]
+          updated_at: string
+          upload_confirmation_path: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          deliverable_id: string
+          id?: string
+          item_count?: number
+          load_file_path?: string | null
+          name: string
+          seq: number
+          status?: Database["public"]["Enums"]["p2a_maint_batch_status"]
+          updated_at?: string
+          upload_confirmation_path?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          deliverable_id?: string
+          id?: string
+          item_count?: number
+          load_file_path?: string | null
+          name?: string
+          seq?: number
+          status?: Database["public"]["Enums"]["p2a_maint_batch_status"]
+          updated_at?: string
+          upload_confirmation_path?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_vcr_maint_batches_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_maint_batches_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_maint_batches_deliverable_id_fkey"
+            columns: ["deliverable_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_vcr_maintenance_deliverables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      p2a_vcr_maint_spares: {
+        Row: {
+          created_at: string
+          deliverable_id: string
+          delivered: boolean
+          display_order: number
+          id: string
+          material_name: string
+          material_no: string
+          po_no: string | null
+          pr_no: string | null
+          qty_ordered: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deliverable_id: string
+          delivered?: boolean
+          display_order?: number
+          id?: string
+          material_name: string
+          material_no: string
+          po_no?: string | null
+          pr_no?: string | null
+          qty_ordered?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deliverable_id?: string
+          delivered?: boolean
+          display_order?: number
+          id?: string
+          material_name?: string
+          material_no?: string
+          po_no?: string | null
+          pr_no?: string | null
+          qty_ordered?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_vcr_maint_spares_deliverable_id_fkey"
+            columns: ["deliverable_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_vcr_maintenance_deliverables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       p2a_vcr_maintenance_deliverables: {
         Row: {
+          central_mtce_lead_id: string | null
+          cmms_lead_id: string | null
           comments: string | null
           created_at: string
           created_by: string | null
+          deliverable_key:
+            | Database["public"]["Enums"]["p2a_maint_deliverable_key"]
+            | null
           deliverable_type: string
+          display_name: string | null
           handover_point_id: string
           id: string
           is_applicable: boolean
           updated_at: string
         }
         Insert: {
+          central_mtce_lead_id?: string | null
+          cmms_lead_id?: string | null
           comments?: string | null
           created_at?: string
           created_by?: string | null
+          deliverable_key?:
+            | Database["public"]["Enums"]["p2a_maint_deliverable_key"]
+            | null
           deliverable_type: string
+          display_name?: string | null
           handover_point_id: string
           id?: string
           is_applicable?: boolean
           updated_at?: string
         }
         Update: {
+          central_mtce_lead_id?: string | null
+          cmms_lead_id?: string | null
           comments?: string | null
           created_at?: string
           created_by?: string | null
+          deliverable_key?:
+            | Database["public"]["Enums"]["p2a_maint_deliverable_key"]
+            | null
           deliverable_type?: string
+          display_name?: string | null
           handover_point_id?: string
           id?: string
           is_applicable?: boolean
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "p2a_vcr_maintenance_deliverables_central_mtce_lead_id_fkey"
+            columns: ["central_mtce_lead_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_maintenance_deliverables_central_mtce_lead_id_fkey"
+            columns: ["central_mtce_lead_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_maintenance_deliverables_cmms_lead_id_fkey"
+            columns: ["cmms_lead_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_maintenance_deliverables_cmms_lead_id_fkey"
+            columns: ["cmms_lead_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "p2a_vcr_maintenance_deliverables_handover_point_id_fkey"
             columns: ["handover_point_id"]
@@ -18084,6 +18380,19 @@ export type Database = {
       p2a_handover_point_status: "PENDING" | "IN_PROGRESS" | "READY" | "SIGNED"
       p2a_itr_phase: "A" | "B"
       p2a_itr_record_status: "Outstanding" | "Completed"
+      p2a_maint_batch_status:
+        | "NOT_STARTED"
+        | "DRAFT"
+        | "QAQC_IN_PROGRESS"
+        | "UPLOAD_IN_PROGRESS"
+        | "COMPLETE"
+      p2a_maint_deliverable_key:
+        | "ASSET_REGISTER_BUILD"
+        | "PM_ROUTINES"
+        | "BOM"
+        | "SPARES_2Y"
+        | "RISKPOYNT"
+        | "IMS"
       p2a_milestone_source: "MANUAL" | "PRIMAVERA_API"
       p2a_phase: "PAC" | "FAC"
       p2a_plan_status:
@@ -18482,6 +18791,21 @@ export const Constants = {
       p2a_handover_point_status: ["PENDING", "IN_PROGRESS", "READY", "SIGNED"],
       p2a_itr_phase: ["A", "B"],
       p2a_itr_record_status: ["Outstanding", "Completed"],
+      p2a_maint_batch_status: [
+        "NOT_STARTED",
+        "DRAFT",
+        "QAQC_IN_PROGRESS",
+        "UPLOAD_IN_PROGRESS",
+        "COMPLETE",
+      ],
+      p2a_maint_deliverable_key: [
+        "ASSET_REGISTER_BUILD",
+        "PM_ROUTINES",
+        "BOM",
+        "SPARES_2Y",
+        "RISKPOYNT",
+        "IMS",
+      ],
       p2a_milestone_source: ["MANUAL", "PRIMAVERA_API"],
       p2a_phase: ["PAC", "FAC"],
       p2a_plan_status: [
