@@ -1,5 +1,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { trainingStatusMeta } from '../../training/TrainingStatusChip';
+
 
 export type ChipTone = 'emerald' | 'blue' | 'amber' | 'red' | 'slate';
 
@@ -97,17 +99,18 @@ export const procedureStatusChip = (status: string | null | undefined): { label:
   }
 };
 
-/** Chip for p2a_vcr_training.status */
+/** Chip for p2a_vcr_training.status — delegates to the canonical 8-state meta. */
 export const trainingStatusChip = (status: string | null | undefined): { label: string; tone: ChipTone } => {
   const s = (status || '').toLowerCase();
-  switch (s) {
-    case 'competency_verified': return { label: 'Competency verified', tone: 'emerald' };
-    case 'delivered': return { label: 'Delivered', tone: 'emerald' };
-    case 'scheduled': return { label: 'Scheduled', tone: 'blue' };
-    case 'in_progress': return { label: 'In progress', tone: 'blue' };
-    case 'planned': return { label: 'Planned', tone: 'amber' };
-    case 'cancelled': return { label: 'Cancelled', tone: 'red' };
-    default: return { label: 'To deliver', tone: 'slate' };
-  }
+  // Legacy fallbacks for any pre-lifecycle rows still in the wild.
+  if (s === 'competency_verified') return { label: 'Competency verified', tone: 'emerald' };
+  if (s === 'delivered')           return { label: 'Delivered',           tone: 'emerald' };
+  if (s === 'in_progress')         return { label: 'In progress',         tone: 'blue' };
+  if (s === 'planned')             return { label: 'Planned',             tone: 'amber' };
+  if (s === 'cancelled')           return { label: 'Cancelled',           tone: 'red' };
+  const meta = trainingStatusMeta(status);
+  return { label: meta.label, tone: meta.tone };
 };
+
+
 
