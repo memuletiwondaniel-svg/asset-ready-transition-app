@@ -61,6 +61,7 @@ export function useTrainingActions(trainingId: string | null) {
         | 'request_po'
         | 'provide_po'
         | 'upload_materials'
+        | 'submit_review'
         | 'provide_attendance'
         | 'schedule_training'
         | 'complete_training';
