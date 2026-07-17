@@ -107,6 +107,8 @@ export interface ProcedureDrawerProps {
   procedureId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  vcrCode?: string;
+  vcrName?: string;
   footerSlot?: (ctx: { data: ProcedureLifecycleData; currentUserId: string | null }) => React.ReactNode;
   currentUserId?: string | null;
 }
@@ -114,7 +116,7 @@ export interface ProcedureDrawerProps {
 const ASSAI_BASE = 'https://client.assaisoftware.com/documents/';
 
 export const ProcedureDrawer: React.FC<ProcedureDrawerProps> = ({
-  procedureId, open, onOpenChange, footerSlot, currentUserId = null,
+  procedureId, open, onOpenChange, footerSlot, currentUserId = null, vcrCode, vcrName,
 }) => {
   const { data, isLoading } = useProcedureLifecycle(procedureId);
   const [activityOpen, setActivityOpen] = useState(false);
@@ -133,16 +135,16 @@ export const ProcedureDrawer: React.FC<ProcedureDrawerProps> = ({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="!z-modal-critical w-full sm:max-w-lg p-0 flex flex-col">
+        {/* G1 header — title + VCR-NN · Name subtext, one pill, no eyebrow, no X */}
         <SheetHeader className="px-5 pt-5 pb-4 border-b shrink-0">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <Eyebrow>Procedure</Eyebrow>
-              <SheetTitle className="text-[15px] leading-snug mt-1">
+              <SheetTitle className="text-[15px] leading-snug">
                 {procedure?.title || <Skeleton className="h-4 w-40" />}
               </SheetTitle>
-              {procedure?.document_number && (
-                <SheetDescription className="text-[12px] mt-1 truncate font-mono">
-                  {procedure.document_number}
+              {vcrCode && (
+                <SheetDescription className="text-[12px] mt-0.5 truncate text-muted-foreground">
+                  {vcrCode}{vcrName ? ` · ${vcrName}` : ''}
                 </SheetDescription>
               )}
             </div>

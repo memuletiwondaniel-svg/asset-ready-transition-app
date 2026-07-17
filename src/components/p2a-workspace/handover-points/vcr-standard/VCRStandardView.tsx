@@ -236,8 +236,8 @@ export const VCRStandardView: React.FC<Props> = ({
                   <NavItem id="overview"       label="Overview"       icon={BarChart3}     active={activeTab==='overview'}       onClick={() => setActiveTab('overview')} />
                   <NavItem id="items"          label="VCR Items"      icon={List}          active={activeTab==='items'}          count={counts.total} onClick={() => setActiveTab('items')} />
                   <NavItem id="qualifications" label="Qualifications" icon={AlertTriangle} active={activeTab==='qualifications'} liveCount={openQuals ? { value: openQuals, tone: 'amber' } : undefined} onClick={() => setActiveTab('qualifications')} />
-                  <NavItem id="comments"       label="Comments"       icon={MessageSquare} active={activeTab==='comments'}       count={commentsCount} onClick={() => setActiveTab('comments')} />
                   <NavItem id="parties"        label="Parties"        icon={Users}         active={activeTab==='parties'}        onClick={() => setActiveTab('parties')} />
+                  <NavItem id="comments"       label="Comments"       icon={MessageSquare} active={activeTab==='comments'}       count={commentsCount} onClick={() => setActiveTab('comments')} />
                   {isHC && (
                     <NavItem
                       id="sof" label="SoF" icon={ShieldCheck}

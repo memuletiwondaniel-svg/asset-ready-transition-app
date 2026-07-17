@@ -150,13 +150,15 @@ export interface TrainingDrawerProps {
   trainingId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  vcrCode?: string;
+  vcrName?: string;
   /** Renderer receives full lifecycle data + currentUserId so callers can render owner-gated CTAs. */
   footerSlot?: (ctx: { data: any; currentUserId: string | null }) => React.ReactNode;
   currentUserId?: string | null;
 }
 
 export const TrainingDrawer: React.FC<TrainingDrawerProps> = ({
-  trainingId, open, onOpenChange, footerSlot, currentUserId = null,
+  trainingId, open, onOpenChange, footerSlot, currentUserId = null, vcrCode, vcrName,
 }) => {
   const { data, isLoading } = useTrainingLifecycle(trainingId);
   const [activityOpen, setActivityOpen] = useState(false);
@@ -170,17 +172,17 @@ export const TrainingDrawer: React.FC<TrainingDrawerProps> = ({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="!z-modal-critical w-full sm:max-w-lg p-0 flex flex-col">
+      <SheetContent side="right" className="!z-modal-critical w-full sm:max-w-lg p-0 flex flex-col [&>button]:hidden">
+        {/* G1 header — title + VCR-NN · Name subtext, one pill, no eyebrow, no X */}
         <SheetHeader className="px-5 pt-5 pb-4 border-b shrink-0">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <Eyebrow>Training</Eyebrow>
-              <SheetTitle className="text-[15px] leading-snug mt-1">
+              <SheetTitle className="text-[15px] leading-snug">
                 {training?.title || <Skeleton className="h-4 w-40" />}
               </SheetTitle>
-              {training?.training_provider && (
-                <SheetDescription className="text-[12px] mt-1 truncate">
-                  {training.training_provider}
+              {vcrCode && (
+                <SheetDescription className="text-[12px] mt-0.5 truncate text-muted-foreground">
+                  {vcrCode}{vcrName ? ` · ${vcrName}` : ''}
                 </SheetDescription>
               )}
             </div>

@@ -167,8 +167,8 @@ export const WitnessHoldDrawer: React.FC<WitnessHoldDrawerProps> = ({
               </span>
             )}
           </div>
-          <div className="text-[10px] font-bold tracking-[0.14em] uppercase text-muted-foreground/70">
-            {vcrCode}{vcrName ? ` · ${vcrName}` : ''} · {typeLabel(point.inspection_type)}
+          <div className="text-[12px] text-muted-foreground mt-0.5">
+            {vcrCode}{vcrName ? ` · ${vcrName}` : ''}
           </div>
         </div>
 
