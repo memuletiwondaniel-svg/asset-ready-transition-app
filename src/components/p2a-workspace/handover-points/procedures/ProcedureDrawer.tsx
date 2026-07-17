@@ -107,6 +107,8 @@ export interface ProcedureDrawerProps {
   procedureId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  vcrCode?: string;
+  vcrName?: string;
   footerSlot?: (ctx: { data: ProcedureLifecycleData; currentUserId: string | null }) => React.ReactNode;
   currentUserId?: string | null;
 }
@@ -114,7 +116,7 @@ export interface ProcedureDrawerProps {
 const ASSAI_BASE = 'https://client.assaisoftware.com/documents/';
 
 export const ProcedureDrawer: React.FC<ProcedureDrawerProps> = ({
-  procedureId, open, onOpenChange, footerSlot, currentUserId = null,
+  procedureId, open, onOpenChange, footerSlot, currentUserId = null, vcrCode, vcrName,
 }) => {
   const { data, isLoading } = useProcedureLifecycle(procedureId);
   const [activityOpen, setActivityOpen] = useState(false);
