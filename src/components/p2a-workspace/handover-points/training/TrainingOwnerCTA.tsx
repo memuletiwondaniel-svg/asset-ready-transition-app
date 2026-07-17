@@ -78,6 +78,13 @@ export const TrainingOwnerCTA: React.FC<Props> = ({ data, currentUserId, autoOpe
     }
   })();
 
+  // Auto-open the CTA modal once when launched from a task.
+  useEffect(() => {
+    if (!autoOpen || autoActed || !cta) return;
+    setModal(cta.modal);
+    setAutoActed(true);
+  }, [autoOpen, autoActed, cta]);
+
   if (!cta) return null;
 
   const hasPriorReview = data.activity.some(
