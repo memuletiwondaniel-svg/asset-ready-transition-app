@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useTrainingOwnership } from './useTrainingOwnership';
 import type { TrainingLifecycleData } from './useTrainingLifecycle';
@@ -23,16 +23,19 @@ type Modal =
 interface Props {
   data: TrainingLifecycleData;
   currentUserId: string | null;
+  /** When true, auto-opens the appropriate modal for the current user (used by task launcher). */
+  autoOpen?: boolean;
 }
 
 /**
- * Owner-only footer CTA for the Training drawer. Visibility is gated by an
- * open user_tasks row for the caller (mirrors the DB-side gate). One CTA
- * per state — the reviewer decision CTA is separate (FE-4).
+ * Owner/reviewer footer CTA for the Training drawer. Visibility is gated by
+ * an open user_tasks row for the caller (mirrors the DB-side gate). One CTA
+ * per state — reviewer decision CTA is prioritised when applicable.
  */
-export const TrainingOwnerCTA: React.FC<Props> = ({ data, currentUserId }) => {
+export const TrainingOwnerCTA: React.FC<Props> = ({ data, currentUserId, autoOpen }) => {
   const { training } = data;
   const [modal, setModal] = useState<Modal>(null);
+  const [autoActed, setAutoActed] = useState(false);
   const { data: ownership } = useTrainingOwnership(training?.id ?? null, currentUserId);
 
   if (!training) return null;
