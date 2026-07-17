@@ -1308,6 +1308,13 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         return;
       }
 
+      // Procedure task routing — owner action (start/submit/resubmit) or reviewer decision.
+      if ((task.userTask.type === 'procedure_action' || task.userTask.type === 'procedure_review') && meta?.procedure_id) {
+        console.log('[TaskKanbanBoard] handleTaskClick:branch', { branch: task.userTask.type });
+        setProcedureTaskTarget({ procedureId: meta.procedure_id as string });
+        return;
+      }
+
       // Witness & Hold task routing — bundle (delivering party) or review (accepting party).
       if ((task.userTask.type === 'wh_delivery_bundle' || task.userTask.type === 'wh_review') && meta?.point_id) {
         console.log('[TaskKanbanBoard] handleTaskClick:branch', { branch: task.userTask.type });
