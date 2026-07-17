@@ -101,17 +101,16 @@ export const procedureStatusChip = (status: string | null | undefined): { label:
 
 /** Chip for p2a_vcr_training.status — delegates to the canonical 8-state meta. */
 export const trainingStatusChip = (status: string | null | undefined): { label: string; tone: ChipTone } => {
-  // Legacy fallbacks for any pre-lifecycle rows.
   const s = (status || '').toLowerCase();
+  // Legacy fallbacks for any pre-lifecycle rows still in the wild.
   if (s === 'competency_verified') return { label: 'Competency verified', tone: 'emerald' };
   if (s === 'delivered')           return { label: 'Delivered',           tone: 'emerald' };
   if (s === 'in_progress')         return { label: 'In progress',         tone: 'blue' };
   if (s === 'planned')             return { label: 'Planned',             tone: 'amber' };
   if (s === 'cancelled')           return { label: 'Cancelled',           tone: 'red' };
-  // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-  const { trainingStatusMeta } = require('../../training/TrainingStatusChip') as typeof import('../../training/TrainingStatusChip');
   const meta = trainingStatusMeta(status);
   return { label: meta.label, tone: meta.tone };
 };
+
 
 
