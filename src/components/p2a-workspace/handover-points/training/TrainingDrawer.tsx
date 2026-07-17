@@ -150,8 +150,8 @@ export interface TrainingDrawerProps {
   trainingId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Renderer receives the training row + currentUserId so callers can render owner-gated CTAs. */
-  footerSlot?: (ctx: { training: any; currentUserId: string | null }) => React.ReactNode;
+  /** Renderer receives full lifecycle data + currentUserId so callers can render owner-gated CTAs. */
+  footerSlot?: (ctx: { data: any; currentUserId: string | null }) => React.ReactNode;
   currentUserId?: string | null;
 }
 
