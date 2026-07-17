@@ -54,6 +54,9 @@ export const TrainingOwnerCTA: React.FC<Props> = ({ data, currentUserId }) => {
   if (!ownership?.isOwner && !canReviewNow) return null;
 
   const cta = (() => {
+    if (canReviewNow) {
+      return { text: 'Review materials', modal: 'review' as Modal };
+    }
     switch (status) {
       case 'NOT_STARTED':
         return { text: 'Request PO', modal: 'request_po' as Modal };
