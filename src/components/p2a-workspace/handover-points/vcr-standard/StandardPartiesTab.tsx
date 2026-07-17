@@ -179,11 +179,15 @@ const Group: React.FC<GroupProps> = ({
 
 const PartyItemsDrawer: React.FC<{
   party: PartyPerson | null;
+  isApprover: boolean;
+  vcrCode: string;
+  vcrName: string;
   onOpenChange: (o: boolean) => void;
   handoverPointId: string;
   projectId?: string;
   prereqCategoryMap: Map<string, { catCode: string; displayOrder: number }>;
-}> = ({ party, onOpenChange, handoverPointId, projectId, prereqCategoryMap }) => {
+  disciplineStatement?: string | null;
+}> = ({ party, isApprover, vcrCode, vcrName, onOpenChange, handoverPointId, projectId, prereqCategoryMap, disciplineStatement }) => {
   const [openItem, setOpenItem] = useState<VCRItemBasic | null>(null);
   if (!party) return null;
 
@@ -191,27 +195,46 @@ const PartyItemsDrawer: React.FC<{
     <>
       <Sheet open={!!party} onOpenChange={onOpenChange}>
         <SheetContent side="right" className="!z-modal-critical w-full sm:max-w-lg p-0 flex flex-col">
+          {/* G1 header — title + VCR-NN · Name subtext, single pill top-right, no eyebrow, no X */}
           <SheetHeader className="px-5 pt-5 pb-3 border-b shrink-0">
-            <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10 flex-none">
-                {party.avatar_url && <AvatarImage src={party.avatar_url} alt={party.full_name} />}
-                <AvatarFallback className="text-[11px] font-semibold bg-slate-200 text-slate-700">
-                  {initials(party.full_name)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="min-w-0 flex-1">
-                <div className="text-[10.5px] font-bold tracking-[0.14em] uppercase text-muted-foreground">
-                  Party
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3 min-w-0 flex-1">
+                <Avatar className="h-10 w-10 flex-none">
+                  {party.avatar_url && <AvatarImage src={party.avatar_url} alt={party.full_name} />}
+                  <AvatarFallback className="text-[11px] font-semibold bg-slate-200 text-slate-700">
+                    {initials(party.full_name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <SheetTitle className="text-[15px] leading-snug truncate">
+                    {party.full_name}
+                  </SheetTitle>
+                  <SheetDescription className="text-[12px] mt-0.5 truncate text-muted-foreground">
+                    {party.role_name || party.position || '—'} · {vcrCode}{vcrName ? ` · ${vcrName}` : ''}
+                  </SheetDescription>
                 </div>
-                <SheetTitle className="text-[15px] leading-snug truncate">
-                  {party.full_name}
-                </SheetTitle>
-                <SheetDescription className="text-[12px] mt-0.5 truncate">
-                  {party.role_name || party.position || '—'} · {party.completed}/{party.assigned}
-                </SheetDescription>
               </div>
+              <span
+                className={cn(
+                  'flex-none text-[10.5px] font-bold rounded-full px-2 py-0.5',
+                  fractionChipClass(party.assigned, party.completed),
+                )}
+              >
+                {party.completed} of {party.assigned}
+              </span>
             </div>
           </SheetHeader>
+
+          {isApprover && disciplineStatement && (
+            <div className="px-5 py-3 border-b shrink-0">
+              <div className="text-[10px] font-bold tracking-[0.14em] uppercase text-muted-foreground/70 mb-1.5">
+                Discipline comment
+              </div>
+              <div className="text-[13px] leading-relaxed whitespace-pre-wrap text-foreground/90">
+                {disciplineStatement}
+              </div>
+            </div>
+          )}
           <ScrollArea className="flex-1">
             <div className="divide-y divide-border/60">
               {party.items.length === 0 ? (
