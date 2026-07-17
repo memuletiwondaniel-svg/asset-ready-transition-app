@@ -1299,6 +1299,13 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         return;
       }
 
+      // Training task routing — owner action or reviewer decision.
+      if ((task.userTask.type === 'training_action' || task.userTask.type === 'training_review') && meta?.training_id) {
+        console.log('[TaskKanbanBoard] handleTaskClick:branch', { branch: task.userTask.type });
+        setTrainingTaskTarget({ trainingId: meta.training_id as string });
+        return;
+      }
+
       // Witness & Hold task routing — bundle (delivering party) or review (accepting party).
       if ((task.userTask.type === 'wh_delivery_bundle' || task.userTask.type === 'wh_review') && meta?.point_id) {
         console.log('[TaskKanbanBoard] handleTaskClick:branch', { branch: task.userTask.type });
@@ -2162,6 +2169,16 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
           subItemActivityIds={whTaskTarget.subItemActivityIds}
           vcrCode={whTaskTarget.vcrCode}
           vcrName={whTaskTarget.vcrName}
+        />
+      )}
+
+    </>
+      {/* Training task launcher (owner action + reviewer decision) */}
+      {trainingTaskTarget && (
+        <TrainingTaskLauncher
+          open={!!trainingTaskTarget}
+          onOpenChange={(o) => { if (!o) setTrainingTaskTarget(null); }}
+          trainingId={trainingTaskTarget.trainingId}
         />
       )}
 
