@@ -25,7 +25,7 @@ import { PrereqStatus, standardPill, normalizeCategoryCode, CATEGORY_META } from
 import { PartyPerson, PartyItem, useVCRPartiesRollup } from './useVCRPartiesRollup';
 import { VCRItemDetailSheet, VCRItemBasic } from '@/components/widgets/VCRItemDetailSheet';
 import { formatVcrItemCode } from '@/lib/vcrItemCode';
-import { useDisciplineStatements } from '@/components/widgets/vcr-assurance/useDisciplineStatements';
+import { useVCRDisciplineAssurance } from '@/components/widgets/hooks/useVCRDisciplineAssurance';
 
 import type { LifecyclePhase } from './useVCRLifecycle';
 
