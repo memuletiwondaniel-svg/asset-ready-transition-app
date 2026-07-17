@@ -38,7 +38,7 @@ export const ProvideAttendanceModal: React.FC<Props> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md z-[1420]">
+      <DialogContent overlayClassName="z-[1500]" className="max-w-md z-[1510]">
         <DialogHeader>
           <ModalTitleBlock title="Provide attendance list" trainingTitle={trainingTitle} provider={provider} />
         </DialogHeader>

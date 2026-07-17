@@ -93,7 +93,7 @@ export const ScheduleTrainingModal: React.FC<Props> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg z-[1420]">
+      <DialogContent overlayClassName="z-[1500]" className="max-w-lg z-[1510]">
         <DialogHeader>
           <ModalTitleBlock title="Schedule training" trainingTitle={trainingTitle} provider={provider} />
         </DialogHeader>
@@ -114,7 +114,7 @@ export const ScheduleTrainingModal: React.FC<Props> = ({
                   {date ? format(date, 'd MMM yyyy') : 'Pick date'}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 z-[1420] pointer-events-auto" align="start">
+              <PopoverContent className="w-auto p-0 z-[1510] pointer-events-auto" align="start">
                 <Calendar
                   mode="single"
                   selected={date}

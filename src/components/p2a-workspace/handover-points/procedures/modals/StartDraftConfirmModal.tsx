@@ -28,7 +28,7 @@ export const StartDraftConfirmModal: React.FC<Props> = ({
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="max-w-sm z-[1420]">
+      <AlertDialogContent overlayClassName="z-[1500]" className="max-w-sm z-[1510]">
         <AlertDialogHeader>
           <AlertDialogTitle className="text-[14px]">Start drafting procedure?</AlertDialogTitle>
           <AlertDialogDescription className="text-[12px]">
