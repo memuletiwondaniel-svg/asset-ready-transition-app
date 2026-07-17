@@ -52,12 +52,8 @@ const Field: React.FC<{ label: string; value?: React.ReactNode; full?: boolean }
   </div>
 );
 
-const accStatusChip = (s: 'PENDING' | 'APPROVED' | 'REJECTED') =>
-  s === 'APPROVED'
-    ? { label: 'Accepted', tone: 'blue' as const }
-    : s === 'REJECTED'
-    ? { label: 'Rework', tone: 'red' as const }
-    : { label: 'Pending',  tone: 'amber' as const };
+// (Accepting-party chip variants live inline in the Witnessed & accepted by
+//  section — retrofitted to the shared ApproverRow standard.)
 
 const humanAction = (action: string): string => {
   switch (action) {
