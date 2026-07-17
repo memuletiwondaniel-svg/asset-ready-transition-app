@@ -38,12 +38,7 @@ export const TrainingOwnerCTA: React.FC<Props> = ({ data, currentUserId, autoOpe
   const [autoActed, setAutoActed] = useState(false);
   const { data: ownership } = useTrainingOwnership(training?.id ?? null, currentUserId);
 
-  if (!training) return null;
-
-  const status = training.status as string;
-  const label = training.title as string;
-  const provider = training.training_provider ?? null;
-
+  const status = (training?.status ?? '') as string;
   const decidedCount = data.reviewers.filter((r) => r.decision != null).length;
   const totalReviewers = data.reviewers.length;
 
@@ -53,13 +48,12 @@ export const TrainingOwnerCTA: React.FC<Props> = ({ data, currentUserId, autoOpe
     ? data.reviewers.find((r) => r.user_id === currentUserId && r.decision == null)
     : null;
   const canReviewNow = status === 'MATERIALS_UNDER_REVIEW' && !!ownership?.isReviewer && !!myReviewer;
-
-  if (!ownership?.isOwner && !canReviewNow) return null;
+  const canOwnAction = !!ownership?.isOwner;
 
   const cta = (() => {
-    if (canReviewNow) {
-      return { text: 'Review materials', modal: 'review' as Modal };
-    }
+    if (!training) return null;
+    if (!canOwnAction && !canReviewNow) return null;
+    if (canReviewNow) return { text: 'Review materials', modal: 'review' as Modal };
     switch (status) {
       case 'NOT_STARTED':
         return { text: 'Request PO', modal: 'request_po' as Modal };
@@ -85,8 +79,10 @@ export const TrainingOwnerCTA: React.FC<Props> = ({ data, currentUserId, autoOpe
     setAutoActed(true);
   }, [autoOpen, autoActed, cta]);
 
-  if (!cta) return null;
+  if (!training || !cta) return null;
 
+  const label = training.title as string;
+  const provider = training.training_provider ?? null;
   const hasPriorReview = data.activity.some(
     (a) => a.from_status === 'MATERIALS_UNDER_REVIEW' && a.to_status === 'AWAITING_MATERIALS',
   );
