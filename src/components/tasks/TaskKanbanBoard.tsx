@@ -2172,7 +2172,6 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         />
       )}
 
-    </>
       {/* Training task launcher (owner action + reviewer decision) */}
       {trainingTaskTarget && (
         <TrainingTaskLauncher
