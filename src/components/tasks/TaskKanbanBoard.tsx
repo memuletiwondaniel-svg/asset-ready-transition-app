@@ -27,6 +27,7 @@ import { ScheduleSofMeetingModal } from '@/components/widgets/ScheduleSofMeeting
 import { SchedulePacMeetingModal } from '@/components/widgets/SchedulePacMeetingModal';
 import { QualificationReviewLauncher } from './QualificationReviewLauncher';
 import { WitnessHoldTaskLauncher } from './WitnessHoldTaskLauncher';
+import { TrainingTaskLauncher } from './TrainingTaskLauncher';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -1145,6 +1146,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     vcrCode: string;
     vcrName: string;
   } | null>(null);
+  const [trainingTaskTarget, setTrainingTaskTarget] = useState<{ trainingId: string } | null>(null);
 
   const handleOpenP2AWizard = useCallback((projectId: string, projectCode: string, openWorkspace?: boolean) => {
     setP2aTarget({ projectId, projectCode });
