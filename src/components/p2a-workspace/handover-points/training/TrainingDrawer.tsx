@@ -150,8 +150,8 @@ export interface TrainingDrawerProps {
   trainingId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Renderer receives the training row + currentUserId so callers can render owner-gated CTAs. */
-  footerSlot?: (ctx: { training: any; currentUserId: string | null }) => React.ReactNode;
+  /** Renderer receives full lifecycle data + currentUserId so callers can render owner-gated CTAs. */
+  footerSlot?: (ctx: { data: any; currentUserId: string | null }) => React.ReactNode;
   currentUserId?: string | null;
 }
 
@@ -404,7 +404,7 @@ export const TrainingDrawer: React.FC<TrainingDrawerProps> = ({
         {/* Footer — owner-only CTA slot (populated by FE-3). */}
         {training && footerSlot && (
           <div className="border-t px-5 py-3 shrink-0 bg-background">
-            {footerSlot({ training, currentUserId })}
+            {footerSlot({ data, currentUserId })}
           </div>
         )}
       </SheetContent>
