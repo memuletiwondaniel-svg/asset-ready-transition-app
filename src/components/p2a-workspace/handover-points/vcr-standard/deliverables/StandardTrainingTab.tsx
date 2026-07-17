@@ -133,6 +133,8 @@ export const StandardTrainingTab: React.FC<{ handoverPoint: P2AHandoverPoint }> 
         open={!!selectedId}
         onOpenChange={(o) => !o && setSelectedId(null)}
         currentUserId={uid}
+        vcrCode={handoverPoint.vcr_code}
+        vcrName={handoverPoint.name}
         footerSlot={({ data, currentUserId }) =>
           data ? <TrainingOwnerCTA data={data} currentUserId={currentUserId} /> : null
         }
