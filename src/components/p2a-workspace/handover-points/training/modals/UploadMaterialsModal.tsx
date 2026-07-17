@@ -7,17 +7,30 @@ import { useTrainingActions } from '../useTrainingActions';
 import { ModalTitleBlock, ModalSection } from './ModalPrimitives';
 import { PaperclipAttach, AttachedFile } from './PaperclipAttach';
 import { ReviewerPickerList, ReviewerPick } from './ReviewerPickerList';
-import type { TrainingReviewerRow } from '../useTrainingLifecycle';
+import type { TrainingReviewerRow, TrainingActivityRow } from '../useTrainingLifecycle';
+import { supabase } from '@/integrations/supabase/client';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { format } from 'date-fns';
 
 interface Props {
   trainingId: string;
   trainingTitle: string;
   provider?: string | null;
   existingReviewers: TrainingReviewerRow[];
+  activity?: TrainingActivityRow[];
   isResubmit: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
+const initialsOf = (name: string | null | undefined) =>
+  (name || '?').split(/\s+/).map((n) => n[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
+
+const resolveAvatar = (u: string | null | undefined) => {
+  if (!u) return null;
+  if (u.startsWith('http')) return u;
+  return supabase.storage.from('user-avatars').getPublicUrl(u).data.publicUrl;
+};
 
 export const UploadMaterialsModal: React.FC<Props> = ({
   trainingId, trainingTitle, provider, existingReviewers, isResubmit, open, onOpenChange,
