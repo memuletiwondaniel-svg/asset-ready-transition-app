@@ -1,22 +1,14 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { P2AHandoverPoint } from '../../../hooks/useP2AHandoverPoints';
 import { useVCRTrainingDeliverables } from '../../../hooks/useVCRDeliverables';
 import { DeliverableList, EmptyDeliverable, trainingStatusChip, ChipTone } from './DeliverableRow';
-import {
-  DeliverableDetailShell,
-  Section,
-  FieldGrid,
-  LabeledField,
-  InlineChip,
-  TagList,
-  EvidenceList,
-  DrawerDivider,
-} from '../../shared/deliverableDrawer';
 import {
   trainingStatusMeta,
   normalizeTrainingStatus,
   TRAINING_TOTAL_STEPS,
 } from '../../training/TrainingStatusChip';
+import { TrainingDrawer } from '../../training/TrainingDrawer';
+import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { AlertTriangle } from 'lucide-react';
 import { format, isBefore, startOfDay } from 'date-fns';
@@ -37,9 +29,6 @@ const PROGRESS_TONES: Record<ChipTone, string> = {
   slate: 'bg-slate-400',
 };
 
-const isCompleted = (status?: string) => normalizeTrainingStatus(status) === 'COMPLETED';
-
-// Prefer scheduled_date, then target_date, then tentative_date for the "when" line.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const effectiveTargetDate = (r: any): string | null =>
   r?.scheduled_date || r?.target_date || r?.tentative_date || null;
@@ -57,27 +46,15 @@ const isOverdue = (r: any): boolean => {
   }
 };
 
-interface TrainingRowProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  row: any;
-  onClick: () => void;
-}
-
-const TrainingListRow: React.FC<TrainingRowProps> = ({ row, onClick }) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const TrainingListRow: React.FC<{ row: any; onClick: () => void }> = ({ row, onClick }) => {
   const chip = trainingStatusChip(row.status);
   const meta = trainingStatusMeta(row.status);
   const stepPct = Math.round((meta.step / TRAINING_TOTAL_STEPS) * 100);
-
-  const contextParts = [
-    row.training_provider || null,
-    row.duration_hours ? `${row.duration_hours} h` : null,
-  ].filter(Boolean) as string[];
+  const contextParts = [row.training_provider || null, row.duration_hours ? `${row.duration_hours} h` : null].filter(Boolean) as string[];
   const context = contextParts.join(' · ');
-
   const overdue = isOverdue(row);
-  const targetDate = effectiveTargetDate(row);
-  const dateLabel = targetDate ? format(new Date(targetDate), 'd MMM yyyy') : null;
-
+  const dateLabel = effectiveTargetDate(row) ? format(new Date(effectiveTargetDate(row)!), 'd MMM yyyy') : null;
   return (
     <button
       type="button"
@@ -91,35 +68,22 @@ const TrainingListRow: React.FC<TrainingRowProps> = ({ row, onClick }) => {
             <div className="text-[11px] text-muted-foreground truncate mt-1">{context}</div>
           )}
         </div>
-        <span
-          className={cn(
-            'flex-none text-[10.5px] font-bold rounded-full px-2 py-0.5 mt-0.5',
-            CHIP_TONES[chip.tone],
-          )}
-        >
+        <span className={cn('flex-none text-[10.5px] font-bold rounded-full px-2 py-0.5 mt-0.5', CHIP_TONES[chip.tone])}>
           {chip.label}
         </span>
       </div>
-
-      {/* Mini progress + step caption + optional overdue flag */}
-      <div className="flex items-center gap-2 pl-0">
+      <div className="flex items-center gap-2">
         <div className="h-1 w-24 rounded-full bg-muted overflow-hidden">
-          <div
-            className={cn('h-full transition-all', PROGRESS_TONES[chip.tone])}
-            style={{ width: `${stepPct}%` }}
-          />
+          <div className={cn('h-full transition-all', PROGRESS_TONES[chip.tone])} style={{ width: `${stepPct}%` }} />
         </div>
         <span className="text-[10.5px] text-muted-foreground whitespace-nowrap">
           Step {meta.step} of {TRAINING_TOTAL_STEPS}
         </span>
-
         {dateLabel && (
-          <span
-            className={cn(
-              'ml-auto text-[10.5px] whitespace-nowrap',
-              overdue ? 'text-red-600 dark:text-red-400 font-medium flex items-center gap-1' : 'text-muted-foreground',
-            )}
-          >
+          <span className={cn(
+            'ml-auto text-[10.5px] whitespace-nowrap',
+            overdue ? 'text-red-600 dark:text-red-400 font-medium flex items-center gap-1' : 'text-muted-foreground',
+          )}>
             {overdue && <AlertTriangle className="h-3 w-3" />}
             {overdue ? 'Overdue · ' : ''}
             {dateLabel}
@@ -132,8 +96,12 @@ const TrainingListRow: React.FC<TrainingRowProps> = ({ row, onClick }) => {
 
 export const StandardTrainingTab: React.FC<{ handoverPoint: P2AHandoverPoint }> = ({ handoverPoint }) => {
   const { data, isLoading } = useVCRTrainingDeliverables(handoverPoint.id);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [selected, setSelected] = useState<any | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [uid, setUid] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUid(data.user?.id ?? null));
+  }, []);
 
   const rows = useMemo(() => {
     const list = data || [];
@@ -149,83 +117,23 @@ export const StandardTrainingTab: React.FC<{ handoverPoint: P2AHandoverPoint }> 
   if (!rows.length)
     return <EmptyDeliverable label="No training deliverables planned yet." hint="Add training items during plan definition." />;
 
-  const chip = selected ? trainingStatusChip(selected.status) : null;
-  const completed = selected && isCompleted(selected.status);
-
   return (
     <>
       <DeliverableList>
         {rows.map((r) => (
           <div key={r.id} className="border-b border-border/60 last:border-0">
-            <TrainingListRow row={r} onClick={() => setSelected(r)} />
+            <TrainingListRow row={r} onClick={() => setSelectedId(r.id)} />
           </div>
         ))}
       </DeliverableList>
 
-      {selected && chip && (
-        <DeliverableDetailShell
-          open={!!selected}
-          onOpenChange={(o) => !o && setSelected(null)}
-          kind="Training"
-          title={selected.title}
-          subtitle={selected.training_provider || null}
-          chipLabel={chip.label}
-          chipTone={chip.tone}
-        >
-          <Section title="Overview">
-            <FieldGrid>
-              <LabeledField label="Title" value={selected.title} full />
-              <LabeledField
-                label="Objective & justification"
-                value={selected.description || null}
-                full
-              />
-              <LabeledField label="Provider" value={selected.training_provider || null} />
-              <LabeledField
-                label="Delivery format"
-                value={<TagList items={selected.delivery_method} />}
-              />
-              <LabeledField
-                label="Target audience"
-                value={<TagList items={selected.target_audience} />}
-                full
-              />
-              <LabeledField
-                label="Applicable systems"
-                value={
-                  selected.system_ids?.length
-                    ? `${selected.system_ids.length} system${selected.system_ids.length === 1 ? '' : 's'} mapped`
-                    : null
-                }
-              />
-              <LabeledField
-                label="Duration"
-                value={selected.duration_hours ? `${selected.duration_hours} h` : null}
-              />
-              <LabeledField
-                label="Status"
-                value={<InlineChip tone={chip.tone}>{chip.label}</InlineChip>}
-              />
-              <LabeledField
-                label={completed ? 'Delivered' : 'Target date'}
-                value={effectiveTargetDate(selected)}
-              />
-            </FieldGrid>
-          </Section>
-
-          {completed && (
-            <>
-              <DrawerDivider />
-              <Section title="Supporting evidence">
-                <EvidenceList
-                  items={selected.evidence || null}
-                  emptyLabel="Attendance, materials & photos not yet uploaded."
-                />
-              </Section>
-            </>
-          )}
-        </DeliverableDetailShell>
-      )}
+      <TrainingDrawer
+        trainingId={selectedId}
+        open={!!selectedId}
+        onOpenChange={(o) => !o && setSelectedId(null)}
+        currentUserId={uid}
+        /* footerSlot is wired in FE-3 (owner CTAs). */
+      />
     </>
   );
 };
