@@ -27,6 +27,7 @@ import { ScheduleSofMeetingModal } from '@/components/widgets/ScheduleSofMeeting
 import { SchedulePacMeetingModal } from '@/components/widgets/SchedulePacMeetingModal';
 import { QualificationReviewLauncher } from './QualificationReviewLauncher';
 import { WitnessHoldTaskLauncher } from './WitnessHoldTaskLauncher';
+import { TrainingTaskLauncher } from './TrainingTaskLauncher';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -1145,6 +1146,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     vcrCode: string;
     vcrName: string;
   } | null>(null);
+  const [trainingTaskTarget, setTrainingTaskTarget] = useState<{ trainingId: string } | null>(null);
 
   const handleOpenP2AWizard = useCallback((projectId: string, projectCode: string, openWorkspace?: boolean) => {
     setP2aTarget({ projectId, projectCode });
@@ -1294,6 +1296,13 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
           vcrCode: meta.vcr_code as string | undefined,
           vcrName: meta.vcr_name as string | undefined,
         });
+        return;
+      }
+
+      // Training task routing — owner action or reviewer decision.
+      if ((task.userTask.type === 'training_action' || task.userTask.type === 'training_review') && meta?.training_id) {
+        console.log('[TaskKanbanBoard] handleTaskClick:branch', { branch: task.userTask.type });
+        setTrainingTaskTarget({ trainingId: meta.training_id as string });
         return;
       }
 
@@ -2160,6 +2169,15 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
           subItemActivityIds={whTaskTarget.subItemActivityIds}
           vcrCode={whTaskTarget.vcrCode}
           vcrName={whTaskTarget.vcrName}
+        />
+      )}
+
+      {/* Training task launcher (owner action + reviewer decision) */}
+      {trainingTaskTarget && (
+        <TrainingTaskLauncher
+          open={!!trainingTaskTarget}
+          onOpenChange={(o) => { if (!o) setTrainingTaskTarget(null); }}
+          trainingId={trainingTaskTarget.trainingId}
         />
       )}
 

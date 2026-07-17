@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useTrainingOwnership } from './useTrainingOwnership';
 import type { TrainingLifecycleData } from './useTrainingLifecycle';
@@ -23,24 +23,22 @@ type Modal =
 interface Props {
   data: TrainingLifecycleData;
   currentUserId: string | null;
+  /** When true, auto-opens the appropriate modal for the current user (used by task launcher). */
+  autoOpen?: boolean;
 }
 
 /**
- * Owner-only footer CTA for the Training drawer. Visibility is gated by an
- * open user_tasks row for the caller (mirrors the DB-side gate). One CTA
- * per state — the reviewer decision CTA is separate (FE-4).
+ * Owner/reviewer footer CTA for the Training drawer. Visibility is gated by
+ * an open user_tasks row for the caller (mirrors the DB-side gate). One CTA
+ * per state — reviewer decision CTA is prioritised when applicable.
  */
-export const TrainingOwnerCTA: React.FC<Props> = ({ data, currentUserId }) => {
+export const TrainingOwnerCTA: React.FC<Props> = ({ data, currentUserId, autoOpen }) => {
   const { training } = data;
   const [modal, setModal] = useState<Modal>(null);
+  const [autoActed, setAutoActed] = useState(false);
   const { data: ownership } = useTrainingOwnership(training?.id ?? null, currentUserId);
 
-  if (!training) return null;
-
-  const status = training.status as string;
-  const label = training.title as string;
-  const provider = training.training_provider ?? null;
-
+  const status = (training?.status ?? '') as string;
   const decidedCount = data.reviewers.filter((r) => r.decision != null).length;
   const totalReviewers = data.reviewers.length;
 
@@ -50,13 +48,12 @@ export const TrainingOwnerCTA: React.FC<Props> = ({ data, currentUserId }) => {
     ? data.reviewers.find((r) => r.user_id === currentUserId && r.decision == null)
     : null;
   const canReviewNow = status === 'MATERIALS_UNDER_REVIEW' && !!ownership?.isReviewer && !!myReviewer;
-
-  if (!ownership?.isOwner && !canReviewNow) return null;
+  const canOwnAction = !!ownership?.isOwner;
 
   const cta = (() => {
-    if (canReviewNow) {
-      return { text: 'Review materials', modal: 'review' as Modal };
-    }
+    if (!training) return null;
+    if (!canOwnAction && !canReviewNow) return null;
+    if (canReviewNow) return { text: 'Review materials', modal: 'review' as Modal };
     switch (status) {
       case 'NOT_STARTED':
         return { text: 'Request PO', modal: 'request_po' as Modal };
@@ -75,8 +72,17 @@ export const TrainingOwnerCTA: React.FC<Props> = ({ data, currentUserId }) => {
     }
   })();
 
-  if (!cta) return null;
+  // Auto-open the CTA modal once when launched from a task.
+  useEffect(() => {
+    if (!autoOpen || autoActed || !cta) return;
+    setModal(cta.modal);
+    setAutoActed(true);
+  }, [autoOpen, autoActed, cta]);
 
+  if (!training || !cta) return null;
+
+  const label = training.title as string;
+  const provider = training.training_provider ?? null;
   const hasPriorReview = data.activity.some(
     (a) => a.from_status === 'MATERIALS_UNDER_REVIEW' && a.to_status === 'AWAITING_MATERIALS',
   );
