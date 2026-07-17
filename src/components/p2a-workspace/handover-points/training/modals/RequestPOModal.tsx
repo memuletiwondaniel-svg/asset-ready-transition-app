@@ -26,7 +26,7 @@ export const RequestPOModal: React.FC<Props> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm z-[1420]">
+      <DialogContent className="max-w-sm z-[1510]">
         <DialogHeader>
           <ModalTitleBlock title="Request PO" trainingTitle={trainingTitle} provider={provider} />
         </DialogHeader>

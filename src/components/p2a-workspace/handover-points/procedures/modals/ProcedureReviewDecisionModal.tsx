@@ -82,7 +82,7 @@ export const ProcedureReviewDecisionModal: React.FC<Props> = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-md z-[1420]">
+        <DialogContent className="max-w-md z-[1510]">
           <DialogHeader>
             <ModalTitleBlock
               title="Review procedure"
@@ -148,7 +148,7 @@ export const ProcedureReviewDecisionModal: React.FC<Props> = ({
       </Dialog>
 
       <AlertDialog open={confirmReject} onOpenChange={setConfirmReject}>
-        <AlertDialogContent className="max-w-sm z-[1430]">
+        <AlertDialogContent className="max-w-sm z-[1520]">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-[14px]">
               Return to {authorName || 'author'} for rework?

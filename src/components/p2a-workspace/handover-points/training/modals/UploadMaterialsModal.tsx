@@ -68,7 +68,7 @@ export const UploadMaterialsModal: React.FC<Props> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg z-[1420]">
+      <DialogContent className="max-w-lg z-[1510]">
         <DialogHeader>
           <ModalTitleBlock
             title={isResubmit ? 'Re-upload materials' : 'Upload materials'}

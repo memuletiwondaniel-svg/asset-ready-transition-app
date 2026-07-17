@@ -98,7 +98,7 @@ export const ReviewDecisionModal: React.FC<Props> = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-md z-[1420]">
+        <DialogContent className="max-w-md z-[1510]">
           <DialogHeader>
             <ModalTitleBlock title="Review materials" trainingTitle={trainingTitle} provider={provider} />
           </DialogHeader>
@@ -164,7 +164,7 @@ export const ReviewDecisionModal: React.FC<Props> = ({
       </Dialog>
 
       <AlertDialog open={confirmReject} onOpenChange={setConfirmReject}>
-        <AlertDialogContent className="max-w-sm z-[1430]">
+        <AlertDialogContent className="max-w-sm z-[1520]">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-[14px]">Reject training materials?</AlertDialogTitle>
             <AlertDialogDescription className="text-[12px]">

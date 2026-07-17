@@ -127,7 +127,7 @@ export const ReviewerPickerList: React.FC<Props> = ({ value, onChange, disabled 
             Add reviewer
           </Button>
         </PopoverTrigger>
-        <PopoverContent align="start" className="w-72 p-2 pointer-events-auto z-[1420]">
+        <PopoverContent align="start" className="w-72 p-2 pointer-events-auto z-[1510]">
           <div className="relative">
             <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <Input
