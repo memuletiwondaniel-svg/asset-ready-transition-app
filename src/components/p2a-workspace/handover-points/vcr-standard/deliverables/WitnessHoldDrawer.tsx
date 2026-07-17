@@ -236,48 +236,35 @@ export const WitnessHoldDrawer: React.FC<WitnessHoldDrawerProps> = ({
 
             <Separator />
 
-            {/* Witnessed & accepted by */}
-            <div className="space-y-2">
+            {/* Witnessed & accepted by — stacked no-separator approver rows */}
+            <div className="space-y-1">
               <SectionLabel>Witnessed &amp; accepted by</SectionLabel>
               {point.accepting_parties.length === 0 ? (
                 <div className="text-[12px] text-muted-foreground/70">
                   No accepting parties assigned yet.
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div>
                   {point.accepting_parties.map((ap) => {
-                    const chip = accStatusChip(ap.status);
                     const showChip =
                       point.status === 'UNDER_REVIEW' ||
                       point.status === 'COMPLETED' ||
                       point.status === 'REWORK_REQUESTED';
+                    const chip = showChip
+                      ? ap.status === 'APPROVED'
+                        ? { label: 'Accepted', tone: 'blue' as const }
+                        : ap.status === 'REJECTED'
+                          ? { label: 'Rework', tone: 'red' as const }
+                          : { label: 'Pending', tone: 'slate' as const }
+                      : null;
                     return (
-                      <div key={ap.id} className="flex items-center gap-2">
-                        <Avatar className="h-7 w-7">
-                          {ap.user_avatar_url && <AvatarImage src={ap.user_avatar_url} />}
-                          <AvatarFallback className="text-[10px]">
-                            {initials(ap.user_full_name || ap.role_name || '?')}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0 flex-1">
-                          <div className="text-[12.5px] font-medium truncate">
-                            {ap.user_full_name || <span className="text-muted-foreground/70">Unassigned</span>}
-                          </div>
-                          {ap.role_name && (
-                            <div className="text-[11px] text-muted-foreground truncate">
-                              {ap.role_name}
-                            </div>
-                          )}
-                        </div>
-                        {showChip && (
-                          <span className={cn(
-                            'text-[10px] font-bold rounded-full border px-2 py-0.5 shrink-0',
-                            CHIP_TONES[chip.tone],
-                          )}>
-                            {chip.label}
-                          </span>
-                        )}
-                      </div>
+                      <ApproverRow
+                        key={ap.id}
+                        fullName={ap.user_full_name}
+                        roleLabel={ap.role_name}
+                        avatarUrl={ap.user_avatar_url}
+                        chip={chip}
+                      />
                     );
                   })}
                 </div>
