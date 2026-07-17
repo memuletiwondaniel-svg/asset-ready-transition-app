@@ -42,6 +42,10 @@ export interface VCRProcedureDeliverable {
   display_order: number;
   created_at: string;
   ora: VCRDeliverableStatus;
+  document_number?: string | null;
+  change_type?: string | null;
+  author_user_id?: string | null;
+  approved_at?: string | null;
 }
 
 export interface VCRRegisterDeliverable {

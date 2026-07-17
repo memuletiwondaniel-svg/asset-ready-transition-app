@@ -86,15 +86,15 @@ export const oraStatusChip = (
   return { label: 'To deliver', tone: 'slate' };
 };
 
-/** Chip for p2a_vcr_procedures.status */
+/** Chip for p2a_vcr_procedures.status — 5-state lifecycle enum. */
 export const procedureStatusChip = (status: string | null | undefined): { label: string; tone: ChipTone } => {
-  const s = (status || '').toLowerCase();
+  const s = (status || 'NOT_STARTED').toString().toUpperCase();
   switch (s) {
-    case 'approved': return { label: 'Approved', tone: 'emerald' };
-    case 'issued': return { label: 'Issued', tone: 'blue' };
-    case 'in_review': return { label: 'In review', tone: 'amber' };
-    case 'draft': return { label: 'Draft', tone: 'slate' };
-    case 'superseded': return { label: 'Superseded', tone: 'red' };
+    case 'APPROVED': return { label: 'Approved', tone: 'emerald' };
+    case 'UNDER_REVIEW': return { label: 'Under review', tone: 'blue' };
+    case 'REWORK_REQUESTED': return { label: 'Rework', tone: 'red' };
+    case 'DRAFT': return { label: 'Draft', tone: 'amber' };
+    case 'NOT_STARTED':
     default: return { label: 'To deliver', tone: 'slate' };
   }
 };

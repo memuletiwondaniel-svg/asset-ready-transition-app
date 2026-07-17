@@ -28,6 +28,7 @@ import { SchedulePacMeetingModal } from '@/components/widgets/SchedulePacMeeting
 import { QualificationReviewLauncher } from './QualificationReviewLauncher';
 import { WitnessHoldTaskLauncher } from './WitnessHoldTaskLauncher';
 import { TrainingTaskLauncher } from './TrainingTaskLauncher';
+import { ProcedureTaskLauncher } from './ProcedureTaskLauncher';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -1147,6 +1148,7 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     vcrName: string;
   } | null>(null);
   const [trainingTaskTarget, setTrainingTaskTarget] = useState<{ trainingId: string } | null>(null);
+  const [procedureTaskTarget, setProcedureTaskTarget] = useState<{ procedureId: string } | null>(null);
 
   const handleOpenP2AWizard = useCallback((projectId: string, projectCode: string, openWorkspace?: boolean) => {
     setP2aTarget({ projectId, projectCode });
@@ -1303,6 +1305,13 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       if ((task.userTask.type === 'training_action' || task.userTask.type === 'training_review') && meta?.training_id) {
         console.log('[TaskKanbanBoard] handleTaskClick:branch', { branch: task.userTask.type });
         setTrainingTaskTarget({ trainingId: meta.training_id as string });
+        return;
+      }
+
+      // Procedure task routing — owner action (start/submit/resubmit) or reviewer decision.
+      if ((task.userTask.type === 'procedure_action' || task.userTask.type === 'procedure_review') && meta?.procedure_id) {
+        console.log('[TaskKanbanBoard] handleTaskClick:branch', { branch: task.userTask.type });
+        setProcedureTaskTarget({ procedureId: meta.procedure_id as string });
         return;
       }
 
@@ -2178,6 +2187,15 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
           open={!!trainingTaskTarget}
           onOpenChange={(o) => { if (!o) setTrainingTaskTarget(null); }}
           trainingId={trainingTaskTarget.trainingId}
+        />
+      )}
+
+      {/* Procedure task launcher (owner action + reviewer decision) */}
+      {procedureTaskTarget && (
+        <ProcedureTaskLauncher
+          open={!!procedureTaskTarget}
+          onOpenChange={(o) => { if (!o) setProcedureTaskTarget(null); }}
+          procedureId={procedureTaskTarget.procedureId}
         />
       )}
 
