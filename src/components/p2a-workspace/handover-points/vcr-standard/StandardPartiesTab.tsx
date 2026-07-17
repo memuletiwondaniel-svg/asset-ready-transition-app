@@ -300,7 +300,9 @@ export const StandardPartiesTab: React.FC<Props> = ({
   const { data: hc } = useVCRHydrocarbonStatus(handoverPoint.id);
   const { prerequisites } = useVCRPrerequisites(handoverPoint.id);
   const { data: rollup, isLoading } = useVCRPartiesRollup(handoverPoint.id, projectId || null);
+  const { disciplineStatements } = useVCRDisciplineAssurance(handoverPoint.id);
   const [openParty, setOpenParty] = useState<PartyPerson | null>(null);
+  const [query, setQuery] = useState('');
 
   const isHC = hc?.status === 'HC';
 
@@ -325,12 +327,16 @@ export const StandardPartiesTab: React.FC<Props> = ({
     return m;
   }, [prerequisites]);
 
+  const prereqCodeMap = useMemo(() => {
+    const m = new Map<string, string>();
+    prereqCategoryMap.forEach((v, id) => m.set(id, formatVcrItemCode(v.catCode, v.displayOrder)));
+    return m;
+  }, [prereqCategoryMap]);
+
   const openDelivery = lifecyclePhase
     ? lifecyclePhase === 'IN_EXECUTION' || lifecyclePhase === 'DRAFT' || lifecyclePhase === 'AWAITING_SUMMARY'
     : true;
   const openApprover = lifecyclePhase === 'AWAITING_SUMMARY';
-  const openSof = lifecyclePhase === 'AWAITING_SOF';
-  const openPac = lifecyclePhase === 'AWAITING_PAC';
 
   const b2bPositions = useMemo(() => {
     const posCount = new Map<string, number>();
@@ -342,60 +348,148 @@ export const StandardPartiesTab: React.FC<Props> = ({
     return new Set([...posCount.entries()].filter(([, c]) => c > 1).map(([k]) => k));
   }, [data.approving]);
 
+  // Search across name / role / discipline / item code / item summary
+  const q = query.trim().toLowerCase();
+  const filterPeople = (list: PartyPerson[]) => {
+    if (!q) return list;
+    return list.filter((p) => {
+      if (p.full_name.toLowerCase().includes(q)) return true;
+      if ((p.role_name || '').toLowerCase().includes(q)) return true;
+      if ((p.position || '').toLowerCase().includes(q)) return true;
+      return p.items.some((it) => {
+        if (it.summary.toLowerCase().includes(q)) return true;
+        const code = prereqCodeMap.get(it.prereq_id) || '';
+        return code.toLowerCase().includes(q);
+      });
+    });
+  };
+
+  const fDelivering = filterPeople(data.delivering);
+  const fApproving = filterPeople(data.approving);
+  const fSof = filterPeople(data.sof);
+  const fPac = filterPeople(data.pac);
+
+  // G2 narrative summary
+  const narrative = useMemo(() => {
+    const totalItems = prerequisites.length;
+    const completeItems = prerequisites.filter(
+      (p) => standardPill(p.status as PrereqStatus).bucket === 'terminal',
+    ).length;
+    const parts: string[] = [];
+    parts.push(
+      `**${data.delivering.length}** delivering role holders and **${data.approving.length}** approvers resolved across ${totalItems} VCR item${totalItems === 1 ? '' : 's'}.`,
+    );
+    if (totalItems > 0) {
+      parts.push(`${completeItems} of ${totalItems} items complete.`);
+    }
+    if (!gateUnlocked) {
+      parts.push('SoF and PAC signatories unlock once every item reaches terminal status.');
+    }
+    return parts.join(' ');
+  }, [data.delivering.length, data.approving.length, prerequisites, gateUnlocked]);
+
+  // Discipline statement lookup for the party drawer (approvers only).
+  const statementForParty = (p: PartyPerson | null): string | null => {
+    if (!p) return null;
+    const roleKey = (p.role_name || p.position || '').toLowerCase();
+    if (!roleKey) return null;
+    const match = (disciplineStatements || []).find((s) =>
+      s.discipline_role_name && roleKey.includes(s.discipline_role_name.toLowerCase()),
+    );
+    return match?.assurance_statement ?? null;
+  };
+  const openPartyIsApprover =
+    !!openParty && data.approving.some((a) => a.user_id === openParty.user_id);
+
   if (isLoading) {
     return <div className="p-6 text-sm text-muted-foreground">Loading parties…</div>;
   }
 
   return (
-    <div className="space-y-3">
-      <Group
-        title="VCR Delivery"
-        count={data.delivering.length}
-        defaultOpen={openDelivery}
-        emptyText="No delivering role holders resolved for this project yet."
-        people={data.delivering}
-        onPersonClick={setOpenParty}
-        personClickable
-      />
-      <Group
-        title="VCR Approver"
-        count={data.approving.length}
-        defaultOpen={openApprover}
-        emptyText="No approving parties assigned yet."
-        people={data.approving}
-        b2bPositions={b2bPositions}
-        onPersonClick={setOpenParty}
-        personClickable
-      />
-      {isHC && (
-        <Group
-          title="SoF Approver"
-          count={data.sof.length}
-          defaultOpen={openSof && gateUnlocked}
-          locked={!gateUnlocked}
-          lockCaption="— unlocks once all VCR items are approved"
-          lockTooltip="Statement of Fitness applies to hydrocarbon VCRs. Unlocks once every VCR item reaches terminal status."
-          emptyText="No SoF approver role holders resolved yet."
-          people={data.sof}
+    <div className="space-y-4">
+      {/* G2 tab header — title, VCR subtext, narrative summary, divider */}
+      <div>
+        <h2 className="text-[16px] font-bold tracking-tight text-foreground">Parties</h2>
+        <div className="text-[12px] text-muted-foreground mt-0.5">
+          {handoverPoint.vcr_code}{handoverPoint.name ? ` · ${handoverPoint.name}` : ''}
+        </div>
+      </div>
+      <div className="rounded-md bg-muted/40 px-4 py-3 text-[12.5px] leading-relaxed text-foreground/85">
+        {narrative.split(/(\*\*[^*]+\*\*)/g).map((chunk, i) =>
+          chunk.startsWith('**') ? (
+            <strong key={i} className="font-semibold text-foreground">
+              {chunk.slice(2, -2)}
+            </strong>
+          ) : (
+            <span key={i}>{chunk}</span>
+          ),
+        )}
+      </div>
+      <div className="relative">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/70 pointer-events-none" />
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search by name, discipline, item ID or description"
+          className="h-9 pl-8 text-[12.5px]"
         />
-      )}
-      <Group
-        title="PAC Approver"
-        count={data.pac.length}
-        defaultOpen={openPac && gateUnlocked}
-        locked={!gateUnlocked}
-        lockCaption="— unlocks once all VCR items are approved"
-        lockTooltip="Provisional Acceptance Certificate signature. Unlocks once every VCR item reaches terminal status."
-        emptyText="No PAC approver role holders resolved yet."
-        people={data.pac}
-      />
+      </div>
+      <div className="h-px bg-border/60" />
+
+      <div className="space-y-3">
+        <Group
+          title="VCR Delivery"
+          count={fDelivering.length}
+          defaultOpen={openDelivery}
+          emptyText={q ? 'No matches in this group.' : 'No delivering role holders resolved for this project yet.'}
+          people={fDelivering}
+          onPersonClick={setOpenParty}
+          personClickable
+        />
+        <Group
+          title="VCR Approvers"
+          count={fApproving.length}
+          defaultOpen={openApprover || !!q}
+          emptyText={q ? 'No matches in this group.' : 'No approving parties assigned yet.'}
+          people={fApproving}
+          b2bPositions={b2bPositions}
+          onPersonClick={setOpenParty}
+          personClickable
+        />
+        {isHC && (
+          <Group
+            title="SoF Approvers · UNLOCKS AT VCR APPROVAL"
+            count={fSof.length}
+            defaultOpen={false}
+            locked={!gateUnlocked}
+            lockTooltip="Statement of Fitness applies to hydrocarbon VCRs. Unlocks once every VCR item reaches terminal status."
+            emptyText="No SoF approver role holders resolved yet."
+            people={fSof}
+            muted={!gateUnlocked}
+          />
+        )}
+        <Group
+          title="PAC Approvers · UNLOCKS AT VCR APPROVAL"
+          count={fPac.length}
+          defaultOpen={false}
+          locked={!gateUnlocked}
+          lockTooltip="Provisional Acceptance Certificate signature. Unlocks once every VCR item reaches terminal status."
+          emptyText="No PAC approver role holders resolved yet."
+          people={fPac}
+          muted={!gateUnlocked}
+        />
+      </div>
 
       <PartyItemsDrawer
         party={openParty}
+        isApprover={openPartyIsApprover}
+        vcrCode={handoverPoint.vcr_code}
+        vcrName={handoverPoint.name}
         onOpenChange={(o) => { if (!o) setOpenParty(null); }}
         handoverPointId={handoverPoint.id}
         projectId={projectId}
         prereqCategoryMap={prereqCategoryMap}
+        disciplineStatement={statementForParty(openParty)}
       />
     </div>
   );
