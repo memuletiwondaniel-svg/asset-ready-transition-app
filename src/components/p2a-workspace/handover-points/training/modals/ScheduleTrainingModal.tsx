@@ -93,7 +93,7 @@ export const ScheduleTrainingModal: React.FC<Props> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg z-[1510]">
+      <DialogContent overlayClassName="z-[1500]" className="max-w-lg z-[1510]">
         <DialogHeader>
           <ModalTitleBlock title="Schedule training" trainingTitle={trainingTitle} provider={provider} />
         </DialogHeader>

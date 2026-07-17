@@ -98,7 +98,7 @@ export const ReviewDecisionModal: React.FC<Props> = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-md z-[1510]">
+        <DialogContent overlayClassName="z-[1500]" className="max-w-md z-[1510]">
           <DialogHeader>
             <ModalTitleBlock title="Review materials" trainingTitle={trainingTitle} provider={provider} />
           </DialogHeader>
