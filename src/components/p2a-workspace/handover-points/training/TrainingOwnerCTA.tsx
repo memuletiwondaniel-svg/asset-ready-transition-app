@@ -146,6 +146,18 @@ export const TrainingOwnerCTA: React.FC<Props> = ({ data, currentUserId }) => {
           provider={provider}
         />
       )}
+      {modal === 'review' && myReviewer && (
+        <ReviewDecisionModal
+          open
+          onOpenChange={(o) => !o && setModal(null)}
+          trainingId={training.id}
+          trainingTitle={label}
+          provider={provider}
+          decidedCount={decidedCount}
+          totalReviewers={totalReviewers}
+          reviewerRowId={myReviewer.id}
+        />
+      )}
     </>
   );
 };
