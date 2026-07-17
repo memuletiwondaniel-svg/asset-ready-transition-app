@@ -8,6 +8,7 @@ import { UploadMaterialsModal } from './modals/UploadMaterialsModal';
 import { ProvideAttendanceModal } from './modals/ProvideAttendanceModal';
 import { ScheduleTrainingModal } from './modals/ScheduleTrainingModal';
 import { CompleteTrainingModal } from './modals/CompleteTrainingModal';
+import { ReviewDecisionModal } from './modals/ReviewDecisionModal';
 
 type Modal =
   | 'request_po'
@@ -16,6 +17,7 @@ type Modal =
   | 'provide_attendance'
   | 'schedule'
   | 'complete'
+  | 'review'
   | null;
 
 interface Props {
@@ -34,11 +36,22 @@ export const TrainingOwnerCTA: React.FC<Props> = ({ data, currentUserId }) => {
   const { data: ownership } = useTrainingOwnership(training?.id ?? null, currentUserId);
 
   if (!training) return null;
-  if (!ownership?.isOwner) return null;
 
   const status = training.status as string;
   const label = training.title as string;
   const provider = training.training_provider ?? null;
+
+  const decidedCount = data.reviewers.filter((r) => r.decision != null).length;
+  const totalReviewers = data.reviewers.length;
+
+  // Reviewer branch takes priority — a reviewer viewing a MATERIALS_UNDER_REVIEW
+  // row with an undecided reviewer_row for them gets the decision CTA.
+  const myReviewer = currentUserId
+    ? data.reviewers.find((r) => r.user_id === currentUserId && r.decision == null)
+    : null;
+  const canReviewNow = status === 'MATERIALS_UNDER_REVIEW' && !!ownership?.isReviewer && !!myReviewer;
+
+  if (!ownership?.isOwner && !canReviewNow) return null;
 
   const cta = (() => {
     switch (status) {
