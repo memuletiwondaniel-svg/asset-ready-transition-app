@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Input } from '@/components/ui/input';
 import {
   Tooltip,
   TooltipContent,
@@ -15,7 +16,7 @@ import {
   SheetDescription,
 } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ChevronDown, ChevronRight, Lock } from 'lucide-react';
+import { ChevronDown, ChevronRight, Lock, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { P2AHandoverPoint } from '../../hooks/useP2AHandoverPoints';
 import { useVCRPrerequisites } from '../../hooks/useVCRPrerequisites';
@@ -24,6 +25,7 @@ import { PrereqStatus, standardPill, normalizeCategoryCode, CATEGORY_META } from
 import { PartyPerson, PartyItem, useVCRPartiesRollup } from './useVCRPartiesRollup';
 import { VCRItemDetailSheet, VCRItemBasic } from '@/components/widgets/VCRItemDetailSheet';
 import { formatVcrItemCode } from '@/lib/vcrItemCode';
+import { useDisciplineStatements } from '@/components/widgets/vcr-assurance/useDisciplineStatements';
 
 import type { LifecyclePhase } from './useVCRLifecycle';
 
