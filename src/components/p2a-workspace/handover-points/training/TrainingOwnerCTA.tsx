@@ -115,6 +115,7 @@ export const TrainingOwnerCTA: React.FC<Props> = ({ data, currentUserId }) => {
           trainingTitle={label}
           provider={provider}
           existingReviewers={data.reviewers}
+          activity={data.activity}
           isResubmit={hasPriorReview}
         />
       )}
