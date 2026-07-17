@@ -1,5 +1,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { trainingStatusMeta } from '../../training/TrainingStatusChip';
+
 
 export type ChipTone = 'emerald' | 'blue' | 'amber' | 'red' | 'slate';
 
