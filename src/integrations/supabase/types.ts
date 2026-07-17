@@ -7777,8 +7777,12 @@ export type Database = {
           id: string
           itr_count: number
           mc_status: Database["public"]["Enums"]["p2a_subsystem_status"]
+          mcc_achieved: boolean
+          mcc_date: string | null
           metadata: Json | null
           name: string
+          pcc_achieved: boolean
+          pcc_date: string | null
           pcc_status: Database["public"]["Enums"]["p2a_subsystem_status"]
           punchlist_a_count: number
           punchlist_b_count: number
@@ -7794,8 +7798,12 @@ export type Database = {
           id?: string
           itr_count?: number
           mc_status?: Database["public"]["Enums"]["p2a_subsystem_status"]
+          mcc_achieved?: boolean
+          mcc_date?: string | null
           metadata?: Json | null
           name: string
+          pcc_achieved?: boolean
+          pcc_date?: string | null
           pcc_status?: Database["public"]["Enums"]["p2a_subsystem_status"]
           punchlist_a_count?: number
           punchlist_b_count?: number
@@ -7811,8 +7819,12 @@ export type Database = {
           id?: string
           itr_count?: number
           mc_status?: Database["public"]["Enums"]["p2a_subsystem_status"]
+          mcc_achieved?: boolean
+          mcc_date?: string | null
           metadata?: Json | null
           name?: string
+          pcc_achieved?: boolean
+          pcc_date?: string | null
           pcc_status?: Database["public"]["Enums"]["p2a_subsystem_status"]
           punchlist_a_count?: number
           punchlist_b_count?: number
@@ -7823,6 +7835,186 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "p2a_subsystems_system_id_fkey"
+            columns: ["system_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_systems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      p2a_system_itrs: {
+        Row: {
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          description: string
+          discipline: string | null
+          id: string
+          metadata: Json | null
+          phase: Database["public"]["Enums"]["p2a_itr_phase"]
+          ref: string
+          status: Database["public"]["Enums"]["p2a_itr_record_status"]
+          subsystem_id: string
+          system_id: string
+          tag: string | null
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          description: string
+          discipline?: string | null
+          id?: string
+          metadata?: Json | null
+          phase: Database["public"]["Enums"]["p2a_itr_phase"]
+          ref: string
+          status?: Database["public"]["Enums"]["p2a_itr_record_status"]
+          subsystem_id: string
+          system_id: string
+          tag?: string | null
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          description?: string
+          discipline?: string | null
+          id?: string
+          metadata?: Json | null
+          phase?: Database["public"]["Enums"]["p2a_itr_phase"]
+          ref?: string
+          status?: Database["public"]["Enums"]["p2a_itr_record_status"]
+          subsystem_id?: string
+          system_id?: string
+          tag?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_system_itrs_completed_by_fkey"
+            columns: ["completed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_system_itrs_completed_by_fkey"
+            columns: ["completed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_system_itrs_subsystem_id_fkey"
+            columns: ["subsystem_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_subsystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_system_itrs_system_id_fkey"
+            columns: ["system_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_systems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      p2a_system_punch_items: {
+        Row: {
+          category: Database["public"]["Enums"]["p2a_punch_category"]
+          cleared_at: string | null
+          cleared_by: string | null
+          closure_note: string | null
+          created_at: string
+          description: string
+          id: string
+          linked_itr_ref: string | null
+          metadata: Json | null
+          raised_at: string
+          raised_by: string | null
+          ref: string
+          status: Database["public"]["Enums"]["p2a_punch_status"]
+          subsystem_id: string
+          system_id: string
+          updated_at: string
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["p2a_punch_category"]
+          cleared_at?: string | null
+          cleared_by?: string | null
+          closure_note?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          linked_itr_ref?: string | null
+          metadata?: Json | null
+          raised_at?: string
+          raised_by?: string | null
+          ref: string
+          status?: Database["public"]["Enums"]["p2a_punch_status"]
+          subsystem_id: string
+          system_id: string
+          updated_at?: string
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["p2a_punch_category"]
+          cleared_at?: string | null
+          cleared_by?: string | null
+          closure_note?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          linked_itr_ref?: string | null
+          metadata?: Json | null
+          raised_at?: string
+          raised_by?: string | null
+          ref?: string
+          status?: Database["public"]["Enums"]["p2a_punch_status"]
+          subsystem_id?: string
+          system_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_system_punch_items_cleared_by_fkey"
+            columns: ["cleared_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_system_punch_items_cleared_by_fkey"
+            columns: ["cleared_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_system_punch_items_raised_by_fkey"
+            columns: ["raised_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_system_punch_items_raised_by_fkey"
+            columns: ["raised_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_system_punch_items_subsystem_id_fkey"
+            columns: ["subsystem_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_subsystems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_system_punch_items_system_id_fkey"
             columns: ["system_id"]
             isOneToOne: false
             referencedRelation: "p2a_systems"
@@ -17655,6 +17847,8 @@ export type Database = {
         | "COMPLETED"
         | "NOT_APPLICABLE"
       p2a_handover_point_status: "PENDING" | "IN_PROGRESS" | "READY" | "SIGNED"
+      p2a_itr_phase: "A" | "B"
+      p2a_itr_record_status: "Outstanding" | "Completed"
       p2a_milestone_source: "MANUAL" | "PRIMAVERA_API"
       p2a_phase: "PAC" | "FAC"
       p2a_plan_status:
@@ -17663,12 +17857,16 @@ export type Database = {
         | "COMPLETED"
         | "ARCHIVED"
         | "PENDING_APPROVAL"
+      p2a_punch_category: "A" | "B"
+      p2a_punch_status: "Open" | "Closed"
       p2a_qualification_status: "DRAFT" | "PENDING" | "APPROVED" | "REJECTED"
       p2a_status: "DRAFT" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED"
       p2a_subsystem_status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED"
       p2a_system_completion_status:
         | "NOT_STARTED"
         | "IN_PROGRESS"
+        | "MC"
+        | "RFC"
         | "RFO"
         | "RFSU"
       p2a_system_source_type:
@@ -18038,6 +18236,8 @@ export const Constants = {
         "NOT_APPLICABLE",
       ],
       p2a_handover_point_status: ["PENDING", "IN_PROGRESS", "READY", "SIGNED"],
+      p2a_itr_phase: ["A", "B"],
+      p2a_itr_record_status: ["Outstanding", "Completed"],
       p2a_milestone_source: ["MANUAL", "PRIMAVERA_API"],
       p2a_phase: ["PAC", "FAC"],
       p2a_plan_status: [
@@ -18047,12 +18247,16 @@ export const Constants = {
         "ARCHIVED",
         "PENDING_APPROVAL",
       ],
+      p2a_punch_category: ["A", "B"],
+      p2a_punch_status: ["Open", "Closed"],
       p2a_qualification_status: ["DRAFT", "PENDING", "APPROVED", "REJECTED"],
       p2a_status: ["DRAFT", "IN_PROGRESS", "COMPLETED", "CANCELLED"],
       p2a_subsystem_status: ["NOT_STARTED", "IN_PROGRESS", "COMPLETED"],
       p2a_system_completion_status: [
         "NOT_STARTED",
         "IN_PROGRESS",
+        "MC",
+        "RFC",
         "RFO",
         "RFSU",
       ],
