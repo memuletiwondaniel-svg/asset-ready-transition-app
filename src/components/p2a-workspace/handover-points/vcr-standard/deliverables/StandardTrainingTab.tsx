@@ -8,6 +8,7 @@ import {
   TRAINING_TOTAL_STEPS,
 } from '../../training/TrainingStatusChip';
 import { TrainingDrawer } from '../../training/TrainingDrawer';
+import { TrainingOwnerCTA } from '../../training/TrainingOwnerCTA';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { AlertTriangle } from 'lucide-react';
@@ -132,7 +133,9 @@ export const StandardTrainingTab: React.FC<{ handoverPoint: P2AHandoverPoint }> 
         open={!!selectedId}
         onOpenChange={(o) => !o && setSelectedId(null)}
         currentUserId={uid}
-        /* footerSlot is wired in FE-3 (owner CTAs). */
+        footerSlot={({ data, currentUserId }) =>
+          data ? <TrainingOwnerCTA data={data} currentUserId={currentUserId} /> : null
+        }
       />
     </>
   );
