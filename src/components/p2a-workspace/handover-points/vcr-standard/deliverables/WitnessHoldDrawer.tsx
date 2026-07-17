@@ -15,6 +15,7 @@ import {
   WH_STATUS_PRESENTATION,
   typeLabel,
 } from './useWHPoints';
+import { ApproverRow } from '../../shared/ApproverRow';
 
 const CHIP_TONES = {
   emerald: 'bg-emerald-50 text-emerald-700 border-emerald-200',
