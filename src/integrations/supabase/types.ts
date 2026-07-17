@@ -8225,6 +8225,8 @@ export type Database = {
       }
       p2a_vcr_critical_docs: {
         Row: {
+          assai_revision: string | null
+          assai_status_code: string | null
           catalog_id: string | null
           created_at: string
           discipline: string | null
@@ -8245,6 +8247,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          assai_revision?: string | null
+          assai_status_code?: string | null
           catalog_id?: string | null
           created_at?: string
           discipline?: string | null
@@ -8265,6 +8269,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          assai_revision?: string | null
+          assai_status_code?: string | null
           catalog_id?: string | null
           created_at?: string
           discipline?: string | null
