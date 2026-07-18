@@ -361,6 +361,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
           Icon={Key}
           hoverIconClass="group-hover:text-orange-600"
           title="P2A Handover"
+          testId="p2a-header-button"
           onHeaderClick={handleP2AHeaderClick}
           dragProps={{ attributes: dragAttributes, listeners: dragListeners }}
         />
