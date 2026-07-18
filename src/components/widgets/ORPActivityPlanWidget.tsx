@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Settings2, Clock, CheckCircle2, FileEdit, Send, AlertTriangle, AlertCircle, ChevronRight, ChevronDown, Trash2, CalendarRange, Activity, CircleDot, Plus, Pencil } from 'lucide-react';
+import { Settings2, ListChecks, Clock, CheckCircle2, FileEdit, Send, AlertTriangle, AlertCircle, ChevronRight, ChevronDown, Trash2, CalendarRange, Activity, CircleDot, Plus, Pencil } from 'lucide-react';
 
 import { StyledWidgetIcon } from './StyledWidgetIcon';
+import { WidgetCardHeader, NarrativeSummary, InlineDivider } from './WidgetCardHeader';
 import { useProjectORPPlans, ProjectORPActivity } from '@/hooks/useProjectORPPlans';
 import { useORPPlans } from '@/hooks/useORPPlans';
 import { Progress } from '@/components/ui/progress';
@@ -47,6 +48,11 @@ const ActivityRow: React.FC<{ activity: ProjectORPActivity; isCompleted?: boolea
   const actStatus = isCompleted ? 'completed' : getActivityStatus(activity);
   const daysToDue = activity.end_date ? differenceInCalendarDays(parseISO(activity.end_date), new Date()) : null;
   const isDueSoon = !isCompleted && daysToDue !== null && daysToDue >= 0 && daysToDue <= 7;
+  // Overdue severity per spec: red when >35 days overdue, amber below.
+  const daysOverdue = daysToDue !== null && daysToDue < 0 ? Math.abs(daysToDue) : 0;
+  const overdueSeverity: 'red' | 'amber' | null = actStatus === 'overdue'
+    ? (daysOverdue > 35 ? 'red' : 'amber')
+    : null;
 
   // State-aware leading icon. Only render an icon when it carries signal.
   let Icon: React.ElementType | null = null;
@@ -56,12 +62,11 @@ const ActivityRow: React.FC<{ activity: ProjectORPActivity; isCompleted?: boolea
     iconColor = 'text-teal-600';
   } else if (actStatus === 'overdue') {
     Icon = AlertCircle;
-    iconColor = 'text-amber-600';
+    iconColor = overdueSeverity === 'red' ? 'text-red-600' : 'text-amber-600';
   } else if (isDueSoon) {
     Icon = Clock;
     iconColor = 'text-muted-foreground';
   }
-  // on-track / future: no leading icon — date column on the right is the timing anchor.
 
   return (
     <div
@@ -76,9 +81,22 @@ const ActivityRow: React.FC<{ activity: ProjectORPActivity; isCompleted?: boolea
       <span className={cn("truncate flex-1 text-foreground/90", isCompleted && "text-muted-foreground")}>
         {activity.name}
       </span>
+      {overdueSeverity && (
+        <span
+          className={cn(
+            'shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded tabular-nums',
+            overdueSeverity === 'red'
+              ? 'bg-red-500/10 text-red-600 border border-red-500/20'
+              : 'bg-amber-500/10 text-amber-700 border border-amber-500/20',
+          )}
+          title={`${daysOverdue} day${daysOverdue === 1 ? '' : 's'} overdue`}
+        >
+          {daysOverdue}d late
+        </span>
+      )}
       {activity.end_date && (
-        <span className="text-[10px] shrink-0 text-muted-foreground">
-          {format(parseISO(activity.end_date), 'MMM d')}
+        <span className="text-[10px] shrink-0 text-muted-foreground tabular-nums">
+          Due {format(parseISO(activity.end_date), 'd MMM')}
         </span>
       )}
     </div>
