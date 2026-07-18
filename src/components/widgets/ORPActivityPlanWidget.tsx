@@ -299,51 +299,42 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
   return (
     <>
       <Card className="h-full flex flex-col transition-all duration-300 group overflow-hidden glass-card glass-card-hover">
-        <CardHeader {...dragAttributes} {...dragListeners} className="cursor-grab active:cursor-grabbing flex-shrink-0 pb-3">
-          <CardTitle className="text-lg flex items-center gap-3">
+        <WidgetCardHeader
+          Icon={ListChecks}
+          hoverIconClass="group-hover:text-violet-600"
+          title="ORA Activities"
+          onHeaderClick={() => setOverlayOpen(true)}
+          dragProps={{ attributes: dragAttributes, listeners: dragListeners }}
+          statusPill={statusConfig ? (
             <button
               type="button"
-              onPointerDown={(e) => e.stopPropagation()}
-              onMouseDown={(e) => e.stopPropagation()}
-              onClick={(e) => { e.stopPropagation(); setOverlayOpen(true); }}
-              className="flex items-center gap-3 flex-1 min-w-0 text-left hover:opacity-80 transition-opacity cursor-pointer relative z-10"
+              onClick={(e) => { e.stopPropagation(); setApproversOpen(true); }}
+              className="cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+              title="View approvers"
             >
-              <StyledWidgetIcon Icon={Settings2} gradientFrom="from-purple-500" gradientTo="to-violet-500" glowFrom="from-purple-500/40" glowTo="to-violet-500/40" />
-              <span className="truncate">ORA Activities</span>
+              <Badge variant="outline" className={cn("text-[10px] h-5 px-2", statusConfig.className)}>
+                {statusConfig.label}
+              </Badge>
             </button>
-            {statusConfig && (
-              <button
-                type="button"
-                onPointerDown={(e) => e.stopPropagation()}
-                onMouseDown={(e) => e.stopPropagation()}
-                onClick={(e) => { e.stopPropagation(); setApproversOpen(true); }}
-                className="shrink-0 cursor-pointer relative z-10 opacity-0 group-hover:opacity-100 transition-opacity"
-                title="View approvers"
-              >
-                <Badge variant="outline" className={cn("text-[10px] h-5 px-2 hover:opacity-80 transition-opacity", statusConfig.className)}>
-                  {statusConfig.label}
-                </Badge>
-              </button>
-            )}
-          </CardTitle>
-        </CardHeader>
-        
-        <CardContent className="flex-1 flex flex-col gap-3 overflow-hidden pt-0">
-          {/* Section 2: Progress Summary */}
-          <div className="flex-shrink-0 rounded-lg border border-border bg-muted/30 p-3 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => openActivityOverlay()}>
-            <div className="flex items-center justify-between text-xs mb-2">
-              <span className="text-muted-foreground font-medium">Overall Progress</span>
-              <span className="font-bold text-sm">{overallProgress}%</span>
-            </div>
-            <Progress value={overallProgress} className="h-2 mb-2" />
-            <p className="text-[11px] text-muted-foreground leading-relaxed">
-              <span className="text-green-600 font-medium">{completedDeliverables} completed</span>
-              {' · '}
-              <span className="text-blue-600 font-medium">{inProgressCount} in progress</span>
-              {' · '}
-              <span>{notStartedCount} not started</span>
-            </p>
-          </div>
+          ) : undefined}
+        />
+
+        <CardContent className="flex-1 flex flex-col gap-3 overflow-hidden pt-4">
+          {/* G3 narrative summary — bold lead + secondary; the bar owns the
+              percentage so we never duplicate "%". Tone drives the accent rail. */}
+          <NarrativeSummary
+            tone={narrativeTone}
+            lead={narrativeLead}
+            secondary={
+              <span className="flex items-center gap-2">
+                <span className="tabular-nums">{narrativeSecondary}</span>
+                <span className="text-muted-foreground/50">·</span>
+                <span className="tabular-nums font-medium text-foreground/80">{overallProgress}%</span>
+              </span>
+            }
+            onClick={() => openActivityOverlay()}
+          />
+          <Progress value={overallProgress} className={cn("h-1.5 flex-shrink-0", barColorClass)} />
 
           {/* Scrollable activity sections */}
           <div className="flex-1 overflow-y-auto min-h-0 space-y-2 pr-1 scrollbar-modern">
