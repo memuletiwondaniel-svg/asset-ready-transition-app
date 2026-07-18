@@ -1833,76 +1833,75 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     <P2AApprovalContext.Provider value={p2aApprovalMap}>
     <ReviewerSummaryContext.Provider value={reviewerMap}>
     <>
-      {/* Lens toggle — portalled into the page toolbar so it shares a row
-          with the search field. Falls back to inline rendering if the slot
-          hasn't mounted yet. Persisted per user. */}
-      <LensTogglePortal>
-        <div className="inline-flex rounded-md border border-border/60 bg-card/40 p-0.5">
-          <button
-            type="button"
-            onClick={() => setLens('work')}
-            className={cn(
-              'text-[12px] px-3 py-1 rounded transition-colors',
-              lens === 'work' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
-            )}
-          >
-            My work
-          </button>
-          <button
-            type="button"
-            onClick={() => setLens('reviews')}
-            className={cn(
-              'text-[12px] px-3 py-1 rounded transition-colors inline-flex items-center gap-1.5',
-              lens === 'reviews' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
-            )}
-          >
-            My reviews
-            {awaitingTotal > 0 && (
-              <span className="text-[10px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                {awaitingTotal}
-              </span>
-            )}
-          </button>
-        </div>
-      </LensTogglePortal>
-
-
-      {lens === 'reviews' ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 items-stretch">
-          {REVIEW_BUCKETS.map(bucket => {
-            const bTasks = reviewBuckets[bucket.key];
-            const isEmpty = bTasks.length === 0;
-            return (
-              <div key={bucket.key} className="bg-card/40 dark:bg-muted/20 rounded-xl border border-border/60 flex flex-col min-h-[60vh] overflow-hidden">
-                <div className="flex items-center justify-between gap-2 px-3 pt-3 pb-2 border-b border-border/40">
-                  <span className="text-[13px] font-medium text-foreground truncate">{bucket.label}</span>
-                  <span className="text-[11px] tabular-nums text-muted-foreground/70">{bTasks.length}</span>
-                </div>
-                {isEmpty ? (
-                  <div className="flex-1 flex items-stretch p-3">
-                    <div className="flex-1 rounded-lg border border-dashed border-border/60 flex items-center justify-center text-center px-4 py-8">
-                      <p className="text-[11px] text-muted-foreground/60">{bucket.hint || 'Nothing here.'}</p>
-                    </div>
-                  </div>
-                ) : (
-                  <ScrollArea className="flex-1 max-h-[calc(100vh-320px)]">
-                    <div className={cn('px-3 pb-3 pt-2 space-y-2.5', bucket.dim && 'opacity-60')}>
-                      {bTasks.map(task => (
-                        <div key={task.id} className="space-y-1">
-                          <KanbanCardWithChildren task={task} onTaskClick={handleTaskClick} />
-                          {bucket.dim && (
-                            <p className="text-[10px] text-muted-foreground/70 pl-3">{bucket.hint}</p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </ScrollArea>
+      {/* Transient filter chips — portalled into the page toolbar. Defaults to
+          empty (board shows every task). Chips are combinable and removable;
+          they NARROW the board, they do not navigate. */}
+      <ToolbarChipsPortal>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {(() => {
+            const { decisions, myWork, projects } = filterChips;
+            const chip = (opts: { active: boolean; label: string; onToggle: () => void; onRemove?: () => void; tone?: 'amber' | 'neutral' }) => (
+              <button
+                key={opts.label}
+                type="button"
+                onClick={opts.onToggle}
+                className={cn(
+                  'inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-full border transition-colors whitespace-nowrap',
+                  opts.active
+                    ? opts.tone === 'amber'
+                      ? 'bg-amber-100 border-amber-300 text-amber-800 dark:bg-amber-900/30 dark:border-amber-800 dark:text-amber-300'
+                      : 'bg-primary/10 border-primary/40 text-primary'
+                    : 'bg-transparent border-border/60 text-muted-foreground hover:text-foreground hover:border-border',
                 )}
-              </div>
+              >
+                <span>{opts.label}</span>
+                {opts.active && opts.onRemove && (
+                  <X
+                    className="h-3 w-3 opacity-70 hover:opacity-100"
+                    onClick={(e) => { e.stopPropagation(); opts.onRemove!(); }}
+                  />
+                )}
+              </button>
             );
-          })}
+            return (
+              <>
+                {chip({
+                  active: decisions,
+                  label: 'Decisions',
+                  tone: 'amber',
+                  onToggle: () => setFilterChips(s => ({ ...s, decisions: !s.decisions })),
+                  onRemove: () => setFilterChips(s => ({ ...s, decisions: false })),
+                })}
+                {chip({
+                  active: myWork,
+                  label: 'My work',
+                  onToggle: () => setFilterChips(s => ({ ...s, myWork: !s.myWork })),
+                  onRemove: () => setFilterChips(s => ({ ...s, myWork: false })),
+                })}
+                {availableProjects.map(code => chip({
+                  active: projects.includes(code),
+                  label: code,
+                  onToggle: () => setFilterChips(s => ({
+                    ...s,
+                    projects: s.projects.includes(code) ? s.projects.filter(p => p !== code) : [...s.projects, code],
+                  })),
+                  onRemove: () => setFilterChips(s => ({ ...s, projects: s.projects.filter(p => p !== code) })),
+                }))}
+                {(decisions || myWork || projects.length > 0) && (
+                  <button
+                    type="button"
+                    onClick={() => setFilterChips({ decisions: false, myWork: false, projects: [] })}
+                    className="text-[11px] px-2 py-1 rounded text-muted-foreground/70 hover:text-foreground"
+                  >
+                    Clear
+                  </button>
+                )}
+              </>
+            );
+          })()}
         </div>
-      ) : (
+      </ToolbarChipsPortal>
+
       <DndContext
         sensors={sensors}
         onDragStart={handleDragStart}
