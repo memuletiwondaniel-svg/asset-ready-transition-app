@@ -56,6 +56,7 @@ import {
   GanttChart,
   MoreVertical,
   Check,
+  X,
 } from 'lucide-react';
 import {
   DropdownMenu,
