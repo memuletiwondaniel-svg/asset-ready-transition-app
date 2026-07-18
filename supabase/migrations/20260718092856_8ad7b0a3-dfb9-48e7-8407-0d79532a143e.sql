@@ -1,0 +1,1 @@
+DELETE FROM public.vcr_item_insights WHERE vcr_item_id IN ('0069519f-caa9-48e9-bd62-bdf07f4fd3c1','88213ab2-c16c-446e-9452-a43e95297214');
