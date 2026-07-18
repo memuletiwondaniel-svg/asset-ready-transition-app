@@ -120,7 +120,7 @@ export const SystemDrawer: React.FC<Props> = ({ system, handoverPoint, projectId
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="right" className="!z-modal-critical w-full sm:max-w-2xl p-0 flex flex-col [&>button]:hidden">
+        <SheetContent side="right" hideClose className="!z-modal-critical w-full sm:max-w-2xl p-0 flex flex-col">
           {/* G1 header */}
           <div className="px-5 pt-5 pb-3 border-b shrink-0 bg-background">
             <div className="text-[10px] font-bold tracking-[0.16em] uppercase text-muted-foreground/70 mb-1">SYSTEM</div>
