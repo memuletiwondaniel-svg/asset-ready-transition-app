@@ -136,8 +136,10 @@ export const WitnessHoldDrawer: React.FC<WitnessHoldDrawerProps> = ({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="!z-modal-critical w-full sm:max-w-lg p-0 flex flex-col [&>button]:hidden"
+        hideClose
+        className="!z-modal-critical w-full sm:max-w-lg p-0 flex flex-col"
       >
+
         {/* Header — title first, breadcrumb as subtext */}
         <div className="px-5 pt-5 pb-3 border-b shrink-0 bg-background">
           <div className="flex items-start justify-between gap-3 mb-1">

@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import {
@@ -16,7 +15,7 @@ import {
   SheetDescription,
 } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ChevronDown, ChevronRight, Lock, Search } from 'lucide-react';
+import { Lock, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { P2AHandoverPoint } from '../../hooks/useP2AHandoverPoints';
 import { useVCRPrerequisites } from '../../hooks/useVCRPrerequisites';
@@ -28,6 +27,7 @@ import { formatVcrItemCode } from '@/lib/vcrItemCode';
 import { useVCRDisciplineAssurance } from '@/components/widgets/hooks/useVCRDisciplineAssurance';
 
 import type { LifecyclePhase } from './useVCRLifecycle';
+
 
 interface Props {
   handoverPoint: P2AHandoverPoint;
@@ -52,80 +52,138 @@ const fractionChipClass = (assigned: number, completed: number) => {
   return 'bg-slate-100 text-muted-foreground';
 };
 
-const PersonRow: React.FC<{
-  p: PartyPerson;
-  isB2B?: boolean;
-  onClick?: () => void;
+/**
+ * PartyRow — one seat per canonical role. When the role has 2+ holders
+ * (a B2B pair), we show the primary and expose a "B2B" chip that cycles
+ * to the partner. Clicking the row opens the drawer for the currently
+ * displayed holder. Root-cause fix for the previous B2B defect: pairing
+ * is now grouped by role (not by profiles.position string), so two
+ * holders of the same canonical role always collapse to one seat.
+ */
+const PartyRow: React.FC<{
+  holders: PartyPerson[];
+  onClick?: (p: PartyPerson) => void;
   clickable?: boolean;
-}> = ({ p, isB2B, onClick, clickable }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    disabled={!clickable}
-    className={cn(
-      'w-full flex items-center gap-3 px-3 py-2 text-left transition-colors',
-      clickable ? 'hover:bg-muted/50 cursor-pointer' : 'cursor-default',
-    )}
-  >
-    <Avatar className="h-8 w-8 flex-none">
-      {p.avatar_url && <AvatarImage src={p.avatar_url} alt={p.full_name} />}
-      <AvatarFallback className="text-[10px] font-semibold bg-slate-200 text-slate-700">
-        {initials(p.full_name)}
-      </AvatarFallback>
-    </Avatar>
-    <div className="min-w-0 flex-1">
-      <div className="text-[13px] font-medium truncate leading-tight flex items-center gap-1.5">
-        {p.full_name}
-        {isB2B && (
-          <span className="text-[9px] font-bold uppercase tracking-wider bg-purple-100 text-purple-700 rounded px-1.5 py-0.5">
-            B2B
-          </span>
-        )}
-      </div>
-      <div className="text-[11px] text-muted-foreground truncate">
-        {p.role_name || p.position || '—'}
-      </div>
-    </div>
-    <span
-      className={cn(
-        'text-[10.5px] font-bold rounded-full px-2 py-0.5 flex-none',
-        fractionChipClass(p.assigned, p.completed),
-      )}
-      title={`${p.completed} of ${p.assigned} complete`}
-    >
-      {p.completed}/{p.assigned}
-    </span>
-  </button>
-);
+}> = ({ holders, onClick, clickable }) => {
+  const [idx, setIdx] = useState(0);
+  const safeIdx = idx % holders.length;
+  const shown = holders[safeIdx];
+  const isPaired = holders.length > 1;
+  const partnerNames = holders
+    .filter((_, i) => i !== safeIdx)
+    .map((p) => p.full_name)
+    .join(', ');
 
-interface GroupProps {
+  return (
+    <div
+      className={cn(
+        'w-full flex items-center gap-3 px-3 py-2 transition-colors',
+        clickable ? 'hover:bg-muted/50' : '',
+      )}
+    >
+      <button
+        type="button"
+        onClick={() => clickable && onClick?.(shown)}
+        disabled={!clickable}
+        className={cn(
+          'flex items-center gap-3 flex-1 min-w-0 text-left',
+          clickable ? 'cursor-pointer' : 'cursor-default',
+        )}
+      >
+        <Avatar className="h-8 w-8 flex-none">
+          {shown.avatar_url && <AvatarImage src={shown.avatar_url} alt={shown.full_name} />}
+          <AvatarFallback className="text-[10px] font-semibold bg-slate-200 text-slate-700">
+            {initials(shown.full_name)}
+          </AvatarFallback>
+        </Avatar>
+        <div className="min-w-0 flex-1">
+          <div className="text-[13px] font-medium truncate leading-tight flex items-center gap-1.5">
+            {shown.full_name}
+            {isPaired && (
+              <TooltipProvider delayDuration={150}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        setIdx((i) => (i + 1) % holders.length);
+                      }}
+                      className="text-[8px] font-semibold tracking-wider px-1 py-px rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0 leading-none cursor-pointer hover:bg-amber-200 dark:hover:bg-amber-900/60 transition-colors"
+                      aria-label={`Back-to-back with ${partnerNames}. Click to view partner.`}
+                    >
+                      B2B
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" align="start" sideOffset={4} className="text-xs">
+                    Back-to-back with {partnerNames} — click to swap
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </div>
+          <div className="text-[11px] text-muted-foreground truncate">
+            {shown.role_name || shown.position || '—'}
+          </div>
+        </div>
+      </button>
+      <span
+        className={cn(
+          'text-[10.5px] font-bold rounded-full px-2 py-0.5 flex-none',
+          fractionChipClass(shown.assigned, shown.completed),
+        )}
+        title={`${shown.completed} of ${shown.assigned} complete`}
+      >
+        {shown.completed}/{shown.assigned}
+      </span>
+    </div>
+  );
+};
+
+/** Group holders into role-based seats. Users sharing a canonical role
+ *  collapse into ONE seat with a B2B chip; solo holders remain solo. */
+function groupHoldersByRole(list: PartyPerson[]): PartyPerson[][] {
+  const map = new Map<string, PartyPerson[]>();
+  const order: string[] = [];
+  for (const p of list) {
+    const key = (p.role_name || p.position || `__solo_${p.user_id}`).trim().toLowerCase();
+    if (!map.has(key)) { map.set(key, []); order.push(key); }
+    map.get(key)!.push(p);
+  }
+  return order.map((k) =>
+    map
+      .get(k)!
+      .slice()
+      .sort((a, b) => a.full_name.localeCompare(b.full_name)),
+  );
+}
+
+interface SectionProps {
   title: string;
   count: number;
-  defaultOpen: boolean;
   locked?: boolean;
   lockCaption?: string;
   lockTooltip?: string;
   emptyText?: string;
   people: PartyPerson[];
-  b2bPositions?: Set<string>;
   onPersonClick?: (p: PartyPerson) => void;
   personClickable?: boolean;
   muted?: boolean;
 }
 
-const Group: React.FC<GroupProps> = ({
-  title, count, defaultOpen, locked, lockCaption, lockTooltip, emptyText,
-  people, b2bPositions, onPersonClick, personClickable, muted,
+/**
+ * Section — inline labelled divider (uppercase label + count + hairline)
+ * with person rows directly beneath. One flat surface, no card borders.
+ */
+const Section: React.FC<SectionProps> = ({
+  title, count, locked, lockCaption, lockTooltip, emptyText,
+  people, onPersonClick, personClickable, muted,
 }) => {
-  const [open, setOpen] = useState(defaultOpen);
-  const Icon = open ? ChevronDown : ChevronRight;
+  const seats = useMemo(() => groupHoldersByRole(people), [people]);
   return (
-    <Card className={cn('overflow-hidden', muted && 'opacity-[0.45]')}>
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-muted/30"
-      >
-        <Icon className="w-3.5 h-3.5 text-muted-foreground flex-none" />
+    <section className={cn(muted && 'opacity-[0.5]')}>
+      <div className="flex items-center gap-2 pt-1 pb-2">
         {locked && (
           <TooltipProvider>
             <Tooltip>
@@ -140,40 +198,35 @@ const Group: React.FC<GroupProps> = ({
             </Tooltip>
           </TooltipProvider>
         )}
-        <span className="text-[10.5px] font-extrabold tracking-[.14em] uppercase text-foreground">
+        <span className="text-[10.5px] font-extrabold tracking-[.14em] uppercase text-foreground shrink-0">
           {title}
         </span>
-        <span className="text-[10.5px] font-medium text-muted-foreground/60">{count}</span>
+        <span className="text-[10.5px] font-medium text-muted-foreground/70 shrink-0">{count}</span>
         {locked && lockCaption && (
-          <span className="text-[10.5px] text-muted-foreground/70 italic ml-1">{lockCaption}</span>
+          <span className="text-[10.5px] text-muted-foreground/70 italic shrink-0">{lockCaption}</span>
         )}
-      </button>
-      {open && (
-        <div className="border-t border-border/60 divide-y divide-border/40">
-          {people.length === 0 ? (
-            <div className="px-3 py-4 text-[12px] text-muted-foreground text-center">
-              {emptyText || 'No members yet.'}
-            </div>
-          ) : (
-            people.map((p) => (
-              <PersonRow
-                key={p.user_id}
-                p={p}
-                isB2B={
-                  !!p.position &&
-                  !!b2bPositions &&
-                  b2bPositions.has(p.position.trim().toLowerCase())
-                }
-                onClick={() => onPersonClick?.(p)}
-                clickable={personClickable}
-              />
-            ))
-          )}
+        <div className="flex-1 h-px bg-border/60" />
+      </div>
+      {seats.length === 0 ? (
+        <div className="px-3 py-3 text-[12px] text-muted-foreground">
+          {emptyText || 'No members yet.'}
+        </div>
+      ) : (
+        <div className="divide-y divide-border/40">
+          {seats.map((holders) => (
+            <PartyRow
+              key={holders.map((h) => h.user_id).join('|')}
+              holders={holders}
+              onClick={onPersonClick}
+              clickable={personClickable}
+            />
+          ))}
         </div>
       )}
-    </Card>
+    </section>
   );
 };
+
 
 /* ---------------- Party items drawer ---------------- */
 
@@ -194,8 +247,8 @@ const PartyItemsDrawer: React.FC<{
   return (
     <>
       <Sheet open={!!party} onOpenChange={onOpenChange}>
-        <SheetContent side="right" className="!z-modal-critical w-full sm:max-w-lg p-0 flex flex-col">
-          {/* G1 header — title + VCR-NN · Name subtext, single pill top-right, no eyebrow, no X */}
+        <SheetContent side="right" hideClose className="!z-modal-critical w-full sm:max-w-lg p-0 flex flex-col">
+          {/* G1 header — name + role subtext only; VCR context removed per Daniel review; click-outside closes (no X) */}
           <SheetHeader className="px-5 pt-5 pb-3 border-b shrink-0">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-3 min-w-0 flex-1">
@@ -210,10 +263,11 @@ const PartyItemsDrawer: React.FC<{
                     {party.full_name}
                   </SheetTitle>
                   <SheetDescription className="text-[12px] mt-0.5 truncate text-muted-foreground">
-                    {party.role_name || party.position || '—'} · {vcrCode}{vcrName ? ` · ${vcrName}` : ''}
+                    {party.role_name || party.position || '—'}
                   </SheetDescription>
                 </div>
               </div>
+
               <span
                 className={cn(
                   'flex-none text-[10.5px] font-bold rounded-full px-2 py-0.5',
@@ -338,15 +392,7 @@ export const StandardPartiesTab: React.FC<Props> = ({
     : true;
   const openApprover = lifecyclePhase === 'AWAITING_SUMMARY';
 
-  const b2bPositions = useMemo(() => {
-    const posCount = new Map<string, number>();
-    data.approving.forEach((p) => {
-      if (!p.position) return;
-      const key = p.position.trim().toLowerCase();
-      posCount.set(key, (posCount.get(key) || 0) + 1);
-    });
-    return new Set([...posCount.entries()].filter(([, c]) => c > 1).map(([k]) => k));
-  }, [data.approving]);
+
 
   // Search across name / role / discipline / item code / item summary
   const q = query.trim().toLowerCase();
@@ -407,12 +453,9 @@ export const StandardPartiesTab: React.FC<Props> = ({
 
   return (
     <div className="space-y-4">
-      {/* G2 tab header — title, VCR subtext, narrative summary, divider */}
+      {/* G2 tab header — title only, subtext removed per Daniel review */}
       <div>
         <h2 className="text-[16px] font-bold tracking-tight text-foreground">Parties</h2>
-        <div className="text-[12px] text-muted-foreground mt-0.5">
-          {handoverPoint.vcr_code}{handoverPoint.name ? ` · ${handoverPoint.name}` : ''}
-        </div>
       </div>
       <div className="rounded-md bg-muted/40 px-4 py-3 text-[12.5px] leading-relaxed text-foreground/85">
         {narrative.split(/(\*\*[^*]+\*\*)/g).map((chunk, i) =>
@@ -434,51 +477,48 @@ export const StandardPartiesTab: React.FC<Props> = ({
           className="h-9 pl-8 text-[12.5px]"
         />
       </div>
-      <div className="h-px bg-border/60" />
 
-      <div className="space-y-3">
-        <Group
+      <div className="space-y-5">
+        <Section
           title="VCR Delivery"
           count={fDelivering.length}
-          defaultOpen={openDelivery}
           emptyText={q ? 'No matches in this group.' : 'No delivering role holders resolved for this project yet.'}
           people={fDelivering}
           onPersonClick={setOpenParty}
           personClickable
         />
-        <Group
+        <Section
           title="VCR Approvers"
           count={fApproving.length}
-          defaultOpen={openApprover || !!q}
           emptyText={q ? 'No matches in this group.' : 'No approving parties assigned yet.'}
           people={fApproving}
-          b2bPositions={b2bPositions}
           onPersonClick={setOpenParty}
           personClickable
         />
         {isHC && (
-          <Group
-            title="SoF Approvers · UNLOCKS AT VCR APPROVAL"
+          <Section
+            title="SoF Approvers"
             count={fSof.length}
-            defaultOpen={false}
             locked={!gateUnlocked}
+            lockCaption={!gateUnlocked ? 'unlocks at VCR approval' : undefined}
             lockTooltip="Statement of Fitness applies to hydrocarbon VCRs. Unlocks once every VCR item reaches terminal status."
             emptyText="No SoF approver role holders resolved yet."
             people={fSof}
             muted={!gateUnlocked}
           />
         )}
-        <Group
-          title="PAC Approvers · UNLOCKS AT VCR APPROVAL"
+        <Section
+          title="PAC Approvers"
           count={fPac.length}
-          defaultOpen={false}
           locked={!gateUnlocked}
+          lockCaption={!gateUnlocked ? 'unlocks at VCR approval' : undefined}
           lockTooltip="Provisional Acceptance Certificate signature. Unlocks once every VCR item reaches terminal status."
           emptyText="No PAC approver role holders resolved yet."
           people={fPac}
           muted={!gateUnlocked}
         />
       </div>
+
 
       <PartyItemsDrawer
         party={openParty}

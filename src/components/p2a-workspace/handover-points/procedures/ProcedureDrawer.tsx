@@ -134,7 +134,7 @@ export const ProcedureDrawer: React.FC<ProcedureDrawerProps> = ({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="!z-modal-critical w-full sm:max-w-lg p-0 flex flex-col">
+      <SheetContent side="right" hideClose className="!z-modal-critical w-full sm:max-w-lg p-0 flex flex-col">
         {/* G1 header — title + VCR-NN · Name subtext, one pill, no eyebrow, no X */}
         <SheetHeader className="px-5 pt-5 pb-4 border-b shrink-0">
           <div className="flex items-start justify-between gap-3">
