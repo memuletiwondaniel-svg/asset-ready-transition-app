@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
 import { PACCategory } from './useHandoverPrerequisites';
+import { buildTaskTitle } from '@/lib/buildTaskTitle';
+
 
 export type VCRTemplateStatus = 'draft' | 'under_review' | 'approved';
 
@@ -84,7 +86,11 @@ export function useVCRTemplates() {
     // Create a task for each matching user
     const tasks = matchingUsers.map(user => ({
       user_id: user.user_id,
-      title: `Review VCR Template: ${templateName}`,
+      title: buildTaskTitle({
+        action: 'review_vcr_checklist_bundle',
+        actionOverride: 'Review VCR template',
+        subjectCode: templateName,
+      }),
       description: `A VCR template "${templateName}" has been submitted for your review and approval.`,
       type: 'review',
       priority: 'Medium',
@@ -92,6 +98,7 @@ export function useVCRTemplates() {
       metadata: {
         template_id: templateId,
         template_name: templateName,
+        action: 'review_vcr_template',
       },
     }));
 
