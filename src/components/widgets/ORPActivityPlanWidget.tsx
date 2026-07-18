@@ -136,15 +136,50 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
   const rawUpcoming = primaryPlan?.upcoming_activities || [];
   const completedActivities = primaryPlan?.completed_activities || [];
 
-  // Split into Ongoing (in-progress or overdue) vs Upcoming (future / not started)
-  const ongoingActivities = rawUpcoming.filter(a => {
-    const s = getActivityStatus(a);
-    return s === 'in-progress' || s === 'overdue' || s === 'due-today';
-  });
+  // Split into Ongoing (in-progress or overdue) vs Upcoming (future / not started).
+  // Ongoing is sorted worst-first: overdue before due-today before in-progress,
+  // and within overdue by descending days-late.
+  const ongoingActivities = rawUpcoming
+    .filter(a => {
+      const s = getActivityStatus(a);
+      return s === 'in-progress' || s === 'overdue' || s === 'due-today';
+    })
+    .sort((a, b) => {
+      const sa = getActivityStatus(a);
+      const sb = getActivityStatus(b);
+      const rank = (s: string) => (s === 'overdue' ? 0 : s === 'due-today' ? 1 : 2);
+      const r = rank(sa) - rank(sb);
+      if (r !== 0) return r;
+      // Within overdue: most-overdue first (oldest end_date).
+      const da = a.end_date ? parseISO(a.end_date).getTime() : Number.POSITIVE_INFINITY;
+      const db = b.end_date ? parseISO(b.end_date).getTime() : Number.POSITIVE_INFINITY;
+      return da - db;
+    });
   const upcomingActivities = rawUpcoming.filter(a => {
     const s = getActivityStatus(a);
     return s === 'upcoming';
   });
+
+  // Overdue rollup drives the narrative summary tone.
+  const overdueCount = ongoingActivities.filter(a => getActivityStatus(a) === 'overdue').length;
+  const worstDaysLate = ongoingActivities.reduce((max, a) => {
+    if (getActivityStatus(a) !== 'overdue' || !a.end_date) return max;
+    const dl = -differenceInCalendarDays(parseISO(a.end_date), new Date());
+    return Math.max(max, dl);
+  }, 0);
+  const narrativeTone: 'ok' | 'attention' | 'critical' =
+    overdueCount === 0 ? 'ok' : worstDaysLate > 35 ? 'critical' : 'attention';
+  const narrativeLead = overdueCount === 0
+    ? (inProgressCount > 0 ? 'On track' : (completedDeliverables === totalDeliverables && totalDeliverables > 0 ? 'All activities complete' : 'Not yet started'))
+    : `${overdueCount} activit${overdueCount === 1 ? 'y' : 'ies'} overdue`;
+  const narrativeSecondary = `${completedDeliverables} completed · ${inProgressCount} in progress · ${notStartedCount} not started`;
+  // Health-only bar colour: green when on track, amber for attention, red for critical.
+  // Never blue anywhere (spec).
+  const barColorClass = narrativeTone === 'critical'
+    ? '[&>div]:bg-red-500'
+    : narrativeTone === 'attention'
+      ? '[&>div]:bg-amber-500'
+      : '[&>div]:bg-emerald-500';
 
   const openActivityOverlay = (code?: string) => {
     setHighlightCode(code);
