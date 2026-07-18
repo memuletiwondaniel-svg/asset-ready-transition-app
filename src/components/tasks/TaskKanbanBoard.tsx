@@ -2020,7 +2020,6 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
           ) : null}
         </DragOverlay>
       </DndContext>
-      )}
 
       <TaskDetailSheet
         task={selectedTask}
