@@ -17640,6 +17640,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      _task_close_by_dedupe_prefix: {
+        Args: { p_prefix: string }
+        Returns: undefined
+      }
       _training_close_open_tasks: {
         Args: { p_training_id: string }
         Returns: undefined
