@@ -460,12 +460,9 @@ export const StandardPartiesTab: React.FC<Props> = ({
 
   return (
     <div className="space-y-4">
-      {/* G2 tab header — title, VCR subtext, narrative summary, divider */}
+      {/* G2 tab header — title only, subtext removed per Daniel review */}
       <div>
         <h2 className="text-[16px] font-bold tracking-tight text-foreground">Parties</h2>
-        <div className="text-[12px] text-muted-foreground mt-0.5">
-          {handoverPoint.vcr_code}{handoverPoint.name ? ` · ${handoverPoint.name}` : ''}
-        </div>
       </div>
       <div className="rounded-md bg-muted/40 px-4 py-3 text-[12.5px] leading-relaxed text-foreground/85">
         {narrative.split(/(\*\*[^*]+\*\*)/g).map((chunk, i) =>
@@ -487,51 +484,48 @@ export const StandardPartiesTab: React.FC<Props> = ({
           className="h-9 pl-8 text-[12.5px]"
         />
       </div>
-      <div className="h-px bg-border/60" />
 
-      <div className="space-y-3">
-        <Group
+      <div className="space-y-5">
+        <Section
           title="VCR Delivery"
           count={fDelivering.length}
-          defaultOpen={openDelivery}
           emptyText={q ? 'No matches in this group.' : 'No delivering role holders resolved for this project yet.'}
           people={fDelivering}
           onPersonClick={setOpenParty}
           personClickable
         />
-        <Group
+        <Section
           title="VCR Approvers"
           count={fApproving.length}
-          defaultOpen={openApprover || !!q}
           emptyText={q ? 'No matches in this group.' : 'No approving parties assigned yet.'}
           people={fApproving}
-          b2bPositions={b2bPositions}
           onPersonClick={setOpenParty}
           personClickable
         />
         {isHC && (
-          <Group
-            title="SoF Approvers · UNLOCKS AT VCR APPROVAL"
+          <Section
+            title="SoF Approvers"
             count={fSof.length}
-            defaultOpen={false}
             locked={!gateUnlocked}
+            lockCaption={!gateUnlocked ? 'unlocks at VCR approval' : undefined}
             lockTooltip="Statement of Fitness applies to hydrocarbon VCRs. Unlocks once every VCR item reaches terminal status."
             emptyText="No SoF approver role holders resolved yet."
             people={fSof}
             muted={!gateUnlocked}
           />
         )}
-        <Group
-          title="PAC Approvers · UNLOCKS AT VCR APPROVAL"
+        <Section
+          title="PAC Approvers"
           count={fPac.length}
-          defaultOpen={false}
           locked={!gateUnlocked}
+          lockCaption={!gateUnlocked ? 'unlocks at VCR approval' : undefined}
           lockTooltip="Provisional Acceptance Certificate signature. Unlocks once every VCR item reaches terminal status."
           emptyText="No PAC approver role holders resolved yet."
           people={fPac}
           muted={!gateUnlocked}
         />
       </div>
+
 
       <PartyItemsDrawer
         party={openParty}
