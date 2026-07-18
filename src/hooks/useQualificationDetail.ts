@@ -252,7 +252,12 @@ export const useRaiseQualification = () => {
 
       // Create qualification_review tasks per approver (dedupe via dedupe_key)
       const qNum = qual.q_number ?? 0;
-      const title = `Review Qualification Q-${String(qNum).padStart(3, '0')} for ${args.vcr_code || 'VCR'} (${args.vcr_name || ''})`;
+      const qCode = `Q-${String(qNum).padStart(3, '0')}`;
+      const title = buildTaskTitle({
+        action: 'review_qualification',
+        subjectCode: qCode,
+        subjectName: args.vcr_code ? `${args.vcr_code}${args.vcr_name ? ' · ' + args.vcr_name : ''}` : args.vcr_name || null,
+      });
       const taskRows = args.approver_user_ids.map((u) => ({
         user_id: u,
         title,
