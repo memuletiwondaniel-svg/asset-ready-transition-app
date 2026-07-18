@@ -729,6 +729,9 @@ const KanbanCardContent: React.FC<{
             <span className="text-[10px] text-muted-foreground">{task.categoryLabel}</span>
           )
         )}
+        {!isChild && isReviewShape && task.kanbanColumn !== 'done' && (
+          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 whitespace-nowrap">Review</span>
+        )}
         {topRightChip && <div className="ml-auto shrink-0">{topRightChip}</div>}
       </div>
 
