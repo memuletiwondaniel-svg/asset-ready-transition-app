@@ -50,9 +50,22 @@ function closeAnyOpenDialog() {
   document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
 }
 
+const FIND_TIMEOUT_MS = 20000;
+const FIND_STEP_MS = 500;
+
+async function findButton(testId: string): Promise<HTMLButtonElement | null> {
+  const start = Date.now();
+  while (Date.now() - start < FIND_TIMEOUT_MS) {
+    const el = document.querySelector<HTMLButtonElement>(`[data-testid="${testId}"]`);
+    if (el) return el;
+    await delay(FIND_STEP_MS);
+  }
+  return document.querySelector<HTMLButtonElement>(`[data-testid="${testId}"]`);
+}
+
 async function runP2ATest(): Promise<Result> {
-  const btn = document.querySelector<HTMLButtonElement>('[data-testid="p2a-header-button"]');
-  if (!btn) return { target: 'P2A Handover header', pass: false, detail: 'button not found (widget may be hidden or page not on /project/:id)' };
+  const btn = await findButton('p2a-header-button');
+  if (!btn) return { target: 'P2A Handover header', pass: false, detail: `button not found after ${FIND_TIMEOUT_MS}ms (widget may be hidden or page not on /project/:id)` };
   const dialogsBefore = findDialogs().length;
   btn.click();
   const opened = await waitFor(() => findDialogs().length > dialogsBefore, 3000);
@@ -65,8 +78,8 @@ async function runP2ATest(): Promise<Result> {
 }
 
 async function runORATest(): Promise<Result> {
-  const btn = document.querySelector<HTMLButtonElement>('[data-testid="ora-header-button"]');
-  if (!btn) return { target: 'ORA Activities header', pass: false, detail: 'button not found (project may have no active ORA plan)' };
+  const btn = await findButton('ora-header-button');
+  if (!btn) return { target: 'ORA Activities header', pass: false, detail: `button not found after ${FIND_TIMEOUT_MS}ms (project may have no active ORA plan)` };
   const dialogsBefore = findDialogs().length;
   btn.click();
   const opened = await waitFor(() => findDialogs().length > dialogsBefore, 3000);
@@ -79,8 +92,8 @@ async function runORATest(): Promise<Result> {
 }
 
 async function runScopeReadMoreTest(): Promise<Result> {
-  const btn = document.querySelector<HTMLButtonElement>('[data-testid="scope-read-more"]');
-  if (!btn) return { target: 'Scope Read more', pass: false, detail: 'button not found (scope may be short enough not to need it)' };
+  const btn = await findButton('scope-read-more');
+  if (!btn) return { target: 'Scope Read more', pass: false, detail: `button not found after ${FIND_TIMEOUT_MS}ms (scope may be short enough not to need it)` };
   const before = btn.getAttribute('data-scope-expanded');
   const beforeLabel = btn.textContent?.trim();
   btn.click();
@@ -93,7 +106,6 @@ async function runScopeReadMoreTest(): Promise<Result> {
   const afterLabel = after?.textContent?.trim();
   const labelFlipped = beforeLabel !== afterLabel;
   const pass = flipped && labelFlipped;
-  // Toggle back so the page state is unchanged after the test.
   if (after) after.click();
   return {
     target: 'Scope Read more',
@@ -104,9 +116,25 @@ async function runScopeReadMoreTest(): Promise<Result> {
   };
 }
 
+async function waitForProjectRouteReady(): Promise<void> {
+  // Wait until we're on /project/:id AND at least one widget card header exists
+  // (any of the three testids), or a hard 25s cap.
+  const start = Date.now();
+  const cap = 25000;
+  while (Date.now() - start < cap) {
+    const onRoute = /\/project\/[^/]+/.test(window.location.pathname);
+    const anyWidget = document.querySelector('[data-testid="p2a-header-button"], [data-testid="ora-header-button"], [data-testid="scope-read-more"]');
+    if (onRoute && anyWidget) return;
+    await delay(250);
+  }
+}
+
 export async function runHeaderSelfTest(): Promise<{ build: string; results: Result[]; passed: number; total: number }> {
   // eslint-disable-next-line no-console
   console.info('[orsh:selftest] starting header self-test build=%s at=%s', BUILD_ID, new Date().toISOString());
+  await waitForProjectRouteReady();
+  // eslint-disable-next-line no-console
+  console.info('[orsh:selftest] project route ready, running assertions');
   const results: Result[] = [];
   results.push(await runP2ATest());
   results.push(await runORATest());
@@ -131,10 +159,12 @@ export function scheduleHeaderSelfTestIfRequested() {
     if (params.get('selftest') !== 'headers') return;
     if ((window as any).__ORSH_HEADER_SELFTEST_SCHEDULED__) return;
     (window as any).__ORSH_HEADER_SELFTEST_SCHEDULED__ = true;
-    // Wait 1.2s for widgets to render and data queries to settle before firing.
-    window.setTimeout(() => { void runHeaderSelfTest(); }, 1200);
+    // Kick after a short tick; runHeaderSelfTest itself polls up to ~25s for
+    // the project route + widgets to hydrate before running assertions.
+    window.setTimeout(() => { void runHeaderSelfTest(); }, 300);
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error('[orsh:selftest] scheduling error', err);
   }
 }
+
