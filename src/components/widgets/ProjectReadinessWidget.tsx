@@ -18,6 +18,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 import { MilestonesTimeline } from './MilestonesTimeline';
+import { resolvePlantLabel } from '@/lib/plantCodeLabels';
 import DOMPurify from 'dompurify';
 
 const isHtmlScope = (s: string) => /<\/?[a-z][\s\S]*>/i.test(s);
@@ -503,11 +504,14 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
             )}
           </div>
           
-          {/* Location Labels */}
-          {project && (plant || (project as any).field_name || station) && (
+          {/* Location — plant + station only. Field is surfaced inside the
+              Details drawer, never on the overview line (Daniel-approved
+              2026-07-18). Plant name resolves through the data-driven
+              plant-code label dictionary; unmapped codes render raw. */}
+          {project && (plant || station) && (
             <p className="text-xs text-muted-foreground">
               <span className="font-medium text-foreground/70">Location:</span>{' '}
-              {[plant?.name, (project as any).field_name, station?.name].filter(Boolean).join(' · ')}
+              {[resolvePlantLabel(plant?.name), station?.name].filter(Boolean).join(' · ')}
             </p>
           )}
         </div>
