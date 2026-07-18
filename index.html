@@ -91,6 +91,8 @@
         gap: 16px; background: #ffffff; color: #1a56db;
         font-family: Inter, system-ui, -apple-system, sans-serif;
         transition: opacity .25s ease;
+        /* Never block user interaction — this is a visual-only splash. */
+        pointer-events: none;
       }
       @media (prefers-color-scheme: dark) {
         #app-boot-overlay { background: #0b0f1a; color: #93c5fd; }
