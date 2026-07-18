@@ -161,7 +161,7 @@ export const MaintenanceDrawer: React.FC<MaintenanceDrawerProps> = ({ deliverabl
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className={cn('!z-modal-critical w-full p-0 flex flex-col', wideClass)}>
+      <SheetContent side="right" hideClose className={cn('!z-modal-critical w-full p-0 flex flex-col', wideClass)}>
         <SheetHeader className="px-5 pt-5 pb-4 border-b shrink-0">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
