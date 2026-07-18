@@ -23,7 +23,7 @@ const bucketOrder = (label: string): number => {
   return 1;
 };
 
-export const StandardSystemsTab: React.FC<{ handoverPoint: P2AHandoverPoint }> = ({ handoverPoint }) => {
+export const StandardSystemsTab: React.FC<{ handoverPoint: P2AHandoverPoint; projectId?: string }> = ({ handoverPoint, projectId }) => {
   const { systems, isLoading } = useHandoverPointSystems(handoverPoint.id);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [selected, setSelected] = useState<any | null>(null);
