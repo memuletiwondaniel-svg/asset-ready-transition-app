@@ -44,18 +44,8 @@ export interface WidgetCardHeaderProps {
   /** Editable "Edit" button title/aria label. */
   editLabel?: string;
 }
-  subtitle?: React.ReactNode;
-  statusPill?: React.ReactNode;
-  onHeaderClick?: () => void;
-  onEdit?: () => void;
-  dragProps?: {
-    attributes?: any;
-    listeners?: any;
-  };
-  className?: string;
-  /** Editable "Edit" button title/aria label. */
-  editLabel?: string;
-}
+
+
 
 export const WidgetCardHeader: React.FC<WidgetCardHeaderProps> = ({
   Icon,
