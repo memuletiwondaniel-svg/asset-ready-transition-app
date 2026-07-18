@@ -1603,11 +1603,17 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     }
   };
 
-  // Lens partition. "My reviews" surfaces vcr/pssr approval bundles only;
-  // "My work" hides them. Both derive from the same input list.
+  // Lens partition. "My reviews" surfaces every review-shaped task — VCR/PSSR
+  // approval bundles PLUS every review_* action across the new state machines
+  // (training_review, procedure_review, register_review, ora_plan_review,
+  // qualification_review, wh_review, vcr_plan_review, sof/pac signature).
+  // The shared predicate `isReviewShapedTask` in src/lib/buildTaskTitle.ts is
+  // the single source of truth, mirrored server-side by `public.is_review_task`.
   const isReviewBundle = (u: UnifiedTask): boolean => {
-    const bt = (u.bundleTask as { type?: string } | undefined)?.type;
-    return bt === 'vcr_approval_bundle' || bt === 'pssr_approval_bundle';
+    const bt = u.bundleTask as { type?: string; metadata?: { action?: string } } | undefined;
+    if (bt && isReviewShapedTask(bt)) return true;
+    const ut = u.userTask as { type?: string; metadata?: { action?: string } } | undefined;
+    return isReviewShapedTask(ut);
   };
   const workTasks = useMemo(() => tasks.filter(u => !isReviewBundle(u)), [tasks]);
   const reviewBundles = useMemo(() => tasks.filter(isReviewBundle), [tasks]);
