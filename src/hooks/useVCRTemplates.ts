@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
 import { PACCategory } from './useHandoverPrerequisites';
+import { buildTaskTitle } from '@/lib/buildTaskTitle';
+
 
 export type VCRTemplateStatus = 'draft' | 'under_review' | 'approved';
 
