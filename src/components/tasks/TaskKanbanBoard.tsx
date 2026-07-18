@@ -624,12 +624,19 @@ const KanbanCardContent: React.FC<{
   const oraApprovalSummaries = useContext(ORAApprovalContext);
   const strippedTitleCollisions = useContext(TitleCollisionContext);
 
-  // Rail color encodes URGENCY (overdue/due-soon/on-track) — see computeUrgency.
+  // Review-shape drives the amber 3px left rail (overrides urgency rail) and
+  // the amber "Review" chip in the top-right — same classification used by
+  // the "NEEDS YOUR DECISION" in-column grouping.
+  const isReviewShape = isReviewShapeTask(task);
+
+  // Rail color encodes URGENCY (overdue/due-soon/on-track) — see computeUrgency,
+  // except review-shaped tasks always carry the amber decision rail.
   // Rejected status keeps the destructive override.
   const urgency = computeUrgency(task);
   const railShadow = (() => {
     if (task.kanbanColumn === 'done') return undefined;
     if (accentClass === 'border-l-destructive') return 'inset 2px 0 0 0 hsl(var(--destructive) / 0.5)';
+    if (isReviewShape) return 'inset 3px 0 0 0 rgb(245 158 11 / 0.9)';
     switch (urgency.rail) {
       case 'red':   return 'inset 2px 0 0 0 rgb(239 68 68 / 0.45)';
       case 'amber': return 'inset 2px 0 0 0 rgb(245 158 11 / 0.45)';
