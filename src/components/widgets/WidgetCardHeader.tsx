@@ -43,7 +43,11 @@ export interface WidgetCardHeaderProps {
   className?: string;
   /** Editable "Edit" button title/aria label. */
   editLabel?: string;
+  /** Optional data-testid applied to the clickable header button. Used by the
+   *  dev-only header self-test (see src/lib/dev-header-selftest.ts). */
+  testId?: string;
 }
+
 
 
 
@@ -58,7 +62,9 @@ export const WidgetCardHeader: React.FC<WidgetCardHeaderProps> = ({
   dragProps,
   className,
   editLabel = 'Edit',
+  testId,
 }) => {
+
   return (
     <div
       {...(dragProps?.attributes || {})}
@@ -72,6 +78,7 @@ export const WidgetCardHeader: React.FC<WidgetCardHeaderProps> = ({
       <div className="flex items-center gap-3 min-w-0">
         <button
           type="button"
+          data-testid={testId}
           onPointerDown={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
           onClick={(e) => { e.stopPropagation(); onHeaderClick?.(); }}

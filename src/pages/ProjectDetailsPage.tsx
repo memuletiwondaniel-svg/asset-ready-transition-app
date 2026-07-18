@@ -32,6 +32,8 @@ import { CSS } from '@dnd-kit/utilities';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { createSidebarNavigator } from '@/utils/sidebarNavigation';
+import { scheduleHeaderSelfTestIfRequested } from '@/lib/dev-header-selftest';
+
 
 const PROJECT_WIDGET_STORAGE_VERSION = 'v2';
 
@@ -147,6 +149,14 @@ export default function ProjectDetailsPage() {
     queryClient.invalidateQueries({ queryKey: ['project-pssrs', id] });
     queryClient.invalidateQueries({ queryKey: ['p2a-plan-by-project', id] });
   }, [id, queryClient]);
+
+  // N-family QAQC: header click-through self-test. Runs when the URL has
+  // `?selftest=headers` — logs PASS/FAIL for P2A / ORA / Scope Read-more.
+  useEffect(() => {
+    if (!id) return;
+    scheduleHeaderSelfTestIfRequested();
+  }, [id]);
+
 
   useEffect(() => {
     if (!id) return;

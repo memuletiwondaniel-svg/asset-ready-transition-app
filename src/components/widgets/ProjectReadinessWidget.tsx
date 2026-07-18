@@ -274,6 +274,8 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
               {stripHtml(project.project_scope).length > 200 && (
                 <button
                   type="button"
+                  data-testid="scope-read-more"
+                  data-scope-expanded={isScopeExpanded ? 'true' : 'false'}
                   className="mt-2 text-[11px] font-medium text-primary/80 hover:text-primary hover:underline underline-offset-2 transition-colors"
                   onClick={(e) => {
                     e.stopPropagation();

@@ -303,6 +303,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
           Icon={ListChecks}
           hoverIconClass="group-hover:text-violet-600"
           title="ORA Activities"
+          testId="ora-header-button"
           onHeaderClick={() => setOverlayOpen(true)}
           dragProps={{ attributes: dragAttributes, listeners: dragListeners }}
           statusPill={statusConfig ? (
