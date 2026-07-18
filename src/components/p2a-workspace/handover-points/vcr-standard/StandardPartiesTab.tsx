@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import {
@@ -16,7 +15,7 @@ import {
   SheetDescription,
 } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ChevronDown, ChevronRight, Lock, Search } from 'lucide-react';
+import { Lock, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { P2AHandoverPoint } from '../../hooks/useP2AHandoverPoints';
 import { useVCRPrerequisites } from '../../hooks/useVCRPrerequisites';
@@ -28,6 +27,7 @@ import { formatVcrItemCode } from '@/lib/vcrItemCode';
 import { useVCRDisciplineAssurance } from '@/components/widgets/hooks/useVCRDisciplineAssurance';
 
 import type { LifecyclePhase } from './useVCRLifecycle';
+
 
 interface Props {
   handoverPoint: P2AHandoverPoint;
