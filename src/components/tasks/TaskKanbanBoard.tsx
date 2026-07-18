@@ -75,6 +75,7 @@ import { stripLeadingTaskVerb, shortenInlineVCRCode } from '@/components/widgets
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useKanbanDragDrop, type MoveResult } from './useKanbanDragDrop';
+import { isReviewShapedTask } from '@/lib/buildTaskTitle';
 
 // DnD Kit
 import {
