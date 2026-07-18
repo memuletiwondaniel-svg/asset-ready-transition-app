@@ -47,8 +47,10 @@ export const DeliverableDetailShell: React.FC<ShellProps> = ({
   <Sheet open={open} onOpenChange={onOpenChange}>
     <SheetContent
       side="right"
+      hideClose
       className="!z-modal-critical w-full sm:max-w-lg p-0 flex flex-col"
     >
+
       <SheetHeader className="px-5 pt-5 pb-3 border-b shrink-0">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
