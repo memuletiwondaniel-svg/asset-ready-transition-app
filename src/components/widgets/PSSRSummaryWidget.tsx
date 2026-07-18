@@ -9,6 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useP2APlanWizard } from '@/hooks/useP2APlanWizard';
 
 import { StyledWidgetIcon } from './StyledWidgetIcon';
+import { WidgetCardHeader, NarrativeSummary, InlineDivider } from './WidgetCardHeader';
 import { VCRCard } from './VCRCard';
 import { useProjectPSSRs } from '@/hooks/useProjectPSSRs';
 import { useProjectVCRs, ProjectVCR, VCRLifecycle } from '@/hooks/useProjectVCRs';
@@ -298,30 +299,47 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
   const headerStatusLabel = hasPlan ? planUIState.badgeLabel : null;
   const headerStatusClass = hasPlan ? planUIState.badgeClass : '';
 
+  // VCR narrative rollup — bold lead + exceptions, no % duplication.
+  const vcrCounts = {
+    total: allVCRs.length,
+    completed: allVCRs.filter(v => v.lifecycle === 'handed_over').length,
+    stalled: allVCRs.filter(v => {
+      if (!v.updated_at) return false;
+      const days = Math.floor((Date.now() - new Date(v.updated_at).getTime()) / 86400000);
+      const lc = v.lifecycle ?? 'not_started';
+      return days > 21 && lc !== 'handed_over' && lc !== 'approved';
+    }).length,
+    actionNeeded: allVCRs.filter(v => {
+      const lc = v.lifecycle ?? 'not_started';
+      return lc === 'not_started' || lc === 'draft';
+    }).length,
+  };
+  const vcrNarrativeTone: 'ok' | 'attention' | 'critical' =
+    vcrCounts.stalled > 0 ? 'critical' : vcrCounts.actionNeeded > 0 ? 'attention' : 'ok';
+  const vcrNarrativeLead = vcrCounts.total === 0
+    ? 'No VCRs yet'
+    : vcrCounts.stalled > 0
+      ? `${vcrCounts.stalled} VCR${vcrCounts.stalled === 1 ? '' : 's'} stalled`
+      : vcrCounts.actionNeeded > 0
+        ? `${vcrCounts.actionNeeded} awaiting setup`
+        : vcrCounts.completed === vcrCounts.total
+          ? 'All VCRs handed over'
+          : 'On track';
+  const vcrNarrativeSecondary = vcrCounts.total > 0
+    ? `${vcrCounts.completed} of ${vcrCounts.total} handed over`
+    : null;
+
   return (
     <>
       <Card className="h-full flex flex-col transition-all duration-300 group overflow-hidden glass-card glass-card-hover">
-        <CardHeader {...dragAttributes} {...dragListeners} className="cursor-grab active:cursor-grabbing pb-3">
-          <CardTitle className="text-lg flex items-center gap-3">
-            <button
-              type="button"
-              onPointerDown={(e) => e.stopPropagation()}
-              onMouseDown={(e) => e.stopPropagation()}
-              onClick={(e) => { e.stopPropagation(); handleP2AHeaderClick(); }}
-              className="flex items-center gap-3 flex-1 min-w-0 text-left hover:opacity-80 transition-opacity cursor-pointer relative z-10"
-            >
-              <StyledWidgetIcon 
-                Icon={Key}
-                gradientFrom="from-orange-500"
-                gradientTo="to-amber-500"
-                glowFrom="from-orange-500/40"
-                glowTo="to-amber-500/40"
-              />
-              <span className="truncate">P2A Handover</span>
-            </button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex-1 flex flex-col space-y-3 pt-2 min-h-0">
+        <WidgetCardHeader
+          Icon={Key}
+          hoverIconClass="group-hover:text-orange-600"
+          title="P2A Handover"
+          onHeaderClick={handleP2AHeaderClick}
+          dragProps={{ attributes: dragAttributes, listeners: dragListeners }}
+        />
+        <CardContent className="flex-1 flex flex-col space-y-3 pt-4 min-h-0">
           <div className="flex-1 flex flex-col min-h-0">
             {isLoading ? (
               <div className="space-y-3">
@@ -333,25 +351,27 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                 ))}
               </div>
             ) : showVCRList ? (
-              <div className="space-y-3 overflow-y-auto overscroll-contain pr-1 flex-1 min-h-0 scrollbar-modern">
-                {vcrGroups.map(group => group.items.length === 0 ? null : (
-                  <div key={group.key} className="space-y-2">
-                    <div className="flex items-center gap-2 pt-1">
-                      <span className="text-[10px] uppercase tracking-[0.08em] font-medium text-muted-foreground">
-                        {group.label} · {group.items.length}
-                      </span>
-                      <div className="flex-1 h-px bg-border/60" />
+              <div className="flex flex-col gap-3 flex-1 min-h-0">
+                <NarrativeSummary
+                  tone={vcrNarrativeTone}
+                  lead={vcrNarrativeLead}
+                  secondary={vcrNarrativeSecondary}
+                />
+                <div className="space-y-3 overflow-y-auto overscroll-contain pr-1 flex-1 min-h-0 scrollbar-modern">
+                  {vcrGroups.map(group => group.items.length === 0 ? null : (
+                    <div key={group.key} className="space-y-2">
+                      <InlineDivider label={group.label} count={group.items.length} />
+                      {group.items.map(vcr => (
+                        <VCRCard
+                          key={vcr.id}
+                          vcr={vcr}
+                          onClick={handleVCRClick}
+                          isActive={(wizardVCR?.id ?? selectedVCR?.id) === vcr.id}
+                        />
+                      ))}
                     </div>
-                    {group.items.map(vcr => (
-                      <VCRCard
-                        key={vcr.id}
-                        vcr={vcr}
-                        onClick={handleVCRClick}
-                        isActive={(wizardVCR?.id ?? selectedVCR?.id) === vcr.id}
-                      />
-                    ))}
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             ) : p2aPlanByProject ? (
               <div className="text-center py-8 text-muted-foreground">

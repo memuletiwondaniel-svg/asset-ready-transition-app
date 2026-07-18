@@ -81,11 +81,23 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
   const gateSigned = vcr.gate_signed ?? vcr.sof_signed ?? false;
   const systemsLabel = `${vcr.systems_count} system${vcr.systems_count === 1 ? '' : 's'}`;
 
+  // Exception-only left rail per G4:
+  //   red   → stalled (non-terminal + no update in >21 days)
+  //   amber → action-needed (not_started / draft)
+  //   none  → healthy
+  const daysSinceUpdate = vcr.updated_at
+    ? Math.floor((Date.now() - new Date(vcr.updated_at).getTime()) / 86400000)
+    : null;
+  const isTerminal = lifecycle === 'approved' || lifecycle === 'handed_over';
+  const isStale = daysSinceUpdate !== null && daysSinceUpdate > 21 && !isTerminal;
+  const isActionNeeded = lifecycle === 'not_started' || lifecycle === 'draft';
+  const railColor: string | null = isStale ? '#DC2626' : (isActionNeeded ? '#D97706' : null);
+
   // Derive bar percent + trailing value per state
   let barPercent = 0;
   let trailingValue = '';
   let ctxLeft: React.ReactNode = null;
-  let ctxRight = '';
+  let ctxRight: React.ReactNode = '';
 
   if (lifecycle === 'draft') {
     barPercent = Math.max(0, Math.min(100, vcr.planProgress ?? 0));
@@ -113,7 +125,7 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
       trailingValue = total > 0 ? `${approved}/${total}` : '';
     } else if (pa?.phase === 1) {
       ctxLeft = 'Awaiting ORA Lead approval';
-      barPercent = pct; // 0% at Phase 1 is honest
+      barPercent = pct;
       trailingValue = 'Phase 1';
     } else if (pa?.phase === 2) {
       ctxLeft = `${approved} of ${total} approvers signed`;
@@ -137,6 +149,17 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
     ctxRight = vcr.gate_signed_at ? `Handed over ${formatShortDate(vcr.gate_signed_at)}` : '';
   }
 
+  // Stale chip replaces the plain "Updated Xd ago" line on the right when
+  // the card has been idle >21 days on a non-terminal lifecycle.
+  if (isStale && daysSinceUpdate !== null) {
+    ctxRight = (
+      <span className="inline-flex items-center gap-1 text-red-600 font-medium">
+        <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-600" aria-hidden />
+        Stale {daysSinceUpdate}d
+      </span>
+    );
+  }
+
   const activeBorder = 'hsl(var(--primary))';
   const activeBg = 'hsl(var(--primary) / 0.08)';
   const activeText = 'hsl(var(--primary))';
@@ -152,6 +175,15 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
     border: '0.5px solid hsl(var(--muted-foreground) / 0.4)',
   };
 
+  // Compose the inset left-rule box-shadow. Handed-over cards keep their
+  // green rule; exception rails only apply otherwise so we never colour
+  // a completed card red or amber.
+  const insetRuleShadow = isHandedOver
+    ? 'inset 3px 0 0 #1D9E75'
+    : railColor
+      ? `inset 3px 0 0 ${railColor}`
+      : null;
+
   return (
     <button
       type="button"
@@ -165,18 +197,18 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
           'bg-muted dark:bg-muted/60 border border-border hover:bg-card hover:border-foreground/20 hover:shadow-md hover:-translate-y-px'
       )}
       style={{
-        // Inset green left rule on handed-over cards adds zero outer width (no 3px column drift).
-        // Extra ~2px left padding so text clears the rule.
-        paddingLeft: isHandedOver ? 16 : 14,
+        // Inset left rule adds zero outer width. Extra ~2px left padding so
+        // text clears the rule when one is present.
+        paddingLeft: insetRuleShadow ? 16 : 14,
         paddingRight: 14,
         ...(isActive
           ? {
               backgroundColor: activeBg,
               border: `1px solid ${activeBorder}`,
-              ...(isHandedOver ? { boxShadow: 'inset 3px 0 0 #1D9E75' } : {}),
+              ...(insetRuleShadow ? { boxShadow: insetRuleShadow } : {}),
             }
-          : isHandedOver
-            ? { boxShadow: 'inset 3px 0 0 #1D9E75' }
+          : insetRuleShadow
+            ? { boxShadow: insetRuleShadow }
             : {}),
       }}
     >

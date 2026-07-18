@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Settings2, Clock, CheckCircle2, FileEdit, Send, AlertTriangle, AlertCircle, ChevronRight, ChevronDown, Trash2, CalendarRange, Activity, CircleDot, Plus, Pencil } from 'lucide-react';
+import { Settings2, ListChecks, Clock, CheckCircle2, FileEdit, Send, AlertTriangle, AlertCircle, ChevronRight, ChevronDown, Trash2, CalendarRange, Activity, CircleDot, Plus, Pencil } from 'lucide-react';
 
 import { StyledWidgetIcon } from './StyledWidgetIcon';
+import { WidgetCardHeader, NarrativeSummary, InlineDivider } from './WidgetCardHeader';
 import { useProjectORPPlans, ProjectORPActivity } from '@/hooks/useProjectORPPlans';
 import { useORPPlans } from '@/hooks/useORPPlans';
 import { Progress } from '@/components/ui/progress';
@@ -47,6 +48,11 @@ const ActivityRow: React.FC<{ activity: ProjectORPActivity; isCompleted?: boolea
   const actStatus = isCompleted ? 'completed' : getActivityStatus(activity);
   const daysToDue = activity.end_date ? differenceInCalendarDays(parseISO(activity.end_date), new Date()) : null;
   const isDueSoon = !isCompleted && daysToDue !== null && daysToDue >= 0 && daysToDue <= 7;
+  // Overdue severity per spec: red when >35 days overdue, amber below.
+  const daysOverdue = daysToDue !== null && daysToDue < 0 ? Math.abs(daysToDue) : 0;
+  const overdueSeverity: 'red' | 'amber' | null = actStatus === 'overdue'
+    ? (daysOverdue > 35 ? 'red' : 'amber')
+    : null;
 
   // State-aware leading icon. Only render an icon when it carries signal.
   let Icon: React.ElementType | null = null;
@@ -56,12 +62,11 @@ const ActivityRow: React.FC<{ activity: ProjectORPActivity; isCompleted?: boolea
     iconColor = 'text-teal-600';
   } else if (actStatus === 'overdue') {
     Icon = AlertCircle;
-    iconColor = 'text-amber-600';
+    iconColor = overdueSeverity === 'red' ? 'text-red-600' : 'text-amber-600';
   } else if (isDueSoon) {
     Icon = Clock;
     iconColor = 'text-muted-foreground';
   }
-  // on-track / future: no leading icon — date column on the right is the timing anchor.
 
   return (
     <div
@@ -76,9 +81,22 @@ const ActivityRow: React.FC<{ activity: ProjectORPActivity; isCompleted?: boolea
       <span className={cn("truncate flex-1 text-foreground/90", isCompleted && "text-muted-foreground")}>
         {activity.name}
       </span>
+      {overdueSeverity && (
+        <span
+          className={cn(
+            'shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded tabular-nums',
+            overdueSeverity === 'red'
+              ? 'bg-red-500/10 text-red-600 border border-red-500/20'
+              : 'bg-amber-500/10 text-amber-700 border border-amber-500/20',
+          )}
+          title={`${daysOverdue} day${daysOverdue === 1 ? '' : 's'} overdue`}
+        >
+          {daysOverdue}d late
+        </span>
+      )}
       {activity.end_date && (
-        <span className="text-[10px] shrink-0 text-muted-foreground">
-          {format(parseISO(activity.end_date), 'MMM d')}
+        <span className="text-[10px] shrink-0 text-muted-foreground tabular-nums">
+          Due {format(parseISO(activity.end_date), 'd MMM')}
         </span>
       )}
     </div>
@@ -118,15 +136,50 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
   const rawUpcoming = primaryPlan?.upcoming_activities || [];
   const completedActivities = primaryPlan?.completed_activities || [];
 
-  // Split into Ongoing (in-progress or overdue) vs Upcoming (future / not started)
-  const ongoingActivities = rawUpcoming.filter(a => {
-    const s = getActivityStatus(a);
-    return s === 'in-progress' || s === 'overdue' || s === 'due-today';
-  });
+  // Split into Ongoing (in-progress or overdue) vs Upcoming (future / not started).
+  // Ongoing is sorted worst-first: overdue before due-today before in-progress,
+  // and within overdue by descending days-late.
+  const ongoingActivities = rawUpcoming
+    .filter(a => {
+      const s = getActivityStatus(a);
+      return s === 'in-progress' || s === 'overdue' || s === 'due-today';
+    })
+    .sort((a, b) => {
+      const sa = getActivityStatus(a);
+      const sb = getActivityStatus(b);
+      const rank = (s: string) => (s === 'overdue' ? 0 : s === 'due-today' ? 1 : 2);
+      const r = rank(sa) - rank(sb);
+      if (r !== 0) return r;
+      // Within overdue: most-overdue first (oldest end_date).
+      const da = a.end_date ? parseISO(a.end_date).getTime() : Number.POSITIVE_INFINITY;
+      const db = b.end_date ? parseISO(b.end_date).getTime() : Number.POSITIVE_INFINITY;
+      return da - db;
+    });
   const upcomingActivities = rawUpcoming.filter(a => {
     const s = getActivityStatus(a);
     return s === 'upcoming';
   });
+
+  // Overdue rollup drives the narrative summary tone.
+  const overdueCount = ongoingActivities.filter(a => getActivityStatus(a) === 'overdue').length;
+  const worstDaysLate = ongoingActivities.reduce((max, a) => {
+    if (getActivityStatus(a) !== 'overdue' || !a.end_date) return max;
+    const dl = -differenceInCalendarDays(parseISO(a.end_date), new Date());
+    return Math.max(max, dl);
+  }, 0);
+  const narrativeTone: 'ok' | 'attention' | 'critical' =
+    overdueCount === 0 ? 'ok' : worstDaysLate > 35 ? 'critical' : 'attention';
+  const narrativeLead = overdueCount === 0
+    ? (inProgressCount > 0 ? 'On track' : (completedDeliverables === totalDeliverables && totalDeliverables > 0 ? 'All activities complete' : 'Not yet started'))
+    : `${overdueCount} activit${overdueCount === 1 ? 'y' : 'ies'} overdue`;
+  const narrativeSecondary = `${completedDeliverables} completed · ${inProgressCount} in progress · ${notStartedCount} not started`;
+  // Health-only bar colour: green when on track, amber for attention, red for critical.
+  // Never blue anywhere (spec).
+  const barColorClass = narrativeTone === 'critical'
+    ? '[&>div]:bg-red-500'
+    : narrativeTone === 'attention'
+      ? '[&>div]:bg-amber-500'
+      : '[&>div]:bg-emerald-500';
 
   const openActivityOverlay = (code?: string) => {
     setHighlightCode(code);
@@ -246,51 +299,42 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
   return (
     <>
       <Card className="h-full flex flex-col transition-all duration-300 group overflow-hidden glass-card glass-card-hover">
-        <CardHeader {...dragAttributes} {...dragListeners} className="cursor-grab active:cursor-grabbing flex-shrink-0 pb-3">
-          <CardTitle className="text-lg flex items-center gap-3">
+        <WidgetCardHeader
+          Icon={ListChecks}
+          hoverIconClass="group-hover:text-violet-600"
+          title="ORA Activities"
+          onHeaderClick={() => setOverlayOpen(true)}
+          dragProps={{ attributes: dragAttributes, listeners: dragListeners }}
+          statusPill={statusConfig ? (
             <button
               type="button"
-              onPointerDown={(e) => e.stopPropagation()}
-              onMouseDown={(e) => e.stopPropagation()}
-              onClick={(e) => { e.stopPropagation(); setOverlayOpen(true); }}
-              className="flex items-center gap-3 flex-1 min-w-0 text-left hover:opacity-80 transition-opacity cursor-pointer relative z-10"
+              onClick={(e) => { e.stopPropagation(); setApproversOpen(true); }}
+              className="cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+              title="View approvers"
             >
-              <StyledWidgetIcon Icon={Settings2} gradientFrom="from-purple-500" gradientTo="to-violet-500" glowFrom="from-purple-500/40" glowTo="to-violet-500/40" />
-              <span className="truncate">ORA Activities</span>
+              <Badge variant="outline" className={cn("text-[10px] h-5 px-2", statusConfig.className)}>
+                {statusConfig.label}
+              </Badge>
             </button>
-            {statusConfig && (
-              <button
-                type="button"
-                onPointerDown={(e) => e.stopPropagation()}
-                onMouseDown={(e) => e.stopPropagation()}
-                onClick={(e) => { e.stopPropagation(); setApproversOpen(true); }}
-                className="shrink-0 cursor-pointer relative z-10 opacity-0 group-hover:opacity-100 transition-opacity"
-                title="View approvers"
-              >
-                <Badge variant="outline" className={cn("text-[10px] h-5 px-2 hover:opacity-80 transition-opacity", statusConfig.className)}>
-                  {statusConfig.label}
-                </Badge>
-              </button>
-            )}
-          </CardTitle>
-        </CardHeader>
-        
-        <CardContent className="flex-1 flex flex-col gap-3 overflow-hidden pt-0">
-          {/* Section 2: Progress Summary */}
-          <div className="flex-shrink-0 rounded-lg border border-border bg-muted/30 p-3 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => openActivityOverlay()}>
-            <div className="flex items-center justify-between text-xs mb-2">
-              <span className="text-muted-foreground font-medium">Overall Progress</span>
-              <span className="font-bold text-sm">{overallProgress}%</span>
-            </div>
-            <Progress value={overallProgress} className="h-2 mb-2" />
-            <p className="text-[11px] text-muted-foreground leading-relaxed">
-              <span className="text-green-600 font-medium">{completedDeliverables} completed</span>
-              {' · '}
-              <span className="text-blue-600 font-medium">{inProgressCount} in progress</span>
-              {' · '}
-              <span>{notStartedCount} not started</span>
-            </p>
-          </div>
+          ) : undefined}
+        />
+
+        <CardContent className="flex-1 flex flex-col gap-3 overflow-hidden pt-4">
+          {/* G3 narrative summary — bold lead + secondary; the bar owns the
+              percentage so we never duplicate "%". Tone drives the accent rail. */}
+          <NarrativeSummary
+            tone={narrativeTone}
+            lead={narrativeLead}
+            secondary={
+              <span className="flex items-center gap-2">
+                <span className="tabular-nums">{narrativeSecondary}</span>
+                <span className="text-muted-foreground/50">·</span>
+                <span className="tabular-nums font-medium text-foreground/80">{overallProgress}%</span>
+              </span>
+            }
+            onClick={() => openActivityOverlay()}
+          />
+          <Progress value={overallProgress} className={cn("h-1.5 flex-shrink-0", barColorClass)} />
 
           {/* Scrollable activity sections */}
           <div className="flex-1 overflow-y-auto min-h-0 space-y-2 pr-1 scrollbar-modern">
