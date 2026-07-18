@@ -392,15 +392,7 @@ export const StandardPartiesTab: React.FC<Props> = ({
     : true;
   const openApprover = lifecyclePhase === 'AWAITING_SUMMARY';
 
-  const b2bPositions = useMemo(() => {
-    const posCount = new Map<string, number>();
-    data.approving.forEach((p) => {
-      if (!p.position) return;
-      const key = p.position.trim().toLowerCase();
-      posCount.set(key, (posCount.get(key) || 0) + 1);
-    });
-    return new Set([...posCount.entries()].filter(([, c]) => c > 1).map(([k]) => k));
-  }, [data.approving]);
+
 
   // Search across name / role / discipline / item code / item summary
   const q = query.trim().toLowerCase();
