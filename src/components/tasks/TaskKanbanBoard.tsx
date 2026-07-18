@@ -1692,6 +1692,63 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
 
 
 
+  // Inline labelled divider used at the top of each in-column partition
+  // ("NEEDS YOUR DECISION · n" and "YOUR WORK · n").
+  const SectionDivider: React.FC<{ label: string; count: number; tone?: 'amber' | 'muted' }> = ({ label, count, tone = 'muted' }) => (
+    <div className="flex items-center gap-2 mt-1 mb-2 first:mt-0 select-none">
+      <span className={cn(
+        'text-[10px] font-semibold uppercase tracking-wider whitespace-nowrap',
+        tone === 'amber' ? 'text-amber-700 dark:text-amber-400' : 'text-muted-foreground/70',
+      )}>
+        {label} · {count}
+      </span>
+      <div className={cn('flex-1 h-px', tone === 'amber' ? 'bg-amber-200/70 dark:bg-amber-900/40' : 'bg-border/50')} />
+    </div>
+  );
+
+  const renderTaskList = (list: UnifiedTask[], col: typeof columnData[number], keyPrefix: string) => {
+    const colGroupBy = columnGroupBy[col.key];
+    if (colGroupBy === 'project') {
+      const groups: Record<string, UnifiedTask[]> = {};
+      list.forEach(t => {
+        const key = t.project || 'Unassigned';
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(t);
+      });
+      const sorted = Object.entries(groups).sort(([a], [b]) => {
+        if (a === 'Unassigned') return 1;
+        if (b === 'Unassigned') return -1;
+        return a.localeCompare(b);
+      });
+      return sorted.map(([project, tasks]) => (
+        <ProjectGroup key={`${keyPrefix}-${project}`} projectName={project} tasks={tasks} onTaskClick={handleTaskClick} accentClass={col.accent} />
+      ));
+    }
+    if (colGroupBy === 'category') {
+      const groups: Record<string, UnifiedTask[]> = {};
+      list.forEach(t => {
+        const key = t.categoryLabel;
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(t);
+      });
+      return Object.entries(groups).map(([category, tasks]) => (
+        <ProjectGroup key={`${keyPrefix}-${category}`} projectName={category} tasks={tasks} onTaskClick={handleTaskClick} accentClass={col.accent} />
+      ));
+    }
+    return list.map(task => {
+      const meta = task.userTask?.metadata as Record<string, any> | undefined;
+      const isRejected = meta?.outcome === 'rejected';
+      return (
+        <KanbanCardWithChildren
+          key={task.id}
+          task={task}
+          onTaskClick={handleTaskClick}
+          accentClass={isRejected ? 'border-l-destructive' : col.accent}
+        />
+      );
+    });
+  };
+
   const renderColumnContent = (columnTasks: UnifiedTask[], col: typeof columnData[number]) => {
     if (columnTasks.length === 0) {
       const EmptyIcon = col.emptyIcon;
@@ -1710,53 +1767,28 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       );
     }
 
-    const colGroupBy = columnGroupBy[col.key];
+    // Decision-first partition: review-shaped tasks group at the top of the
+    // column under an amber-toned "NEEDS YOUR DECISION" divider; the rest
+    // group beneath under a quiet "YOUR WORK" divider. Order within each
+    // partition is preserved from the sorted `columnTasks` input.
+    const decisionTasks = columnTasks.filter(isReviewShapeTask);
+    const workTasks = columnTasks.filter(t => !isReviewShapeTask(t));
+    const showBoth = decisionTasks.length > 0 && workTasks.length > 0;
 
-    if (colGroupBy === 'project') {
-      const groups: Record<string, UnifiedTask[]> = {};
-      columnTasks.forEach(t => {
-        const key = t.project || 'Unassigned';
-        if (!groups[key]) groups[key] = [];
-        groups[key].push(t);
-      });
-      const sorted = Object.entries(groups).sort(([a], [b]) => {
-        if (a === 'Unassigned') return 1;
-        if (b === 'Unassigned') return -1;
-        return a.localeCompare(b);
-      });
-      return sorted.map(([project, tasks]) => (
-        <ProjectGroup key={project} projectName={project} tasks={tasks} onTaskClick={handleTaskClick} accentClass={col.accent} />
-      ));
-    }
-
-    if (colGroupBy === 'category') {
-      const groups: Record<string, UnifiedTask[]> = {};
-      columnTasks.forEach(t => {
-        const key = t.categoryLabel;
-        if (!groups[key]) groups[key] = [];
-        groups[key].push(t);
-      });
-      return Object.entries(groups).map(([category, tasks]) => (
-        <ProjectGroup key={category} projectName={category} tasks={tasks} onTaskClick={handleTaskClick} accentClass={col.accent} />
-      ));
-    }
-
-    // Default (no explicit grouping) — flat card list. VCR sub-clustering
-    // was removed in v3; project grouping is the sole grouping tier.
     return (
       <>
-        {columnTasks.map(task => {
-          const meta = task.userTask?.metadata as Record<string, any> | undefined;
-          const isRejected = meta?.outcome === 'rejected';
-          return (
-            <KanbanCardWithChildren
-              key={task.id}
-              task={task}
-              onTaskClick={handleTaskClick}
-              accentClass={isRejected ? 'border-l-destructive' : col.accent}
-            />
-          );
-        })}
+        {decisionTasks.length > 0 && (
+          <>
+            {showBoth && <SectionDivider label="Needs your decision" count={decisionTasks.length} tone="amber" />}
+            {renderTaskList(decisionTasks, col, 'rev')}
+          </>
+        )}
+        {workTasks.length > 0 && (
+          <>
+            {showBoth && <SectionDivider label="Your work" count={workTasks.length} tone="muted" />}
+            {renderTaskList(workTasks, col, 'work')}
+          </>
+        )}
       </>
     );
   };
