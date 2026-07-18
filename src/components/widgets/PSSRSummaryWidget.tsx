@@ -262,28 +262,53 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
   const hasContent = (pssrs && pssrs.length > 0) || allVCRs.length > 0;
 
   // Single dispatcher for the primary CTA / header click. Routes by the
-  // canonical action — never branches on raw status here.
+  // canonical action — never branches on raw status here. Guarantees the
+  // header click always produces a visible response (P1 functional
+  // preservation): if the plan query is still in flight or the user lacks
+  // create permission, fall back to opening the workspace read-only so the
+  // user always gets feedback.
   const openPlanByAction = () => {
+    // Loading — open workspace read-only so the click never silently drops.
+    if (p2aPlanLoading && !p2aPlanByProject) {
+      console.info('[P2A header] plan still loading — opening workspace read-only');
+      setShowP2AWorkspace(true);
+      return;
+    }
     if (!p2aPlanByProject) {
-      if (oraApproved && canCreateVCR) setShowP2APlanWizard(true);
+      if (oraApproved && canCreateVCR) {
+        setShowP2APlanWizard(true);
+      } else {
+        // No plan yet + can't create — still open the workspace so the user
+        // sees the empty state instead of a dead click.
+        setShowP2AWorkspace(true);
+      }
       return;
     }
     switch (planUIState.primaryAction) {
       case 'edit':
-        // Only DRAFT — never opens for a submitted plan.
         setShowP2APlanWizard(true);
         break;
       case 'view':
-        // PENDING_APPROVAL / ACTIVE / COMPLETED / ARCHIVED → read-only workspace.
         setShowP2AWorkspace(true);
         break;
       case 'create':
         if (canCreateVCR) setShowP2APlanWizard(true);
+        else setShowP2AWorkspace(true);
         break;
+      default:
+        setShowP2AWorkspace(true);
     }
   };
 
-  const handleP2AHeaderClick = () => openPlanByAction();
+  const handleP2AHeaderClick = () => {
+    console.info('[P2A header] click', {
+      hasPlan: !!p2aPlanByProject,
+      loading: p2aPlanLoading,
+      status: p2aPlanByProject?.status,
+      action: planUIState.primaryAction,
+    });
+    openPlanByAction();
+  };
 
   const handleP2AStatusClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
