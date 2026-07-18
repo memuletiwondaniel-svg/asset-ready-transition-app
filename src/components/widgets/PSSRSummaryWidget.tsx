@@ -351,25 +351,27 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                 ))}
               </div>
             ) : showVCRList ? (
-              <div className="space-y-3 overflow-y-auto overscroll-contain pr-1 flex-1 min-h-0 scrollbar-modern">
-                {vcrGroups.map(group => group.items.length === 0 ? null : (
-                  <div key={group.key} className="space-y-2">
-                    <div className="flex items-center gap-2 pt-1">
-                      <span className="text-[10px] uppercase tracking-[0.08em] font-medium text-muted-foreground">
-                        {group.label} · {group.items.length}
-                      </span>
-                      <div className="flex-1 h-px bg-border/60" />
+              <div className="flex flex-col gap-3 flex-1 min-h-0">
+                <NarrativeSummary
+                  tone={vcrNarrativeTone}
+                  lead={vcrNarrativeLead}
+                  secondary={vcrNarrativeSecondary}
+                />
+                <div className="space-y-3 overflow-y-auto overscroll-contain pr-1 flex-1 min-h-0 scrollbar-modern">
+                  {vcrGroups.map(group => group.items.length === 0 ? null : (
+                    <div key={group.key} className="space-y-2">
+                      <InlineDivider label={group.label} count={group.items.length} />
+                      {group.items.map(vcr => (
+                        <VCRCard
+                          key={vcr.id}
+                          vcr={vcr}
+                          onClick={handleVCRClick}
+                          isActive={(wizardVCR?.id ?? selectedVCR?.id) === vcr.id}
+                        />
+                      ))}
                     </div>
-                    {group.items.map(vcr => (
-                      <VCRCard
-                        key={vcr.id}
-                        vcr={vcr}
-                        onClick={handleVCRClick}
-                        isActive={(wizardVCR?.id ?? selectedVCR?.id) === vcr.id}
-                      />
-                    ))}
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             ) : p2aPlanByProject ? (
               <div className="text-center py-8 text-muted-foreground">
