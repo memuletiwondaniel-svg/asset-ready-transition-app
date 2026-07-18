@@ -56,6 +56,7 @@ import {
   GanttChart,
   MoreVertical,
   Check,
+  X,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -90,9 +91,11 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core';
 
-// Portals the lens toggle into the page toolbar slot (#kanban-lens-slot).
-// Falls back to inline rendering above the board if the slot isn't mounted.
-const LensTogglePortal: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+// Portals filter chips into the page toolbar slot (#kanban-lens-slot). The
+// lens toggle was retired — the board is now unified and the toolbar hosts
+// transient filter chips (Decisions / My work / per-project) that narrow the
+// board without hiding any tasks by default.
+const ToolbarChipsPortal: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [slot, setSlot] = useState<HTMLElement | null>(null);
   useEffect(() => {
     const find = () => document.getElementById('kanban-lens-slot');
@@ -102,6 +105,17 @@ const LensTogglePortal: React.FC<{ children: React.ReactNode }> = ({ children })
   }, []);
   if (slot) return createPortal(children, slot);
   return <div className="mb-3">{children}</div>;
+};
+
+// Shared review-shape predicate. Mirrors `public.is_review_task` server-side
+// and drives (a) the amber rail + Review chip on cards and (b) the
+// "NEEDS YOUR DECISION" in-column grouping. Hoisted above KanbanCardContent
+// so the card can self-classify without prop drilling.
+const isReviewShapeTask = (u: UnifiedTask): boolean => {
+  const bt = u.bundleTask as { type?: string; metadata?: { action?: string } } | undefined;
+  if (bt && isReviewShapedTask(bt)) return true;
+  const ut = u.userTask as { type?: string; metadata?: { action?: string } } | undefined;
+  return isReviewShapedTask(ut);
 };
 
 type GroupBy = 'none' | 'project' | 'category';
@@ -610,12 +624,19 @@ const KanbanCardContent: React.FC<{
   const oraApprovalSummaries = useContext(ORAApprovalContext);
   const strippedTitleCollisions = useContext(TitleCollisionContext);
 
-  // Rail color encodes URGENCY (overdue/due-soon/on-track) — see computeUrgency.
+  // Review-shape drives the amber 3px left rail (overrides urgency rail) and
+  // the amber "Review" chip in the top-right — same classification used by
+  // the "NEEDS YOUR DECISION" in-column grouping.
+  const isReviewShape = isReviewShapeTask(task);
+
+  // Rail color encodes URGENCY (overdue/due-soon/on-track) — see computeUrgency,
+  // except review-shaped tasks always carry the amber decision rail.
   // Rejected status keeps the destructive override.
   const urgency = computeUrgency(task);
   const railShadow = (() => {
     if (task.kanbanColumn === 'done') return undefined;
     if (accentClass === 'border-l-destructive') return 'inset 2px 0 0 0 hsl(var(--destructive) / 0.5)';
+    if (isReviewShape) return 'inset 3px 0 0 0 rgb(245 158 11 / 0.9)';
     switch (urgency.rail) {
       case 'red':   return 'inset 2px 0 0 0 rgb(239 68 68 / 0.45)';
       case 'amber': return 'inset 2px 0 0 0 rgb(245 158 11 / 0.45)';
@@ -707,6 +728,9 @@ const KanbanCardContent: React.FC<{
           ) : (
             <span className="text-[10px] text-muted-foreground">{task.categoryLabel}</span>
           )
+        )}
+        {!isChild && isReviewShape && task.kanbanColumn !== 'done' && (
+          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 whitespace-nowrap">Review</span>
         )}
         {topRightChip && <div className="ml-auto shrink-0">{topRightChip}</div>}
       </div>
@@ -917,18 +941,15 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     todo: 'project', in_progress: 'project', waiting: 'project', done: 'project',
   });
 
-  // Lens toggle: "My work" (default) hides approval bundles; "My reviews"
-  // shows only approval bundles re-columned by decision state. Persisted per
-  // user in localStorage.
-  const [lens, setLens] = useState<'work' | 'reviews'>(() => {
-    try {
-      const v = localStorage.getItem('kanban-lens');
-      return v === 'reviews' ? 'reviews' : 'work';
-    } catch { return 'work'; }
-  });
-  useEffect(() => {
-    try { localStorage.setItem('kanban-lens', lens); } catch { /* noop */ }
-  }, [lens]);
+  // Toolbar filter chips (transient, combinable, removable). Default state is
+  // empty — the board shows 100% of the user's tasks. Chips narrow the board:
+  //  - decisions:  keep only review-shaped tasks
+  //  - myWork:     keep only non-review-shaped tasks
+  //  - projects:   OR filter across selected project codes
+  // (decisions + myWork together degenerate to "no restriction".)
+  const [filterChips, setFilterChips] = useState<{ decisions: boolean; myWork: boolean; projects: string[] }>(
+    { decisions: false, myWork: false, projects: [] }
+  );
 
   // Batch-fetch reviewer summaries for ALL tasks (not just done column)
   const allTaskIds = useMemo(() => 
@@ -1604,42 +1625,33 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     }
   };
 
-  // Lens partition. "My reviews" surfaces every review-shaped task — VCR/PSSR
-  // approval bundles PLUS every review_* action across the new state machines
-  // (training_review, procedure_review, register_review, ora_plan_review,
-  // qualification_review, wh_review, vcr_plan_review, sof/pac signature).
-  // The shared predicate `isReviewShapedTask` in src/lib/buildTaskTitle.ts is
-  // the single source of truth, mirrored server-side by `public.is_review_task`.
-  const isReviewBundle = (u: UnifiedTask): boolean => {
-    const bt = u.bundleTask as { type?: string; metadata?: { action?: string } } | undefined;
-    if (bt && isReviewShapedTask(bt)) return true;
-    const ut = u.userTask as { type?: string; metadata?: { action?: string } } | undefined;
-    return isReviewShapedTask(ut);
-  };
-  const workTasks = useMemo(() => tasks.filter(u => !isReviewBundle(u)), [tasks]);
-  const reviewBundles = useMemo(() => tasks.filter(isReviewBundle), [tasks]);
+  // Distinct project codes across the current task set — drives the per-project
+  // filter chips in the toolbar.
+  const availableProjects = useMemo(() => {
+    const s = new Set<string>();
+    for (const t of tasks) if (t.project) s.add(t.project);
+    return [...s].sort();
+  }, [tasks]);
 
-  // Aggregate awaiting count across all review bundles (badge on the toggle).
-  // Reads the trigger-maintained `approver_awaiting_items` counter, which
-  // correctly excludes not-yet-submitted items and REJECTED prereqs. Falls
-  // back to (total - decided) only for legacy rows missing the field.
-  const awaitingTotal = useMemo(() => {
-    let n = 0;
-    for (const u of reviewBundles) {
-      const m = (u.bundleTask?.metadata || {}) as Record<string, any>;
-      const total = Number(m.approver_total_items ?? 0);
-      const decided = Number(m.approver_decided_items ?? 0);
-      n += m.approver_awaiting_items != null
-        ? Number(m.approver_awaiting_items)
-        : Math.max(0, total - decided);
-    }
-    return n;
-  }, [reviewBundles]);
+  // Apply transient filter chips. Default (no chips active) returns every
+  // task unchanged — the unified board never hides anything by default.
+  const chipFiltered = useMemo(() => {
+    const { decisions, myWork, projects } = filterChips;
+    const bothTypes = decisions && myWork;
+    const anyType = decisions || myWork;
+    return tasks.filter(t => {
+      if (projects.length > 0 && (!t.project || !projects.includes(t.project))) return false;
+      if (!anyType || bothTypes) return true;
+      const rev = isReviewShapeTask(t);
+      if (decisions && !rev) return false;
+      if (myWork && rev) return false;
+      return true;
+    });
+  }, [tasks, filterChips]);
 
   const columnData = useMemo(() => {
-    const source = lens === 'reviews' ? reviewBundles : workTasks;
     return COLUMNS.map(col => {
-      const filtered = source.filter(t =>
+      const filtered = chipFiltered.filter(t =>
         col.key === 'todo'
           ? (t.kanbanColumn === 'todo' || t.kanbanColumn === 'waiting')
           : t.kanbanColumn === col.key
@@ -1653,34 +1665,89 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         : [...filtered].sort(compareBySort(sortKey));
       return { ...col, tasks: ordered, sortKey };
     });
-  }, [workTasks, reviewBundles, lens, COLUMNS, columnSort]);
+  }, [chipFiltered, COLUMNS, columnSort]);
 
-  // Reviews-lens decision buckets. Approval bundles are re-columned by their
-  // review state, not by kanbanColumn.
-  interface ReviewBucketDef { key: 'needs' | 'in_progress' | 'waiting' | 'done'; label: string; hint?: string; dim?: boolean; }
-  const REVIEW_BUCKETS: ReviewBucketDef[] = [
-    { key: 'needs', label: 'Needs my decision' },
-    { key: 'in_progress', label: 'In review progress' },
-    { key: 'waiting', label: 'Waiting on delivering parties', hint: 'Nothing submitted yet', dim: true },
-    { key: 'done', label: 'Done' },
-  ];
-  const reviewBuckets = useMemo(() => {
-    const buckets: Record<ReviewBucketDef['key'], UnifiedTask[]> = { needs: [], in_progress: [], waiting: [], done: [] };
-    for (const u of reviewBundles) {
-      if (u.kanbanColumn === 'done') { buckets.done.push(u); continue; }
-      const m = (u.bundleTask?.metadata || {}) as Record<string, any>;
-      const total = Number(m.approver_total_items ?? u.bundleTask?.sub_items?.length ?? 0);
-      const decided = Number(m.approver_decided_items ?? 0);
-      const awaiting = m.approver_awaiting_items != null
-        ? Number(m.approver_awaiting_items)
-        : Math.max(0, total - decided);
-      if (awaiting > 0 && decided > 0) buckets.in_progress.push(u);
-      else if (awaiting > 0) buckets.needs.push(u);
-      else buckets.waiting.push(u);
+  // QAQC (dev only): assert (1) decision-first ordering within every column
+  // and (2) default view (no chips) contains 100% of the input tasks.
+  useEffect(() => {
+    if (import.meta.env.PROD) return;
+    for (const col of columnData) {
+      let sawWork = false;
+      for (const t of col.tasks) {
+        const rev = isReviewShapeTask(t);
+        if (!rev) sawWork = true;
+        else if (sawWork) {
+          // eslint-disable-next-line no-console
+          console.warn('[Kanban QAQC] decision-first ordering violated in column', col.key, t.id);
+          break;
+        }
+      }
     }
-    return buckets;
-  }, [reviewBundles]);
+    const { decisions, myWork, projects } = filterChips;
+    if (!decisions && !myWork && projects.length === 0 && chipFiltered.length !== tasks.length) {
+      // eslint-disable-next-line no-console
+      console.warn('[Kanban QAQC] default view dropped tasks:', tasks.length - chipFiltered.length);
+    }
+  }, [columnData, chipFiltered, tasks, filterChips]);
 
+
+
+  // Inline labelled divider used at the top of each in-column partition
+  // ("NEEDS YOUR DECISION · n" and "YOUR WORK · n").
+  const SectionDivider: React.FC<{ label: string; count: number; tone?: 'amber' | 'muted' }> = ({ label, count, tone = 'muted' }) => (
+    <div className="flex items-center gap-2 mt-1 mb-2 first:mt-0 select-none">
+      <span className={cn(
+        'text-[10px] font-semibold uppercase tracking-wider whitespace-nowrap',
+        tone === 'amber' ? 'text-amber-700 dark:text-amber-400' : 'text-muted-foreground/70',
+      )}>
+        {label} · {count}
+      </span>
+      <div className={cn('flex-1 h-px', tone === 'amber' ? 'bg-amber-200/70 dark:bg-amber-900/40' : 'bg-border/50')} />
+    </div>
+  );
+
+  const renderTaskList = (list: UnifiedTask[], col: typeof columnData[number], keyPrefix: string) => {
+    const colGroupBy = columnGroupBy[col.key];
+    if (colGroupBy === 'project') {
+      const groups: Record<string, UnifiedTask[]> = {};
+      list.forEach(t => {
+        const key = t.project || 'Unassigned';
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(t);
+      });
+      const sorted = Object.entries(groups).sort(([a], [b]) => {
+        if (a === 'Unassigned') return 1;
+        if (b === 'Unassigned') return -1;
+        return a.localeCompare(b);
+      });
+      return sorted.map(([project, tasks]) => (
+        <ProjectGroup key={`${keyPrefix}-${project}`} projectName={project} tasks={tasks} onTaskClick={handleTaskClick} accentClass={col.accent} />
+      ));
+    }
+    if (colGroupBy === 'category') {
+      const groups: Record<string, UnifiedTask[]> = {};
+      list.forEach(t => {
+        const key = t.categoryLabel;
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(t);
+      });
+      return Object.entries(groups).map(([category, tasks]) => (
+        <ProjectGroup key={`${keyPrefix}-${category}`} projectName={category} tasks={tasks} onTaskClick={handleTaskClick} accentClass={col.accent} />
+      ));
+    }
+    return list.map(task => {
+      const meta = task.userTask?.metadata as Record<string, any> | undefined;
+      const isRejected = meta?.outcome === 'rejected';
+      return (
+        <KanbanCardWithChildren
+          key={task.id}
+          task={task}
+          onTaskClick={handleTaskClick}
+          accentClass={isRejected ? 'border-l-destructive' : col.accent}
+        />
+      );
+    });
+  };
 
   const renderColumnContent = (columnTasks: UnifiedTask[], col: typeof columnData[number]) => {
     if (columnTasks.length === 0) {
@@ -1700,53 +1767,28 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       );
     }
 
-    const colGroupBy = columnGroupBy[col.key];
+    // Decision-first partition: review-shaped tasks group at the top of the
+    // column under an amber-toned "NEEDS YOUR DECISION" divider; the rest
+    // group beneath under a quiet "YOUR WORK" divider. Order within each
+    // partition is preserved from the sorted `columnTasks` input.
+    const decisionTasks = columnTasks.filter(isReviewShapeTask);
+    const workTasks = columnTasks.filter(t => !isReviewShapeTask(t));
+    const showBoth = decisionTasks.length > 0 && workTasks.length > 0;
 
-    if (colGroupBy === 'project') {
-      const groups: Record<string, UnifiedTask[]> = {};
-      columnTasks.forEach(t => {
-        const key = t.project || 'Unassigned';
-        if (!groups[key]) groups[key] = [];
-        groups[key].push(t);
-      });
-      const sorted = Object.entries(groups).sort(([a], [b]) => {
-        if (a === 'Unassigned') return 1;
-        if (b === 'Unassigned') return -1;
-        return a.localeCompare(b);
-      });
-      return sorted.map(([project, tasks]) => (
-        <ProjectGroup key={project} projectName={project} tasks={tasks} onTaskClick={handleTaskClick} accentClass={col.accent} />
-      ));
-    }
-
-    if (colGroupBy === 'category') {
-      const groups: Record<string, UnifiedTask[]> = {};
-      columnTasks.forEach(t => {
-        const key = t.categoryLabel;
-        if (!groups[key]) groups[key] = [];
-        groups[key].push(t);
-      });
-      return Object.entries(groups).map(([category, tasks]) => (
-        <ProjectGroup key={category} projectName={category} tasks={tasks} onTaskClick={handleTaskClick} accentClass={col.accent} />
-      ));
-    }
-
-    // Default (no explicit grouping) — flat card list. VCR sub-clustering
-    // was removed in v3; project grouping is the sole grouping tier.
     return (
       <>
-        {columnTasks.map(task => {
-          const meta = task.userTask?.metadata as Record<string, any> | undefined;
-          const isRejected = meta?.outcome === 'rejected';
-          return (
-            <KanbanCardWithChildren
-              key={task.id}
-              task={task}
-              onTaskClick={handleTaskClick}
-              accentClass={isRejected ? 'border-l-destructive' : col.accent}
-            />
-          );
-        })}
+        {decisionTasks.length > 0 && (
+          <>
+            {showBoth && <SectionDivider label="Needs your decision" count={decisionTasks.length} tone="amber" />}
+            {renderTaskList(decisionTasks, col, 'rev')}
+          </>
+        )}
+        {workTasks.length > 0 && (
+          <>
+            {showBoth && <SectionDivider label="Your work" count={workTasks.length} tone="muted" />}
+            {renderTaskList(workTasks, col, 'work')}
+          </>
+        )}
       </>
     );
   };
@@ -1791,76 +1833,75 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     <P2AApprovalContext.Provider value={p2aApprovalMap}>
     <ReviewerSummaryContext.Provider value={reviewerMap}>
     <>
-      {/* Lens toggle — portalled into the page toolbar so it shares a row
-          with the search field. Falls back to inline rendering if the slot
-          hasn't mounted yet. Persisted per user. */}
-      <LensTogglePortal>
-        <div className="inline-flex rounded-md border border-border/60 bg-card/40 p-0.5">
-          <button
-            type="button"
-            onClick={() => setLens('work')}
-            className={cn(
-              'text-[12px] px-3 py-1 rounded transition-colors',
-              lens === 'work' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
-            )}
-          >
-            My work
-          </button>
-          <button
-            type="button"
-            onClick={() => setLens('reviews')}
-            className={cn(
-              'text-[12px] px-3 py-1 rounded transition-colors inline-flex items-center gap-1.5',
-              lens === 'reviews' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
-            )}
-          >
-            My reviews
-            {awaitingTotal > 0 && (
-              <span className="text-[10px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                {awaitingTotal}
-              </span>
-            )}
-          </button>
-        </div>
-      </LensTogglePortal>
-
-
-      {lens === 'reviews' ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 items-stretch">
-          {REVIEW_BUCKETS.map(bucket => {
-            const bTasks = reviewBuckets[bucket.key];
-            const isEmpty = bTasks.length === 0;
-            return (
-              <div key={bucket.key} className="bg-card/40 dark:bg-muted/20 rounded-xl border border-border/60 flex flex-col min-h-[60vh] overflow-hidden">
-                <div className="flex items-center justify-between gap-2 px-3 pt-3 pb-2 border-b border-border/40">
-                  <span className="text-[13px] font-medium text-foreground truncate">{bucket.label}</span>
-                  <span className="text-[11px] tabular-nums text-muted-foreground/70">{bTasks.length}</span>
-                </div>
-                {isEmpty ? (
-                  <div className="flex-1 flex items-stretch p-3">
-                    <div className="flex-1 rounded-lg border border-dashed border-border/60 flex items-center justify-center text-center px-4 py-8">
-                      <p className="text-[11px] text-muted-foreground/60">{bucket.hint || 'Nothing here.'}</p>
-                    </div>
-                  </div>
-                ) : (
-                  <ScrollArea className="flex-1 max-h-[calc(100vh-320px)]">
-                    <div className={cn('px-3 pb-3 pt-2 space-y-2.5', bucket.dim && 'opacity-60')}>
-                      {bTasks.map(task => (
-                        <div key={task.id} className="space-y-1">
-                          <KanbanCardWithChildren task={task} onTaskClick={handleTaskClick} />
-                          {bucket.dim && (
-                            <p className="text-[10px] text-muted-foreground/70 pl-3">{bucket.hint}</p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </ScrollArea>
+      {/* Transient filter chips — portalled into the page toolbar. Defaults to
+          empty (board shows every task). Chips are combinable and removable;
+          they NARROW the board, they do not navigate. */}
+      <ToolbarChipsPortal>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {(() => {
+            const { decisions, myWork, projects } = filterChips;
+            const chip = (opts: { active: boolean; label: string; onToggle: () => void; onRemove?: () => void; tone?: 'amber' | 'neutral' }) => (
+              <button
+                key={opts.label}
+                type="button"
+                onClick={opts.onToggle}
+                className={cn(
+                  'inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-full border transition-colors whitespace-nowrap',
+                  opts.active
+                    ? opts.tone === 'amber'
+                      ? 'bg-amber-100 border-amber-300 text-amber-800 dark:bg-amber-900/30 dark:border-amber-800 dark:text-amber-300'
+                      : 'bg-primary/10 border-primary/40 text-primary'
+                    : 'bg-transparent border-border/60 text-muted-foreground hover:text-foreground hover:border-border',
                 )}
-              </div>
+              >
+                <span>{opts.label}</span>
+                {opts.active && opts.onRemove && (
+                  <X
+                    className="h-3 w-3 opacity-70 hover:opacity-100"
+                    onClick={(e) => { e.stopPropagation(); opts.onRemove!(); }}
+                  />
+                )}
+              </button>
             );
-          })}
+            return (
+              <>
+                {chip({
+                  active: decisions,
+                  label: 'Decisions',
+                  tone: 'amber',
+                  onToggle: () => setFilterChips(s => ({ ...s, decisions: !s.decisions })),
+                  onRemove: () => setFilterChips(s => ({ ...s, decisions: false })),
+                })}
+                {chip({
+                  active: myWork,
+                  label: 'My work',
+                  onToggle: () => setFilterChips(s => ({ ...s, myWork: !s.myWork })),
+                  onRemove: () => setFilterChips(s => ({ ...s, myWork: false })),
+                })}
+                {availableProjects.map(code => chip({
+                  active: projects.includes(code),
+                  label: code,
+                  onToggle: () => setFilterChips(s => ({
+                    ...s,
+                    projects: s.projects.includes(code) ? s.projects.filter(p => p !== code) : [...s.projects, code],
+                  })),
+                  onRemove: () => setFilterChips(s => ({ ...s, projects: s.projects.filter(p => p !== code) })),
+                }))}
+                {(decisions || myWork || projects.length > 0) && (
+                  <button
+                    type="button"
+                    onClick={() => setFilterChips({ decisions: false, myWork: false, projects: [] })}
+                    className="text-[11px] px-2 py-1 rounded text-muted-foreground/70 hover:text-foreground"
+                  >
+                    Clear
+                  </button>
+                )}
+              </>
+            );
+          })()}
         </div>
-      ) : (
+      </ToolbarChipsPortal>
+
       <DndContext
         sensors={sensors}
         onDragStart={handleDragStart}
@@ -1979,7 +2020,6 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
           ) : null}
         </DragOverlay>
       </DndContext>
-      )}
 
       <TaskDetailSheet
         task={selectedTask}
