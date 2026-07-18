@@ -91,9 +91,11 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core';
 
-// Portals the lens toggle into the page toolbar slot (#kanban-lens-slot).
-// Falls back to inline rendering above the board if the slot isn't mounted.
-const LensTogglePortal: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+// Portals filter chips into the page toolbar slot (#kanban-lens-slot). The
+// lens toggle was retired — the board is now unified and the toolbar hosts
+// transient filter chips (Decisions / My work / per-project) that narrow the
+// board without hiding any tasks by default.
+const ToolbarChipsPortal: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [slot, setSlot] = useState<HTMLElement | null>(null);
   useEffect(() => {
     const find = () => document.getElementById('kanban-lens-slot');
@@ -103,6 +105,17 @@ const LensTogglePortal: React.FC<{ children: React.ReactNode }> = ({ children })
   }, []);
   if (slot) return createPortal(children, slot);
   return <div className="mb-3">{children}</div>;
+};
+
+// Shared review-shape predicate. Mirrors `public.is_review_task` server-side
+// and drives (a) the amber rail + Review chip on cards and (b) the
+// "NEEDS YOUR DECISION" in-column grouping. Hoisted above KanbanCardContent
+// so the card can self-classify without prop drilling.
+const isReviewShapeTask = (u: UnifiedTask): boolean => {
+  const bt = u.bundleTask as { type?: string; metadata?: { action?: string } } | undefined;
+  if (bt && isReviewShapedTask(bt)) return true;
+  const ut = u.userTask as { type?: string; metadata?: { action?: string } } | undefined;
+  return isReviewShapedTask(ut);
 };
 
 type GroupBy = 'none' | 'project' | 'category';
