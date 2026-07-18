@@ -941,18 +941,15 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     todo: 'project', in_progress: 'project', waiting: 'project', done: 'project',
   });
 
-  // Lens toggle: "My work" (default) hides approval bundles; "My reviews"
-  // shows only approval bundles re-columned by decision state. Persisted per
-  // user in localStorage.
-  const [lens, setLens] = useState<'work' | 'reviews'>(() => {
-    try {
-      const v = localStorage.getItem('kanban-lens');
-      return v === 'reviews' ? 'reviews' : 'work';
-    } catch { return 'work'; }
-  });
-  useEffect(() => {
-    try { localStorage.setItem('kanban-lens', lens); } catch { /* noop */ }
-  }, [lens]);
+  // Toolbar filter chips (transient, combinable, removable). Default state is
+  // empty — the board shows 100% of the user's tasks. Chips narrow the board:
+  //  - decisions:  keep only review-shaped tasks
+  //  - myWork:     keep only non-review-shaped tasks
+  //  - projects:   OR filter across selected project codes
+  // (decisions + myWork together degenerate to "no restriction".)
+  const [filterChips, setFilterChips] = useState<{ decisions: boolean; myWork: boolean; projects: string[] }>(
+    { decisions: false, myWork: false, projects: [] }
+  );
 
   // Batch-fetch reviewer summaries for ALL tasks (not just done column)
   const allTaskIds = useMemo(() => 
