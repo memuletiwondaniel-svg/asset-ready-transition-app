@@ -1625,42 +1625,33 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
     }
   };
 
-  // Lens partition. "My reviews" surfaces every review-shaped task — VCR/PSSR
-  // approval bundles PLUS every review_* action across the new state machines
-  // (training_review, procedure_review, register_review, ora_plan_review,
-  // qualification_review, wh_review, vcr_plan_review, sof/pac signature).
-  // The shared predicate `isReviewShapedTask` in src/lib/buildTaskTitle.ts is
-  // the single source of truth, mirrored server-side by `public.is_review_task`.
-  const isReviewBundle = (u: UnifiedTask): boolean => {
-    const bt = u.bundleTask as { type?: string; metadata?: { action?: string } } | undefined;
-    if (bt && isReviewShapedTask(bt)) return true;
-    const ut = u.userTask as { type?: string; metadata?: { action?: string } } | undefined;
-    return isReviewShapedTask(ut);
-  };
-  const workTasks = useMemo(() => tasks.filter(u => !isReviewBundle(u)), [tasks]);
-  const reviewBundles = useMemo(() => tasks.filter(isReviewBundle), [tasks]);
+  // Distinct project codes across the current task set — drives the per-project
+  // filter chips in the toolbar.
+  const availableProjects = useMemo(() => {
+    const s = new Set<string>();
+    for (const t of tasks) if (t.project) s.add(t.project);
+    return [...s].sort();
+  }, [tasks]);
 
-  // Aggregate awaiting count across all review bundles (badge on the toggle).
-  // Reads the trigger-maintained `approver_awaiting_items` counter, which
-  // correctly excludes not-yet-submitted items and REJECTED prereqs. Falls
-  // back to (total - decided) only for legacy rows missing the field.
-  const awaitingTotal = useMemo(() => {
-    let n = 0;
-    for (const u of reviewBundles) {
-      const m = (u.bundleTask?.metadata || {}) as Record<string, any>;
-      const total = Number(m.approver_total_items ?? 0);
-      const decided = Number(m.approver_decided_items ?? 0);
-      n += m.approver_awaiting_items != null
-        ? Number(m.approver_awaiting_items)
-        : Math.max(0, total - decided);
-    }
-    return n;
-  }, [reviewBundles]);
+  // Apply transient filter chips. Default (no chips active) returns every
+  // task unchanged — the unified board never hides anything by default.
+  const chipFiltered = useMemo(() => {
+    const { decisions, myWork, projects } = filterChips;
+    const bothTypes = decisions && myWork;
+    const anyType = decisions || myWork;
+    return tasks.filter(t => {
+      if (projects.length > 0 && (!t.project || !projects.includes(t.project))) return false;
+      if (!anyType || bothTypes) return true;
+      const rev = isReviewShapeTask(t);
+      if (decisions && !rev) return false;
+      if (myWork && rev) return false;
+      return true;
+    });
+  }, [tasks, filterChips]);
 
   const columnData = useMemo(() => {
-    const source = lens === 'reviews' ? reviewBundles : workTasks;
     return COLUMNS.map(col => {
-      const filtered = source.filter(t =>
+      const filtered = chipFiltered.filter(t =>
         col.key === 'todo'
           ? (t.kanbanColumn === 'todo' || t.kanbanColumn === 'waiting')
           : t.kanbanColumn === col.key
@@ -1674,33 +1665,31 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
         : [...filtered].sort(compareBySort(sortKey));
       return { ...col, tasks: ordered, sortKey };
     });
-  }, [workTasks, reviewBundles, lens, COLUMNS, columnSort]);
+  }, [chipFiltered, COLUMNS, columnSort]);
 
-  // Reviews-lens decision buckets. Approval bundles are re-columned by their
-  // review state, not by kanbanColumn.
-  interface ReviewBucketDef { key: 'needs' | 'in_progress' | 'waiting' | 'done'; label: string; hint?: string; dim?: boolean; }
-  const REVIEW_BUCKETS: ReviewBucketDef[] = [
-    { key: 'needs', label: 'Needs my decision' },
-    { key: 'in_progress', label: 'In review progress' },
-    { key: 'waiting', label: 'Waiting on delivering parties', hint: 'Nothing submitted yet', dim: true },
-    { key: 'done', label: 'Done' },
-  ];
-  const reviewBuckets = useMemo(() => {
-    const buckets: Record<ReviewBucketDef['key'], UnifiedTask[]> = { needs: [], in_progress: [], waiting: [], done: [] };
-    for (const u of reviewBundles) {
-      if (u.kanbanColumn === 'done') { buckets.done.push(u); continue; }
-      const m = (u.bundleTask?.metadata || {}) as Record<string, any>;
-      const total = Number(m.approver_total_items ?? u.bundleTask?.sub_items?.length ?? 0);
-      const decided = Number(m.approver_decided_items ?? 0);
-      const awaiting = m.approver_awaiting_items != null
-        ? Number(m.approver_awaiting_items)
-        : Math.max(0, total - decided);
-      if (awaiting > 0 && decided > 0) buckets.in_progress.push(u);
-      else if (awaiting > 0) buckets.needs.push(u);
-      else buckets.waiting.push(u);
+  // QAQC (dev only): assert (1) decision-first ordering within every column
+  // and (2) default view (no chips) contains 100% of the input tasks.
+  useEffect(() => {
+    if (import.meta.env.PROD) return;
+    for (const col of columnData) {
+      let sawWork = false;
+      for (const t of col.tasks) {
+        const rev = isReviewShapeTask(t);
+        if (!rev) sawWork = true;
+        else if (sawWork) {
+          // eslint-disable-next-line no-console
+          console.warn('[Kanban QAQC] decision-first ordering violated in column', col.key, t.id);
+          break;
+        }
+      }
     }
-    return buckets;
-  }, [reviewBundles]);
+    const { decisions, myWork, projects } = filterChips;
+    if (!decisions && !myWork && projects.length === 0 && chipFiltered.length !== tasks.length) {
+      // eslint-disable-next-line no-console
+      console.warn('[Kanban QAQC] default view dropped tasks:', tasks.length - chipFiltered.length);
+    }
+  }, [columnData, chipFiltered, tasks, filterChips]);
+
 
 
   const renderColumnContent = (columnTasks: UnifiedTask[], col: typeof columnData[number]) => {
