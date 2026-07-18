@@ -247,8 +247,8 @@ const PartyItemsDrawer: React.FC<{
   return (
     <>
       <Sheet open={!!party} onOpenChange={onOpenChange}>
-        <SheetContent side="right" className="!z-modal-critical w-full sm:max-w-lg p-0 flex flex-col">
-          {/* G1 header — title + VCR-NN · Name subtext, single pill top-right, no eyebrow, no X */}
+        <SheetContent side="right" hideClose className="!z-modal-critical w-full sm:max-w-lg p-0 flex flex-col">
+          {/* G1 header — name + role subtext only; VCR context removed per Daniel review; click-outside closes (no X) */}
           <SheetHeader className="px-5 pt-5 pb-3 border-b shrink-0">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-3 min-w-0 flex-1">
@@ -263,10 +263,11 @@ const PartyItemsDrawer: React.FC<{
                     {party.full_name}
                   </SheetTitle>
                   <SheetDescription className="text-[12px] mt-0.5 truncate text-muted-foreground">
-                    {party.role_name || party.position || '—'} · {vcrCode}{vcrName ? ` · ${vcrName}` : ''}
+                    {party.role_name || party.position || '—'}
                   </SheetDescription>
                 </div>
               </div>
+
               <span
                 className={cn(
                   'flex-none text-[10.5px] font-bold rounded-full px-2 py-0.5',
