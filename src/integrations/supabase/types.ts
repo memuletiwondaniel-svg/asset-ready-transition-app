@@ -17626,6 +17626,20 @@ export type Database = {
         Args: { p_task_id: string }
         Returns: undefined
       }
+      _register_close_tasks: {
+        Args: { p_register_id: string; p_types?: string[]; p_user_id?: string }
+        Returns: undefined
+      }
+      _register_upsert_task: {
+        Args: {
+          p_register_id: string
+          p_status: Database["public"]["Enums"]["p2a_register_workflow_status"]
+          p_task_type: string
+          p_title: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       _training_close_open_tasks: {
         Args: { p_training_id: string }
         Returns: undefined
@@ -17705,6 +17719,15 @@ export type Database = {
       advance_procedure_status: {
         Args: { p_action: string; p_payload?: Json; p_procedure_id: string }
         Returns: Json
+      }
+      advance_register_status: {
+        Args: {
+          p_action: string
+          p_comment?: string
+          p_register_id: string
+          p_reviewer_ids?: string[]
+        }
+        Returns: Database["public"]["Enums"]["p2a_register_workflow_status"]
       }
       advance_training_status: {
         Args: { p_action: string; p_payload?: Json; p_training_id: string }
