@@ -18,6 +18,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 import { MilestonesTimeline } from './MilestonesTimeline';
+import { WidgetCardHeader } from './WidgetCardHeader';
 import { resolvePlantLabel } from '@/lib/plantCodeLabels';
 import DOMPurify from 'dompurify';
 
@@ -92,7 +93,8 @@ const PairedRoleRow: React.FC<{
 
 export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ projectId, onViewDetails, onEdit }) => {
   const [teamExpanded, setTeamExpanded] = useState(false);
-  const [milestonesExpanded, setMilestonesExpanded] = useState(false);
+  // Milestones expanded by default per the approved Project-Page redesign (G1).
+  const [milestonesExpanded, setMilestonesExpanded] = useState(true);
   const [documentsExpanded, setDocumentsExpanded] = useState(false);
   const { projects } = useProjects();
   const { plants } = usePlants();
@@ -470,54 +472,24 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
 
   return (
     <Card className="lg:h-full flex flex-col glass-card glass-card-hover lg:overflow-hidden group">
-      {/* Hero Header */}
-      <CardHeader className="pb-3 cursor-pointer relative overflow-hidden" onClick={onViewDetails}>
-        {/* Subtle shine effect on hover */}
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 pointer-events-none" />
-        
-        {/* Gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-accent/5 to-transparent pointer-events-none" />
-        
-        <div className="relative z-10">
-          {/* Icon and Title Row */}
-          <div className="flex items-center gap-3 mb-4">
-            <StyledWidgetIcon 
-              Icon={Building2}
-              gradientFrom="from-blue-500"
-              gradientTo="to-cyan-500"
-              glowFrom="from-blue-500/40"
-              glowTo="to-cyan-500/40"
-            />
-            <span className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors flex-1 min-w-0 truncate">
-              Project Overview
-            </span>
-            {onEdit && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={(e) => { e.stopPropagation(); onEdit(); }}
-                className="h-8 w-8 text-muted-foreground/50 hover:text-primary hover:bg-primary/10 transition-all duration-200 hover:scale-110"
-                title="Edit project"
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-          
-          {/* Location — plant + station only. Field is surfaced inside the
-              Details drawer, never on the overview line (Daniel-approved
-              2026-07-18). Plant name resolves through the data-driven
-              plant-code label dictionary; unmapped codes render raw. */}
-          {project && (plant || station) && (
-            <p className="text-xs text-muted-foreground">
-              <span className="font-medium text-foreground/70">Location:</span>{' '}
-              {[resolvePlantLabel(plant?.name), station?.name].filter(Boolean).join(' · ')}
-            </p>
-          )}
-        </div>
-      </CardHeader>
-      
-      <CardContent className="flex-1 lg:overflow-hidden pt-0">
+      {/* G1 header — muted Building2 wakes to blue-600 on card hover, hairline
+          below, hover-gated edit pencil. Clicking the header row opens the
+          View Project details drawer (field.name surfaces there, not here). */}
+      <WidgetCardHeader
+        Icon={Building2}
+        hoverIconClass="group-hover:text-blue-600"
+        title="Project Overview"
+        subtitle={
+          project && (plant || station)
+            ? [resolvePlantLabel(plant?.name), station?.name].filter(Boolean).join(' · ')
+            : undefined
+        }
+        onHeaderClick={onViewDetails}
+        onEdit={onEdit}
+        editLabel="Edit project"
+      />
+
+      <CardContent className="flex-1 lg:overflow-hidden pt-4">
         {/* Mobile: content flows naturally for page scrolling */}
         <div className="lg:hidden pr-1">
           {widgetContent}
