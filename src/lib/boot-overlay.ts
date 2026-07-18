@@ -27,6 +27,8 @@ export function showBootOverlay(message?: string) {
     el.id = OVERLAY_ID;
     el.setAttribute("role", "status");
     el.setAttribute("aria-live", "polite");
+    // Visual-only splash — must never intercept clicks.
+    (el as HTMLElement).style.pointerEvents = "none";
     el.innerHTML =
       '<div class="spinner"></div><div class="label" id="' +
       LABEL_ID +
