@@ -108,7 +108,7 @@ export const StandardSystemsTab: React.FC<{ handoverPoint: P2AHandoverPoint; pro
       <SystemDrawer
         system={selected}
         handoverPoint={handoverPoint}
-        projectId={handoverPoint.handover_plan_id ? null : null}
+        projectId={projectId ?? null}
         open={!!selected}
         onOpenChange={(o) => !o && setSelected(null)}
       />
