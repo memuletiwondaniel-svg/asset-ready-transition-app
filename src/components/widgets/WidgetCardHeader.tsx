@@ -26,11 +26,24 @@ import { cn } from '@/lib/utils';
 export interface WidgetCardHeaderProps {
   Icon: LucideIcon;
   /**
-   * Tailwind text-colour class (e.g. 'text-blue-600') applied to the icon
-   * when the parent card is hovered. Muted otherwise.
+   * Full Tailwind class (e.g. 'group-hover:text-blue-600') applied to the
+   * icon when the parent card is hovered. Must be a literal so Tailwind's
+   * JIT can pick it up — never interpolate at call sites.
    */
-  iconColor: string;
+  hoverIconClass: string;
   title: string;
+  subtitle?: React.ReactNode;
+  statusPill?: React.ReactNode;
+  onHeaderClick?: () => void;
+  onEdit?: () => void;
+  dragProps?: {
+    attributes?: any;
+    listeners?: any;
+  };
+  className?: string;
+  /** Editable "Edit" button title/aria label. */
+  editLabel?: string;
+}
   subtitle?: React.ReactNode;
   statusPill?: React.ReactNode;
   onHeaderClick?: () => void;
@@ -46,7 +59,7 @@ export interface WidgetCardHeaderProps {
 
 export const WidgetCardHeader: React.FC<WidgetCardHeaderProps> = ({
   Icon,
-  iconColor,
+  hoverIconClass,
   title,
   subtitle,
   statusPill,
@@ -83,7 +96,7 @@ export const WidgetCardHeader: React.FC<WidgetCardHeaderProps> = ({
             className={cn(
               'h-4 w-4 shrink-0 text-muted-foreground/70 transition-colors',
               // Wake to identity colour when the ancestor card is hovered.
-              `group-hover:${iconColor}`,
+              hoverIconClass,
             )}
           />
           <div className="min-w-0 flex-1">
