@@ -209,20 +209,37 @@ interface SectionProps {
   onPersonClick?: (p: PartyPerson) => void;
   personClickable?: boolean;
   muted?: boolean;
+  defaultOpen?: boolean;
+  signedRoleKeys?: Set<string>;
 }
 
 /**
- * Section — inline labelled divider (uppercase label + count + hairline)
- * with person rows directly beneath. One flat surface, no card borders.
+ * Section — collapsible inline labelled divider (uppercase label + count +
+ * chevron + hairline) with person rows directly beneath. Default expansion
+ * is driven by VCR lifecycle phase.
  */
 const Section: React.FC<SectionProps> = ({
   title, count, locked, lockCaption, lockTooltip, emptyText,
-  people, onPersonClick, personClickable, muted,
+  people, onPersonClick, personClickable, muted, defaultOpen = true, signedRoleKeys,
 }) => {
   const seats = useMemo(() => groupHoldersByRole(people), [people]);
+  const [open, setOpen] = useState(defaultOpen);
+  // Sync when lifecycle-driven default changes
+  React.useEffect(() => { setOpen(defaultOpen); }, [defaultOpen]);
   return (
     <section className={cn(muted && 'opacity-[0.5]')}>
-      <div className="flex items-center gap-2 pt-1 pb-2">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center gap-2 pt-1 pb-2 group text-left"
+        aria-expanded={open}
+      >
+        <ChevronDown
+          className={cn(
+            'w-3.5 h-3.5 text-muted-foreground/70 flex-none transition-transform',
+            open ? '' : '-rotate-90',
+          )}
+        />
         {locked && (
           <TooltipProvider>
             <Tooltip>
@@ -245,22 +262,25 @@ const Section: React.FC<SectionProps> = ({
           <span className="text-[10.5px] text-muted-foreground/70 italic shrink-0">{lockCaption}</span>
         )}
         <div className="flex-1 h-px bg-border/60" />
-      </div>
-      {seats.length === 0 ? (
-        <div className="px-3 py-3 text-[12px] text-muted-foreground">
-          {emptyText || 'No members yet.'}
-        </div>
-      ) : (
-        <div className="divide-y divide-border/40">
-          {seats.map((holders) => (
-            <PartyRow
-              key={holders.map((h) => h.user_id).join('|')}
-              holders={holders}
-              onClick={onPersonClick}
-              clickable={personClickable}
-            />
-          ))}
-        </div>
+      </button>
+      {open && (
+        seats.length === 0 ? (
+          <div className="px-3 py-3 text-[12px] text-muted-foreground">
+            {emptyText || 'No members yet.'}
+          </div>
+        ) : (
+          <div className="divide-y divide-border/40">
+            {seats.map((holders) => (
+              <PartyRow
+                key={holders.map((h) => h.user_id).join('|')}
+                holders={holders}
+                onClick={onPersonClick}
+                clickable={personClickable}
+                signedRoleKeys={signedRoleKeys}
+              />
+            ))}
+          </div>
+        )
       )}
     </section>
   );
