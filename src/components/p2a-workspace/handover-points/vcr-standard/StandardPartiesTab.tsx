@@ -88,7 +88,7 @@ const PartyRow: React.FC<{
   const hasStatement = !!(roleKey && signedRoleKeys?.has(roleKey));
   const isSofPacSigned = !!shown.signed;
   const displayAssigned = shown.assigned;
-  const displayCompleted = hasStatement ? Math.max(shown.completed, shown.assigned) : shown.completed;
+  const displayCompleted = shown.completed;
   const complete = hasStatement || isSofPacSigned || (displayAssigned > 0 && displayCompleted >= displayAssigned);
 
   return (
