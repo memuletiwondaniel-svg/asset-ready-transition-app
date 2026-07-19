@@ -192,7 +192,7 @@ export const useVCRPrerequisites = (handoverPointId: string) => {
 
 // Legacy status display config — kept for VCRChecklistTab + PrerequisiteDetailSheet.
 // Labels aligned to the canonical set (see standardStatus.ts): Draft/Under review/
-// Rework/Qualification raised/Qualified/Approved/Not started.
+// Rework/Approved/Not started, with Q · prefix for the qualification sub-states.
 export const getPrerequisiteStatusConfig = (status: VCRPrerequisite['status']) => {
   switch (status) {
     case 'ACCEPTED':
@@ -204,9 +204,9 @@ export const getPrerequisiteStatusConfig = (status: VCRPrerequisite['status']) =
     case 'REJECTED':
       return { label: 'Rework', color: 'bg-red-500', textColor: 'text-red-500' };
     case 'QUALIFICATION_REQUESTED':
-      return { label: 'Qualification raised', color: 'bg-slate-400', textColor: 'text-slate-500' };
+      return { label: 'Q · Under review', color: 'bg-amber-500', textColor: 'text-amber-500' };
     case 'QUALIFICATION_APPROVED':
-      return { label: 'Qualification approved', color: 'bg-emerald-500', textColor: 'text-emerald-500' };
+      return { label: 'Q · Approved', color: 'bg-emerald-500', textColor: 'text-emerald-500' };
     case 'NOT_STARTED':
     default:
       return { label: 'Not started', color: 'bg-slate-400', textColor: 'text-slate-500' };
