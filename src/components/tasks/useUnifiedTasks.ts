@@ -304,20 +304,10 @@ export function useUnifiedTasks(userId: string) {
         }
       }
 
-      // ─── Resolve effective due date (Step 1 policy) ───
-      // Precedence: real t.due_date → inherited ORA endDate (no SLA) → SLA fallback.
-      let slaKind: 'approval_review' | 'plan_creation' | 'none' = 'none';
-      if (isAdHocReview || source === 'p2a_handover' || t.type === 'ora_plan_review') {
-        slaKind = 'approval_review';
-      } else if (isOraPlanCreation || isP2aPlanCreation || action === 'create_vcr_delivery_plan' || t.type === 'vcr_delivery_plan') {
-        slaKind = 'plan_creation';
-      }
-      const realDueDate = t.due_date || undefined;
-      const inheritedEnd = endDate; // ORA activity end_date — keep as-is, no SLA
-      const slaDue = !realDueDate && !inheritedEnd
-        ? addBusinessDays(t.created_at, slaDaysFor(slaKind))
-        : undefined;
-      const resolvedDueDate = realDueDate || slaDue;
+      // ─── Resolve effective due date (MVP-D1: no SLA fiction) ───
+      // Strictly the real user_tasks.due_date. ORA endDate is exposed separately
+      // via UnifiedTask.endDate and taskUrgency falls back to it there.
+      const resolvedDueDate = t.due_date || undefined;
 
       const sp = computeSmartPriority({
         category,
