@@ -1306,8 +1306,8 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
     const catCode = sameCategorySibs[0]?.vcr_items?.category?.code || null;
     for (const f of computeSignal8({
       categoryCode: catCode,
-      sameCategorySibItemIds: sameCategorySibVcrItemIds,
-      returnedSibItemIds: Array.from(returnedItemIds),
+      total: sameCategorySibs.length,
+      returnedCount: returnedItemIds.size,
     })) facts.push(f as Fact);
   }
 
