@@ -11,6 +11,7 @@ import {
   type TableRowSchema as SharedTableRowSchema,
   type PageRegisterSchema as SharedPageRegisterSchema,
 } from "../_shared/register-reader.ts";
+import { computeSignal7 } from "../_shared/signal7.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1273,11 +1274,10 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
     }
   }
 
-  // Signal 7 (EXE-1b) — per-item task completion signal
-  // Reads the hidden vcr_item_action / vcr_item_review rows keyed to this prereq.
+  // Signal 7 (EXE-1b) — per-item task completion signal.
+  // DB fetch here; fact synthesis is delegated to the pure computeSignal7()
+  // so the eval harness can exercise identical logic in-memory.
   {
-    const _terminal = new Set(["ACCEPTED", "QUALIFICATION_APPROVED", "REJECTED", "NA"]);
-    const _isTerminal = _terminal.has(status);
     const { data: itemTasks } = await bounded(
       "workflow item tasks",
       DB_TIMEOUT_MS,
@@ -1292,51 +1292,8 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
           signal,
         ),
     );
-    const its = (itemTasks || []) as any[];
-    const OPEN = new Set(["pending", "todo", "waiting", "in_progress"]);
-    const openTasks = its.filter((t) => OPEN.has(String(t.status || "").toLowerCase()));
-    const openDelivery = openTasks.filter((t) => t.type === "vcr_item_action").length;
-    const openReview = openTasks.filter((t) => t.type === "vcr_item_review").length;
-
-    if (_isTerminal && openTasks.length > 0) {
-      // E3-shaped: item-task should have been retired when the prereq went terminal.
-      facts.push({
-        label: "Orphan item-tasks",
-        value: `${openTasks.length} open on terminal prereq`,
-        tone: "red",
-        confidence: "verified",
-      });
-    } else if (!_isTerminal) {
-      if (openDelivery > 0) {
-        // Age the oldest open delivery task for pressure signal.
-        const oldest = openTasks
-          .filter((t) => t.type === "vcr_item_action")
-          .map((t) => new Date(t.created_at))
-          .sort((a, b) => a.getTime() - b.getTime())[0];
-        const days = oldest ? daysBetween(oldest, now) : 0;
-        facts.push({
-          label: "Open delivery task",
-          value: days > 0 ? `${days} days` : "1 open",
-          tone: days >= 5 ? "amber" : "grey",
-          confidence: "verified",
-        });
-      }
-      if (openReview > 0) {
-        const oldest = openTasks
-          .filter((t) => t.type === "vcr_item_review")
-          .map((t) => new Date(t.created_at))
-          .sort((a, b) => a.getTime() - b.getTime())[0];
-        const days = oldest ? daysBetween(oldest, now) : 0;
-        facts.push({
-          label: openReview === 1 ? "Open review task" : `Open review tasks`,
-          value: openReview === 1
-            ? (days > 0 ? `${days} days` : "1 open")
-            : `${openReview} open`,
-          tone: days >= 5 ? "amber" : "grey",
-          confidence: "verified",
-        });
-      }
-    }
+    const s7 = computeSignal7(status, (itemTasks || []) as any[], now);
+    for (const f of s7) facts.push(f as Fact);
   }
 
 
