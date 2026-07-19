@@ -17637,6 +17637,7 @@ export type Database = {
       }
     }
     Functions: {
+      _is_task_terminal: { Args: { p_status: string }; Returns: boolean }
       _procedure_close_open_tasks: {
         Args: { p_procedure_id: string }
         Returns: undefined
@@ -17695,6 +17696,10 @@ export type Database = {
           p_vcr_code: string
         }
         Returns: string
+      }
+      _propagate_due_to_tasks: {
+        Args: { p_key: string; p_types: string[]; p_value: string }
+        Returns: undefined
       }
       _recompute_vcr_approval_bundle_row: {
         Args: { p_task_id: string }
@@ -18183,6 +18188,10 @@ export type Database = {
       }
       qaqc_run_check: { Args: { p_sql: string }; Returns: Json }
       recall_vcr_plan: { Args: { p_handover_point_id: string }; Returns: Json }
+      recompute_user_task_due_date: {
+        Args: { p_task_id: string }
+        Returns: string
+      }
       reconcile_ora_plan_tasks: { Args: { p_plan_id: string }; Returns: Json }
       reconcile_vcr_approval_bundles: {
         Args: { p_point_id: string }
