@@ -1220,7 +1220,7 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
     }
   }
 
-  // 6) Evidence provenance
+  // 6) Evidence provenance — pure via computeSignal6
   const { data: ev } = await bounded("workflow evidence", DB_TIMEOUT_MS, { data: [] }, (signal) =>
     withAbort(
       sb
@@ -1231,29 +1231,11 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
     ),
   );
   const evRows = (ev || []) as any[];
-  const assaiPending = evRows.filter(
-    (e) => String(e.source || "").toLowerCase() === "assai" && e.confirmed === false,
-  );
-  if (assaiPending.length > 0) {
-    facts.push({
-      label: "Assai evidence awaiting confirmation",
-      value: String(assaiPending.length),
-      tone: "amber",
-      confidence: "verified",
-    });
-  }
-  const submittedAt = (pr as any).submitted_at ? new Date((pr as any).submitted_at) : null;
-  if (submittedAt && status === "READY_FOR_REVIEW") {
-    const lateFiles = evRows.filter((e) => new Date(e.created_at) > submittedAt);
-    if (lateFiles.length > 0) {
-      facts.push({
-        label: "Evidence added after submission",
-        value: `${lateFiles.length} file(s)`,
-        tone: "red",
-        confidence: "verified",
-      });
-    }
-  }
+  for (const f of computeSignal6({
+    status,
+    submittedAt: (pr as any).submitted_at || null,
+    evidence: evRows,
+  })) facts.push(f as Fact);
 
   // Signal 7 (EXE-1b) — per-item task completion signal.
   // DB fetch here; fact synthesis is delegated to the pure computeSignal7()
