@@ -38,12 +38,23 @@ export const MilestonesTimeline: React.FC<MilestonesTimelineProps> = ({ mileston
     return new Date(a.milestone_date).getTime() - new Date(b.milestone_date).getTime();
   });
 
-  const firstUpcomingIdx = sorted.findIndex(m => m.status !== 'completed');
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+
+  // NEXT = first non-completed milestone whose date is today or in the future.
+  // Past-dated non-completed milestones are treated as "Overdue" (never NEXT).
+  const firstUpcomingIdx = sorted.findIndex(m => {
+    if (m.status === 'completed') return false;
+    if (!m.milestone_date) return false;
+    return new Date(m.milestone_date).getTime() >= startOfToday.getTime();
+  });
 
   return (
     <div className="grid grid-cols-[1fr_auto_auto] gap-x-3 gap-y-1 text-[12px] items-center">
       {sorted.map((m, i) => {
         const isCompleted = m.status === 'completed';
+        const dateMs = m.milestone_date ? new Date(m.milestone_date).getTime() : null;
+        const isOverdue = !isCompleted && dateMs !== null && dateMs < startOfToday.getTime();
         const isNext = !isCompleted && i === firstUpcomingIdx;
         return (
           <React.Fragment key={m.id}>
@@ -52,17 +63,20 @@ export const MilestonesTimeline: React.FC<MilestonesTimelineProps> = ({ mileston
                 'truncate leading-snug',
                 isCompleted && 'text-muted-foreground',
                 isNext && 'font-semibold text-foreground',
-                !isCompleted && !isNext && 'text-foreground/85',
+                isOverdue && 'text-foreground/85',
+                !isCompleted && !isNext && !isOverdue && 'text-foreground/85',
               )}
             >
               {m.milestone_name}
             </span>
-            <span className={cn('text-[11px] tabular-nums shrink-0', isCompleted ? 'text-muted-foreground' : 'text-muted-foreground')}>
+            <span className={cn('text-[11px] tabular-nums shrink-0', isOverdue ? 'text-amber-600' : 'text-muted-foreground')}>
               {m.milestone_date ? format(new Date(m.milestone_date), 'dd MMM yy') : '—'}
             </span>
             <span className="text-[10px] font-medium uppercase tracking-wider tabular-nums shrink-0 min-w-[62px] text-right">
               {isCompleted ? (
                 <span className="text-emerald-600">Achieved</span>
+              ) : isOverdue ? (
+                <span className="text-amber-600 font-semibold">Overdue</span>
               ) : isNext ? (
                 <span className="text-foreground font-semibold">Next</span>
               ) : (
@@ -75,3 +89,4 @@ export const MilestonesTimeline: React.FC<MilestonesTimelineProps> = ({ mileston
     </div>
   );
 };
+
