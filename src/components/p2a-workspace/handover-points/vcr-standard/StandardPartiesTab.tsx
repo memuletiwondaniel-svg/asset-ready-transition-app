@@ -107,32 +107,12 @@ const PartyRow: React.FC<{
           clickable ? 'cursor-pointer' : 'cursor-default',
         )}
       >
-        {/* Teams-style avatar with bottom-right completion badge */}
-        <div className="relative flex-none">
-          <Avatar className="h-8 w-8">
-            {shown.avatar_url && <AvatarImage src={shown.avatar_url} alt={shown.full_name} />}
-            <AvatarFallback className="text-[10px] font-semibold bg-slate-200 text-slate-700">
-              {initials(shown.full_name)}
-            </AvatarFallback>
-          </Avatar>
-          {complete && (
-            <TooltipProvider delayDuration={150}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span
-                    className="absolute -bottom-0.5 -right-0.5 flex items-center justify-center w-3.5 h-3.5 rounded-full bg-emerald-500 ring-2 ring-background"
-                    aria-label={hasStatement ? 'Discipline statement signed' : 'All assigned items complete'}
-                  >
-                    <CheckCircle2 className="w-2.5 h-2.5 text-white" strokeWidth={3} />
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs">
-                  {hasStatement ? 'Discipline statement signed' : 'All assigned items complete'}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-        </div>
+        <Avatar className="h-8 w-8 flex-none">
+          {shown.avatar_url && <AvatarImage src={shown.avatar_url} alt={shown.full_name} />}
+          <AvatarFallback className="text-[10px] font-semibold bg-slate-200 text-slate-700">
+            {initials(shown.full_name)}
+          </AvatarFallback>
+        </Avatar>
         <div className="min-w-0 flex-1">
           <div className="text-[13px] font-medium truncate leading-tight flex items-center gap-1.5">
             {shown.full_name}
