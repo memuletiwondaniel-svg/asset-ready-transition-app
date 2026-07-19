@@ -297,17 +297,44 @@ const PartyItemsDrawer: React.FC<{
   onOpenChange: (o: boolean) => void;
   handoverPointId: string;
   projectId?: string;
-  prereqCategoryMap: Map<string, { catCode: string; displayOrder: number }>;
+  prereqCategoryMap: Map<string, { catCode: string; displayOrder: number; topic: string | null }>;
   disciplineStatement?: string | null;
-}> = ({ party, isApprover, vcrCode, vcrName, onOpenChange, handoverPointId, projectId, prereqCategoryMap, disciplineStatement }) => {
+  hasStatement?: boolean;
+}> = ({ party, isApprover, vcrCode, vcrName, onOpenChange, handoverPointId, projectId, prereqCategoryMap, disciplineStatement, hasStatement }) => {
   const [openItem, setOpenItem] = useState<VCRItemBasic | null>(null);
   if (!party) return null;
+
+  // Drawer sort: status group (Rework → Not started → In progress/Under review
+  // → Approved), then category (TI, OI, DI, MS, HS, XX), then serial.
+  const STATUS_ORDER: Record<string, number> = {
+    REJECTED: 0,
+    NOT_STARTED: 1,
+    IN_PROGRESS: 2,
+    READY_FOR_REVIEW: 3,
+    QUALIFICATION_REQUESTED: 4,
+    ACCEPTED: 5,
+    QUALIFICATION_APPROVED: 5,
+  };
+  const CAT_ORDER: Record<string, number> = { TI: 0, OI: 1, DI: 2, MS: 3, HS: 4, XX: 9, '??': 9 };
+  const sortedItems = [...party.items].sort((a, b) => {
+    const sa = STATUS_ORDER[a.status] ?? 99;
+    const sb = STATUS_ORDER[b.status] ?? 99;
+    if (sa !== sb) return sa - sb;
+    const ma = prereqCategoryMap.get(a.prereq_id);
+    const mb = prereqCategoryMap.get(b.prereq_id);
+    const ca = CAT_ORDER[ma?.catCode ?? '??'] ?? 9;
+    const cb = CAT_ORDER[mb?.catCode ?? '??'] ?? 9;
+    if (ca !== cb) return ca - cb;
+    return (ma?.displayOrder ?? 0) - (mb?.displayOrder ?? 0);
+  });
+
+  const displayAssigned = party.assigned;
+  const displayCompleted = hasStatement ? Math.max(party.completed, party.assigned) : party.completed;
 
   return (
     <>
       <Sheet open={!!party} onOpenChange={onOpenChange}>
         <SheetContent side="right" hideClose className="!z-modal-critical w-full sm:max-w-lg p-0 flex flex-col">
-          {/* G1 header — name + role subtext only; VCR context removed per Daniel review; click-outside closes (no X) */}
           <SheetHeader className="px-5 pt-5 pb-3 border-b shrink-0">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-3 min-w-0 flex-1">
@@ -318,8 +345,11 @@ const PartyItemsDrawer: React.FC<{
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
-                  <SheetTitle className="text-[15px] leading-snug truncate">
+                  <SheetTitle className="text-[15px] leading-snug truncate flex items-center gap-1.5">
                     {party.full_name}
+                    {hasStatement && (
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" aria-label="Discipline statement signed" />
+                    )}
                   </SheetTitle>
                   <SheetDescription className="text-[12px] mt-0.5 truncate text-muted-foreground">
                     {party.role_name || party.position || '—'}
@@ -329,11 +359,11 @@ const PartyItemsDrawer: React.FC<{
 
               <span
                 className={cn(
-                  'flex-none text-[10.5px] font-bold rounded-full px-2 py-0.5',
-                  fractionChipClass(party.assigned, party.completed),
+                  'flex-none text-[11px] font-semibold rounded-full px-2 py-0.5',
+                  fractionChipClass(displayAssigned, displayCompleted, !!hasStatement || !!party.signed),
                 )}
               >
-                {party.completed} of {party.assigned}
+                {displayAssigned > 0 ? `${displayCompleted} of ${displayAssigned} items` : (party.signed ? 'Signed' : '—')}
               </span>
             </div>
           </SheetHeader>
@@ -350,26 +380,27 @@ const PartyItemsDrawer: React.FC<{
           )}
           <ScrollArea className="flex-1">
             <div className="divide-y divide-border/60">
-              {party.items.length === 0 ? (
+              {sortedItems.length === 0 ? (
                 <div className="p-6 text-sm text-muted-foreground text-center">
                   No VCR items assigned via this role.
                 </div>
               ) : (
-                party.items.map((it) => {
+                sortedItems.map((it) => {
                   const meta = prereqCategoryMap.get(it.prereq_id);
                   const code = meta ? formatVcrItemCode(meta.catCode, meta.displayOrder) : '';
                   const pill = standardPill(it.status as PrereqStatus);
+                  const catName = meta && meta.catCode in CATEGORY_META
+                    ? CATEGORY_META[meta.catCode as keyof typeof CATEGORY_META].name
+                    : 'Uncategorized';
+                  const subtext = [catName, meta?.topic].filter(Boolean).join(' · ');
                   return (
                     <button
                       key={it.prereq_id}
                       onClick={() => {
-                        const catName = meta && meta.catCode in CATEGORY_META
-                          ? CATEGORY_META[meta.catCode as keyof typeof CATEGORY_META].name
-                          : 'Uncategorized';
                         setOpenItem({
                           id: it.prereq_id,
                           vcr_item: it.summary,
-                          topic: null,
+                          topic: meta?.topic ?? null,
                           category_name: catName,
                           category_code: meta?.catCode ?? '??',
                           status: it.status,
@@ -377,13 +408,20 @@ const PartyItemsDrawer: React.FC<{
                           itemCode: code,
                         });
                       }}
-                      className="w-full flex items-baseline gap-3 px-4 py-2.5 text-left hover:bg-muted/40 transition"
+                      className="w-full flex items-start gap-3 px-4 py-2.5 text-left hover:bg-muted/40 transition"
                     >
-                      <div className="w-[52px] flex-none font-mono text-[11px] text-muted-foreground leading-tight">
+                      <div className="w-[52px] flex-none font-mono text-[11px] text-muted-foreground leading-tight pt-0.5">
                         {code || '—'}
                       </div>
-                      <div className="flex-1 text-[13px] leading-snug">{it.summary}</div>
-                      <div className={cn('w-[92px] flex-none text-center text-[10.5px] font-bold py-0.5 rounded-full', pill.className)}>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[13px] leading-snug text-foreground">{it.summary}</div>
+                        {subtext && (
+                          <div className="text-[11px] text-muted-foreground/80 mt-0.5 truncate">
+                            {subtext}
+                          </div>
+                        )}
+                      </div>
+                      <div className={cn('flex-none text-center text-[10.5px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap', pill.className)}>
                         {pill.label}
                       </div>
                     </button>
