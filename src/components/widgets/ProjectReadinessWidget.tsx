@@ -90,10 +90,6 @@ const PairedRoleRow: React.FC<{
 };
 
 export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ projectId, onViewDetails, onEdit }) => {
-  const [teamExpanded, setTeamExpanded] = useState(false);
-  // Milestones expanded by default per the approved Project-Page redesign (G1).
-  const [milestonesExpanded, setMilestonesExpanded] = useState(true);
-  const [documentsExpanded, setDocumentsExpanded] = useState(false);
   const { projects } = useProjects();
   const { plants } = usePlants();
   const { stations } = useStations();
