@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { effectiveBucket, PrereqStatus, QualStage } from './standardStatus';
 
 /**
  * Parties tab rollup — role-holder resolution (NO TA seeding).
@@ -22,11 +23,13 @@ import { supabase } from '@/integrations/supabase/client';
 
 const TERMINAL_STATUSES = new Set([
   'ACCEPTED',
-  'READY_FOR_REVIEW',
   'QUALIFICATION_APPROVED',
 ]);
 
 const APPROVED_APPROVAL_STATUSES = new Set(['ACCEPTED', 'QUALIFIED', 'APPROVED']);
+
+const isCompletedItem = (item: PartyItem) =>
+  effectiveBucket(item.status as PrereqStatus, item.qualification_stage ?? null) === 'terminal';
 
 const SOF_ROLE_LABELS = [
   'Plant Director',
@@ -41,6 +44,7 @@ export interface PartyItem {
   prereq_id: string;
   summary: string;
   status: string;
+  qualification_stage?: QualStage | null;
 }
 
 export interface PartyPerson {
@@ -203,13 +207,30 @@ export function useVCRPartiesRollup(
 
       const prereqStatus = new Map<string, string>();
       const prereqSummary = new Map<string, string>();
+      const prereqQualificationStage = new Map<string, QualStage | null>();
       const prereqDeliveringLabel = new Map<string, string | null>();
       (prereqs || []).forEach((p: any) => {
         prereqStatus.set(p.id, p.status);
         prereqSummary.set(p.id, p.summary);
+        prereqQualificationStage.set(p.id, null);
         prereqDeliveringLabel.set(p.id, p.vcr_items?.delivering_role?.name ?? null);
       });
       const prereqIds = [...prereqStatus.keys()];
+
+      if (prereqIds.length > 0) {
+        const { data: qualifications } = await c
+          .from('p2a_vcr_qualifications')
+          .select('vcr_prerequisite_id, status, submitted_at, created_at')
+          .in('vcr_prerequisite_id', prereqIds)
+          .order('submitted_at', { ascending: false })
+          .order('created_at', { ascending: false });
+
+        (qualifications || []).forEach((q: any) => {
+          if (q.vcr_prerequisite_id && !prereqQualificationStage.get(q.vcr_prerequisite_id)) {
+            prereqQualificationStage.set(q.vcr_prerequisite_id, q.status as QualStage);
+          }
+        });
+      }
 
       // 2) Approving parties (unchanged: TA2 approvals)
       let approvingRows: any[] = [];
@@ -260,6 +281,7 @@ export function useVCRPartiesRollup(
             prereq_id: prereqId,
             summary: prereqSummary.get(prereqId) || '',
             status: prereqStatus.get(prereqId) || '',
+            qualification_stage: prereqQualificationStage.get(prereqId) ?? null,
           });
           deliveringByUser.set(uid, list);
         }
@@ -299,7 +321,7 @@ export function useVCRPartiesRollup(
       const delivering: PartyPerson[] = [...deliveringByUser.entries()]
         .map(([user_id, items]) => {
           const profile = profileMap.get(user_id);
-          const completed = items.filter((it) => TERMINAL_STATUSES.has(it.status)).length;
+          const completed = items.filter(isCompletedItem).length;
           items.forEach((it) => {
             const arr = deliveringByPrereq[it.prereq_id] || [];
             const nm = profile?.full_name || 'Unknown';
@@ -322,10 +344,9 @@ export function useVCRPartiesRollup(
       /* -------- Approving party rows --------
        * ROLE-SCOPED items + counter (items-are-truth):
        * - items = union of all prereqs assigned to any holder of the same role
-       * - completed = count of those prereqs whose UNDERLYING ITEM status is
-       *   terminal (ACCEPTED / QUALIFICATION_APPROVED / READY_FOR_REVIEW),
-       *   NOT the approval-row status. This keeps the counter aligned with
-       *   what the drawer shows and prevents "10/10" when an item is Q·Rework.
+       * - completed = count of those prereqs whose EFFECTIVE status is terminal
+       *   (Approved / Q·Approved). Q·Rework and Rework are incomplete even if
+       *   the base prereq row still says ACCEPTED.
        */
       const approvingRowsByUser = new Map<string, any[]>();
       approvingRows.forEach((r: any) => {
@@ -357,6 +378,7 @@ export function useVCRPartiesRollup(
             prereq_id: pid,
             summary: prereqSummary.get(pid) || '',
             status: prereqStatus.get(pid) || '',
+            qualification_stage: prereqQualificationStage.get(pid) ?? null,
           }));
           items.forEach((it) => {
             const arr = approvingByPrereq[it.prereq_id] || [];
@@ -364,7 +386,7 @@ export function useVCRPartiesRollup(
             if (!arr.includes(nm)) arr.push(nm);
             approvingByPrereq[it.prereq_id] = arr;
           });
-          const completed = items.filter((it) => TERMINAL_STATUSES.has(it.status)).length;
+          const completed = items.filter(isCompletedItem).length;
           return {
             user_id,
             full_name: profile?.full_name || 'Unknown',
