@@ -190,23 +190,25 @@ export const useVCRPrerequisites = (handoverPointId: string) => {
   };
 };
 
-// Status display configuration
+// Legacy status display config — kept for VCRChecklistTab + PrerequisiteDetailSheet.
+// Labels aligned to the canonical set (see standardStatus.ts): Draft/Under review/
+// Rework/Qualification raised/Qualified/Approved/Not started.
 export const getPrerequisiteStatusConfig = (status: VCRPrerequisite['status']) => {
   switch (status) {
     case 'ACCEPTED':
       return { label: 'Approved', color: 'bg-emerald-500', textColor: 'text-emerald-500' };
     case 'READY_FOR_REVIEW':
-      return { label: 'Under Review', color: 'bg-blue-500', textColor: 'text-blue-500' };
+      return { label: 'Under review', color: 'bg-amber-500', textColor: 'text-amber-500' };
     case 'IN_PROGRESS':
-      return { label: 'In Progress', color: 'bg-amber-500', textColor: 'text-amber-500' };
+      return { label: 'Draft', color: 'bg-slate-400', textColor: 'text-slate-500' };
     case 'REJECTED':
-      return { label: 'Rejected', color: 'bg-red-500', textColor: 'text-red-500' };
+      return { label: 'Rework', color: 'bg-red-500', textColor: 'text-red-500' };
     case 'QUALIFICATION_REQUESTED':
-      return { label: 'Qualification Raised', color: 'bg-purple-500', textColor: 'text-purple-500' };
+      return { label: 'Qualification raised', color: 'bg-slate-400', textColor: 'text-slate-500' };
     case 'QUALIFICATION_APPROVED':
-      return { label: 'Qualified', color: 'bg-purple-600', textColor: 'text-purple-600' };
+      return { label: 'Qualification approved', color: 'bg-emerald-500', textColor: 'text-emerald-500' };
     case 'NOT_STARTED':
     default:
-      return { label: 'Draft', color: 'bg-slate-400', textColor: 'text-slate-500' };
+      return { label: 'Not started', color: 'bg-slate-400', textColor: 'text-slate-500' };
   }
 };
