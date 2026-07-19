@@ -78,6 +78,8 @@ export const OperationalRegistersStep: React.FC<OperationalRegistersStepProps> =
     },
   });
 
+  const { data: liveAuthors } = useLiveRegisterAuthors(items);
+
   const showSearch = items.length > 5;
   const filtered = showSearch && search.trim()
     ? items.filter((i: any) => {
