@@ -132,6 +132,14 @@ export const SystemDrawer: React.FC<Props> = ({ system, handoverPoint, projectId
 
   const { data, isLoading } = useSystemDetail(system?.id);
 
+  const { data, isLoading } = useSystemDetail(system?.id);
+  const { data: whData } = useWHPoints(handoverPoint?.id);
+  const systemWhPoints = useMemo(
+    () => (whData?.points ?? []).filter((p) => p.system?.id === system?.id),
+    [whData, system?.id],
+  );
+  const sortedWh = useMemo(() => [...systemWhPoints].sort(sortByStatusBucket), [systemWhPoints]);
+
   const subs = data?.subsystems || [];
   const itrs = data?.itrs || [];
   const punches = data?.punches || [];
