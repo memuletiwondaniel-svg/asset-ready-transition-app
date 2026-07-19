@@ -8,7 +8,7 @@ import { useVCRPartiesRollup } from './useVCRPartiesRollup';
 import { VCRItemDetailSheet, VCRItemBasic } from '@/components/widgets/VCRItemDetailSheet';
 import { formatVcrItemCode } from '@/lib/vcrItemCode';
 import {
-  standardPill, normalizeCategoryCode, CATEGORY_META, PrereqStatus,
+  effectivePill, normalizeCategoryCode, CATEGORY_META, PrereqStatus,
 } from './standardStatus';
 
 interface Props {
