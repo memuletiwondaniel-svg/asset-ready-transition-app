@@ -1273,7 +1273,72 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
     }
   }
 
-  // Signal 7 (item-level tasks) — deferred pending EXE-1. Intentionally omitted.
+  // Signal 7 (EXE-1b) — per-item task completion signal
+  // Reads the hidden vcr_item_action / vcr_item_review rows keyed to this prereq.
+  {
+    const _terminal = new Set(["ACCEPTED", "QUALIFICATION_APPROVED", "REJECTED", "NA"]);
+    const _isTerminal = _terminal.has(status);
+    const { data: itemTasks } = await bounded(
+      "workflow item tasks",
+      DB_TIMEOUT_MS,
+      { data: [] },
+      (signal) =>
+        withAbort(
+          sb
+            .from("user_tasks")
+            .select("id, type, status, progress_percentage, updated_at, created_at")
+            .in("type", ["vcr_item_action", "vcr_item_review"])
+            .filter("metadata->>prerequisite_id", "eq", prereqId),
+          signal,
+        ),
+    );
+    const its = (itemTasks || []) as any[];
+    const OPEN = new Set(["pending", "todo", "waiting", "in_progress"]);
+    const openTasks = its.filter((t) => OPEN.has(String(t.status || "").toLowerCase()));
+    const openDelivery = openTasks.filter((t) => t.type === "vcr_item_action").length;
+    const openReview = openTasks.filter((t) => t.type === "vcr_item_review").length;
+
+    if (_isTerminal && openTasks.length > 0) {
+      // E3-shaped: item-task should have been retired when the prereq went terminal.
+      facts.push({
+        label: "Orphan item-tasks",
+        value: `${openTasks.length} open on terminal prereq`,
+        tone: "red",
+        confidence: "verified",
+      });
+    } else if (!_isTerminal) {
+      if (openDelivery > 0) {
+        // Age the oldest open delivery task for pressure signal.
+        const oldest = openTasks
+          .filter((t) => t.type === "vcr_item_action")
+          .map((t) => new Date(t.created_at))
+          .sort((a, b) => a.getTime() - b.getTime())[0];
+        const days = oldest ? daysBetween(oldest, now) : 0;
+        facts.push({
+          label: "Open delivery task",
+          value: days > 0 ? `${days} days` : "1 open",
+          tone: days >= 5 ? "amber" : "grey",
+          confidence: "verified",
+        });
+      }
+      if (openReview > 0) {
+        const oldest = openTasks
+          .filter((t) => t.type === "vcr_item_review")
+          .map((t) => new Date(t.created_at))
+          .sort((a, b) => a.getTime() - b.getTime())[0];
+        const days = oldest ? daysBetween(oldest, now) : 0;
+        facts.push({
+          label: openReview === 1 ? "Open review task" : `Open review tasks`,
+          value: openReview === 1
+            ? (days > 0 ? `${days} days` : "1 open")
+            : `${openReview} open`,
+          tone: days >= 5 ? "amber" : "grey",
+          confidence: "verified",
+        });
+      }
+    }
+  }
+
 
   // ─── E5 cross-item signals (all 'verified', bounded, no N+1) ────────────
   // Look up this item's category_id + terminal state up-front.
