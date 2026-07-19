@@ -81,15 +81,14 @@ const PartyRow: React.FC<{
     .map((p) => p.full_name)
     .join(', ');
 
-  // Statement-authoritative: if this seat's role has a discipline statement
-  // submitted, treat the review as complete (m of m) regardless of the
-  // underlying ledger. Also drives the "signed" glyph + green dot.
+  // Items are truth: a signed discipline statement is shown as context, but
+  // never overrides the effective item counter. Rework / Q·Rework stay open.
   const roleKey = (shown.role_name || shown.position || '').trim().toLowerCase();
   const hasStatement = !!(roleKey && signedRoleKeys?.has(roleKey));
   const isSofPacSigned = !!shown.signed;
   const displayAssigned = shown.assigned;
   const displayCompleted = shown.completed;
-  const complete = hasStatement || isSofPacSigned || (displayAssigned > 0 && displayCompleted >= displayAssigned);
+  const complete = isSofPacSigned || (displayAssigned > 0 && displayCompleted >= displayAssigned);
 
   return (
     <div
@@ -149,7 +148,7 @@ const PartyRow: React.FC<{
       <span
         className={cn(
           'text-[11px] font-semibold rounded-full px-2 py-0.5 flex-none w-[92px] text-center tabular-nums',
-          fractionChipClass(displayAssigned, displayCompleted, isSofPacSigned || hasStatement),
+          fractionChipClass(displayAssigned, displayCompleted, isSofPacSigned),
         )}
         title={complete ? 'Complete' : `${displayCompleted} of ${displayAssigned} items complete`}
       >
@@ -299,8 +298,8 @@ export const PartyItemsDrawer: React.FC<{
   const sortedItems = [...party.items].sort((a, b) => {
     const ma = prereqCategoryMap.get(a.prereq_id);
     const mb = prereqCategoryMap.get(b.prereq_id);
-    const ba = effectiveBucket(a.status as PrereqStatus, ma?.qualStage ?? null);
-    const bb = effectiveBucket(b.status as PrereqStatus, mb?.qualStage ?? null);
+    const ba = effectiveBucket(a.status as PrereqStatus, a.qualification_stage ?? ma?.qualStage ?? null);
+    const bb = effectiveBucket(b.status as PrereqStatus, b.qualification_stage ?? mb?.qualStage ?? null);
     const sa = BUCKET_ORDER[ba] ?? 99;
     const sb = BUCKET_ORDER[bb] ?? 99;
     if (sa !== sb) return sa - sb;
@@ -342,7 +341,7 @@ export const PartyItemsDrawer: React.FC<{
               <span
                 className={cn(
                   'flex-none text-[11px] font-semibold rounded-full px-2 py-0.5',
-                  fractionChipClass(displayAssigned, displayCompleted, !!hasStatement || !!party.signed),
+                  fractionChipClass(displayAssigned, displayCompleted, !!party.signed),
                 )}
               >
                 {displayAssigned > 0 ? `${displayCompleted} of ${displayAssigned} items` : (party.signed ? 'Signed' : '—')}
@@ -370,7 +369,7 @@ export const PartyItemsDrawer: React.FC<{
                 sortedItems.map((it) => {
                   const meta = prereqCategoryMap.get(it.prereq_id);
                   const code = meta ? formatVcrItemCode(meta.catCode, meta.displayOrder) : '';
-                  const pill = effectivePill(it.status as PrereqStatus, meta?.qualStage ?? null);
+                  const pill = effectivePill(it.status as PrereqStatus, it.qualification_stage ?? meta?.qualStage ?? null);
                   const catName = meta && meta.catCode in CATEGORY_META
                     ? CATEGORY_META[meta.catCode as keyof typeof CATEGORY_META].name
                     : 'Uncategorized';
