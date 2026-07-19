@@ -309,19 +309,26 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
         <CardContent className="flex-1 flex flex-col gap-3 overflow-hidden pt-4">
           {/* G3 narrative summary — bold lead + secondary; the bar owns the
               percentage so we never duplicate "%". Tone drives the accent rail. */}
+          {/* Plain muted narrative summary — no accent rail. Bold lead + exception. */}
           <NarrativeSummary
             tone={narrativeTone}
             lead={narrativeLead}
-            secondary={
-              <span className="flex items-center gap-2">
-                <span className="tabular-nums">{narrativeSecondary}</span>
-                <span className="text-muted-foreground/50">·</span>
-                <span className="tabular-nums font-medium text-foreground/80">{overallProgress}%</span>
-              </span>
-            }
+            secondary={narrativeSecondary}
             onClick={() => openActivityOverlay()}
           />
-          <Progress value={overallProgress} className={cn("h-1.5 flex-shrink-0", barColorClass)} />
+
+          {/* OVERALL PROGRESS label row + health-coloured bar. */}
+          <div className="flex-shrink-0 space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] uppercase tracking-[0.08em] font-semibold text-muted-foreground">
+                Overall Progress
+              </span>
+              <span className="text-[11px] font-medium tabular-nums text-foreground/80">
+                {overallProgress}%
+              </span>
+            </div>
+            <Progress value={overallProgress} className={cn('h-1.5', barColorClass)} />
+          </div>
 
           {/* Scrollable activity sections */}
           <div className="flex-1 overflow-y-auto min-h-0 space-y-2 pr-1 scrollbar-modern">
