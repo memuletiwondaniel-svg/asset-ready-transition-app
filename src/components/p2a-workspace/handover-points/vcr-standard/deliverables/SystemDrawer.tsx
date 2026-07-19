@@ -105,9 +105,6 @@ interface Props {
   onOpenChange: (o: boolean) => void;
 }
 
-type Tab = 'overview' | 'itrs' | 'punchlist';
-
-export const SystemDrawer: React.FC<Props> = ({ system, handoverPoint, projectId: _projectId, open, onOpenChange }) => {
 type Tab = 'overview' | 'itrs' | 'punchlist' | 'whpoints';
 
 export const SystemDrawer: React.FC<Props> = ({ system, handoverPoint, projectId: _projectId, open, onOpenChange }) => {
