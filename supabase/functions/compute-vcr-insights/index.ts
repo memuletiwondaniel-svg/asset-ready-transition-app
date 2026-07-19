@@ -1276,6 +1276,8 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
   // Signal 7 (EXE-1b) — per-item task completion signal
   // Reads the hidden vcr_item_action / vcr_item_review rows keyed to this prereq.
   {
+    const _terminal = new Set(["ACCEPTED", "QUALIFICATION_APPROVED", "REJECTED", "NA"]);
+    const _isTerminal = _terminal.has(status);
     const { data: itemTasks } = await bounded(
       "workflow item tasks",
       DB_TIMEOUT_MS,
