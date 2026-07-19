@@ -131,8 +131,6 @@ export const SystemDrawer: React.FC<Props> = ({ system, handoverPoint, projectId
   const [punchCategory, setPunchCategory] = useState<'A' | 'B' | null>(null);
 
   const { data, isLoading } = useSystemDetail(system?.id);
-
-  const { data, isLoading } = useSystemDetail(system?.id);
   const { data: whData } = useWHPoints(handoverPoint?.id);
   const systemWhPoints = useMemo(
     () => (whData?.points ?? []).filter((p) => p.system?.id === system?.id),
