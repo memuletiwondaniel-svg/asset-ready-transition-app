@@ -12,6 +12,12 @@ import {
   type PageRegisterSchema as SharedPageRegisterSchema,
 } from "../_shared/register-reader.ts";
 import { computeSignal7 } from "../_shared/signal7.ts";
+import {
+  computeSignal1,
+  computeSignal2,
+  computeSignal4,
+  computeSignal10,
+} from "../_shared/workflow-signals.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
