@@ -387,7 +387,7 @@ const PartyItemsDrawer: React.FC<{
                 sortedItems.map((it) => {
                   const meta = prereqCategoryMap.get(it.prereq_id);
                   const code = meta ? formatVcrItemCode(meta.catCode, meta.displayOrder) : '';
-                  const pill = standardPill(it.status as PrereqStatus);
+                  const pill = effectivePill(it.status as PrereqStatus, meta?.qualStage ?? null);
                   const catName = meta && meta.catCode in CATEGORY_META
                     ? CATEGORY_META[meta.catCode as keyof typeof CATEGORY_META].name
                     : 'Uncategorized';
