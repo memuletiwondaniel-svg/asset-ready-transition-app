@@ -99,6 +99,55 @@ export const qualificationPill = (stage: QualStage): QualPill => {
   }
 };
 
+// ---- Effective pill (item status + optional qualification overlay) -----
+
+/**
+ * Canonical status+colour resolver used by every touchpoint (Items tab,
+ * Parties drawers, CategoryItemsDrawer, dashboards). If the prereq has a
+ * linked qualification we render the QUALIFICATION pill coloured by the
+ * qualification's own sub-stage (DRAFT/PENDING/REJECTED/APPROVED).
+ * Otherwise the plain item pill is used.
+ *
+ * Label matrix:
+ *   QUALIFICATION_REQUESTED + DRAFT     → grey  "Qualification raised"
+ *   QUALIFICATION_REQUESTED + PENDING   → amber "Qualification submitted"
+ *   QUALIFICATION_REQUESTED + REJECTED  → red   "Qualification rework"
+ *   QUALIFICATION_APPROVED  + APPROVED  → green "Qualification approved"
+ */
+const QUAL_LABEL: Record<QualStage, string> = {
+  DRAFT:    'Qualification raised',
+  PENDING:  'Qualification submitted',
+  REJECTED: 'Qualification rework',
+  APPROVED: 'Qualification approved',
+};
+
+export const effectivePill = (
+  status: PrereqStatus,
+  qualStage: QualStage | null | undefined,
+): StandardPill => {
+  if (qualStage) {
+    const q = qualificationPill(qualStage);
+    return { bucket: q.bucket, label: QUAL_LABEL[qualStage], className: q.className };
+  }
+  // Parent flagged QUALIFICATION_REQUESTED but qual row not resolved yet — surface
+  // as pipeline (amber "Qualification submitted") rather than the placeholder text.
+  if (status === 'QUALIFICATION_REQUESTED') {
+    return { bucket: 'pipeline', label: QUAL_LABEL.PENDING,
+      className: 'bg-amber-50 text-amber-700 border border-amber-200' };
+  }
+  if (status === 'QUALIFICATION_APPROVED') {
+    return { bucket: 'terminal', label: QUAL_LABEL.APPROVED,
+      className: 'bg-emerald-50 text-emerald-700 border border-emerald-200' };
+  }
+  return standardPill(status);
+};
+
+/** Sort bucket that respects qualification sub-state (approved → terminal group). */
+export const effectiveBucket = (
+  status: PrereqStatus,
+  qualStage: QualStage | null | undefined,
+): StandardBucket => effectivePill(status, qualStage).bucket;
+
 // ---- Category helpers (unchanged) --------------------------------------
 
 export const normalizeCategoryCode = (raw: string | null | undefined): 'DI' | 'TI' | 'OI' | 'MS' | 'HS' | 'XX' => {
