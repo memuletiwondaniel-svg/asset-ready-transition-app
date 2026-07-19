@@ -29,7 +29,7 @@ const TONE = {
 } as const;
 
 const Chip: React.FC<{ tone: keyof typeof TONE; children: React.ReactNode }> = ({ tone, children }) => (
-  <span className={cn('inline-flex text-[10.5px] font-bold rounded-full border px-2 py-0.5 uppercase tracking-wider whitespace-nowrap', TONE[tone])}>
+  <span className={cn('inline-flex text-[9px] font-semibold rounded-full border px-1.5 py-0.5 normal-case tracking-normal whitespace-nowrap', TONE[tone])}>
     {children}
   </span>
 );
