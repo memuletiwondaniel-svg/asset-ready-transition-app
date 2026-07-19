@@ -516,24 +516,6 @@ export const StandardPartiesTab: React.FC<Props> = ({
   const fSof = filterPeople(data.sof);
   const fPac = filterPeople(data.pac);
 
-  // G2 narrative summary
-  const narrative = useMemo(() => {
-    const totalItems = prerequisites.length;
-    const completeItems = prerequisites.filter(
-      (p) => standardPill(p.status as PrereqStatus).bucket === 'terminal',
-    ).length;
-    const parts: string[] = [];
-    parts.push(
-      `**${data.delivering.length}** delivering role holders and **${data.approving.length}** approvers resolved across ${totalItems} VCR item${totalItems === 1 ? '' : 's'}.`,
-    );
-    if (totalItems > 0) {
-      parts.push(`${completeItems} of ${totalItems} items complete.`);
-    }
-    if (!gateUnlocked) {
-      parts.push('SoF and PAC signatories unlock once every item reaches terminal status.');
-    }
-    return parts.join(' ');
-  }, [data.delivering.length, data.approving.length, prerequisites, gateUnlocked]);
 
   // Discipline statement lookup for the party drawer (approvers only).
   const statementForParty = (p: PartyPerson | null): string | null => {
