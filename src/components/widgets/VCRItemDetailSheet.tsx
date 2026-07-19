@@ -1605,9 +1605,29 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                   <p className="text-xs text-muted-foreground italic">No comments yet.</p>
                 ) : (
                   <div className="divide-y divide-border">
-                    {thread.map((c) => {
-                      const prof = c.author_user_id ? authorById[c.author_user_id] : undefined;
-                      const isYou = c.author_user_id && user?.id && c.author_user_id === user.id;
+                    {thread.map((c, idx) => {
+                      // Display-only author resolution.
+                      // Some legacy/seeded system-generated entries (e.g. the
+                      // auto "Submitted for approver review" marker) have a
+                      // null author_user_id even though the acting user is
+                      // implicit from the surrounding thread. To avoid the
+                      // misleading "Former member" label for a still-active
+                      // person, fall back to the nearest neighbouring author
+                      // on the same item's thread (prior first, then next).
+                      // We never mutate the underlying comment row.
+                      let effectiveAuthorId: string | null = c.author_user_id ?? null;
+                      if (!effectiveAuthorId) {
+                        for (let i = idx - 1; i >= 0; i--) {
+                          if (thread[i].author_user_id) { effectiveAuthorId = thread[i].author_user_id; break; }
+                        }
+                        if (!effectiveAuthorId) {
+                          for (let i = idx + 1; i < thread.length; i++) {
+                            if (thread[i].author_user_id) { effectiveAuthorId = thread[i].author_user_id; break; }
+                          }
+                        }
+                      }
+                      const prof = effectiveAuthorId ? authorById[effectiveAuthorId] : undefined;
+                      const isYou = effectiveAuthorId && user?.id && effectiveAuthorId === user.id;
                       // Graceful fallback: never render literal "Unknown".
                       // When the profile can't be resolved, omit the name and
                       // let role/date carry the meta line; if nothing else is
