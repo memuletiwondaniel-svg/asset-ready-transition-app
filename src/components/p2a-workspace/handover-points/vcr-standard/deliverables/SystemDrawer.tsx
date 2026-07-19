@@ -312,6 +312,7 @@ export const SystemDrawer: React.FC<Props> = ({ system, handoverPoint, projectId
           <TabBtn active={tab === 'overview'} onClick={() => setTab('overview')}>Overview</TabBtn>
           <TabBtn active={tab === 'itrs'} onClick={() => setTab('itrs')}>ITRs</TabBtn>
           <TabBtn active={tab === 'punchlist'} onClick={() => setTab('punchlist')}>Punchlist</TabBtn>
+          <TabBtn active={tab === 'whpoints'} onClick={() => setTab('whpoints')}>W&amp;H Points</TabBtn>
         </div>
 
         <ScrollArea className="flex-1">
