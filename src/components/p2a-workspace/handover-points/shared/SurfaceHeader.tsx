@@ -19,9 +19,8 @@ export interface SurfaceHeaderProps {
 }
 
 export const SurfaceHeader: React.FC<SurfaceHeaderProps> = ({
-  title, vcrCode, vcrName, narrative, right, className,
+  narrative, right, className,
 }) => {
-  const subtext = [vcrCode, vcrName].filter(Boolean).join(' · ');
   // In-body tab title removed app-wide — the left nav is the single source of
   // the tab name. Each tab surface now leads with its narrative summary panel
   // followed by content. `title` + `subtext` are retained on the props for
