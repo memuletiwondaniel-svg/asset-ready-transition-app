@@ -91,13 +91,13 @@ export const WidgetCardHeader: React.FC<WidgetCardHeaderProps> = ({
         >
           <Icon
             className={cn(
-              'h-4 w-4 shrink-0 text-muted-foreground/70 transition-colors',
+              'h-[18px] w-[18px] shrink-0 text-muted-foreground/70 transition-colors',
               // Wake to identity colour when the ancestor card is hovered.
               hoverIconClass,
             )}
           />
           <div className="min-w-0 flex-1">
-            <div className="text-sm font-semibold text-foreground truncate leading-tight">
+            <div className="text-[15px] font-bold text-foreground truncate leading-tight tracking-[-0.01em]">
               {title}
             </div>
             {subtitle && (

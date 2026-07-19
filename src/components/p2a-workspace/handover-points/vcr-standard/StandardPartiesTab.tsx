@@ -98,14 +98,6 @@ const PartyRow: React.FC<{
         clickable ? 'hover:bg-muted/50' : '',
       )}
     >
-      {/* Status dot */}
-      <span
-        className={cn(
-          'w-2 h-2 rounded-full flex-none',
-          statusDotClass(displayAssigned, displayCompleted, isSofPacSigned || hasStatement),
-        )}
-        aria-hidden
-      />
       <button
         type="button"
         onClick={() => clickable && onClick?.(shown)}
@@ -115,27 +107,35 @@ const PartyRow: React.FC<{
           clickable ? 'cursor-pointer' : 'cursor-default',
         )}
       >
-        <Avatar className="h-8 w-8 flex-none">
-          {shown.avatar_url && <AvatarImage src={shown.avatar_url} alt={shown.full_name} />}
-          <AvatarFallback className="text-[10px] font-semibold bg-slate-200 text-slate-700">
-            {initials(shown.full_name)}
-          </AvatarFallback>
-        </Avatar>
+        {/* Teams-style avatar with bottom-right completion badge */}
+        <div className="relative flex-none">
+          <Avatar className="h-8 w-8">
+            {shown.avatar_url && <AvatarImage src={shown.avatar_url} alt={shown.full_name} />}
+            <AvatarFallback className="text-[10px] font-semibold bg-slate-200 text-slate-700">
+              {initials(shown.full_name)}
+            </AvatarFallback>
+          </Avatar>
+          {complete && (
+            <TooltipProvider delayDuration={150}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    className="absolute -bottom-0.5 -right-0.5 flex items-center justify-center w-3.5 h-3.5 rounded-full bg-emerald-500 ring-2 ring-background"
+                    aria-label={hasStatement ? 'Discipline statement signed' : 'All assigned items complete'}
+                  >
+                    <CheckCircle2 className="w-2.5 h-2.5 text-white" strokeWidth={3} />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs">
+                  {hasStatement ? 'Discipline statement signed' : 'All assigned items complete'}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
         <div className="min-w-0 flex-1">
           <div className="text-[13px] font-medium truncate leading-tight flex items-center gap-1.5">
             {shown.full_name}
-            {hasStatement && (
-              <TooltipProvider delayDuration={150}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" aria-label="Discipline statement signed" />
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="text-xs">
-                    Discipline statement signed
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
             {isPaired && (
               <TooltipProvider delayDuration={150}>
                 <Tooltip>
@@ -165,15 +165,16 @@ const PartyRow: React.FC<{
           </div>
         </div>
       </button>
+      {/* Uniform-width progress label — right aligned, tabular numerals */}
       <span
         className={cn(
-          'text-[11px] font-semibold rounded-full px-2 py-0.5 flex-none',
+          'text-[11px] font-semibold rounded-full px-2 py-0.5 flex-none w-[92px] text-center tabular-nums',
           fractionChipClass(displayAssigned, displayCompleted, isSofPacSigned || hasStatement),
         )}
         title={complete ? 'Complete' : `${displayCompleted} of ${displayAssigned} items complete`}
       >
         {displayAssigned > 0
-          ? `${displayCompleted} of ${displayAssigned} items`
+          ? `${displayCompleted} of ${displayAssigned}`
           : (isSofPacSigned ? 'Signed' : '—')}
       </span>
     </div>
