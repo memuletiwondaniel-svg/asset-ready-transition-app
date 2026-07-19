@@ -488,10 +488,27 @@ export const StandardPartiesTab: React.FC<Props> = ({
     return m;
   }, [prereqCategoryMap]);
 
-  const openDelivery = lifecyclePhase
-    ? lifecyclePhase === 'IN_EXECUTION' || lifecyclePhase === 'DRAFT' || lifecyclePhase === 'AWAITING_SUMMARY'
-    : true;
-  const openApprover = lifecyclePhase === 'AWAITING_SUMMARY';
+  // Default-expand rules keyed to VCR lifecycle phase.
+  //   Delivery / acceptance phases → expand VCR DELIVERY + VCR APPROVERS,
+  //     collapse SoF + PAC.
+  //   AWAITING_SOF → expand SoF only.
+  //   AWAITING_PAC / HANDOVER_COMPLETE → expand PAC only.
+  const isSofPhase = lifecyclePhase === 'AWAITING_SOF';
+  const isPacPhase = lifecyclePhase === 'AWAITING_PAC' || lifecyclePhase === 'HANDOVER_COMPLETE';
+  const defaultOpenDelivery = !isSofPhase && !isPacPhase;
+  const defaultOpenApprover = !isSofPhase && !isPacPhase;
+  const defaultOpenSof = isSofPhase;
+  const defaultOpenPac = isPacPhase;
+
+  // Role-name keys of approvers with a submitted discipline statement.
+  const signedRoleKeys = useMemo(() => {
+    const s = new Set<string>();
+    (disciplineStatements || []).forEach((st) => {
+      if (st.discipline_role_name) s.add(st.discipline_role_name.trim().toLowerCase());
+    });
+    return s;
+  }, [disciplineStatements]);
+
 
 
 
