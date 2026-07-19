@@ -44,7 +44,7 @@ type SortDir = 'asc' | 'desc';
 
 const FILTERS: { id: Filter; label: string }[] = [
   { id: 'all', label: 'All' },
-  { id: 'rework', label: 'Rework requested' },
+  { id: 'rework', label: 'Rework' },
   { id: 'todeliver', label: 'Not started' },
   { id: 'pipeline', label: 'Under review' },
   { id: 'qualification', label: 'Qualification' },
