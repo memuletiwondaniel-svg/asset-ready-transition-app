@@ -270,7 +270,9 @@ const Section: React.FC<SectionProps> = ({
 
 /* ---------------- Party items drawer ---------------- */
 
-const PartyItemsDrawer: React.FC<{
+export type PrereqCategoryMap = Map<string, { catCode: string; displayOrder: number; topic: string | null; qualStage: 'DRAFT'|'PENDING'|'APPROVED'|'REJECTED'|null }>;
+
+export const PartyItemsDrawer: React.FC<{
   party: PartyPerson | null;
   isApprover: boolean;
   vcrCode: string;
