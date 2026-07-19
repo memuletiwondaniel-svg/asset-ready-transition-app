@@ -99,12 +99,13 @@ export function useRegisterLifecycle(registerId: string | null | undefined) {
       if (register.author_role_id && register.handover_point_id) {
         const { data: vcr } = await client
           .from('p2a_handover_points')
-          .select('project_id')
+          .select('plan:p2a_handover_plans!p2a_handover_points_handover_plan_id_fkey(project_id)')
           .eq('id', register.handover_point_id)
           .maybeSingle();
-        if (vcr?.project_id) {
+        const projectId = vcr?.plan?.project_id;
+        if (projectId) {
           const { data: holderId } = await client.rpc('resolve_role_holder', {
-            p_project_id: vcr.project_id,
+            p_project_id: projectId,
             p_role_id: register.author_role_id,
           });
           if (holderId) liveAuthorId = holderId as string;
