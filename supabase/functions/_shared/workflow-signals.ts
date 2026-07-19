@@ -372,12 +372,12 @@ export function computeSignal6(input: Signal6Input): WorkflowFact[] {
 // returned, OR when returned/total ratio >= 0.5.
 export interface Signal8Input {
   categoryCode: string | null | undefined;
-  sameCategorySibItemIds: string[];              // distinct vcr_item_id list
-  returnedSibItemIds: string[];                  // distinct vcr_item_ids that had ≥1 "returned" comment
+  total: number;                    // count of same-category sibling prereqs
+  returnedCount: number;            // distinct sibling vcr_items with ≥1 "returned" comment
 }
 export function computeSignal8(input: Signal8Input): WorkflowFact[] {
-  const total = new Set(input.sameCategorySibItemIds || []).size;
-  const returnedCount = new Set(input.returnedSibItemIds || []).size;
+  const total = input.total | 0;
+  const returnedCount = input.returnedCount | 0;
   if (total <= 0) return [];
   if (returnedCount >= 3 || returnedCount / total >= 0.5) {
     const catCode = input.categoryCode || "category";
