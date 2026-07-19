@@ -1165,20 +1165,8 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
       signal,
     ),
   );
-  const openQual = ((quals || []) as any[]).find((q) => {
-    const s = String(q.status || "").toUpperCase();
-    return s && !["APPROVED", "REJECTED", "CLOSED", "COMPLETED"].includes(s);
-  });
-  if (openQual || status === "QUALIFICATION_REQUESTED") {
-    const q = openQual as any;
-    const qAnchor = q?.submitted_at || q?.updated_at || q?.created_at;
-    const qDays = daysBetween(qAnchor ? new Date(qAnchor) : null, now);
-    facts.push({
-      label: "Qualification open",
-      value: `${q?.status || "QUALIFICATION_REQUESTED"} · ${qDays} days`,
-      tone: "amber",
-      confidence: "verified",
-    });
+  for (const f of computeSignal4({ prereqStatus: status, quals: (quals || []) as any[], now })) {
+    facts.push(f as Fact);
   }
 
   // 5) Party health — effective role unassigned
