@@ -250,16 +250,22 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
 
   // Flatten all team holders (across REQUIRED_ROLES) into a de-duped list for
   // the collapsed avatar stack. First-seen role wins as the sublabel.
-  const teamHolders: Array<RoleHolder & { role: string }> = [];
-  const seen = new Set<string>();
+  // Also compute co-holders per role so the drawer can render B2B chips.
+  const holdersByRole: Record<string, RoleHolder[]> = {};
   REQUIRED_ROLES.forEach(role => {
-    const holders = ((roleHolders as Record<string, RoleHolder[]>)[role] || [])
+    holdersByRole[role] = ((roleHolders as Record<string, RoleHolder[]>)[role] || [])
       .slice()
       .sort((a, b) => a.full_name.localeCompare(b.full_name, undefined, { sensitivity: 'base' }));
+  });
+  const teamHolders: Array<RoleHolder & { role: string; partners: RoleHolder[] }> = [];
+  const seen = new Set<string>();
+  REQUIRED_ROLES.forEach(role => {
+    const holders = holdersByRole[role];
     holders.forEach(h => {
       if (!seen.has(h.user_id)) {
         seen.add(h.user_id);
-        teamHolders.push({ ...h, role });
+        const partners = holders.filter(p => p.user_id !== h.user_id);
+        teamHolders.push({ ...h, role, partners });
       }
     });
   });
