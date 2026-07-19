@@ -1383,24 +1383,8 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
       withAbort(sb.from("p2a_handover_points").select("target_date").eq("id", vcrId).maybeSingle(), signal),
     );
     const targetRaw = (hpRow as any)?.target_date || null;
-    if (targetRaw) {
-      const target = new Date(targetRaw);
-      const diffDays = Math.floor((target.getTime() - now.getTime()) / 86400000);
-      if (diffDays < 0) {
-        facts.push({
-          label: "VCR target approaching",
-          value: `Target ${targetRaw} · ${Math.abs(diffDays)} days past-due`,
-          tone: "red",
-          confidence: "verified",
-        });
-      } else if (diffDays <= 14) {
-        facts.push({
-          label: "VCR target approaching",
-          value: `Target ${targetRaw} · ${diffDays} days`,
-          tone: "amber",
-          confidence: "verified",
-        });
-      }
+    for (const f of computeSignal10({ prereqStatus: status, targetDate: targetRaw, now })) {
+      facts.push(f as Fact);
     }
   }
 
