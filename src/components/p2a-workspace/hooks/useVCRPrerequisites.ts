@@ -21,6 +21,7 @@ export interface VCRPrerequisite {
   created_at: string;
   updated_at: string;
   category?: string;
+  topic?: string | null;
   // Joined data
   evidence?: VCREvidence[];
 }
