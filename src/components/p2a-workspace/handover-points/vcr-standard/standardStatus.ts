@@ -55,9 +55,9 @@ export const standardPill = (status: PrereqStatus): StandardPill => {
     case 'READY_FOR_REVIEW':
       return { bucket: 'pipeline', label: 'Under review', className: 'bg-amber-50 text-amber-700 border border-amber-200' };
     case 'IN_PROGRESS':
-      return { bucket: 'pipeline', label: 'In progress', className: 'bg-amber-50 text-amber-700 border border-amber-200' };
+      return { bucket: 'todeliver', label: 'Draft', className: 'bg-slate-100 text-slate-600 border border-slate-200' };
     case 'REJECTED':
-      return { bucket: 'rework', label: 'Rework requested', className: 'bg-red-50 text-red-700 border border-red-200' };
+      return { bucket: 'rework', label: 'Rework', className: 'bg-red-50 text-red-700 border border-red-200' };
     case 'QUALIFICATION_REQUESTED':
       return { bucket: 'qualification', label: 'Qualification requested', className: 'bg-amber-50 text-amber-700 border border-amber-200' };
     case 'NOT_STARTED':
