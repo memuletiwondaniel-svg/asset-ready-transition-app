@@ -4,8 +4,6 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { Search, ArrowUpDown, ArrowUp, ArrowDown, Info } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { P2AHandoverPoint } from '../../hooks/useP2AHandoverPoints';
 import { useVCRPrerequisites } from '../../hooks/useVCRPrerequisites';
 import { useVCRPartiesRollup } from './useVCRPartiesRollup';
@@ -72,26 +70,16 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
   const { prerequisites, isLoading } = useVCRPrerequisites(handoverPoint.id);
   const { data: partiesRollup } = useVCRPartiesRollup(handoverPoint.id, projectId || null);
 
-  // Qualification overlay: latest qualification per prerequisite for this VCR.
-  const { data: qualsByPrereq } = useQuery({
-    queryKey: ['vcr-quals-overlay', handoverPoint.id],
-    enabled: !!handoverPoint.id,
-    queryFn: async (): Promise<Record<string, QualStage>> => {
-      const prereqIds = (prerequisites || []).map(p => p.id);
-      if (!prereqIds.length) return {};
-      const { data, error } = await (supabase as any)
-        .from('p2a_vcr_qualifications')
-        .select('vcr_prerequisite_id,status,submitted_at')
-        .in('vcr_prerequisite_id', prereqIds)
-        .order('submitted_at', { ascending: false });
-      if (error) throw error;
-      const map: Record<string, QualStage> = {};
-      for (const q of (data || []) as any[]) {
-        if (!map[q.vcr_prerequisite_id]) map[q.vcr_prerequisite_id] = q.status as QualStage;
-      }
-      return map;
-    },
-  });
+  // Qualification stage is now merged onto each prereq by useVCRPrerequisites —
+  // a single source of truth for every touchpoint. Build the lookup locally for
+  // this component (kept as `qualsByPrereq` for minimal downstream churn).
+  const qualsByPrereq = useMemo<Record<string, QualStage>>(() => {
+    const map: Record<string, QualStage> = {};
+    for (const p of prerequisites) {
+      if (p.qualification_stage) map[p.id] = p.qualification_stage as QualStage;
+    }
+    return map;
+  }, [prerequisites]);
 
   const [activeFilters, setActiveFilters] = useState<Set<ActiveFilter>>(new Set());
   const [search, setSearch] = useState('');
@@ -333,9 +321,11 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
         ) : (
           <div className="divide-y divide-border/60">
             {rows.map(r => {
-              // Model A — ONE badge per row.
+              // Model A — ONE badge per row. Qualification sub-state carries its own
+              // label (raised / submitted / rework / approved); coloured accordingly.
               const badge = r.qual
-                ? { label: 'Qualification' as const, className: r.qual.className, title: `Qualification — ${r.qual.stageLabel}` }
+                ? { label: `Qualification ${({ DRAFT: 'raised', PENDING: 'submitted', REJECTED: 'rework', APPROVED: 'approved' } as const)[r.qual.stage]}`,
+                    className: r.qual.className, title: `Qualification — ${r.qual.stageLabel}` }
                 : { label: r.pill.label, className: r.pill.className, title: r.pill.label };
               return (
                 <button

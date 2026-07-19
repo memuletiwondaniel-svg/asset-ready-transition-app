@@ -8,7 +8,7 @@ import { useVCRPartiesRollup } from './useVCRPartiesRollup';
 import { VCRItemDetailSheet, VCRItemBasic } from '@/components/widgets/VCRItemDetailSheet';
 import { formatVcrItemCode } from '@/lib/vcrItemCode';
 import {
-  standardPill, normalizeCategoryCode, CATEGORY_META, PrereqStatus,
+  effectivePill, normalizeCategoryCode, CATEGORY_META, PrereqStatus,
 } from './standardStatus';
 
 interface Props {
@@ -47,7 +47,7 @@ export const CategoryItemsDrawer: React.FC<Props> = ({
           prereq: p,
           catCode: code,
           itemCode: formatVcrItemCode(code, p.display_order),
-          pill: standardPill(p.status as PrereqStatus),
+          pill: effectivePill(p.status as PrereqStatus, p.qualification_stage ?? null),
           partyNames,
         };
       })

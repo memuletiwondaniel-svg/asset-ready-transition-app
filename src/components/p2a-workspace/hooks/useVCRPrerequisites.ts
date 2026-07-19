@@ -22,6 +22,10 @@ export interface VCRPrerequisite {
   updated_at: string;
   category?: string;
   topic?: string | null;
+  /** Latest qualification stage for this prereq (null if none). Merged in
+   *  by the hook so every consumer resolves the qualification sub-state
+   *  (DRAFT/PENDING/REJECTED/APPROVED) from a single source of truth. */
+  qualification_stage?: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | null;
   // Joined data
   evidence?: VCREvidence[];
 }
@@ -73,6 +77,24 @@ export const useVCRPrerequisites = (handoverPointId: string) => {
         // per-prereq row order (which can be a concatenated value like 219).
         display_order: prereq.vcr_items?.display_order ?? prereq.display_order,
       })) as VCRPrerequisite[];
+
+      // Merge latest qualification stage per prereq — one source of truth for
+      // the qualification sub-state used by every UI touchpoint.
+      const prereqIds = mapped.map(p => p.id);
+      if (prereqIds.length) {
+        const { data: quals } = await (supabase as any)
+          .from('p2a_vcr_qualifications')
+          .select('vcr_prerequisite_id,status,submitted_at')
+          .in('vcr_prerequisite_id', prereqIds)
+          .order('submitted_at', { ascending: false });
+        const stageByPrereq = new Map<string, VCRPrerequisite['qualification_stage']>();
+        for (const q of (quals || []) as any[]) {
+          if (q.vcr_prerequisite_id && !stageByPrereq.has(q.vcr_prerequisite_id)) {
+            stageByPrereq.set(q.vcr_prerequisite_id, q.status);
+          }
+        }
+        for (const p of mapped) p.qualification_stage = stageByPrereq.get(p.id) ?? null;
+      }
 
       // TEMP diag: prove per-category resolution end-to-end for VCR-02 rollup parity.
       if (typeof window !== 'undefined') {
@@ -168,23 +190,25 @@ export const useVCRPrerequisites = (handoverPointId: string) => {
   };
 };
 
-// Status display configuration
+// Legacy status display config — kept for VCRChecklistTab + PrerequisiteDetailSheet.
+// Labels aligned to the canonical set (see standardStatus.ts): Draft/Under review/
+// Rework/Qualification raised/Qualified/Approved/Not started.
 export const getPrerequisiteStatusConfig = (status: VCRPrerequisite['status']) => {
   switch (status) {
     case 'ACCEPTED':
       return { label: 'Approved', color: 'bg-emerald-500', textColor: 'text-emerald-500' };
     case 'READY_FOR_REVIEW':
-      return { label: 'Under Review', color: 'bg-blue-500', textColor: 'text-blue-500' };
+      return { label: 'Under review', color: 'bg-amber-500', textColor: 'text-amber-500' };
     case 'IN_PROGRESS':
-      return { label: 'In Progress', color: 'bg-amber-500', textColor: 'text-amber-500' };
+      return { label: 'Draft', color: 'bg-slate-400', textColor: 'text-slate-500' };
     case 'REJECTED':
-      return { label: 'Rejected', color: 'bg-red-500', textColor: 'text-red-500' };
+      return { label: 'Rework', color: 'bg-red-500', textColor: 'text-red-500' };
     case 'QUALIFICATION_REQUESTED':
-      return { label: 'Qualification Raised', color: 'bg-purple-500', textColor: 'text-purple-500' };
+      return { label: 'Qualification raised', color: 'bg-slate-400', textColor: 'text-slate-500' };
     case 'QUALIFICATION_APPROVED':
-      return { label: 'Qualified', color: 'bg-purple-600', textColor: 'text-purple-600' };
+      return { label: 'Qualification approved', color: 'bg-emerald-500', textColor: 'text-emerald-500' };
     case 'NOT_STARTED':
     default:
-      return { label: 'Draft', color: 'bg-slate-400', textColor: 'text-slate-500' };
+      return { label: 'Not started', color: 'bg-slate-400', textColor: 'text-slate-500' };
   }
 };

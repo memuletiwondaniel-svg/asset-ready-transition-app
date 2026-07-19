@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils';
 import { P2AHandoverPoint } from '../../hooks/useP2AHandoverPoints';
 import { useVCRPrerequisites } from '../../hooks/useVCRPrerequisites';
 import { useVCRHydrocarbonStatus } from '@/hooks/useVCRHydrocarbonStatus';
-import { PrereqStatus, standardPill, normalizeCategoryCode, CATEGORY_META } from './standardStatus';
+import { PrereqStatus, standardPill, effectivePill, effectiveBucket, normalizeCategoryCode, CATEGORY_META } from './standardStatus';
 import { PartyPerson, PartyItem, useVCRPartiesRollup } from './useVCRPartiesRollup';
 import { VCRItemDetailSheet, VCRItemBasic } from '@/components/widgets/VCRItemDetailSheet';
 import { formatVcrItemCode } from '@/lib/vcrItemCode';
@@ -297,7 +297,7 @@ const PartyItemsDrawer: React.FC<{
   onOpenChange: (o: boolean) => void;
   handoverPointId: string;
   projectId?: string;
-  prereqCategoryMap: Map<string, { catCode: string; displayOrder: number; topic: string | null }>;
+  prereqCategoryMap: Map<string, { catCode: string; displayOrder: number; topic: string | null; qualStage: 'DRAFT'|'PENDING'|'APPROVED'|'REJECTED'|null }>;
   disciplineStatement?: string | null;
   hasStatement?: boolean;
 }> = ({ party, isApprover, vcrCode, vcrName, onOpenChange, handoverPointId, projectId, prereqCategoryMap, disciplineStatement, hasStatement }) => {
@@ -306,22 +306,21 @@ const PartyItemsDrawer: React.FC<{
 
   // Drawer sort: status group (Rework → Not started → In progress/Under review
   // → Approved), then category (TI, OI, DI, MS, HS, XX), then serial.
-  const STATUS_ORDER: Record<string, number> = {
-    REJECTED: 0,
-    NOT_STARTED: 1,
-    IN_PROGRESS: 2,
-    READY_FOR_REVIEW: 3,
-    QUALIFICATION_REQUESTED: 4,
-    ACCEPTED: 5,
-    QUALIFICATION_APPROVED: 5,
+  // Qualification sub-states slot in per the effective bucket:
+  //   qual DRAFT → Not started · qual PENDING → Under review ·
+  //   qual REJECTED → Rework · qual APPROVED → Approved.
+  const BUCKET_ORDER: Record<string, number> = {
+    rework: 0, todeliver: 1, pipeline: 2, qualification: 2, terminal: 3,
   };
   const CAT_ORDER: Record<string, number> = { TI: 0, OI: 1, DI: 2, MS: 3, HS: 4, XX: 9, '??': 9 };
   const sortedItems = [...party.items].sort((a, b) => {
-    const sa = STATUS_ORDER[a.status] ?? 99;
-    const sb = STATUS_ORDER[b.status] ?? 99;
-    if (sa !== sb) return sa - sb;
     const ma = prereqCategoryMap.get(a.prereq_id);
     const mb = prereqCategoryMap.get(b.prereq_id);
+    const ba = effectiveBucket(a.status as PrereqStatus, ma?.qualStage ?? null);
+    const bb = effectiveBucket(b.status as PrereqStatus, mb?.qualStage ?? null);
+    const sa = BUCKET_ORDER[ba] ?? 99;
+    const sb = BUCKET_ORDER[bb] ?? 99;
+    if (sa !== sb) return sa - sb;
     const ca = CAT_ORDER[ma?.catCode ?? '??'] ?? 9;
     const cb = CAT_ORDER[mb?.catCode ?? '??'] ?? 9;
     if (ca !== cb) return ca - cb;
@@ -388,7 +387,7 @@ const PartyItemsDrawer: React.FC<{
                 sortedItems.map((it) => {
                   const meta = prereqCategoryMap.get(it.prereq_id);
                   const code = meta ? formatVcrItemCode(meta.catCode, meta.displayOrder) : '';
-                  const pill = standardPill(it.status as PrereqStatus);
+                  const pill = effectivePill(it.status as PrereqStatus, meta?.qualStage ?? null);
                   const catName = meta && meta.catCode in CATEGORY_META
                     ? CATEGORY_META[meta.catCode as keyof typeof CATEGORY_META].name
                     : 'Uncategorized';
@@ -470,13 +469,14 @@ export const StandardPartiesTab: React.FC<Props> = ({
   };
 
   const prereqCategoryMap = useMemo(() => {
-    const m = new Map<string, { catCode: string; displayOrder: number; topic: string | null }>();
+    const m = new Map<string, { catCode: string; displayOrder: number; topic: string | null; qualStage: 'DRAFT'|'PENDING'|'APPROVED'|'REJECTED'|null }>();
     prerequisites.forEach((p) => {
       const code = normalizeCategoryCode(p.category);
       m.set(p.id, {
         catCode: code === 'XX' ? '??' : code,
         displayOrder: p.display_order ?? 0,
         topic: p.topic ?? null,
+        qualStage: (p.qualification_stage ?? null) as any,
       });
     });
     return m;
