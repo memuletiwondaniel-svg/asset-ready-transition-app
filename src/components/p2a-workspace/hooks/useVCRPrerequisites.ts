@@ -78,6 +78,24 @@ export const useVCRPrerequisites = (handoverPointId: string) => {
         display_order: prereq.vcr_items?.display_order ?? prereq.display_order,
       })) as VCRPrerequisite[];
 
+      // Merge latest qualification stage per prereq — one source of truth for
+      // the qualification sub-state used by every UI touchpoint.
+      const prereqIds = mapped.map(p => p.id);
+      if (prereqIds.length) {
+        const { data: quals } = await (supabase as any)
+          .from('p2a_vcr_qualifications')
+          .select('vcr_prerequisite_id,status,submitted_at')
+          .in('vcr_prerequisite_id', prereqIds)
+          .order('submitted_at', { ascending: false });
+        const stageByPrereq = new Map<string, VCRPrerequisite['qualification_stage']>();
+        for (const q of (quals || []) as any[]) {
+          if (q.vcr_prerequisite_id && !stageByPrereq.has(q.vcr_prerequisite_id)) {
+            stageByPrereq.set(q.vcr_prerequisite_id, q.status);
+          }
+        }
+        for (const p of mapped) p.qualification_stage = stageByPrereq.get(p.id) ?? null;
+      }
+
       // TEMP diag: prove per-category resolution end-to-end for VCR-02 rollup parity.
       if (typeof window !== 'undefined') {
         const catCounts: Record<string, number> = {};
