@@ -16,6 +16,19 @@ import {
   factsEqual,
   SIGNAL7_GOLDEN_CASES,
 } from "../_shared/signal7.ts";
+import {
+  computeSignal1,
+  computeSignal2,
+  computeSignal4,
+  computeSignal10,
+  factsEqualStrict,
+  SIGNAL1_GOLDEN_CASES,
+  SIGNAL2_GOLDEN_CASES,
+  SIGNAL4_GOLDEN_CASES,
+  SIGNAL10_GOLDEN_CASES,
+  type WorkflowFact,
+  type WorkflowGoldenCase,
+} from "../_shared/workflow-signals.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
