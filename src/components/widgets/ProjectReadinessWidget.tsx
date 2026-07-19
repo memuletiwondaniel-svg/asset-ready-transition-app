@@ -91,6 +91,65 @@ const PairedRoleRow: React.FC<{
   );
 };
 
+/**
+ * DrawerRoleRow — single-row renderer for a required role in the team drawer.
+ * Shows one holder at a time; the B2B chip cycles through co-holders.
+ */
+const DrawerRoleRow: React.FC<{
+  role: string;
+  holders: RoleHolder[];
+  getAvatarUrl: (u: string | null | undefined) => string | null;
+}> = ({ role, holders, getAvatarUrl }) => {
+  const [idx, setIdx] = useState(0);
+  const safeIdx = idx % holders.length;
+  const shown = holders[safeIdx];
+  const partners = holders.filter((_, i) => i !== safeIdx);
+  const partnerNames = partners.map(p => p.full_name).join(', ');
+  const isPaired = holders.length > 1;
+
+  return (
+    <div className="flex items-center gap-3 px-5 py-3">
+      <Avatar className="h-10 w-10 flex-none ring-2 ring-background shadow-sm">
+        {shown.avatar_url ? (
+          <AvatarImage src={getAvatarUrl(shown.avatar_url) || undefined} alt={shown.full_name} />
+        ) : (
+          <AvatarFallback className="text-[11px] font-semibold bg-primary/10 text-primary">
+            {shown.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+          </AvatarFallback>
+        )}
+      </Avatar>
+      <div className="min-w-0 flex-1">
+        <div className="text-[13px] font-medium truncate leading-tight flex items-center gap-1.5">
+          {shown.full_name}
+          {isPaired && (
+            <TooltipProvider delayDuration={150}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIdx(i => (i + 1) % holders.length);
+                    }}
+                    className="text-[8px] font-semibold tracking-wider px-1 py-px rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0 leading-none cursor-pointer hover:bg-amber-200 dark:hover:bg-amber-900/60 transition-colors"
+                    aria-label={`Back-to-back with ${partnerNames}. Click to view partner.`}
+                  >
+                    B2B
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" align="start" sideOffset={4} className="text-xs">
+                  Back-to-back with {partnerNames} — click to swap
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
+        <div className="text-[11px] text-muted-foreground truncate">{role}</div>
+      </div>
+    </div>
+  );
+};
+
 export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ projectId, onViewDetails, onEdit }) => {
   const { projects } = useProjects();
   const { plants } = usePlants();
@@ -269,6 +328,17 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
       }
     });
   });
+
+  // Drawer shows one row per required role; the B2B chip cycles the holder
+  // so both back-to-back partners remain reachable without duplicating rows.
+  const primaryHolders: Array<{ role: string; holders: RoleHolder[] }> = [];
+  REQUIRED_ROLES.forEach(role => {
+    const holders = holdersByRole[role];
+    if (holders.length > 0) {
+      primaryHolders.push({ role, holders });
+    }
+  });
+
   const AVATAR_STACK_LIMIT = 6;
   const stackHolders = teamHolders.slice(0, AVATAR_STACK_LIMIT);
   const overflowCount = Math.max(0, teamHolders.length - AVATAR_STACK_LIMIT);
@@ -402,41 +472,8 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
           </SheetHeader>
           <ScrollArea className="flex-1">
             <div className="divide-y divide-border/40">
-              {teamHolders.map(h => (
-                <div key={h.user_id} className="flex items-center gap-3 px-5 py-3">
-                  <Avatar className="h-10 w-10 flex-none ring-2 ring-background shadow-sm">
-                    {h.avatar_url ? (
-                      <AvatarImage src={getAvatarUrl(h.avatar_url) || undefined} alt={h.full_name} />
-                    ) : (
-                      <AvatarFallback className="text-[11px] font-semibold bg-primary/10 text-primary">
-                        {h.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                      </AvatarFallback>
-                    )}
-                  </Avatar>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[13px] font-medium truncate leading-tight flex items-center gap-1.5">
-                      {h.full_name}
-                      {h.partners.length > 0 && (
-                        <TooltipProvider delayDuration={150}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span
-                                className="text-[8px] font-semibold tracking-wider px-1 py-px rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0 leading-none"
-                                aria-label={`Back-to-back with ${h.partners.map(p => p.full_name).join(', ')}`}
-                              >
-                                B2B
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom" align="start" sideOffset={4} className="text-xs">
-                              Back-to-back with {h.partners.map(p => p.full_name).join(', ')}
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      )}
-                    </div>
-                    <div className="text-[11px] text-muted-foreground truncate">{h.role}</div>
-                  </div>
-                </div>
+              {primaryHolders.map(({ role, holders }) => (
+                <DrawerRoleRow key={role} role={role} holders={holders} getAvatarUrl={getAvatarUrl} />
               ))}
             </div>
           </ScrollArea>
