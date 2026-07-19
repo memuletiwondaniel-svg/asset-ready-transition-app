@@ -84,17 +84,17 @@ export interface QualPill {
 export const qualificationPill = (stage: QualStage): QualPill => {
   switch (stage) {
     case 'APPROVED':
-      return { stage, bucket: 'terminal', label: 'Qualification', stageLabel: 'Approved',
+      return { stage, bucket: 'terminal', label: 'Qualification', stageLabel: 'Qualification approved',
         className: 'bg-emerald-50 text-emerald-700 border border-emerald-200' };
     case 'REJECTED':
-      return { stage, bucket: 'rework', label: 'Qualification', stageLabel: 'Rejected — rework required',
+      return { stage, bucket: 'rework', label: 'Qualification', stageLabel: 'Qualification rework',
         className: 'bg-red-50 text-red-700 border border-red-200' };
     case 'PENDING':
-      return { stage, bucket: 'pipeline', label: 'Qualification', stageLabel: 'Under review',
+      return { stage, bucket: 'pipeline', label: 'Qualification', stageLabel: 'Qualification under review',
         className: 'bg-amber-50 text-amber-700 border border-amber-200' };
     case 'DRAFT':
     default:
-      return { stage, bucket: 'todeliver', label: 'Qualification', stageLabel: 'Draft',
+      return { stage, bucket: 'todeliver', label: 'Qualification', stageLabel: 'Qualification draft',
         className: 'bg-slate-100 text-slate-600 border border-slate-200' };
   }
 };
@@ -114,11 +114,14 @@ export const qualificationPill = (stage: QualStage): QualPill => {
  *   QUALIFICATION_REQUESTED + REJECTED  → red   "Qualification rework"
  *   QUALIFICATION_APPROVED  + APPROVED  → green "Qualification approved"
  */
+// Qualification lifecycle mirrors base item lifecycle wording — the small
+// "Q · " prefix is the ONLY differentiator, preventing collision with the
+// normal green "Approved" (= item accepted).
 const QUAL_LABEL: Record<QualStage, string> = {
-  DRAFT:    'Qualification raised',
-  PENDING:  'Qualification submitted',
-  REJECTED: 'Qualification rework',
-  APPROVED: 'Qualification approved',
+  DRAFT:    'Q · Draft',
+  PENDING:  'Q · Under review',
+  REJECTED: 'Q · Rework',
+  APPROVED: 'Q · Approved',
 };
 
 export const effectivePill = (
