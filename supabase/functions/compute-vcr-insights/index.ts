@@ -11,6 +11,7 @@ import {
   type TableRowSchema as SharedTableRowSchema,
   type PageRegisterSchema as SharedPageRegisterSchema,
 } from "../_shared/register-reader.ts";
+import { computeSignal7 } from "../_shared/signal7.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
