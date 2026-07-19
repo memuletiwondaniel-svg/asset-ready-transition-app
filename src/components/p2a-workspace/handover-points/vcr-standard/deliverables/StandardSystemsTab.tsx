@@ -30,17 +30,15 @@ export const StandardSystemsTab: React.FC<{ handoverPoint: P2AHandoverPoint; pro
 
   const sorted = useMemo(() => {
     const rows = [...(systems as any[])].map((s) => {
-      const milestone = computeSystemMilestone(s.completion_status, s.is_hydrocarbon, []);
       const pct = s.completion_percentage ?? 0;
+      const milestone = computeSystemMilestone(s.completion_status, s.is_hydrocarbon, [], pct);
       return { s, milestone, pct };
     });
     rows.sort((a, b) => {
       const ba = bucketOrder(a.milestone.label);
       const bb = bucketOrder(b.milestone.label);
       if (ba !== bb) return ba - bb;
-      // In-progress: ascending by % (most at-risk first)
       if (ba < 3) return a.pct - b.pct;
-      // Terminal: keep stable
       return a.s.name.localeCompare(b.s.name);
     });
     return rows;
