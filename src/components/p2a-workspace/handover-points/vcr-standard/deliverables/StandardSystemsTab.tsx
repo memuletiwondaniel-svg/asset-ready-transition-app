@@ -75,20 +75,23 @@ export const StandardSystemsTab: React.FC<{ handoverPoint: P2AHandoverPoint; pro
       ) : (
         <DeliverableList>
           {sorted.map(({ s, milestone, pct }) => {
-            const ctxBits: string[] = [];
-            if (s.system_id) ctxBits.push(s.system_id);
-            if (s.itr_total_count) ctxBits.push(`${s.itr_total_count} ITRs`);
-            if (milestone.label === 'Not started' || bucketOrder(milestone.label) === 1) {
-              ctxBits.push(`${pct}%`);
-            }
+            // Left context = system code only (compact). % + ITR count move
+            // under the status chip on the right so status stays the primary signal.
+            const context = s.system_id || null;
+            const subBits: string[] = [];
+            const isTerminal = bucketOrder(milestone.label) === 3;
+            if (!isTerminal) subBits.push(`${Math.round(pct)}%`);
+            if (s.itr_total_count) subBits.push(`${s.itr_total_count} ITRs`);
             return (
               <DeliverableRow
                 key={s.id}
+                compact
                 name={s.name}
                 nameBadge={s.is_hydrocarbon ? <HydrocarbonBadge /> : null}
-                context={ctxBits.join(' · ') || null}
+                context={context}
                 chipLabel={milestone.label}
                 chipTone={milestone.tone as ChipTone}
+                chipSubtext={subBits.length ? subBits.join(' · ') : null}
                 onClick={() => setSelected(s)}
               />
             );
