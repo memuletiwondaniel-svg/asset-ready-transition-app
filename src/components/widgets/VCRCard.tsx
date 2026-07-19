@@ -78,13 +78,13 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
   const totalItems = vcr.total_items ?? 0;
   const gate = vcr.gate ?? (vcr.has_hydrocarbon ? 'SOF' : 'PAC');
   const gateLabel = gate === 'SOF' ? 'SoF' : 'PAC';
-  const gateSigned = vcr.gate_signed ?? vcr.sof_signed ?? false;
   const systemsLabel = `${vcr.systems_count} system${vcr.systems_count === 1 ? '' : 's'}`;
+  const isHandedOver = lifecycle === 'handed_over';
 
   // Exception-only left rail per G4:
   //   red   → stalled (non-terminal + no update in >21 days)
   //   amber → action-needed (not_started / draft)
-  //   none  → healthy
+  //   none  → healthy AND completed (handed_over/approved: no rail)
   const daysSinceUpdate = vcr.updated_at
     ? Math.floor((Date.now() - new Date(vcr.updated_at).getTime()) / 86400000)
     : null;
@@ -93,11 +93,15 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
   const isActionNeeded = lifecycle === 'not_started' || lifecycle === 'draft';
   const railColor: string | null = isStale ? '#DC2626' : (isActionNeeded ? '#D97706' : null);
 
-  // Derive bar percent + trailing value per state
+  // Health-based bar fill (NO blue) — the bar owns tone:
+  //   red   → stalled
+  //   amber → action needed / changes requested
+  //   green → moving / approved / handed over
   let barPercent = 0;
   let trailingValue = '';
   let ctxLeft: React.ReactNode = null;
   let ctxRight: React.ReactNode = '';
+  let barTone: 'green' | 'amber' | 'red' = 'green';
 
   if (lifecycle === 'draft') {
     barPercent = Math.max(0, Math.min(100, vcr.planProgress ?? 0));
@@ -105,16 +109,15 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
     trailingValue = `Step ${step}/10`;
     ctxLeft = 'Plan setup in progress';
     ctxRight = 'click to continue';
+    barTone = 'amber';
   } else if (lifecycle === 'in_progress') {
     const checklistPct = totalItems > 0 ? Math.round((closedItems / totalItems) * 100) : 0;
     barPercent = checklistPct;
     trailingValue = `${checklistPct}%`;
     ctxLeft = `${closedItems} of ${totalItems} items closed`;
     ctxRight = vcr.updated_at ? `Updated ${formatRelative(vcr.updated_at)}` : '';
+    barTone = 'green';
   } else if (lifecycle === 'in_approval') {
-    // VCR-plan approval rollup (NOT the SoF/PAC handover gate, which only
-    // applies post-handover). `planApproval` is populated by useProjectVCRs
-    // for in_approval VCRs from v_vcr_plan_approver_tasks.
     const pa = vcr.planApproval;
     const approved = pa?.approvedCount ?? 0;
     const total = pa?.totalCount ?? 0;
@@ -123,18 +126,22 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
       ctxLeft = 'Changes requested';
       barPercent = pct;
       trailingValue = total > 0 ? `${approved}/${total}` : '';
+      barTone = 'amber';
     } else if (pa?.phase === 1) {
       ctxLeft = 'Awaiting ORA Lead approval';
       barPercent = pct;
       trailingValue = 'Phase 1';
+      barTone = 'green';
     } else if (pa?.phase === 2) {
       ctxLeft = `${approved} of ${total} approvers signed`;
       barPercent = pct;
       trailingValue = `${approved}/${total}`;
+      barTone = 'green';
     } else {
       ctxLeft = 'In approval';
       barPercent = pct;
       trailingValue = total > 0 ? `${approved}/${total}` : '';
+      barTone = 'green';
     }
     ctxRight = vcr.submitted_at ? `Submitted ${formatShortDate(vcr.submitted_at)}` : '';
   } else if (lifecycle === 'approved') {
@@ -142,12 +149,19 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
     trailingValue = '100%';
     ctxLeft = systemsLabel;
     ctxRight = vcr.approved_at ? `Approved ${formatShortDate(vcr.approved_at)}` : '';
+    barTone = 'green';
   } else if (lifecycle === 'handed_over') {
     barPercent = 100;
     trailingValue = '100%';
     ctxLeft = `${systemsLabel} · ${gateLabel} signed`;
     ctxRight = vcr.gate_signed_at ? `Handed over ${formatShortDate(vcr.gate_signed_at)}` : '';
+    barTone = 'green';
   }
+
+  // Stalled overrides bar tone to red.
+  if (isStale) barTone = 'red';
+
+  const barFillColor = barTone === 'red' ? '#DC2626' : barTone === 'amber' ? '#D97706' : '#059669';
 
   // Stale chip replaces the plain "Updated Xd ago" line on the right when
   // the card has been idle >21 days on a non-terminal lifecycle.
@@ -164,25 +178,18 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
   const activeBg = 'hsl(var(--primary) / 0.08)';
   const activeText = 'hsl(var(--primary))';
 
-  const isHandedOver = lifecycle === 'handed_over';
   const handedOverDate = isHandedOver ? formatLongDate(vcr.gate_signed_at ?? null) : '';
   const certLineText = isHandedOver && handedOverDate ? `${gateLabel} signed on ${handedOverDate}` : '';
 
-  const handedOverPillStyle: React.CSSProperties = {
+  // Handed-over: NO rail, green "Handed over" chip only (spec j).
+  const handedOverChipStyle: React.CSSProperties = {
     padding: '2px 8px',
-    backgroundColor: 'transparent',
-    color: 'hsl(var(--muted-foreground) / 0.75)',
-    border: '0.5px solid hsl(var(--muted-foreground) / 0.4)',
+    backgroundColor: '#D1FAE5',
+    color: '#064E3B',
   };
 
-  // Compose the inset left-rule box-shadow. Handed-over cards keep their
-  // green rule; exception rails only apply otherwise so we never colour
-  // a completed card red or amber.
-  const insetRuleShadow = isHandedOver
-    ? 'inset 3px 0 0 #1D9E75'
-    : railColor
-      ? `inset 3px 0 0 ${railColor}`
-      : null;
+  // Compose the inset left-rule box-shadow. Handed-over cards get no rail.
+  const insetRuleShadow = !isHandedOver && railColor ? `inset 3px 0 0 ${railColor}` : null;
 
   return (
     <button
@@ -197,8 +204,6 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
           'bg-muted dark:bg-muted/60 border border-border hover:bg-card hover:border-foreground/20 hover:shadow-md hover:-translate-y-px'
       )}
       style={{
-        // Inset left rule adds zero outer width. Extra ~2px left padding so
-        // text clears the rule when one is present.
         paddingLeft: insetRuleShadow ? 16 : 14,
         paddingRight: 14,
         ...(isActive
@@ -212,41 +217,38 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
             : {}),
       }}
     >
-      {/* Row 1: ID + status pill */}
-      <div className="flex items-center justify-between mb-2">
-        <span
-          className="text-[12px] font-medium tracking-[0.02em]"
-          style={{
-            fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-            color: isActive ? activeText : 'hsl(var(--muted-foreground))',
-          }}
-        >
-          {displayCode}
-        </span>
-        <span
-          className="inline-flex items-center text-[11px] font-medium rounded-full"
-          style={
-            isHandedOver
-              ? handedOverPillStyle
-              : { padding: '2px 8px', backgroundColor: style.pillBg, color: style.pillText }
-          }
-        >
-          {style.label}
-        </span>
-      </div>
-
-
-
-      {/* Row 2: Title — de-emphasised on handed-over cards */}
-      <h3
-        className={cn(
-          'text-[14px] font-medium leading-[1.4] mb-2 truncate',
-          isHandedOver ? '' : 'text-foreground'
+      {/* Row 1: "CODE · NAME" on a single line. Status pill removed except
+          for handed-over (green "Handed over" chip only). */}
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <span
+            className="text-[12px] font-medium tracking-[0.02em] shrink-0"
+            style={{
+              fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+              color: isActive ? activeText : 'hsl(var(--muted-foreground))',
+            }}
+          >
+            {displayCode}
+          </span>
+          <span className="text-muted-foreground/60 shrink-0">·</span>
+          <span
+            className={cn(
+              'text-[13px] font-medium leading-tight truncate',
+              isHandedOver ? 'text-muted-foreground' : 'text-foreground',
+            )}
+          >
+            {vcr.name}
+          </span>
+        </div>
+        {isHandedOver && (
+          <span
+            className="inline-flex items-center text-[11px] font-medium rounded-full shrink-0"
+            style={handedOverChipStyle}
+          >
+            Handed over
+          </span>
         )}
-        style={isHandedOver ? { color: 'hsl(var(--muted-foreground))' } : undefined}
-      >
-        {vcr.name}
-      </h3>
+      </div>
 
       {isNotStarted ? (
         <p
@@ -258,14 +260,13 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
       ) : isHandedOver ? (
         <p
           className="text-[12px] leading-[1.4] truncate"
-          style={{ color: 'hsl(var(--muted-foreground) / 0.7)' }}
+          style={{ color: 'hsl(var(--muted-foreground) / 0.75)' }}
         >
           {certLineText}
         </p>
-
       ) : (
         <>
-          {/* Row 3: bar + trailing value on one line */}
+          {/* Row 2: health-coloured bar + neutral trailing value */}
           <div className="flex items-center gap-2.5 mb-2">
             <div
               className="relative flex-1 rounded-full overflow-hidden"
@@ -280,23 +281,20 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
                 className="h-full rounded-full"
                 style={{
                   width: `${barPercent}%`,
-                  backgroundColor: style.barFill,
+                  backgroundColor: barFillColor,
                   transition: 'width 0.4s cubic-bezier(0.4, 0.0, 0.2, 1)',
                 }}
               />
             </div>
             <span
-              className="text-[13px] font-medium tracking-[0.02em] tabular-nums shrink-0"
-              style={{
-                fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-                color: isActive ? activeText : 'hsl(var(--foreground))',
-              }}
+              className="text-[12px] font-medium tracking-[0.02em] tabular-nums shrink-0 text-muted-foreground"
+              style={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}
             >
               {trailingValue}
             </span>
           </div>
 
-          {/* Row 4: context line */}
+          {/* Row 3: context line */}
           <div className="flex items-center justify-between text-[11px] text-muted-foreground">
             <span className="truncate">{ctxLeft}</span>
             {ctxRight && <span className="shrink-0 ml-2">{ctxRight}</span>}
@@ -306,4 +304,5 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
     </button>
   );
 };
+
 

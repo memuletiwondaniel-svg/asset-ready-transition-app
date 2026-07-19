@@ -47,56 +47,38 @@ const getActivityStatus = (activity: { end_date: string | null; status: string }
 const ActivityRow: React.FC<{ activity: ProjectORPActivity; isCompleted?: boolean; onClick?: () => void }> = ({ activity, isCompleted, onClick }) => {
   const actStatus = isCompleted ? 'completed' : getActivityStatus(activity);
   const daysToDue = activity.end_date ? differenceInCalendarDays(parseISO(activity.end_date), new Date()) : null;
-  const isDueSoon = !isCompleted && daysToDue !== null && daysToDue >= 0 && daysToDue <= 7;
   // Overdue severity per spec: red when >35 days overdue, amber below.
   const daysOverdue = daysToDue !== null && daysToDue < 0 ? Math.abs(daysToDue) : 0;
   const overdueSeverity: 'red' | 'amber' | null = actStatus === 'overdue'
     ? (daysOverdue > 35 ? 'red' : 'amber')
     : null;
 
-  // State-aware leading icon. Only render an icon when it carries signal.
-  let Icon: React.ElementType | null = null;
-  let iconColor = 'text-muted-foreground';
-  if (actStatus === 'completed') {
-    Icon = CheckCircle2;
-    iconColor = 'text-teal-600';
-  } else if (actStatus === 'overdue') {
-    Icon = AlertCircle;
-    iconColor = overdueSeverity === 'red' ? 'text-red-600' : 'text-amber-600';
-  } else if (isDueSoon) {
-    Icon = Clock;
-    iconColor = 'text-muted-foreground';
-  }
-
   return (
     <div
-      className="flex items-center gap-2 text-xs py-1.5 px-2 rounded-md bg-muted/40 hover:bg-muted/70 transition-colors cursor-pointer"
+      className="flex items-start justify-between gap-2 py-1.5 px-2 rounded-md hover:bg-muted/50 transition-colors cursor-pointer"
       onClick={onClick}
     >
-      {Icon ? (
-        <Icon className={cn("h-3.5 w-3.5 shrink-0", iconColor)} />
-      ) : (
-        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground/40 ml-1 mr-1" aria-hidden />
-      )}
-      <span className={cn("truncate flex-1 text-foreground/90", isCompleted && "text-muted-foreground")}>
-        {activity.name}
-      </span>
+      <div className="min-w-0 flex-1">
+        <div className={cn('text-[12.5px] leading-snug truncate', isCompleted ? 'text-muted-foreground' : 'text-foreground/90')}>
+          {activity.name}
+        </div>
+        {activity.end_date && (
+          <div className="text-[10.5px] text-muted-foreground leading-snug mt-0.5 tabular-nums">
+            Due {format(parseISO(activity.end_date), 'd MMM')}
+          </div>
+        )}
+      </div>
       {overdueSeverity && (
         <span
           className={cn(
-            'shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded tabular-nums',
+            'shrink-0 mt-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded tabular-nums',
             overdueSeverity === 'red'
               ? 'bg-red-500/10 text-red-600 border border-red-500/20'
               : 'bg-amber-500/10 text-amber-700 border border-amber-500/20',
           )}
           title={`${daysOverdue} day${daysOverdue === 1 ? '' : 's'} overdue`}
         >
-          {daysOverdue}d late
-        </span>
-      )}
-      {activity.end_date && (
-        <span className="text-[10px] shrink-0 text-muted-foreground tabular-nums">
-          Due {format(parseISO(activity.end_date), 'd MMM')}
+          {daysOverdue}d overdue
         </span>
       )}
     </div>
@@ -169,10 +151,14 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
   }, 0);
   const narrativeTone: 'ok' | 'attention' | 'critical' =
     overdueCount === 0 ? 'ok' : worstDaysLate > 35 ? 'critical' : 'attention';
-  const narrativeLead = overdueCount === 0
-    ? (inProgressCount > 0 ? 'On track' : (completedDeliverables === totalDeliverables && totalDeliverables > 0 ? 'All activities complete' : 'Not yet started'))
-    : `${overdueCount} activit${overdueCount === 1 ? 'y' : 'ies'} overdue`;
-  const narrativeSecondary = `${completedDeliverables} completed · ${inProgressCount} in progress · ${notStartedCount} not started`;
+  // Lead per spec: bold "N of M complete." — exception sentence follows on
+  // the secondary line when there are overdue activities.
+  const narrativeLead = totalDeliverables > 0
+    ? `${completedDeliverables} of ${totalDeliverables} complete.`
+    : 'No activities yet.';
+  const narrativeSecondary = overdueCount > 0
+    ? `${overdueCount} activit${overdueCount === 1 ? 'y' : 'ies'} overdue.`
+    : `${inProgressCount} in progress · ${notStartedCount} not started`;
   // Health-only bar colour: green when on track, amber for attention, red for critical.
   // Never blue anywhere (spec).
   const barColorClass = narrativeTone === 'critical'
@@ -323,19 +309,26 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
         <CardContent className="flex-1 flex flex-col gap-3 overflow-hidden pt-4">
           {/* G3 narrative summary — bold lead + secondary; the bar owns the
               percentage so we never duplicate "%". Tone drives the accent rail. */}
+          {/* Plain muted narrative summary — no accent rail. Bold lead + exception. */}
           <NarrativeSummary
             tone={narrativeTone}
             lead={narrativeLead}
-            secondary={
-              <span className="flex items-center gap-2">
-                <span className="tabular-nums">{narrativeSecondary}</span>
-                <span className="text-muted-foreground/50">·</span>
-                <span className="tabular-nums font-medium text-foreground/80">{overallProgress}%</span>
-              </span>
-            }
+            secondary={narrativeSecondary}
             onClick={() => openActivityOverlay()}
           />
-          <Progress value={overallProgress} className={cn("h-1.5 flex-shrink-0", barColorClass)} />
+
+          {/* OVERALL PROGRESS label row + health-coloured bar. */}
+          <div className="flex-shrink-0 space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] uppercase tracking-[0.08em] font-semibold text-muted-foreground">
+                Overall Progress
+              </span>
+              <span className="text-[11px] font-medium tabular-nums text-foreground/80">
+                {overallProgress}%
+              </span>
+            </div>
+            <Progress value={overallProgress} className={cn('h-1.5', barColorClass)} />
+          </div>
 
           {/* Scrollable activity sections */}
           <div className="flex-1 overflow-y-auto min-h-0 space-y-2 pr-1 scrollbar-modern">

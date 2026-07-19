@@ -1,7 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { Check } from 'lucide-react';
 
 interface Milestone {
   id: string;
@@ -15,57 +14,62 @@ interface MilestonesTimelineProps {
   milestones: Milestone[];
 }
 
+/**
+ * Milestones — 3-column grid: name / date / state.
+ *
+ * State column:
+ *   • achieved (status === 'completed') → green "Achieved"
+ *   • next (first non-completed by date) → bold "Next"
+ *   • future → muted em-dash
+ *
+ * Checkbox circles and the SCORECARD chip have been removed per the
+ * 2026-07-18 Project-Page deviation batch.
+ */
 export const MilestonesTimeline: React.FC<MilestonesTimelineProps> = ({ milestones }) => {
   if (milestones.length === 0) {
     return (
-      <p className="text-xs text-muted-foreground text-center py-3">No milestones defined</p>
+      <p className="text-[11px] text-muted-foreground italic">No milestones defined.</p>
     );
   }
 
-  const sortedMilestones = [...milestones].sort((a, b) => {
+  const sorted = [...milestones].sort((a, b) => {
     if (!a.milestone_date) return 1;
     if (!b.milestone_date) return -1;
     return new Date(a.milestone_date).getTime() - new Date(b.milestone_date).getTime();
   });
 
+  const firstUpcomingIdx = sorted.findIndex(m => m.status !== 'completed');
+
   return (
-    <div className="space-y-2">
-      {sortedMilestones.map((milestone) => {
-        const isCompleted = milestone.status === 'completed';
-
+    <div className="grid grid-cols-[1fr_auto_auto] gap-x-3 gap-y-1 text-[12px] items-center">
+      {sorted.map((m, i) => {
+        const isCompleted = m.status === 'completed';
+        const isNext = !isCompleted && i === firstUpcomingIdx;
         return (
-          <div key={milestone.id} className="flex items-center gap-2.5">
-            {/* Minimal dot or check */}
-            <div className={cn(
-              "w-4 h-4 rounded-full flex items-center justify-center shrink-0",
-              isCompleted
-                ? "bg-muted-foreground/20 text-muted-foreground"
-                : "border border-border"
-            )}>
-              {isCompleted && <Check className="h-2.5 w-2.5" />}
-            </div>
-
-            {/* Name + scorecard badge */}
-            <span className={cn(
-              "text-xs flex-1 truncate flex items-center gap-1.5",
-              isCompleted ? "text-muted-foreground" : "text-foreground"
-            )}>
-              <span className="truncate">{milestone.milestone_name}</span>
-              {milestone.is_scorecard_project && (
-                <span
-                  className="text-[8px] font-semibold tracking-wide px-1 py-px rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200/70 dark:border-amber-800 shrink-0 leading-none"
-                  title="Scorecard milestone"
-                >
-                  SCORECARD
-                </span>
+          <React.Fragment key={m.id}>
+            <span
+              className={cn(
+                'truncate leading-snug',
+                isCompleted && 'text-muted-foreground',
+                isNext && 'font-semibold text-foreground',
+                !isCompleted && !isNext && 'text-foreground/85',
+              )}
+            >
+              {m.milestone_name}
+            </span>
+            <span className={cn('text-[11px] tabular-nums shrink-0', isCompleted ? 'text-muted-foreground' : 'text-muted-foreground')}>
+              {m.milestone_date ? format(new Date(m.milestone_date), 'dd MMM yy') : '—'}
+            </span>
+            <span className="text-[10px] font-medium uppercase tracking-wider tabular-nums shrink-0 min-w-[62px] text-right">
+              {isCompleted ? (
+                <span className="text-emerald-600">Achieved</span>
+              ) : isNext ? (
+                <span className="text-foreground font-semibold">Next</span>
+              ) : (
+                <span className="text-muted-foreground/50">—</span>
               )}
             </span>
-            {milestone.milestone_date && (
-              <span className="text-[11px] text-muted-foreground tabular-nums shrink-0">
-                {format(new Date(milestone.milestone_date), 'dd MMM yy')}
-              </span>
-            )}
-          </div>
+          </React.Fragment>
         );
       })}
     </div>

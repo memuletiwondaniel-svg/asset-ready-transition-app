@@ -152,16 +152,15 @@ export interface NarrativeSummaryProps {
   className?: string;
 }
 
-const NARRATIVE_TONE: Record<NonNullable<NarrativeSummaryProps['tone']>, string> = {
-  ok: 'border-l-border/60',
-  attention: 'border-l-amber-500',
-  critical: 'border-l-red-500',
-};
-
+/**
+ * Per the 2026-07-18 Project-Page deviation batch, narrative summaries render
+ * as a plain muted panel — NO left accent rail regardless of tone. The `tone`
+ * prop is retained for future differentiation but has no visual effect today.
+ */
 export const NarrativeSummary: React.FC<NarrativeSummaryProps> = ({
   lead,
   secondary,
-  tone = 'ok',
+  tone: _tone,
   onClick,
   className,
 }) => {
@@ -173,9 +172,8 @@ export const NarrativeSummary: React.FC<NarrativeSummaryProps> = ({
     <Wrapper
       {...wrapperProps}
       className={cn(
-        'w-full text-left rounded-md bg-muted/30 border border-border/40 border-l-[3px] px-3 py-2.5',
-        NARRATIVE_TONE[tone],
-        onClick && 'hover:bg-muted/50 transition-colors cursor-pointer',
+        'w-full text-left rounded-md bg-muted/40 px-3 py-2.5',
+        onClick && 'hover:bg-muted/60 transition-colors cursor-pointer',
         className,
       )}
     >
