@@ -41,11 +41,11 @@ export function useLiveRegisterAuthors(rows: LiveAuthoredRow[] | undefined | nul
 
       const { data: vcrs } = await client
         .from('p2a_handover_points')
-        .select('id, project_id')
+        .select('id, plan:p2a_handover_plans!p2a_handover_points_handover_plan_id_fkey(project_id)')
         .in('id', vcrIds);
       const projectByVcr = new Map<string, string>(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (vcrs || []).map((v: any) => [v.id, v.project_id]),
+        (vcrs || []).map((v: any) => [v.id, v.plan?.project_id]).filter((e: any) => e[1]),
       );
 
       // Resolve holder user_id per unique (project_id, role_id) pair.
