@@ -90,7 +90,33 @@ export function useRegisterLifecycle(registerId: string | null | undefined) {
       (attachments || []).forEach((a: any) => a.uploaded_by && uids.add(a.uploaded_by));
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (activity || []).forEach((a: any) => a.actor_id && uids.add(a.actor_id));
-      const authorId = register.draft_owner_id || register.created_by || null;
+
+      // Live-resolve author via role pointer when present, otherwise fall back
+      // to the register's draft_owner / created_by (matches the maintenance-
+      // deliverable pointer pattern).
+      let liveAuthorId: string | null = null;
+      let liveAuthorRoleLabel: string | null = null;
+      if (register.author_role_id && register.handover_point_id) {
+        const { data: vcr } = await client
+          .from('p2a_handover_points')
+          .select('project_id')
+          .eq('id', register.handover_point_id)
+          .maybeSingle();
+        if (vcr?.project_id) {
+          const { data: holderId } = await client.rpc('resolve_role_holder', {
+            p_project_id: vcr.project_id,
+            p_role_id: register.author_role_id,
+          });
+          if (holderId) liveAuthorId = holderId as string;
+        }
+        const { data: role } = await client
+          .from('roles')
+          .select('name')
+          .eq('id', register.author_role_id)
+          .maybeSingle();
+        if (role?.name) liveAuthorRoleLabel = role.name;
+      }
+      const authorId = liveAuthorId || register.draft_owner_id || register.created_by || null;
       if (authorId) uids.add(authorId);
 
       let profileMap = new Map<string, { full_name: string | null; avatar_url: string | null }>();
@@ -130,7 +156,11 @@ export function useRegisterLifecycle(registerId: string | null | undefined) {
       return {
         register,
         author: authorId
-          ? { user_id: authorId, ...decorate(authorId), role_label: 'Delivering party' }
+          ? {
+              user_id: authorId,
+              ...decorate(authorId),
+              role_label: liveAuthorRoleLabel || 'Delivering party',
+            }
           : null,
         reviewers: (reviewers || []).map(
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
