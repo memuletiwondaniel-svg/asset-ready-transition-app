@@ -485,47 +485,31 @@ export const SIGNAL8_GOLDEN_CASES: WorkflowGoldenCase<Signal8Input>[] = [
   {
     id: "s8_three_returned_amber",
     description: "3 of 5 siblings returned → amber",
-    input: {
-      categoryCode: "OI",
-      sameCategorySibItemIds: ["a", "b", "c", "d", "e"],
-      returnedSibItemIds: ["a", "b", "c"],
-    },
+    input: { categoryCode: "OI", total: 5, returnedCount: 3 },
     expected: [{ label: "Category rework pattern", value: "3 of 5 OI items returned", tone: "amber", confidence: "verified" }],
   },
   {
     id: "s8_ratio_threshold",
     description: "1 of 2 siblings returned (50%) → amber",
-    input: {
-      categoryCode: "PR",
-      sameCategorySibItemIds: ["a", "b"],
-      returnedSibItemIds: ["a"],
-    },
+    input: { categoryCode: "PR", total: 2, returnedCount: 1 },
     expected: [{ label: "Category rework pattern", value: "1 of 2 PR items returned", tone: "amber", confidence: "verified" }],
   },
   {
     id: "s8_below_threshold",
     description: "1 of 4 (25%, <3 abs) → no fact",
-    input: {
-      categoryCode: "OI",
-      sameCategorySibItemIds: ["a", "b", "c", "d"],
-      returnedSibItemIds: ["a"],
-    },
+    input: { categoryCode: "OI", total: 4, returnedCount: 1 },
     expected: [],
   },
   {
     id: "s8_no_siblings",
     description: "No siblings → no fact",
-    input: { categoryCode: "OI", sameCategorySibItemIds: [], returnedSibItemIds: [] },
+    input: { categoryCode: "OI", total: 0, returnedCount: 0 },
     expected: [],
   },
   {
     id: "s8_null_category_fallback",
     description: "Null category label falls back to 'category'",
-    input: {
-      categoryCode: null,
-      sameCategorySibItemIds: ["a", "b", "c"],
-      returnedSibItemIds: ["a", "b", "c"],
-    },
+    input: { categoryCode: null, total: 3, returnedCount: 3 },
     expected: [{ label: "Category rework pattern", value: "3 of 3 category items returned", tone: "amber", confidence: "verified" }],
   },
 ];
