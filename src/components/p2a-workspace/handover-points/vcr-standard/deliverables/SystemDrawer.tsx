@@ -1,15 +1,21 @@
 import React, { useMemo, useState } from 'react';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
-import { X, Search } from 'lucide-react';
-import { format } from 'date-fns';
+import { X, Search, ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { P2AHandoverPoint } from '../../../hooks/useP2AHandoverPoints';
-import { useSystemDetail, computeSystemMilestone, Subsystem, ITRRow, PunchRow } from './useSystemDetail';
-import { useWHPoints, WHPoint, WH_STATUS_PRESENTATION, typeLabel } from './useWHPoints';
-import { WitnessHoldDrawer } from './WitnessHoldDrawer';
+import {
+  useSystemDetail,
+  computeSystemMilestone,
+  formatItrDisplayCode,
+  DISCIPLINE_LABEL,
+  ItrDiscipline,
+  ITRRow,
+  PunchRow,
+} from './useSystemDetail';
+import { OverviewProgressSection } from './system-drawer/OverviewProgressSection';
+import { PunchRowItem } from './system-drawer/PunchRowItem';
 
 const TONE = {
   emerald: 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -38,7 +44,30 @@ const TabBtn: React.FC<{ active: boolean; onClick: () => void; children: React.R
   </button>
 );
 
-const FilterChip: React.FC<{ label: string; onRemove: () => void }> = ({ label, onRemove }) => (
+// Toggle chip: exclusive within its group, no X
+const ToggleChip: React.FC<{ active: boolean; onClick: () => void; tone: 'amber' | 'emerald' | 'slate'; children: React.ReactNode }> = ({
+  active, onClick, tone, children,
+}) => {
+  const activeCls =
+    tone === 'amber' ? 'bg-amber-50 border-amber-200 text-amber-700'
+    : tone === 'emerald' ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+    : 'bg-slate-100 border-slate-300 text-foreground';
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'rounded-full border px-2.5 py-0.5 text-[11px] transition-colors',
+        active ? activeCls : 'text-muted-foreground hover:bg-slate-50',
+      )}
+    >
+      {children}
+    </button>
+  );
+};
+
+// Removable chip (only for injected subsystem filter from deep-link)
+const RemovableChip: React.FC<{ label: string; onRemove: () => void }> = ({ label, onRemove }) => (
   <button
     type="button"
     onClick={onRemove}
@@ -46,6 +75,22 @@ const FilterChip: React.FC<{ label: string; onRemove: () => void }> = ({ label, 
   >
     {label}
     <X className="h-3 w-3" />
+  </button>
+);
+
+// Section header with chevron
+const SectionHeader: React.FC<{ open: boolean; onClick: () => void; label: string; right?: React.ReactNode }> = ({
+  open, onClick, label, right,
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="w-full flex items-center gap-2 py-1.5 group"
+  >
+    {open ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+    <span className="text-[10.5px] font-bold tracking-[0.14em] uppercase text-muted-foreground/80">{label}</span>
+    <div className="flex-1 h-px bg-border" />
+    {right}
   </button>
 );
 
@@ -57,21 +102,31 @@ interface Props {
   onOpenChange: (o: boolean) => void;
 }
 
-export const SystemDrawer: React.FC<Props> = ({ system, handoverPoint, projectId, open, onOpenChange }) => {
-  const [tab, setTab] = useState<'overview' | 'itrs' | 'punchlist' | 'wh'>('overview');
-  const [phaseFilter, setPhaseFilter] = useState<'A' | 'B' | null>(null);
-  const [statusFilter, setStatusFilter] = useState<'Outstanding' | 'Completed' | null>(null);
-  const [subFilter, setSubFilter] = useState<string | null>(null);
-  const [subSearch, setSubSearch] = useState('');
+type Tab = 'overview' | 'itrs' | 'punchlist';
+
+export const SystemDrawer: React.FC<Props> = ({ system, handoverPoint, projectId: _projectId, open, onOpenChange }) => {
+  const [tab, setTab] = useState<Tab>('overview');
+  const [progressOpen, setProgressOpen] = useState(true);
+  const [subsOpen, setSubsOpen] = useState(true);
+
+  // ITR filters
+  const [itrSearch, setItrSearch] = useState('');
+  const [itrDiscipline, setItrDiscipline] = useState<ItrDiscipline | ''>('');
+  const [itrSubFilter, setItrSubFilter] = useState<string | null>(null); // injected chip
+  const [itrSubSearch, setItrSubSearch] = useState('');
+  const [itrStatus, setItrStatus] = useState<'Outstanding' | 'Completed' | null>(null);
+  const [itrType, setItrType] = useState<'A' | 'B' | null>(null);
+  const [itrSortKey, setItrSortKey] = useState<'subsystem' | 'tag' | 'itr' | 'discipline' | 'status'>('subsystem');
+  const [itrSortAsc, setItrSortAsc] = useState(true);
+
+  // Punch filters
   const [punchSearch, setPunchSearch] = useState('');
-  const [selectedWH, setSelectedWH] = useState<WHPoint | null>(null);
+  const [punchSubFilter, setPunchSubFilter] = useState<string | null>(null);
+  const [punchSubSearch, setPunchSubSearch] = useState('');
+  const [punchStatus, setPunchStatus] = useState<'Outstanding' | 'Completed' | null>(null);
+  const [punchCategory, setPunchCategory] = useState<'A' | 'B' | null>(null);
 
   const { data, isLoading } = useSystemDetail(system?.id);
-  const whCtx = useWHPoints(handoverPoint.id);
-  const whPointsForSystem = useMemo(
-    () => (whCtx.data?.points || []).filter((p) => p.system?.id === system?.id),
-    [whCtx.data, system],
-  );
 
   const subs = data?.subsystems || [];
   const itrs = data?.itrs || [];
@@ -81,192 +136,305 @@ export const SystemDrawer: React.FC<Props> = ({ system, handoverPoint, projectId
     ? computeSystemMilestone(system.completion_status, system.is_hydrocarbon, subs)
     : { label: '—', tone: 'slate' as const };
 
-  const itrComplete = itrs.filter((i) => i.status === 'Completed').length;
-  const itrOverall = itrs.length ? Math.round((itrComplete / itrs.length) * 100) : 0;
+  // ── Aggregates ─────────────────────────────────────────────────
   const itrA = itrs.filter((i) => i.phase === 'A');
   const itrB = itrs.filter((i) => i.phase === 'B');
-  const itrAOut = itrA.filter((i) => i.status === 'Outstanding').length;
-  const itrBOut = itrB.filter((i) => i.status === 'Outstanding').length;
+  const itrACompletePct = itrA.length ? (itrA.filter((i) => i.status === 'Completed').length / itrA.length) * 100 : 0;
+  const itrBCompletePct = itrB.length ? (itrB.filter((i) => i.status === 'Completed').length / itrB.length) * 100 : 0;
+  const itrCompleted = itrs.filter((i) => i.status === 'Completed').length;
+  const overallPct = itrs.length ? (itrCompleted / itrs.length) * 100 : 0;
 
+  // Per-subsystem aggregates
+  const subAgg = useMemo(() => {
+    const m = new Map<string, { outstandingItrs: number; openPunch: number }>();
+    for (const s of subs) m.set(s.id, { outstandingItrs: 0, openPunch: 0 });
+    for (const i of itrs) {
+      const row = m.get(i.subsystem_id);
+      if (row && i.status === 'Outstanding') row.outstandingItrs++;
+    }
+    for (const p of punches) {
+      const row = m.get(p.subsystem_id);
+      if (row && p.status === 'Open') row.openPunch++;
+    }
+    return m;
+  }, [subs, itrs, punches]);
+
+  // Originator from the current system's ref (first segment of any ITR ref); default "6529"
+  const originator = useMemo(() => {
+    const firstRef = itrs[0]?.ref || '';
+    return firstRef.split('-')[0] || '6529';
+  }, [itrs]);
+
+  // ── ITR filtering + sort ───────────────────────────────────────
   const filteredItrs = useMemo(() => {
-    return itrs.filter((i) => {
-      if (phaseFilter && i.phase !== phaseFilter) return false;
-      if (statusFilter && i.status !== statusFilter) return false;
-      if (subFilter && i.subsystem_code !== subFilter) return false;
+    const q = itrSearch.trim().toLowerCase();
+    let rows = itrs.filter((i) => {
+      if (itrDiscipline && i.discipline !== itrDiscipline) return false;
+      if (itrSubFilter && i.subsystem_code !== itrSubFilter) return false;
+      if (itrStatus && i.status !== itrStatus) return false;
+      if (itrType && i.phase !== itrType) return false;
+      if (q) {
+        const short = formatItrDisplayCode(i, originator).toLowerCase();
+        const disc = i.discipline ? DISCIPLINE_LABEL[i.discipline].toLowerCase() : '';
+        if (
+          !i.subsystem_code.toLowerCase().includes(q) &&
+          !(i.tag || '').toLowerCase().includes(q) &&
+          !short.includes(q) &&
+          !i.ref.toLowerCase().includes(q) &&
+          !disc.includes(q) &&
+          !(i.description || '').toLowerCase().includes(q)
+        ) return false;
+      }
       return true;
     });
-  }, [itrs, phaseFilter, statusFilter, subFilter]);
+    const dir = itrSortAsc ? 1 : -1;
+    rows.sort((a, b) => {
+      switch (itrSortKey) {
+        case 'tag': return dir * (a.tag || '').localeCompare(b.tag || '');
+        case 'itr': return dir * formatItrDisplayCode(a, originator).localeCompare(formatItrDisplayCode(b, originator));
+        case 'discipline': return dir * (a.discipline || '').localeCompare(b.discipline || '');
+        case 'status': return dir * a.status.localeCompare(b.status);
+        default:
+          return dir * (a.subsystem_code.localeCompare(b.subsystem_code) || a.ref.localeCompare(b.ref));
+      }
+    });
+    return rows;
+  }, [itrs, itrSearch, itrDiscipline, itrSubFilter, itrStatus, itrType, itrSortKey, itrSortAsc, originator]);
 
-  const openPunch = punches.filter((p) => p.status === 'Open');
-  const closedPunch = punches.filter((p) => p.status === 'Closed');
-  const punchFilter = (list: PunchRow[]) =>
-    !punchSearch.trim()
-      ? list
-      : list.filter(
-          (p) =>
-            p.ref.toLowerCase().includes(punchSearch.toLowerCase()) ||
-            p.description.toLowerCase().includes(punchSearch.toLowerCase()) ||
-            p.subsystem_code.toLowerCase().includes(punchSearch.toLowerCase()),
-        );
+  // ── Punch filtering ────────────────────────────────────────────
+  const filteredPunches = useMemo(() => {
+    const q = punchSearch.trim().toLowerCase();
+    return punches.filter((p) => {
+      if (punchSubFilter && p.subsystem_code !== punchSubFilter) return false;
+      const wantStatus = punchStatus === 'Outstanding' ? 'Open' : punchStatus === 'Completed' ? 'Closed' : null;
+      if (wantStatus && p.status !== wantStatus) return false;
+      if (punchCategory && p.category !== punchCategory) return false;
+      if (q) {
+        if (
+          !p.subsystem_code.toLowerCase().includes(q) &&
+          !p.ref.toLowerCase().includes(q) &&
+          !p.category.toLowerCase().includes(q) &&
+          !(p.description || '').toLowerCase().includes(q)
+        ) return false;
+      }
+      return true;
+    }).sort((a, b) => a.subsystem_code.localeCompare(b.subsystem_code) || a.ref.localeCompare(b.ref));
+  }, [punches, punchSearch, punchSubFilter, punchStatus, punchCategory]);
 
-  const subDropdown = useMemo(() => {
-    if (!subSearch.trim()) return [];
-    const q = subSearch.toLowerCase();
+  // ── Subsystem search dropdowns ─────────────────────────────────
+  const itrSubDropdown = useMemo(() => {
+    const q = itrSubSearch.trim().toLowerCase();
+    if (!q) return [];
     return subs.filter((s) => s.subsystem_id.toLowerCase().includes(q) || s.name.toLowerCase().includes(q)).slice(0, 6);
-  }, [subs, subSearch]);
+  }, [subs, itrSubSearch]);
+
+  const punchSubDropdown = useMemo(() => {
+    const q = punchSubSearch.trim().toLowerCase();
+    if (!q) return [];
+    return subs.filter((s) => s.subsystem_id.toLowerCase().includes(q) || s.name.toLowerCase().includes(q)).slice(0, 6);
+  }, [subs, punchSubSearch]);
+
+  // ── Deep-link handlers ─────────────────────────────────────────
+  const deepLinkOutstandingItrs = (subsystemCode: string) => {
+    setItrSubFilter(subsystemCode);
+    setItrStatus('Outstanding');
+    setItrType(null);
+    setTab('itrs');
+  };
+  const deepLinkOpenPunch = (subsystemCode: string) => {
+    setPunchSubFilter(subsystemCode);
+    setPunchStatus('Outstanding');
+    setPunchCategory(null);
+    setTab('punchlist');
+  };
 
   if (!system) return null;
 
+  const AccentLink: React.FC<{ children: React.ReactNode; onClick: () => void; disabled?: boolean }> = ({ children, onClick, disabled }) =>
+    disabled ? (
+      <span className="text-muted-foreground/60 tabular-nums">{children}</span>
+    ) : (
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); onClick(); }}
+        className="text-blue-600 tabular-nums underline decoration-dotted underline-offset-2 hover:text-blue-700"
+      >
+        {children}
+      </button>
+    );
+
+  const SortableTh: React.FC<{ label: string; k: typeof itrSortKey; align?: 'left' | 'right' }> = ({ label, k, align = 'left' }) => (
+    <th className={cn('px-3 py-1.5', align === 'right' ? 'text-right' : 'text-left')}>
+      <button
+        type="button"
+        onClick={() => {
+          if (itrSortKey === k) setItrSortAsc((a) => !a);
+          else { setItrSortKey(k); setItrSortAsc(true); }
+        }}
+        className="inline-flex items-center gap-1 text-inherit hover:text-foreground"
+      >
+        {label}
+        {itrSortKey === k && <span>{itrSortAsc ? '↑' : '↓'}</span>}
+      </button>
+    </th>
+  );
+
   return (
-    <>
-      <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="right" hideClose className="!z-modal-critical w-full sm:max-w-2xl p-0 flex flex-col">
-          {/* G1 header */}
-          <div className="px-5 pt-5 pb-3 border-b shrink-0 bg-background">
-            <div className="text-[10px] font-bold tracking-[0.16em] uppercase text-muted-foreground/70 mb-1">SYSTEM</div>
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <h2 className="text-[16px] leading-tight font-bold tracking-tight text-foreground truncate">{system.name}</h2>
-                <div className="text-[12px] text-muted-foreground mt-0.5">
-                  <span className="font-mono">{system.system_id}</span>
-                  {' · '}
-                  {system.is_hydrocarbon ? 'Hydrocarbon' : 'Non-hydrocarbon'}
-                </div>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" hideClose className="!z-modal-critical w-full sm:max-w-3xl p-0 flex flex-col">
+        {/* G1 header */}
+        <div className="px-5 pt-5 pb-3 border-b shrink-0 bg-background">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <h2 className="text-[16px] leading-tight font-bold tracking-tight text-foreground truncate">{system.name}</h2>
+              <div className="text-[12px] text-muted-foreground mt-0.5">
+                <span className="font-mono">{system.system_id}</span>
+                {' · '}
+                {system.is_hydrocarbon ? 'Hydrocarbon' : 'Non-hydrocarbon'}
               </div>
-              <Chip tone={milestone.tone}>{milestone.label}</Chip>
             </div>
+            <Chip tone={milestone.tone}>{milestone.label}</Chip>
           </div>
+        </div>
 
-          {/* Inner tabs */}
-          <div className="border-b bg-background shrink-0 flex items-center gap-2 px-5">
-            <TabBtn active={tab === 'overview'} onClick={() => setTab('overview')}>Overview</TabBtn>
-            <TabBtn active={tab === 'itrs'} onClick={() => setTab('itrs')}>ITRs</TabBtn>
-            <TabBtn active={tab === 'punchlist'} onClick={() => setTab('punchlist')}>Punchlist</TabBtn>
-            <TabBtn active={tab === 'wh'} onClick={() => setTab('wh')}>W&amp;H Points</TabBtn>
-          </div>
+        {/* Inner tabs */}
+        <div className="border-b bg-background shrink-0 flex items-center gap-2 px-5">
+          <TabBtn active={tab === 'overview'} onClick={() => setTab('overview')}>Overview</TabBtn>
+          <TabBtn active={tab === 'itrs'} onClick={() => setTab('itrs')}>ITRs</TabBtn>
+          <TabBtn active={tab === 'punchlist'} onClick={() => setTab('punchlist')}>Punchlist</TabBtn>
+        </div>
 
-          <ScrollArea className="flex-1">
-            <div className="px-5 py-4 text-sm">
-              {isLoading && <div className="text-muted-foreground">Loading…</div>}
+        <ScrollArea className="flex-1">
+          <div className="px-5 py-4 text-sm">
+            {isLoading && <div className="text-muted-foreground">Loading…</div>}
 
-              {/* OVERVIEW */}
-              {!isLoading && tab === 'overview' && (
-                <div className="space-y-5">
-                  <div>
-                    <div className="flex items-baseline justify-between">
-                      <div className="text-[10.5px] font-bold tracking-[0.14em] uppercase text-muted-foreground/80">Overall completion</div>
-                      <div className="text-[14px] font-semibold">{itrOverall}%</div>
+            {/* OVERVIEW */}
+            {!isLoading && tab === 'overview' && (
+              <div className="space-y-5">
+                <div>
+                  <SectionHeader open={progressOpen} onClick={() => setProgressOpen((v) => !v)} label="Progress" />
+                  {progressOpen && (
+                    <div className="pt-2">
+                      <OverviewProgressSection
+                        overallPct={overallPct}
+                        itrACompletePct={itrACompletePct}
+                        itrBCompletePct={itrBCompletePct}
+                        itrTotal={itrs.length}
+                        itrCompleted={itrCompleted}
+                      />
                     </div>
-                    <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden mt-2">
-                      <div className="h-full bg-blue-500" style={{ width: `${itrOverall}%` }} />
-                    </div>
-                    <div className="text-[11px] text-muted-foreground mt-1.5">
-                      {itrComplete} of {itrs.length} ITRs complete
-                    </div>
-                  </div>
+                  )}
+                </div>
 
-                  <Separator />
-
-                  <div>
-                    <div className="text-[10.5px] font-bold tracking-[0.14em] uppercase text-muted-foreground/80 mb-2">Subsystems</div>
-                    <div className="rounded-md border overflow-hidden">
+                <div>
+                  <SectionHeader
+                    open={subsOpen}
+                    onClick={() => setSubsOpen((v) => !v)}
+                    label="Subsystems"
+                    right={<span className="text-[10.5px] text-muted-foreground tabular-nums">{subs.length}</span>}
+                  />
+                  {subsOpen && (
+                    <div className="mt-2 rounded-md border overflow-hidden">
                       <table className="w-full text-[12px]">
                         <thead className="bg-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground">
                           <tr>
-                            <th className="text-left px-3 py-1.5">ID</th>
-                            <th className="text-left px-3 py-1.5">Name</th>
-                            <th className="text-right px-3 py-1.5 w-16">Compl.</th>
-                            <th className="text-right px-3 py-1.5 w-28">Milestones</th>
+                            <th className="text-left px-3 py-1.5">Subsystem</th>
+                            <th className="text-right px-3 py-1.5 w-20">Progress</th>
+                            <th className="text-right px-3 py-1.5 w-24">Outstanding ITRs</th>
+                            <th className="text-right px-3 py-1.5 w-24">Open Punchlist</th>
+                            <th className="text-right px-3 py-1.5 w-28">Milestone</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {subs.map((s) => (
-                            <tr
-                              key={s.id}
-                              className="border-t border-border/50 hover:bg-blue-50/50 cursor-pointer"
-                              onClick={() => {
-                                setSubFilter(s.subsystem_id);
-                                setTab('itrs');
-                              }}
-                            >
-                              <td className="px-3 py-2 font-mono text-[11px] text-muted-foreground">{s.subsystem_id}</td>
-                              <td className="px-3 py-2">{s.name}</td>
-                              <td className="px-3 py-2 text-right">{s.completion_percentage}%</td>
-                              <td className="px-3 py-2 text-right">
-                                <span className="inline-flex gap-2 text-[10.5px] font-medium">
-                                  <span className={s.mcc_achieved ? 'text-emerald-600' : 'text-muted-foreground/50'}>MCC</span>
-                                  <span className={s.pcc_achieved ? 'text-emerald-600' : 'text-muted-foreground/50'}>PCC</span>
-                                </span>
-                              </td>
-                            </tr>
-                          ))}
+                          {subs.map((s) => {
+                            const agg = subAgg.get(s.id) || { outstandingItrs: 0, openPunch: 0 };
+                            return (
+                              <tr key={s.id} className="border-t border-border/50">
+                                <td className="px-3 py-2">
+                                  <div>{s.name}</div>
+                                  <div className="font-mono text-[10.5px] text-muted-foreground">{s.subsystem_id}</div>
+                                </td>
+                                <td className="px-3 py-2 text-right tabular-nums">{s.completion_percentage}%</td>
+                                <td className="px-3 py-2 text-right">
+                                  <AccentLink onClick={() => deepLinkOutstandingItrs(s.subsystem_id)} disabled={agg.outstandingItrs === 0}>
+                                    {agg.outstandingItrs}
+                                  </AccentLink>
+                                </td>
+                                <td className="px-3 py-2 text-right">
+                                  <AccentLink onClick={() => deepLinkOpenPunch(s.subsystem_id)} disabled={agg.openPunch === 0}>
+                                    {agg.openPunch}
+                                  </AccentLink>
+                                </td>
+                                <td className="px-3 py-2 text-right">
+                                  <span className="inline-flex gap-1.5 text-[10px] font-bold uppercase tracking-wider">
+                                    <span className={cn(
+                                      'rounded-full border px-1.5 py-0.5',
+                                      s.mcc_achieved ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-muted-foreground/60 border-slate-200',
+                                    )}>MCC</span>
+                                    <span className={cn(
+                                      'rounded-full border px-1.5 py-0.5',
+                                      s.pcc_achieved ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-muted-foreground/60 border-slate-200',
+                                    )}>PCC</span>
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          })}
                           {!subs.length && (
-                            <tr>
-                              <td colSpan={4} className="px-3 py-6 text-center text-muted-foreground">No subsystems</td>
-                            </tr>
+                            <tr><td colSpan={5} className="px-3 py-6 text-center text-muted-foreground">No subsystems</td></tr>
                           )}
                         </tbody>
                       </table>
                     </div>
-                  </div>
+                  )}
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* ITRs */}
-              {!isLoading && tab === 'itrs' && (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setPhaseFilter(phaseFilter === 'A' ? null : 'A')}
-                      className={cn(
-                        'rounded-md border p-3 text-left transition-colors',
-                        phaseFilter === 'A' ? 'border-foreground bg-slate-50' : 'hover:bg-slate-50',
-                      )}
-                    >
-                      <div className="text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground">ITR-A</div>
-                      <div className="text-[16px] font-semibold mt-0.5">{itrA.length}</div>
-                      <div className="h-1 w-full rounded-full bg-slate-100 mt-2 overflow-hidden">
-                        <div className="h-full bg-blue-500" style={{ width: `${itrA.length ? ((itrA.length - itrAOut) / itrA.length) * 100 : 0}%` }} />
-                      </div>
-                      <div className="text-[10.5px] text-muted-foreground mt-1">{itrAOut} outstanding</div>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPhaseFilter(phaseFilter === 'B' ? null : 'B')}
-                      className={cn(
-                        'rounded-md border p-3 text-left transition-colors',
-                        phaseFilter === 'B' ? 'border-foreground bg-slate-50' : 'hover:bg-slate-50',
-                      )}
-                    >
-                      <div className="text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground">ITR-B</div>
-                      <div className="text-[16px] font-semibold mt-0.5">{itrB.length}</div>
-                      <div className="h-1 w-full rounded-full bg-slate-100 mt-2 overflow-hidden">
-                        <div className="h-full bg-blue-500" style={{ width: `${itrB.length ? ((itrB.length - itrBOut) / itrB.length) * 100 : 0}%` }} />
-                      </div>
-                      <div className="text-[10.5px] text-muted-foreground mt-1">{itrBOut} outstanding</div>
-                    </button>
-                  </div>
+            {/* ITRs */}
+            {!isLoading && tab === 'itrs' && (
+              <div className="space-y-3">
+                {/* Search */}
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input
+                    value={itrSearch}
+                    onChange={(e) => setItrSearch(e.target.value)}
+                    placeholder="Search subsystem, tag, ITR code, discipline, description…"
+                    className="pl-8 h-8 text-[12px]"
+                  />
+                </div>
 
+                {/* Filters row */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <select
+                    value={itrDiscipline}
+                    onChange={(e) => setItrDiscipline((e.target.value as ItrDiscipline) || '')}
+                    className="h-7 text-[11.5px] rounded-md border bg-background px-2"
+                  >
+                    <option value="">All disciplines</option>
+                    {(Object.keys(DISCIPLINE_LABEL) as ItrDiscipline[]).map((d) => (
+                      <option key={d} value={d}>{DISCIPLINE_LABEL[d]}</option>
+                    ))}
+                  </select>
+
+                  {/* Subsystem search */}
                   <div className="relative">
-                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                    <Input
-                      value={subSearch}
-                      onChange={(e) => setSubSearch(e.target.value)}
-                      placeholder="Filter by subsystem ID or name"
-                      className="pl-8 h-8 text-[12px]"
+                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                    <input
+                      value={itrSubSearch}
+                      onChange={(e) => setItrSubSearch(e.target.value)}
+                      placeholder="Subsystem…"
+                      className="h-7 text-[11.5px] rounded-md border bg-background pl-6 pr-2 w-40"
                     />
-                    {subDropdown.length > 0 && (
-                      <div className="absolute top-full left-0 right-0 z-10 mt-1 rounded-md border bg-popover shadow-md max-h-52 overflow-y-auto">
-                        {subDropdown.map((s) => (
+                    {itrSubDropdown.length > 0 && (
+                      <div className="absolute top-full left-0 z-10 mt-1 rounded-md border bg-popover shadow-md w-64 max-h-52 overflow-y-auto">
+                        {itrSubDropdown.map((s) => (
                           <button
                             key={s.id}
                             type="button"
                             className="w-full text-left px-3 py-1.5 text-[12px] hover:bg-blue-50/60"
-                            onClick={() => {
-                              setSubFilter(s.subsystem_id);
-                              setSubSearch('');
-                            }}
+                            onClick={() => { setItrSubFilter(s.subsystem_id); setItrSubSearch(''); }}
                           >
                             <span className="font-mono text-muted-foreground">{s.subsystem_id}</span>
                             <span className="ml-2">{s.name}</span>
@@ -276,160 +444,146 @@ export const SystemDrawer: React.FC<Props> = ({ system, handoverPoint, projectId
                     )}
                   </div>
 
-                  {(phaseFilter || statusFilter || subFilter) && (
-                    <div className="flex flex-wrap gap-1.5">
-                      {phaseFilter && <FilterChip label={`ITR-${phaseFilter}`} onRemove={() => setPhaseFilter(null)} />}
-                      {statusFilter && <FilterChip label={statusFilter} onRemove={() => setStatusFilter(null)} />}
-                      {subFilter && <FilterChip label={subFilter} onRemove={() => setSubFilter(null)} />}
-                    </div>
-                  )}
-
-                  <div className="flex gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setStatusFilter(statusFilter === 'Outstanding' ? null : 'Outstanding')}
-                      className={cn(
-                        'rounded-full border px-2 py-0.5 text-[11px]',
-                        statusFilter === 'Outstanding' ? 'bg-amber-50 border-amber-200 text-amber-700' : 'text-muted-foreground hover:bg-slate-50',
-                      )}
-                    >Outstanding</button>
-                    <button
-                      type="button"
-                      onClick={() => setStatusFilter(statusFilter === 'Completed' ? null : 'Completed')}
-                      className={cn(
-                        'rounded-full border px-2 py-0.5 text-[11px]',
-                        statusFilter === 'Completed' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'text-muted-foreground hover:bg-slate-50',
-                      )}
-                    >Completed</button>
+                  {/* Status toggle group (exclusive) */}
+                  <div className="inline-flex items-center gap-1 rounded-full bg-muted/40 p-0.5">
+                    <ToggleChip active={itrStatus === 'Outstanding'} tone="amber" onClick={() => setItrStatus(itrStatus === 'Outstanding' ? null : 'Outstanding')}>Outstanding</ToggleChip>
+                    <ToggleChip active={itrStatus === 'Completed'} tone="emerald" onClick={() => setItrStatus(itrStatus === 'Completed' ? null : 'Completed')}>Completed</ToggleChip>
                   </div>
 
-                  <div className="rounded-md border divide-y">
-                    {filteredItrs.slice(0, 200).map((i) => (
-                      <div key={i.id} className="flex items-start gap-3 px-3 py-2">
-                        <div className="flex-1 min-w-0">
-                          <div className="text-[12.5px] leading-snug truncate">
-                            {i.description}
-                            {i.tag && <span className="text-muted-foreground"> — {i.tag}</span>}
-                          </div>
-                          <div className="text-[11px] text-muted-foreground font-mono mt-0.5">{i.ref}</div>
-                        </div>
-                        <Chip tone={i.status === 'Completed' ? 'emerald' : 'amber'}>{i.status}</Chip>
+                  {/* Type toggle group (exclusive) */}
+                  <div className="inline-flex items-center gap-1 rounded-full bg-muted/40 p-0.5">
+                    <ToggleChip active={itrType === 'A'} tone="slate" onClick={() => setItrType(itrType === 'A' ? null : 'A')}>ITR-A</ToggleChip>
+                    <ToggleChip active={itrType === 'B'} tone="slate" onClick={() => setItrType(itrType === 'B' ? null : 'B')}>ITR-B</ToggleChip>
+                  </div>
+
+                  {/* Injected subsystem chip only — has × */}
+                  {itrSubFilter && (
+                    <RemovableChip label={itrSubFilter} onRemove={() => setItrSubFilter(null)} />
+                  )}
+                </div>
+
+                {/* Table */}
+                <div className="rounded-md border overflow-hidden">
+                  <table className="w-full text-[12px]">
+                    <thead className="bg-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground">
+                      <tr>
+                        <SortableTh label="Subsystem" k="subsystem" />
+                        <SortableTh label="Tag" k="tag" />
+                        <SortableTh label="ITR" k="itr" />
+                        <SortableTh label="Discipline" k="discipline" />
+                        <SortableTh label="Status" k="status" align="right" />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredItrs.slice(0, 400).map((i) => (
+                        <tr key={i.id} className="border-t border-border/50">
+                          <td className="px-3 py-2">
+                            <div className="font-mono text-[11px]">{i.subsystem_code}</div>
+                          </td>
+                          <td className="px-3 py-2 font-mono text-[11px]">{i.tag || '—'}</td>
+                          <td className="px-3 py-2">
+                            <div className="font-mono text-[12px]" title={i.ref}>
+                              {formatItrDisplayCode(i, originator)}
+                            </div>
+                            <div className="text-[11px] text-muted-foreground truncate max-w-[220px]">{i.description}</div>
+                          </td>
+                          <td className="px-3 py-2">{i.discipline ? DISCIPLINE_LABEL[i.discipline] : '—'}</td>
+                          <td className="px-3 py-2 text-right">
+                            {i.status === 'Completed' ? (
+                              <Chip tone="emerald">Completed</Chip>
+                            ) : (
+                              <span className="text-[11.5px] text-muted-foreground">Outstanding</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                      {!filteredItrs.length && (
+                        <tr><td colSpan={5} className="px-3 py-6 text-center text-muted-foreground text-[12px]">No ITRs match filters</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                {filteredItrs.length > 400 && (
+                  <div className="text-[11px] text-muted-foreground text-center">Showing first 400 of {filteredItrs.length}</div>
+                )}
+              </div>
+            )}
+
+            {/* PUNCHLIST */}
+            {!isLoading && tab === 'punchlist' && (
+              <div className="space-y-3">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input
+                    value={punchSearch}
+                    onChange={(e) => setPunchSearch(e.target.value)}
+                    placeholder="Search subsystem, punch id, category, description…"
+                    className="pl-8 h-8 text-[12px]"
+                  />
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Subsystem search */}
+                  <div className="relative">
+                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                    <input
+                      value={punchSubSearch}
+                      onChange={(e) => setPunchSubSearch(e.target.value)}
+                      placeholder="Subsystem…"
+                      className="h-7 text-[11.5px] rounded-md border bg-background pl-6 pr-2 w-40"
+                    />
+                    {punchSubDropdown.length > 0 && (
+                      <div className="absolute top-full left-0 z-10 mt-1 rounded-md border bg-popover shadow-md w-64 max-h-52 overflow-y-auto">
+                        {punchSubDropdown.map((s) => (
+                          <button
+                            key={s.id}
+                            type="button"
+                            className="w-full text-left px-3 py-1.5 text-[12px] hover:bg-blue-50/60"
+                            onClick={() => { setPunchSubFilter(s.subsystem_id); setPunchSubSearch(''); }}
+                          >
+                            <span className="font-mono text-muted-foreground">{s.subsystem_id}</span>
+                            <span className="ml-2">{s.name}</span>
+                          </button>
+                        ))}
                       </div>
-                    ))}
-                    {!filteredItrs.length && (
-                      <div className="px-3 py-6 text-center text-muted-foreground text-[12px]">No ITRs match filters</div>
                     )}
                   </div>
-                  {filteredItrs.length > 200 && (
-                    <div className="text-[11px] text-muted-foreground text-center">Showing first 200 of {filteredItrs.length}</div>
+
+                  <div className="inline-flex items-center gap-1 rounded-full bg-muted/40 p-0.5">
+                    <ToggleChip active={punchStatus === 'Outstanding'} tone="amber" onClick={() => setPunchStatus(punchStatus === 'Outstanding' ? null : 'Outstanding')}>Outstanding</ToggleChip>
+                    <ToggleChip active={punchStatus === 'Completed'} tone="emerald" onClick={() => setPunchStatus(punchStatus === 'Completed' ? null : 'Completed')}>Completed</ToggleChip>
+                  </div>
+
+                  <div className="inline-flex items-center gap-1 rounded-full bg-muted/40 p-0.5">
+                    <ToggleChip active={punchCategory === 'A'} tone="slate" onClick={() => setPunchCategory(punchCategory === 'A' ? null : 'A')}>PL-A</ToggleChip>
+                    <ToggleChip active={punchCategory === 'B'} tone="slate" onClick={() => setPunchCategory(punchCategory === 'B' ? null : 'B')}>PL-B</ToggleChip>
+                  </div>
+
+                  {punchSubFilter && (
+                    <RemovableChip label={punchSubFilter} onRemove={() => setPunchSubFilter(null)} />
                   )}
                 </div>
-              )}
 
-              {/* PUNCHLIST */}
-              {!isLoading && tab === 'punchlist' && (
-                <div className="space-y-4">
-                  <div className="relative">
-                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                    <Input
-                      value={punchSearch}
-                      onChange={(e) => setPunchSearch(e.target.value)}
-                      placeholder="Search punch items"
-                      className="pl-8 h-8 text-[12px]"
-                    />
+                <div className="rounded-md border overflow-hidden">
+                  <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,2.6fr)_44px_84px_20px] items-center gap-3 px-3 py-1.5 bg-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground">
+                    <div>Subsystem</div>
+                    <div>Punch ID · Description</div>
+                    <div className="text-center">Cat</div>
+                    <div className="text-right">Status</div>
+                    <div />
                   </div>
-
-                  <div>
-                    <div className="text-[10.5px] font-bold tracking-[0.14em] uppercase text-muted-foreground/80 mb-2">
-                      Open · {punchFilter(openPunch).length}
-                    </div>
-                    <div className="rounded-md border divide-y">
-                      {punchFilter(openPunch).map((p) => (
-                        <div key={p.id} className="flex items-start gap-3 px-3 py-2">
-                          <Chip tone={p.category === 'A' ? 'red' : 'amber'}>{p.category}</Chip>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-[12.5px] leading-snug">{p.description}</div>
-                            <div className="text-[11px] text-muted-foreground font-mono mt-0.5">{p.ref} · {p.subsystem_code}</div>
-                          </div>
-                        </div>
-                      ))}
-                      {!punchFilter(openPunch).length && (
-                        <div className="px-3 py-4 text-center text-muted-foreground text-[12px]">No open items</div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="text-[10.5px] font-bold tracking-[0.14em] uppercase text-muted-foreground/80 mb-2">
-                      Closed history · {punchFilter(closedPunch).length}
-                    </div>
-                    <div className="space-y-2">
-                      {punchFilter(closedPunch).map((p) => (
-                        <div key={p.id} className="rounded-md border bg-muted/20 px-3 py-2 text-[12px] opacity-80">
-                          <div className="flex items-start gap-2">
-                            <Chip tone="slate">{p.category}</Chip>
-                            <div className="flex-1 min-w-0">
-                              <div className="leading-snug">{p.description}</div>
-                              <div className="text-[10.5px] text-muted-foreground mt-1 space-y-0.5">
-                                <div><span className="font-mono">{p.ref}</span>{p.linked_itr_ref && <> · linked ITR <span className="font-mono">{p.linked_itr_ref}</span></>}</div>
-                                {p.raised_at && <div>Raised {format(new Date(p.raised_at), 'd MMM yyyy')}</div>}
-                                {p.cleared_at && <div>Cleared {format(new Date(p.cleared_at), 'd MMM yyyy')}</div>}
-                                {p.closure_note && <div className="italic">{p.closure_note}</div>}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* W&H POINTS */}
-              {!isLoading && tab === 'wh' && (
-                <div className="space-y-2">
-                  {whPointsForSystem.length === 0 && (
-                    <div className="text-muted-foreground text-[12px] py-6 text-center">No W&amp;H points linked to this system</div>
+                  {filteredPunches.map((p) => (
+                    <PunchRowItem key={p.id} p={p} />
+                  ))}
+                  {!filteredPunches.length && (
+                    <div className="px-3 py-6 text-center text-muted-foreground text-[12px] border-t">No punch items match filters</div>
                   )}
-                  {whPointsForSystem.map((p) => {
-                    const pres = WH_STATUS_PRESENTATION[p.status];
-                    const isHold = p.inspection_type === 'HOLD';
-                    const isReview = p.inspection_type === 'REVIEW';
-                    return (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => !isReview && setSelectedWH(p)}
-                        disabled={isReview}
-                        className={cn(
-                          'w-full flex items-start gap-3 rounded-md border px-3 py-2 text-left',
-                          isReview ? 'opacity-70 cursor-default' : 'hover:bg-blue-50/60',
-                        )}
-                      >
-                        <Chip tone={isHold ? 'amber' : isReview ? 'slate' : 'blue'}>{isHold ? 'H' : isReview ? 'R' : 'W'}</Chip>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-[12.5px] leading-snug truncate">{p.activity_name}</div>
-                          <div className="text-[11px] text-muted-foreground mt-0.5">{typeLabel(p.inspection_type)}{p.delivering_party_role_name ? ` · ${p.delivering_party_role_name}` : ''}</div>
-                        </div>
-                        <Chip tone={pres.tone as any}>{pres.label}</Chip>
-                      </button>
-                    );
-                  })}
                 </div>
-              )}
-            </div>
-          </ScrollArea>
-        </SheetContent>
-      </Sheet>
-
-      <WitnessHoldDrawer
-        point={selectedWH}
-        vcrCode={handoverPoint.vcr_code}
-        vcrName={handoverPoint.name}
-        projectId={projectId}
-        open={!!selectedWH}
-        onOpenChange={(o) => !o && setSelectedWH(null)}
-      />
-    </>
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+      </SheetContent>
+    </Sheet>
   );
 };
