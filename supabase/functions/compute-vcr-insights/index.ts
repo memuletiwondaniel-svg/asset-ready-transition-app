@@ -12,6 +12,12 @@ import {
   type PageRegisterSchema as SharedPageRegisterSchema,
 } from "../_shared/register-reader.ts";
 import { computeSignal7 } from "../_shared/signal7.ts";
+import {
+  computeSignal1,
+  computeSignal2,
+  computeSignal4,
+  computeSignal10,
+} from "../_shared/workflow-signals.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1090,19 +1096,10 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
   );
   if (!pr) return facts;
 
-  // 1) Status + aging (always emitted)
+  // 1) Status + aging (always emitted) — pure via computeSignal1
   const status = (pr as any).status || "UNKNOWN";
   const anchor = (pr as any).submitted_at || (pr as any).updated_at || (pr as any).created_at;
-  const days = daysBetween(anchor ? new Date(anchor) : null, now);
-  let statusTone: Tone = "neutral";
-  if (status === "READY_FOR_REVIEW" && days > 7) statusTone = "amber";
-  else if (status === "IN_PROGRESS" && days > 21) statusTone = "amber";
-  facts.push({
-    label: "Status",
-    value: `${status} · ${days} days`,
-    tone: statusTone,
-    confidence: "verified",
-  });
+  for (const f of computeSignal1({ status, anchor, now })) facts.push(f as Fact);
 
   // 2, 3) Comment-based signals
   const { data: comments } = await bounded("workflow comments", DB_TIMEOUT_MS, { data: [] }, (signal) =>
@@ -1118,14 +1115,7 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
   );
   const cs = (comments || []) as any[];
   const returned = cs.filter((c) => (c.action_tag || "").toLowerCase() === "returned");
-  if (returned.length >= 1) {
-    facts.push({
-      label: "Returned by approver",
-      value: `${returned.length}×`,
-      tone: returned.length >= 2 ? "red" : "amber",
-      confidence: "verified",
-    });
-  }
+  for (const f of computeSignal2({ returnedCount: returned.length })) facts.push(f as Fact);
 
   // Unanswered approver comment — resolve party membership via RLS helpers
   if (cs.length > 0) {
@@ -1175,20 +1165,8 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
       signal,
     ),
   );
-  const openQual = ((quals || []) as any[]).find((q) => {
-    const s = String(q.status || "").toUpperCase();
-    return s && !["APPROVED", "REJECTED", "CLOSED", "COMPLETED"].includes(s);
-  });
-  if (openQual || status === "QUALIFICATION_REQUESTED") {
-    const q = openQual as any;
-    const qAnchor = q?.submitted_at || q?.updated_at || q?.created_at;
-    const qDays = daysBetween(qAnchor ? new Date(qAnchor) : null, now);
-    facts.push({
-      label: "Qualification open",
-      value: `${q?.status || "QUALIFICATION_REQUESTED"} · ${qDays} days`,
-      tone: "amber",
-      confidence: "verified",
-    });
+  for (const f of computeSignal4({ prereqStatus: status, quals: (quals || []) as any[], now })) {
+    facts.push(f as Fact);
   }
 
   // 5) Party health — effective role unassigned
@@ -1405,24 +1383,8 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
       withAbort(sb.from("p2a_handover_points").select("target_date").eq("id", vcrId).maybeSingle(), signal),
     );
     const targetRaw = (hpRow as any)?.target_date || null;
-    if (targetRaw) {
-      const target = new Date(targetRaw);
-      const diffDays = Math.floor((target.getTime() - now.getTime()) / 86400000);
-      if (diffDays < 0) {
-        facts.push({
-          label: "VCR target approaching",
-          value: `Target ${targetRaw} · ${Math.abs(diffDays)} days past-due`,
-          tone: "red",
-          confidence: "verified",
-        });
-      } else if (diffDays <= 14) {
-        facts.push({
-          label: "VCR target approaching",
-          value: `Target ${targetRaw} · ${diffDays} days`,
-          tone: "amber",
-          confidence: "verified",
-        });
-      }
+    for (const f of computeSignal10({ prereqStatus: status, targetDate: targetRaw, now })) {
+      facts.push(f as Fact);
     }
   }
 

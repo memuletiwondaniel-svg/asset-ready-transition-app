@@ -16,6 +16,19 @@ import {
   factsEqual,
   SIGNAL7_GOLDEN_CASES,
 } from "../_shared/signal7.ts";
+import {
+  computeSignal1,
+  computeSignal2,
+  computeSignal4,
+  computeSignal10,
+  factsEqualStrict,
+  SIGNAL1_GOLDEN_CASES,
+  SIGNAL2_GOLDEN_CASES,
+  SIGNAL4_GOLDEN_CASES,
+  SIGNAL10_GOLDEN_CASES,
+  type WorkflowFact,
+  type WorkflowGoldenCase,
+} from "../_shared/workflow-signals.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -110,10 +123,60 @@ Deno.serve(async (req) => {
     }, null, 2), { headers: { ...cors, "Content-Type": "application/json" } });
   }
 
+
+  // ── Generic pure workflow-signal branch (S1/S2/S4/S10 …)
+  const WORKFLOW_RUNNERS: Record<
+    string,
+    { cases: WorkflowGoldenCase<any>[]; run: (input: any) => WorkflowFact[] }
+  > = {
+    vcr_workflow_signal_1: { cases: SIGNAL1_GOLDEN_CASES, run: computeSignal1 },
+    vcr_workflow_signal_2: { cases: SIGNAL2_GOLDEN_CASES, run: computeSignal2 },
+    vcr_workflow_signal_4: { cases: SIGNAL4_GOLDEN_CASES, run: computeSignal4 },
+    vcr_workflow_signal_10: { cases: SIGNAL10_GOLDEN_CASES, run: computeSignal10 },
+  };
+  if (schemaKey in WORKFLOW_RUNNERS) {
+    const sb = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+    const { cases: goldens, run } = WORKFLOW_RUNNERS[schemaKey];
+    const perCase = goldens.map((gc) => {
+      const actual = run(gc.input);
+      const pass = factsEqualStrict(actual, gc.expected);
+      return { case_id: gc.id, description: gc.description, expected: gc.expected, actual, pass };
+    });
+    const passedCount = perCase.filter((c) => c.pass).length;
+    const allPass = passedCount === perCase.length;
+    const aggregate = {
+      cases: perCase.length,
+      passed: passedCount,
+      all_pass: allPass,
+      gate: { all_pass: true },
+      ran_at: new Date().toISOString(),
+    };
+    await sb.from("insight_schema_status").upsert({
+      schema_key: schemaKey,
+      eval_status: allPass ? "passed" : "unproven",
+      aggregate,
+      updated_at: new Date().toISOString(),
+    });
+    return new Response(JSON.stringify({
+      schema_key: schemaKey,
+      eval_status: allPass ? "passed" : "unproven",
+      aggregate,
+      cases: perCase,
+    }, null, 2), { headers: { ...cors, "Content-Type": "application/json" } });
+  }
+
   const schema = TABLE_ROW_SCHEMAS[schemaKey];
   if (!schema) {
+    const supported = [
+      ...Object.keys(TABLE_ROW_SCHEMAS),
+      "vcr_workflow_signal_7",
+      ...Object.keys(WORKFLOW_RUNNERS),
+    ].join(", ");
     return new Response(JSON.stringify({
-      error: `Unknown or non-table-row schema '${schemaKey}'. Supported: ${Object.keys(TABLE_ROW_SCHEMAS).join(", ")}, vcr_workflow_signal_7`,
+      error: `Unknown or non-table-row schema '${schemaKey}'. Supported: ${supported}`,
     }), { status: 400, headers: { ...cors, "Content-Type": "application/json" } });
   }
 
