@@ -70,7 +70,8 @@ const PartyRow: React.FC<{
   holders: PartyPerson[];
   onClick?: (p: PartyPerson) => void;
   clickable?: boolean;
-}> = ({ holders, onClick, clickable }) => {
+  signedRoleKeys?: Set<string>;
+}> = ({ holders, onClick, clickable, signedRoleKeys }) => {
   const [idx, setIdx] = useState(0);
   const safeIdx = idx % holders.length;
   const shown = holders[safeIdx];
@@ -80,6 +81,16 @@ const PartyRow: React.FC<{
     .map((p) => p.full_name)
     .join(', ');
 
+  // Statement-authoritative: if this seat's role has a discipline statement
+  // submitted, treat the review as complete (m of m) regardless of the
+  // underlying ledger. Also drives the "signed" glyph + green dot.
+  const roleKey = (shown.role_name || shown.position || '').trim().toLowerCase();
+  const hasStatement = !!(roleKey && signedRoleKeys?.has(roleKey));
+  const isSofPacSigned = !!shown.signed;
+  const displayAssigned = shown.assigned;
+  const displayCompleted = hasStatement ? Math.max(shown.completed, shown.assigned) : shown.completed;
+  const complete = hasStatement || isSofPacSigned || (displayAssigned > 0 && displayCompleted >= displayAssigned);
+
   return (
     <div
       className={cn(
@@ -87,6 +98,14 @@ const PartyRow: React.FC<{
         clickable ? 'hover:bg-muted/50' : '',
       )}
     >
+      {/* Status dot */}
+      <span
+        className={cn(
+          'w-2 h-2 rounded-full flex-none',
+          statusDotClass(displayAssigned, displayCompleted, isSofPacSigned || hasStatement),
+        )}
+        aria-hidden
+      />
       <button
         type="button"
         onClick={() => clickable && onClick?.(shown)}
@@ -105,6 +124,18 @@ const PartyRow: React.FC<{
         <div className="min-w-0 flex-1">
           <div className="text-[13px] font-medium truncate leading-tight flex items-center gap-1.5">
             {shown.full_name}
+            {hasStatement && (
+              <TooltipProvider delayDuration={150}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" aria-label="Discipline statement signed" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs">
+                    Discipline statement signed
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
             {isPaired && (
               <TooltipProvider delayDuration={150}>
                 <Tooltip>
@@ -136,12 +167,14 @@ const PartyRow: React.FC<{
       </button>
       <span
         className={cn(
-          'text-[10.5px] font-bold rounded-full px-2 py-0.5 flex-none',
-          fractionChipClass(shown.assigned, shown.completed),
+          'text-[11px] font-semibold rounded-full px-2 py-0.5 flex-none',
+          fractionChipClass(displayAssigned, displayCompleted, isSofPacSigned || hasStatement),
         )}
-        title={`${shown.completed} of ${shown.assigned} complete`}
+        title={complete ? 'Complete' : `${displayCompleted} of ${displayAssigned} items complete`}
       >
-        {shown.completed}/{shown.assigned}
+        {displayAssigned > 0
+          ? `${displayCompleted} of ${displayAssigned} items`
+          : (isSofPacSigned ? 'Signed' : '—')}
       </span>
     </div>
   );
