@@ -108,9 +108,13 @@ interface Props {
 type Tab = 'overview' | 'itrs' | 'punchlist';
 
 export const SystemDrawer: React.FC<Props> = ({ system, handoverPoint, projectId: _projectId, open, onOpenChange }) => {
+type Tab = 'overview' | 'itrs' | 'punchlist' | 'whpoints';
+
+export const SystemDrawer: React.FC<Props> = ({ system, handoverPoint, projectId: _projectId, open, onOpenChange }) => {
   const [tab, setTab] = useState<Tab>('overview');
   const [progressOpen, setProgressOpen] = useState(true);
   const [subsOpen, setSubsOpen] = useState(true);
+  const [whSelected, setWhSelected] = useState<any>(null);
 
   // ITR filters
   const [itrSearch, setItrSearch] = useState('');
