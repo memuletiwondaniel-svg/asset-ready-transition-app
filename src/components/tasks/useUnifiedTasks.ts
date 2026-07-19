@@ -449,14 +449,8 @@ export function useUnifiedTasks(userId: string) {
       // (See v_vcr_plan_approver_tasks definition.)
       const created: string | null = item.task_created_at ?? null;
       const createdForPriority = created || new Date().toISOString();
-      // SLA: 5 business days from the ACTIONABLE-FROM moment for this user
-      // (createdForPriority = task_created_at = fan-out moment for Phase-2).
-      // Only applied to still-open rows; decided rows keep neutral due date.
-      const rowStatusForDue = String(item.row_status || '').toUpperCase();
-      const isDecidedForDue = rowStatusForDue === 'APPROVED' || rowStatusForDue === 'REJECTED';
-      const vcrPlanDue = !isDecidedForDue
-        ? addBusinessDays(createdForPriority, slaDaysFor('approval_review'))
-        : undefined;
+      // MVP-D1: no SLA fiction. Real due date will be propagated in MVP-D2.
+      const vcrPlanDue: string | undefined = undefined;
       const sp = computeSmartPriority({
         category: 'vcr', categoryLabel: 'VCR Plan Approval',
         dueDate: vcrPlanDue,
