@@ -18,6 +18,7 @@ import { ClipboardList, Plus, Trash2, User, Calendar, Search, X, RefreshCw, Spar
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { RlmuStatusBadge, DmsStatusBadge, DocumentNumberChip, RlmuUploadButton } from './shared/DmsStatusBadges';
+import { useLiveRegisterAuthors } from '@/hooks/useLiveRegisterAuthors';
 
 interface OperationalRegistersStepProps {
   vcrId: string;
