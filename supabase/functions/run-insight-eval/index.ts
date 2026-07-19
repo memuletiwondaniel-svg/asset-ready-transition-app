@@ -11,6 +11,11 @@ import {
   isRowClosed,
   dedupeByKey,
 } from "../_shared/register-reader.ts";
+import {
+  computeSignal7,
+  factsEqual,
+  SIGNAL7_GOLDEN_CASES,
+} from "../_shared/signal7.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
