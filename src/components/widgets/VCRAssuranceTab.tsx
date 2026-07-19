@@ -33,7 +33,7 @@ import {
   ExpectedDiscipline,
 } from './hooks/useVCRDisciplineAssurance';
 import { format } from 'date-fns';
-import { DisciplineStatementDrawer } from './DisciplineStatementDrawer';
+import { DisciplineItemsDrawerAdapter } from './DisciplineItemsDrawerAdapter';
 import { InterdisciplinarySummaryModal } from './InterdisciplinarySummaryModal';
 import { ScheduleSofMeetingModal } from './ScheduleSofMeetingModal';
 import { useProjectRoleHolders } from '@/hooks/useProjectRoleHolders';
@@ -560,13 +560,15 @@ export const VCRAssuranceTab: React.FC<VCRAssuranceTabProps> = ({ handoverPointI
         )}
       </div>
 
-      {/* Drawer */}
-      <DisciplineStatementDrawer
+      {/* Drawer — full alignment with Parties tab */}
+      <DisciplineItemsDrawerAdapter
         open={!!drawerFor}
         onOpenChange={(o) => { if (!o) setDrawerFor(null); }}
         assurance={drawerFor?.assurance ?? null}
         handoverPointId={handoverPointId}
         projectId={vcrMeta?.projectId ?? undefined}
+        vcrCode={vcrMeta?.vcrCode || vcrCode}
+        vcrName={vcrMeta?.vcrName}
         roleName={drawerFor?.roleName}
         roleId={drawerFor?.roleId ?? null}
         fallbackHolderName={drawerFor?.fallbackHolderName ?? null}
