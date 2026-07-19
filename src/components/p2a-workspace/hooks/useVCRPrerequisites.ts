@@ -54,6 +54,7 @@ export const useVCRPrerequisites = (handoverPointId: string) => {
           p2a_vcr_evidence (*),
           vcr_items:vcr_item_id (
             display_order,
+            topic,
             category:category_id ( code )
           )
         `)
@@ -66,6 +67,7 @@ export const useVCRPrerequisites = (handoverPointId: string) => {
         ...prereq,
         evidence: prereq.p2a_vcr_evidence || [],
         category: prereq.vcr_items?.category?.code ?? null,
+        topic: prereq.vcr_items?.topic ?? null,
         // Prefer the canonical catalog display_order (e.g. OI-19) over the
         // per-prereq row order (which can be a concatenated value like 219).
         display_order: prereq.vcr_items?.display_order ?? prereq.display_order,
