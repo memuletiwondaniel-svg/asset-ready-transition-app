@@ -413,41 +413,8 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
           </SheetHeader>
           <ScrollArea className="flex-1">
             <div className="divide-y divide-border/40">
-              {teamHolders.map(h => (
-                <div key={h.user_id} className="flex items-center gap-3 px-5 py-3">
-                  <Avatar className="h-10 w-10 flex-none ring-2 ring-background shadow-sm">
-                    {h.avatar_url ? (
-                      <AvatarImage src={getAvatarUrl(h.avatar_url) || undefined} alt={h.full_name} />
-                    ) : (
-                      <AvatarFallback className="text-[11px] font-semibold bg-primary/10 text-primary">
-                        {h.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                      </AvatarFallback>
-                    )}
-                  </Avatar>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[13px] font-medium truncate leading-tight flex items-center gap-1.5">
-                      {h.full_name}
-                      {h.partners.length > 0 && (
-                        <TooltipProvider delayDuration={150}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span
-                                className="text-[8px] font-semibold tracking-wider px-1 py-px rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0 leading-none"
-                                aria-label={`Back-to-back with ${h.partners.map(p => p.full_name).join(', ')}`}
-                              >
-                                B2B
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom" align="start" sideOffset={4} className="text-xs">
-                              Back-to-back with {h.partners.map(p => p.full_name).join(', ')}
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      )}
-                    </div>
-                    <div className="text-[11px] text-muted-foreground truncate">{h.role}</div>
-                  </div>
-                </div>
+              {primaryHolders.map(({ role, holders }) => (
+                <DrawerRoleRow key={role} role={role} holders={holders} getAvatarUrl={getAvatarUrl} />
               ))}
             </div>
           </ScrollArea>
