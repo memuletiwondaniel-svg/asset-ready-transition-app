@@ -68,10 +68,52 @@ Deno.serve(async (req) => {
     });
   }
 
+  // ── vcr_workflow_signal_7: pure-function eval, in-memory golden cases.
+  // No DB fixtures, no insight_eval_runs writes — just refresh
+  // insight_schema_status so QAQC E5-eval-coverage can observe freshness.
+  if (schemaKey === "vcr_workflow_signal_7") {
+    const sb = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+    const perCase = SIGNAL7_GOLDEN_CASES.map((gc) => {
+      const actual = computeSignal7(gc.prereq_status, gc.item_tasks, new Date(gc.now));
+      const pass = factsEqual(actual, gc.expected as any);
+      return {
+        case_id: gc.id,
+        description: gc.description,
+        expected: gc.expected,
+        actual,
+        pass,
+      };
+    });
+    const passedCount = perCase.filter((c) => c.pass).length;
+    const allPass = passedCount === perCase.length;
+    const aggregate = {
+      cases: perCase.length,
+      passed: passedCount,
+      all_pass: allPass,
+      gate: { all_pass: true },
+      ran_at: new Date().toISOString(),
+    };
+    await sb.from("insight_schema_status").upsert({
+      schema_key: "vcr_workflow_signal_7",
+      eval_status: allPass ? "passed" : "unproven",
+      aggregate,
+      updated_at: new Date().toISOString(),
+    });
+    return new Response(JSON.stringify({
+      schema_key: schemaKey,
+      eval_status: allPass ? "passed" : "unproven",
+      aggregate,
+      cases: perCase,
+    }, null, 2), { headers: { ...cors, "Content-Type": "application/json" } });
+  }
+
   const schema = TABLE_ROW_SCHEMAS[schemaKey];
   if (!schema) {
     return new Response(JSON.stringify({
-      error: `Unknown or non-table-row schema '${schemaKey}'. Supported: ${Object.keys(TABLE_ROW_SCHEMAS).join(", ")}`,
+      error: `Unknown or non-table-row schema '${schemaKey}'. Supported: ${Object.keys(TABLE_ROW_SCHEMAS).join(", ")}, vcr_workflow_signal_7`,
     }), { status: 400, headers: { ...cors, "Content-Type": "application/json" } });
   }
 
