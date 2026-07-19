@@ -9106,6 +9106,8 @@ export type Database = {
         Row: {
           activity_kind: Database["public"]["Enums"]["p2a_register_activity_kind"]
           approved_at: string | null
+          author_region_scope: string | null
+          author_role_id: string | null
           created_at: string
           created_by: string | null
           description: string | null
@@ -9129,6 +9131,8 @@ export type Database = {
         Insert: {
           activity_kind?: Database["public"]["Enums"]["p2a_register_activity_kind"]
           approved_at?: string | null
+          author_region_scope?: string | null
+          author_role_id?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -9152,6 +9156,8 @@ export type Database = {
         Update: {
           activity_kind?: Database["public"]["Enums"]["p2a_register_activity_kind"]
           approved_at?: string | null
+          author_region_scope?: string | null
+          author_role_id?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -9173,6 +9179,13 @@ export type Database = {
           workflow_status?: Database["public"]["Enums"]["p2a_register_workflow_status"]
         }
         Relationships: [
+          {
+            foreignKeyName: "p2a_vcr_operational_registers_author_role_id_fkey"
+            columns: ["author_role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "p2a_vcr_operational_registers_draft_owner_id_fkey"
             columns: ["draft_owner_id"]
@@ -9971,6 +9984,8 @@ export type Database = {
       p2a_vcr_register_selections: {
         Row: {
           action_type: string
+          author_region_scope: string | null
+          author_role_id: string | null
           catalog_id: string | null
           created_at: string
           description: string | null
@@ -9992,6 +10007,8 @@ export type Database = {
         }
         Insert: {
           action_type?: string
+          author_region_scope?: string | null
+          author_role_id?: string | null
           catalog_id?: string | null
           created_at?: string
           description?: string | null
@@ -10013,6 +10030,8 @@ export type Database = {
         }
         Update: {
           action_type?: string
+          author_region_scope?: string | null
+          author_role_id?: string | null
           catalog_id?: string | null
           created_at?: string
           description?: string | null
@@ -10033,6 +10052,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "p2a_vcr_register_selections_author_role_id_fkey"
+            columns: ["author_role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "p2a_vcr_register_selections_catalog_id_fkey"
             columns: ["catalog_id"]
@@ -18201,6 +18227,10 @@ export type Database = {
       resolve_project_role_users: {
         Args: { p_project_id: string; p_role_label: string }
         Returns: string[]
+      }
+      resolve_role_holder: {
+        Args: { p_project_id: string; p_role_id: string }
+        Returns: string
       }
       revise_orp_plan: { Args: { p_plan_id: string }; Returns: Json }
       search_team_members: {
