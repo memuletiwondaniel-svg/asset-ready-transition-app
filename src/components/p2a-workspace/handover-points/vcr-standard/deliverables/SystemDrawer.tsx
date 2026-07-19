@@ -575,9 +575,10 @@ export const SystemDrawer: React.FC<Props> = ({ system, handoverPoint, projectId
                 </div>
 
                 <div className="rounded-md border overflow-hidden">
-                  <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,2.6fr)_44px_84px_20px] items-center gap-3 px-3 py-1.5 bg-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <div className={cn(PUNCH_GRID_CLASS, 'px-3 py-1.5 bg-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground')}>
                     <div>Subsystem</div>
-                    <div>Punch ID · Description</div>
+                    <div>Punch ID</div>
+                    <div>Description</div>
                     <div className="text-center">Cat</div>
                     <div className="text-right">Status</div>
                     <div />
@@ -589,6 +590,51 @@ export const SystemDrawer: React.FC<Props> = ({ system, handoverPoint, projectId
                     <div className="px-3 py-6 text-center text-muted-foreground text-[12px] border-t">No punch items match filters</div>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* W&H POINTS */}
+            {!isLoading && tab === 'whpoints' && (
+              <div className="space-y-3">
+                {sortedWh.length === 0 ? (
+                  <EmptyDeliverable
+                    label="No witness or hold points for this system."
+                    hint="Points added on the VCR plan Inspection & Test Plan step will appear here."
+                  />
+                ) : (
+                  <DeliverableList>
+                    {sortedWh.map((p) => {
+                      const pres = WH_STATUS_PRESENTATION[p.status];
+                      const contextParts = [
+                        typeLabel(p.inspection_type),
+                        p.system ? `${p.system.system_id} · ${p.system.name}` : null,
+                      ].filter(Boolean);
+                      return (
+                        <DeliverableRow
+                          key={p.id}
+                          name={p.activity_name}
+                          context={contextParts.join(' · ')}
+                          chipLabel={pres.label}
+                          chipTone={pres.tone as ChipTone}
+                          onClick={() => setWhSelected(p)}
+                        />
+                      );
+                    })}
+                  </DeliverableList>
+                )}
+
+                <WitnessHoldDrawer
+                  point={whSelected}
+                  vcrCode={handoverPoint.vcr_code}
+                  vcrName={handoverPoint.name}
+                  projectId={whData?.projectId ?? null}
+                  open={!!whSelected}
+                  onOpenChange={(o) => !o && setWhSelected(null)}
+                  onSchedule={() => {}}
+                  onComplete={() => {}}
+                  onReview={() => {}}
+                  onEditParties={() => {}}
+                />
               </div>
             )}
           </div>
