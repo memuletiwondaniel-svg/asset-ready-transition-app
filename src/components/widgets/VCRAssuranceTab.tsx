@@ -33,7 +33,7 @@ import {
   ExpectedDiscipline,
 } from './hooks/useVCRDisciplineAssurance';
 import { format } from 'date-fns';
-import { DisciplineStatementDrawer } from './DisciplineStatementDrawer';
+import { DisciplineItemsDrawerAdapter } from './DisciplineItemsDrawerAdapter';
 import { InterdisciplinarySummaryModal } from './InterdisciplinarySummaryModal';
 import { ScheduleSofMeetingModal } from './ScheduleSofMeetingModal';
 import { useProjectRoleHolders } from '@/hooks/useProjectRoleHolders';
