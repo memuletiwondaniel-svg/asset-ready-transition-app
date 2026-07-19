@@ -62,16 +62,9 @@ export const StandardSystemsTab: React.FC<{ handoverPoint: P2AHandoverPoint; pro
 
   return (
     <div>
-      {/* G2 header */}
-      <div className="px-4 pt-4 pb-3">
-        <h2 className="text-[15px] font-bold tracking-tight">Systems</h2>
-        <div className="text-[11.5px] text-muted-foreground mt-0.5">
-          {handoverPoint.vcr_code}{handoverPoint.name ? ` · ${handoverPoint.name}` : ''}
-        </div>
-      </div>
-      <div className="border-t" />
+      {/* In-body tab title removed app-wide — left nav owns tab name. */}
       {narrative && (
-        <div className="mx-4 my-3 rounded-md bg-muted/40 px-3 py-2.5 text-[12px] leading-relaxed text-foreground">
+        <div className="mx-4 mt-4 mb-3 rounded-md bg-muted/40 px-4 py-3 text-[12.5px] leading-relaxed text-foreground/85">
           <span className="font-semibold">{narrative.complete} of {narrative.total} systems</span> have reached their handover milestone.
           {narrative.inProgress > 0 && <> {narrative.inProgress} are in progress.</>}
           {narrative.notStarted > 0 && <> {narrative.notStarted} have not started.</>}
