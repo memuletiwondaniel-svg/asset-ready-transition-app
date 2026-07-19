@@ -15,7 +15,10 @@ import {
   PunchRow,
 } from './useSystemDetail';
 import { OverviewProgressSection } from './system-drawer/OverviewProgressSection';
-import { PunchRowItem } from './system-drawer/PunchRowItem';
+import { PunchRowItem, PUNCH_GRID_CLASS } from './system-drawer/PunchRowItem';
+import { useWHPoints, WH_STATUS_PRESENTATION, sortByStatusBucket, typeLabel } from './useWHPoints';
+import { DeliverableList, DeliverableRow, EmptyDeliverable, ChipTone } from './DeliverableRow';
+import { WitnessHoldDrawer } from './WitnessHoldDrawer';
 
 const TONE = {
   emerald: 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -102,12 +105,13 @@ interface Props {
   onOpenChange: (o: boolean) => void;
 }
 
-type Tab = 'overview' | 'itrs' | 'punchlist';
+type Tab = 'overview' | 'itrs' | 'punchlist' | 'whpoints';
 
 export const SystemDrawer: React.FC<Props> = ({ system, handoverPoint, projectId: _projectId, open, onOpenChange }) => {
   const [tab, setTab] = useState<Tab>('overview');
   const [progressOpen, setProgressOpen] = useState(true);
   const [subsOpen, setSubsOpen] = useState(true);
+  const [whSelected, setWhSelected] = useState<any>(null);
 
   // ITR filters
   const [itrSearch, setItrSearch] = useState('');
@@ -127,6 +131,12 @@ export const SystemDrawer: React.FC<Props> = ({ system, handoverPoint, projectId
   const [punchCategory, setPunchCategory] = useState<'A' | 'B' | null>(null);
 
   const { data, isLoading } = useSystemDetail(system?.id);
+  const { data: whData } = useWHPoints(handoverPoint?.id);
+  const systemWhPoints = useMemo(
+    () => (whData?.points ?? []).filter((p) => p.system?.id === system?.id),
+    [whData, system?.id],
+  );
+  const sortedWh = useMemo(() => [...systemWhPoints].sort(sortByStatusBucket), [systemWhPoints]);
 
   const subs = data?.subsystems || [];
   const itrs = data?.itrs || [];
@@ -302,6 +312,7 @@ export const SystemDrawer: React.FC<Props> = ({ system, handoverPoint, projectId
           <TabBtn active={tab === 'overview'} onClick={() => setTab('overview')}>Overview</TabBtn>
           <TabBtn active={tab === 'itrs'} onClick={() => setTab('itrs')}>ITRs</TabBtn>
           <TabBtn active={tab === 'punchlist'} onClick={() => setTab('punchlist')}>Punchlist</TabBtn>
+          <TabBtn active={tab === 'whpoints'} onClick={() => setTab('whpoints')}>W&amp;H Points</TabBtn>
         </div>
 
         <ScrollArea className="flex-1">
@@ -335,47 +346,46 @@ export const SystemDrawer: React.FC<Props> = ({ system, handoverPoint, projectId
                   />
                   {subsOpen && (
                     <div className="mt-2 rounded-md border overflow-hidden">
-                      <table className="w-full text-[12px]">
+                      <table className="w-full text-[12px] table-fixed">
+                        <colgroup>
+                          <col style={{ width: '150px' }} />
+                          <col style={{ width: '68px' }} />
+                          <col style={{ width: '52px' }} />
+                          <col style={{ width: '68px' }} />
+                          <col />
+                        </colgroup>
                         <thead className="bg-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground">
                           <tr>
-                            <th className="text-left px-3 py-1.5">Subsystem</th>
-                            <th className="text-right px-3 py-1.5 w-20">Progress</th>
-                            <th className="text-right px-3 py-1.5 w-24">Outstanding ITRs</th>
-                            <th className="text-right px-3 py-1.5 w-24">Open Punchlist</th>
-                            <th className="text-right px-3 py-1.5 w-28">Milestone</th>
+                            <th className="text-left px-3 py-1">Subsystem</th>
+                            <th className="text-right px-2 py-1">Progress</th>
+                            <th className="text-center px-2 py-1">ITR</th>
+                            <th className="text-center px-2 py-1">Punchlist</th>
+                            <th className="text-left px-3 py-1 pl-6">Milestone</th>
                           </tr>
                         </thead>
                         <tbody>
                           {subs.map((s) => {
                             const agg = subAgg.get(s.id) || { outstandingItrs: 0, openPunch: 0 };
+                            const milestoneLabel = s.pcc_achieved ? 'PCC' : s.mcc_achieved ? 'MCC' : '';
                             return (
                               <tr key={s.id} className="border-t border-border/50">
-                                <td className="px-3 py-2">
-                                  <div>{s.name}</div>
-                                  <div className="font-mono text-[10.5px] text-muted-foreground">{s.subsystem_id}</div>
+                                <td className="px-3 py-1.5 min-w-0">
+                                  <div className="truncate leading-tight">{s.name}</div>
+                                  <div className="font-mono text-[10.5px] text-muted-foreground truncate leading-tight">{s.subsystem_id}</div>
                                 </td>
-                                <td className="px-3 py-2 text-right tabular-nums">{s.completion_percentage}%</td>
-                                <td className="px-3 py-2 text-right">
+                                <td className="px-2 py-1.5 text-right tabular-nums">{s.completion_percentage}%</td>
+                                <td className="px-2 py-1.5 text-center">
                                   <AccentLink onClick={() => deepLinkOutstandingItrs(s.subsystem_id)} disabled={agg.outstandingItrs === 0}>
                                     {agg.outstandingItrs}
                                   </AccentLink>
                                 </td>
-                                <td className="px-3 py-2 text-right">
+                                <td className="px-2 py-1.5 text-center">
                                   <AccentLink onClick={() => deepLinkOpenPunch(s.subsystem_id)} disabled={agg.openPunch === 0}>
                                     {agg.openPunch}
                                   </AccentLink>
                                 </td>
-                                <td className="px-3 py-2 text-right">
-                                  <span className="inline-flex gap-1.5 text-[10px] font-bold uppercase tracking-wider">
-                                    <span className={cn(
-                                      'rounded-full border px-1.5 py-0.5',
-                                      s.mcc_achieved ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-muted-foreground/60 border-slate-200',
-                                    )}>MCC</span>
-                                    <span className={cn(
-                                      'rounded-full border px-1.5 py-0.5',
-                                      s.pcc_achieved ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-muted-foreground/60 border-slate-200',
-                                    )}>PCC</span>
-                                  </span>
+                                <td className="px-3 py-1.5 pl-6 text-left text-[11.5px] font-semibold text-emerald-600 tabular-nums">
+                                  {milestoneLabel}
                                 </td>
                               </tr>
                             );
@@ -565,9 +575,10 @@ export const SystemDrawer: React.FC<Props> = ({ system, handoverPoint, projectId
                 </div>
 
                 <div className="rounded-md border overflow-hidden">
-                  <div className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,2.6fr)_44px_84px_20px] items-center gap-3 px-3 py-1.5 bg-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <div className={cn(PUNCH_GRID_CLASS, 'px-3 py-1.5 bg-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground')}>
                     <div>Subsystem</div>
-                    <div>Punch ID · Description</div>
+                    <div>Punch ID</div>
+                    <div>Description</div>
                     <div className="text-center">Cat</div>
                     <div className="text-right">Status</div>
                     <div />
@@ -579,6 +590,51 @@ export const SystemDrawer: React.FC<Props> = ({ system, handoverPoint, projectId
                     <div className="px-3 py-6 text-center text-muted-foreground text-[12px] border-t">No punch items match filters</div>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* W&H POINTS */}
+            {!isLoading && tab === 'whpoints' && (
+              <div className="space-y-3">
+                {sortedWh.length === 0 ? (
+                  <EmptyDeliverable
+                    label="No witness or hold points for this system."
+                    hint="Points added on the VCR plan Inspection & Test Plan step will appear here."
+                  />
+                ) : (
+                  <DeliverableList>
+                    {sortedWh.map((p) => {
+                      const pres = WH_STATUS_PRESENTATION[p.status];
+                      const contextParts = [
+                        typeLabel(p.inspection_type),
+                        p.system ? `${p.system.system_id} · ${p.system.name}` : null,
+                      ].filter(Boolean);
+                      return (
+                        <DeliverableRow
+                          key={p.id}
+                          name={p.activity_name}
+                          context={contextParts.join(' · ')}
+                          chipLabel={pres.label}
+                          chipTone={pres.tone as ChipTone}
+                          onClick={() => setWhSelected(p)}
+                        />
+                      );
+                    })}
+                  </DeliverableList>
+                )}
+
+                <WitnessHoldDrawer
+                  point={whSelected}
+                  vcrCode={handoverPoint.vcr_code}
+                  vcrName={handoverPoint.name}
+                  projectId={whData?.projectId ?? null}
+                  open={!!whSelected}
+                  onOpenChange={(o) => !o && setWhSelected(null)}
+                  onSchedule={() => {}}
+                  onComplete={() => {}}
+                  onReview={() => {}}
+                  onEditParties={() => {}}
+                />
               </div>
             )}
           </div>
