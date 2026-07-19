@@ -1298,7 +1298,7 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
     const openDelivery = openTasks.filter((t) => t.type === "vcr_item_action").length;
     const openReview = openTasks.filter((t) => t.type === "vcr_item_review").length;
 
-    if (isTerminal && openTasks.length > 0) {
+    if (_isTerminal && openTasks.length > 0) {
       // E3-shaped: item-task should have been retired when the prereq went terminal.
       facts.push({
         label: "Orphan item-tasks",
@@ -1306,7 +1306,7 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
         tone: "red",
         confidence: "verified",
       });
-    } else if (!isTerminal) {
+    } else if (!_isTerminal) {
       if (openDelivery > 0) {
         // Age the oldest open delivery task for pressure signal.
         const oldest = openTasks
