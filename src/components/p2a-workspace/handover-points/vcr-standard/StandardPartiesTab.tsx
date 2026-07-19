@@ -571,10 +571,8 @@ export const StandardPartiesTab: React.FC<Props> = ({
 
   return (
     <div className="space-y-4">
-      {/* G2 tab header — title only, subtext removed per Daniel review */}
-      <div>
-        <h2 className="text-[16px] font-bold tracking-tight text-foreground">Parties</h2>
-      </div>
+      {/* Narrative summary — canonical VCR-tab summary panel typography.
+       * H1 removed; left-nav is the single source of the tab name. */}
       <div className="rounded-md bg-muted/40 px-4 py-3 text-[12.5px] leading-relaxed text-foreground/85">
         {narrative.split(/(\*\*[^*]+\*\*)/g).map((chunk, i) =>
           chunk.startsWith('**') ? (
@@ -604,6 +602,8 @@ export const StandardPartiesTab: React.FC<Props> = ({
           people={fDelivering}
           onPersonClick={setOpenParty}
           personClickable
+          defaultOpen={defaultOpenDelivery}
+          signedRoleKeys={signedRoleKeys}
         />
         <Section
           title="VCR Approvers"
@@ -612,6 +612,8 @@ export const StandardPartiesTab: React.FC<Props> = ({
           people={fApproving}
           onPersonClick={setOpenParty}
           personClickable
+          defaultOpen={defaultOpenApprover}
+          signedRoleKeys={signedRoleKeys}
         />
         {isHC && (
           <Section
@@ -623,6 +625,7 @@ export const StandardPartiesTab: React.FC<Props> = ({
             emptyText="No SoF approver role holders resolved yet."
             people={fSof}
             muted={!gateUnlocked}
+            defaultOpen={defaultOpenSof}
           />
         )}
         <Section
@@ -634,6 +637,7 @@ export const StandardPartiesTab: React.FC<Props> = ({
           emptyText="No PAC approver role holders resolved yet."
           people={fPac}
           muted={!gateUnlocked}
+          defaultOpen={defaultOpenPac}
         />
       </div>
 
@@ -648,6 +652,10 @@ export const StandardPartiesTab: React.FC<Props> = ({
         projectId={projectId}
         prereqCategoryMap={prereqCategoryMap}
         disciplineStatement={statementForParty(openParty)}
+        hasStatement={
+          !!openParty &&
+          signedRoleKeys.has(((openParty.role_name || openParty.position || '').trim().toLowerCase()))
+        }
       />
     </div>
   );
