@@ -95,7 +95,7 @@ const BatchCard: React.FC<{ b: MaintBatch }> = ({ b }) => {
               </Avatar>
               <div className="text-[11.5px]">
                 <span className="font-medium">Approved by {b.approver_name}</span>
-                <span className="text-muted-foreground"> · Asset Lead{b.approved_at ? ` · ${format(new Date(b.approved_at), 'd MMM yyyy')}` : ''}</span>
+                <span className="text-muted-foreground"> · Batch approver{b.approved_at ? ` · ${format(new Date(b.approved_at), 'd MMM yyyy')}` : ''}</span>
               </div>
             </div>
           )}
