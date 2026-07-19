@@ -1,10 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface Subsystem {
   id: string;
-  system_id: string; // uuid FK
-  subsystem_id: string; // text code
+  system_id: string;
+  subsystem_id: string;
   name: string;
   mcc_achieved: boolean;
   mcc_date: string | null;
@@ -14,15 +14,35 @@ export interface Subsystem {
   itr_count: number;
 }
 
+export type ItrDiscipline = 'INS' | 'ELE' | 'MEC' | 'PIP' | 'CIV';
+
+export const DISCIPLINE_LABEL: Record<ItrDiscipline, string> = {
+  INS: 'Instrumentation',
+  ELE: 'Electrical',
+  MEC: 'Mechanical',
+  PIP: 'Piping',
+  CIV: 'Civil',
+};
+
+// Single letter used in short display code (e.g. GCC-M39A → M = Mechanical/Piping bucket).
+// Daniel's example maps M to mechanical family; keep P separate to preserve punch-family disambiguation.
+const DISC_LETTER: Record<ItrDiscipline, string> = {
+  INS: 'I',
+  ELE: 'E',
+  MEC: 'M',
+  PIP: 'P',
+  CIV: 'C',
+};
+
 export interface ITRRow {
   id: string;
   ref: string;
   description: string;
   phase: 'A' | 'B';
-  discipline: string;
+  discipline: ItrDiscipline | null;
   tag: string | null;
   status: 'Outstanding' | 'Completed';
-  subsystem_id: string; // uuid FK
+  subsystem_id: string;
   subsystem_code: string;
 }
 
@@ -38,8 +58,26 @@ export interface PunchRow {
   cleared_at: string | null;
   closure_note: string | null;
   linked_itr_ref: string | null;
+  subsystem_id: string;
   subsystem_code: string;
 }
+
+/**
+ * Derive a shorter, human-friendly ITR display code from the authoritative ref.
+ * ref format: {ORIG}-ITR-{A|B}-{DISC}-{SYS}-{SUB}-{SEQ}
+ * output:     {ORIG}-{L}{seq-no-leading-zeros}{PHASE}   e.g. GCC-M39A
+ *
+ * originatorOverride lets callers force the display prefix (e.g. "GCC").
+ * When absent we fall back to the ref's first segment (typically "6529").
+ */
+export const formatItrDisplayCode = (itr: Pick<ITRRow, 'ref' | 'phase' | 'discipline'>, originatorOverride?: string): string => {
+  const parts = (itr.ref || '').split('-');
+  const orig = originatorOverride || parts[0] || 'ITR';
+  const seqRaw = parts[parts.length - 1] || '';
+  const seq = String(parseInt(seqRaw, 10) || 0);
+  const letter = itr.discipline ? DISC_LETTER[itr.discipline] : '?';
+  return `${orig}-${letter}${seq}${itr.phase}`;
+};
 
 export const useSystemDetail = (systemUuid: string | undefined) => {
   return useQuery({
@@ -91,6 +129,7 @@ export const useSystemDetail = (systemUuid: string | undefined) => {
         cleared_at: r.cleared_at,
         closure_note: r.closure_note,
         linked_itr_ref: r.linked_itr_ref,
+        subsystem_id: r.subsystem_id,
         subsystem_code: subById.get(r.subsystem_id)?.subsystem_id ?? '',
       }));
 
@@ -99,10 +138,6 @@ export const useSystemDetail = (systemUuid: string | undefined) => {
   });
 };
 
-/**
- * Per S1: system milestone = highest achieved of MC / RFC / RFO (non-HC) / RFSU (HC).
- * MC requires ALL subsystems to have mcc_achieved.
- */
 export const computeSystemMilestone = (
   completion_status: string | null,
   is_hydrocarbon: boolean,
@@ -116,4 +151,74 @@ export const computeSystemMilestone = (
     return { label: 'MC', tone: 'blue' };
   }
   return { label: 'Not started', tone: 'slate' };
+};
+
+// ─── Punch activity log ──────────────────────────────────────────
+export interface PunchComment {
+  id: string;
+  punch_id: string;
+  author_user_id: string | null;
+  author_name: string | null;
+  author_avatar_url: string | null;
+  body: string;
+  attachment_url: string | null;
+  attachment_name: string | null;
+  created_at: string;
+}
+
+export const usePunchComments = (punchId: string | undefined) => {
+  return useQuery({
+    enabled: !!punchId,
+    queryKey: ['punch-comments', punchId],
+    queryFn: async () => {
+      const c = supabase as any;
+      const { data, error } = await c
+        .from('p2a_system_punch_activity_log')
+        .select('id, punch_id, author_user_id, body, attachment_url, attachment_name, created_at')
+        .eq('punch_id', punchId)
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      const rows = (data || []) as any[];
+      const authorIds = Array.from(new Set(rows.map((r) => r.author_user_id).filter(Boolean)));
+      let profiles: Record<string, { full_name: string | null; avatar_url: string | null }> = {};
+      if (authorIds.length) {
+        const { data: profs } = await c
+          .from('profiles')
+          .select('id, full_name, avatar_url')
+          .in('id', authorIds);
+        for (const p of profs || []) profiles[p.id] = { full_name: p.full_name, avatar_url: p.avatar_url };
+      }
+      return rows.map<PunchComment>((r) => ({
+        id: r.id,
+        punch_id: r.punch_id,
+        author_user_id: r.author_user_id,
+        author_name: r.author_user_id ? profiles[r.author_user_id]?.full_name ?? null : null,
+        author_avatar_url: r.author_user_id ? profiles[r.author_user_id]?.avatar_url ?? null : null,
+        body: r.body,
+        attachment_url: r.attachment_url,
+        attachment_name: r.attachment_name,
+        created_at: r.created_at,
+      }));
+    },
+  });
+};
+
+export const useAddPunchComment = (punchId: string | undefined) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: string) => {
+      if (!punchId) throw new Error('no punch');
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData.user?.id;
+      if (!uid) throw new Error('not signed in');
+      const c = supabase as any;
+      const { error } = await c
+        .from('p2a_system_punch_activity_log')
+        .insert({ punch_id: punchId, author_user_id: uid, body });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['punch-comments', punchId] });
+    },
+  });
 };

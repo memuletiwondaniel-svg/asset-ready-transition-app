@@ -7848,7 +7848,7 @@ export type Database = {
           completed_by: string | null
           created_at: string
           description: string
-          discipline: string | null
+          discipline: Database["public"]["Enums"]["p2a_itr_discipline"] | null
           id: string
           metadata: Json | null
           phase: Database["public"]["Enums"]["p2a_itr_phase"]
@@ -7864,7 +7864,7 @@ export type Database = {
           completed_by?: string | null
           created_at?: string
           description: string
-          discipline?: string | null
+          discipline?: Database["public"]["Enums"]["p2a_itr_discipline"] | null
           id?: string
           metadata?: Json | null
           phase: Database["public"]["Enums"]["p2a_itr_phase"]
@@ -7880,7 +7880,7 @@ export type Database = {
           completed_by?: string | null
           created_at?: string
           description?: string
-          discipline?: string | null
+          discipline?: Database["public"]["Enums"]["p2a_itr_discipline"] | null
           id?: string
           metadata?: Json | null
           phase?: Database["public"]["Enums"]["p2a_itr_phase"]
@@ -7918,6 +7918,58 @@ export type Database = {
             columns: ["system_id"]
             isOneToOne: false
             referencedRelation: "p2a_systems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      p2a_system_punch_activity_log: {
+        Row: {
+          attachment_name: string | null
+          attachment_url: string | null
+          author_user_id: string | null
+          body: string
+          created_at: string
+          id: string
+          punch_id: string
+        }
+        Insert: {
+          attachment_name?: string | null
+          attachment_url?: string | null
+          author_user_id?: string | null
+          body: string
+          created_at?: string
+          id?: string
+          punch_id: string
+        }
+        Update: {
+          attachment_name?: string | null
+          attachment_url?: string | null
+          author_user_id?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          punch_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_system_punch_activity_log_author_user_id_fkey"
+            columns: ["author_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_system_punch_activity_log_author_user_id_fkey"
+            columns: ["author_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_system_punch_activity_log_punch_id_fkey"
+            columns: ["punch_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_system_punch_items"
             referencedColumns: ["id"]
           },
         ]
@@ -18405,6 +18457,7 @@ export type Database = {
         | "COMPLETED"
         | "NOT_APPLICABLE"
       p2a_handover_point_status: "PENDING" | "IN_PROGRESS" | "READY" | "SIGNED"
+      p2a_itr_discipline: "INS" | "ELE" | "MEC" | "PIP" | "CIV"
       p2a_itr_phase: "A" | "B"
       p2a_itr_record_status: "Outstanding" | "Completed"
       p2a_maint_batch_status:
@@ -18816,6 +18869,7 @@ export const Constants = {
         "NOT_APPLICABLE",
       ],
       p2a_handover_point_status: ["PENDING", "IN_PROGRESS", "READY", "SIGNED"],
+      p2a_itr_discipline: ["INS", "ELE", "MEC", "PIP", "CIV"],
       p2a_itr_phase: ["A", "B"],
       p2a_itr_record_status: ["Outstanding", "Completed"],
       p2a_maint_batch_status: [
