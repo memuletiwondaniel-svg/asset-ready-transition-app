@@ -21,13 +21,6 @@ import { effectiveBucket, PrereqStatus, QualStage } from './standardStatus';
  * Signed status (if any) is overlaid from `vcr_sof_approvers`.
  */
 
-const TERMINAL_STATUSES = new Set([
-  'ACCEPTED',
-  'QUALIFICATION_APPROVED',
-]);
-
-const APPROVED_APPROVAL_STATUSES = new Set(['ACCEPTED', 'QUALIFIED', 'APPROVED']);
-
 const isCompletedItem = (item: PartyItem) =>
   effectiveBucket(item.status as PrereqStatus, item.qualification_stage ?? null) === 'terminal';
 
