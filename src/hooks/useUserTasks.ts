@@ -55,6 +55,9 @@ const fetchUserTasks = async (userId: string): Promise<FetchResult> => {
     .from('ora_activity_plan_v')
     .select('id,title,description,due_date,priority,type,status,display_order,created_at,updated_at,metadata,sub_items,progress_percentage,user_id,parent_task_id')
     .in('user_id', effectiveUserIds)
+    // EXE-1c: hide per-item VCR plumbing tasks from board / counters / kanban.
+    // They stay queryable via useVCRBundleItemTasks for the bundle sheet.
+    .not('type', 'in', '(vcr_item_action,vcr_item_review)')
     .order('display_order', { ascending: true })
     .order('priority', { ascending: false })
     .order('due_date', { ascending: true });
