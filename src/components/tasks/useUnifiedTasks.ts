@@ -386,7 +386,7 @@ export function useUnifiedTasks(userId: string) {
       const pssrId = item.pssr?.id;
       if (!pssrId) return;
       if (tasks.some(t => t.userTask?.metadata?.pssr_id === pssrId)) return;
-      const pssrDue = addBusinessDays(item.pendingSince, slaDaysFor('approval_review'));
+      const pssrDue: string | undefined = undefined; // MVP-D1: no SLA fiction
       const spPssr = computeSmartPriority({
         category: 'pssr', categoryLabel: 'PSSR Review',
         dueDate: pssrDue,
