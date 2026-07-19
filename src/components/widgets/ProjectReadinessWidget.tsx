@@ -269,6 +269,17 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
       }
     });
   });
+
+  // Drawer shows one row per required role; the B2B chip cycles the holder
+  // so both back-to-back partners remain reachable without duplicating rows.
+  const primaryHolders: Array<{ role: string; holders: RoleHolder[] }> = [];
+  REQUIRED_ROLES.forEach(role => {
+    const holders = holdersByRole[role];
+    if (holders.length > 0) {
+      primaryHolders.push({ role, holders });
+    }
+  });
+
   const AVATAR_STACK_LIMIT = 6;
   const stackHolders = teamHolders.slice(0, AVATAR_STACK_LIMIT);
   const overflowCount = Math.max(0, teamHolders.length - AVATAR_STACK_LIMIT);
