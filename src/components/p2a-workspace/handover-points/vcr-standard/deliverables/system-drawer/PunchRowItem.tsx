@@ -49,42 +49,48 @@ interface Props {
   onDeepLink?: (subsystemCode: string) => void;
 }
 
+/**
+ * Grid must match the header in SystemDrawer punchlist section:
+ *   subsystem | punch id | description | cat | status | chevron
+ */
+export const PUNCH_GRID_CLASS =
+  'grid grid-cols-[minmax(0,1fr)_120px_minmax(0,2.2fr)_40px_92px_20px] items-center gap-3';
+
 export const PunchRowItem: React.FC<Props> = ({ p }) => {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState('');
   const { data: comments = [] } = usePunchComments(open ? p.id : undefined);
   const add = useAddPunchComment(p.id);
 
-  // Derived punch chip like "PL-A · 120-01-002"
   // ref: {ORIG}-PL-{A|B}-{sub}-{seq2}-{itemNo3} → take last 3 chunks
+  // Drop the PL-A/PL-B prefix — show only the numeric ref, e.g. 960-01-004.
   const refParts = (p.ref || '').split('-');
   const shortId = refParts.slice(-3).join('-');
-  const punchChip = `PL-${p.category} · ${shortId}`;
+
+  const raisedAt = p.raised_at ? format(new Date(p.raised_at), 'd MMM yyyy') : '';
+  const clearedAt = p.cleared_at ? format(new Date(p.cleared_at), 'd MMM yyyy') : '';
 
   return (
     <div className={cn('border-t first:border-t-0', open && 'bg-muted/20')}>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="w-full grid grid-cols-[minmax(0,1.2fr)_minmax(0,2.6fr)_44px_84px_20px] items-center gap-3 px-3 py-2 text-left hover:bg-blue-50/50"
+        className={cn(PUNCH_GRID_CLASS, 'w-full px-3 py-2 text-left hover:bg-blue-50/50')}
       >
-        <div className="min-w-0">
-          <div className="font-mono text-[11.5px]">{p.subsystem_code}</div>
+        <div className="min-w-0 font-mono text-[11.5px]">{p.subsystem_code}</div>
+        <div className="min-w-0 font-mono text-[11.5px]">{shortId}</div>
+        <div className="min-w-0 text-[12.5px] leading-snug text-foreground/90 break-words">
+          {p.description}
         </div>
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-            <span className="inline-flex items-center rounded-full bg-slate-100 text-slate-700 text-[10.5px] font-mono px-2 py-0.5">
-              {punchChip}
-            </span>
-            <span className="text-[12.5px] leading-snug text-foreground/90 break-words">{p.description}</span>
-          </div>
+        <div
+          className="text-center text-[12px] font-medium text-muted-foreground"
+          title={`PL-${p.category} — ${CATEGORY_DEFINITION[p.category]}`}
+        >
+          {p.category}
         </div>
-        <div className="text-center text-[12px] font-medium text-muted-foreground">{p.category}</div>
         <div className="text-right">
           {p.status === 'Closed' ? (
-            <span className="inline-flex text-[10.5px] font-bold rounded-full border px-2 py-0.5 uppercase tracking-wider bg-emerald-50 text-emerald-700 border-emerald-200">
-              Completed
-            </span>
+            <span className="text-[11.5px] text-emerald-600">Completed</span>
           ) : (
             <span className="text-[11.5px] text-muted-foreground">Outstanding</span>
           )}
@@ -94,31 +100,22 @@ export const PunchRowItem: React.FC<Props> = ({ p }) => {
 
       {open && (
         <div className="px-3 pb-4 pt-1 space-y-3">
-          <div className="text-[12.5px] leading-relaxed">{p.description}</div>
-
           <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-[11.5px]">
             <div>
               <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">Raised</div>
-              <div>{p.raised_at ? format(new Date(p.raised_at), 'd MMM yyyy') : '—'}</div>
+              <div>{raisedAt}</div>
             </div>
             <div>
               <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">Raised by</div>
-              <div>{p.raised_by_name ?? '—'}</div>
+              <div>{p.raised_by_name ?? ''}</div>
             </div>
             <div>
               <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">Cleared</div>
-              <div>{p.cleared_at ? format(new Date(p.cleared_at), 'd MMM yyyy') : '—'}</div>
+              <div>{clearedAt}</div>
             </div>
             <div>
               <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">Cleared by</div>
-              <div>{p.cleared_by_name ?? '—'}</div>
-            </div>
-            <div className="col-span-2">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">Category</div>
-              <div>
-                <span className="font-medium">PL-{p.category}</span>
-                <span className="text-muted-foreground"> — {CATEGORY_DEFINITION[p.category]}</span>
-              </div>
+              <div>{p.cleared_by_name ?? ''}</div>
             </div>
             {p.closure_note && (
               <div className="col-span-2">
