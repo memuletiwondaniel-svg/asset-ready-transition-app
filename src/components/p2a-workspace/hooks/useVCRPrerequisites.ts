@@ -22,6 +22,10 @@ export interface VCRPrerequisite {
   updated_at: string;
   category?: string;
   topic?: string | null;
+  /** Latest qualification stage for this prereq (null if none). Merged in
+   *  by the hook so every consumer resolves the qualification sub-state
+   *  (DRAFT/PENDING/REJECTED/APPROVED) from a single source of truth. */
+  qualification_stage?: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | null;
   // Joined data
   evidence?: VCREvidence[];
 }
