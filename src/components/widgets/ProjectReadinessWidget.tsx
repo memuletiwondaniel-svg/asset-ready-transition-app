@@ -107,6 +107,7 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
   const [milestonesLoading, setMilestonesLoading] = useState(true);
   const [documents, setDocuments] = useState<any[]>([]);
   const [isScopeExpanded, setIsScopeExpanded] = useState(false);
+  const [teamDrawerOpen, setTeamDrawerOpen] = useState(false);
 
   const project = projects.find(p => p.id === projectId);
   const plant = plants.find(p => p.id === project?.plant_id);
