@@ -15,7 +15,7 @@ import {
   SheetDescription,
 } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Lock, Search } from 'lucide-react';
+import { ChevronDown, Lock, Search, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { P2AHandoverPoint } from '../../hooks/useP2AHandoverPoints';
 import { useVCRPrerequisites } from '../../hooks/useVCRPrerequisites';
@@ -44,10 +44,16 @@ const initials = (name: string) =>
     .join('')
     .toUpperCase() || '?';
 
+/** Health-token status dot for a seat. */
+const statusDotClass = (assigned: number, completed: number, signed: boolean) => {
+  if (signed || (assigned > 0 && completed >= assigned)) return 'bg-emerald-500';
+  if (completed > 0) return 'bg-amber-500';
+  return 'bg-slate-300';
+};
+
 /** Fraction chip tone: green when complete, amber while in progress, slate at zero. */
-const fractionChipClass = (assigned: number, completed: number) => {
-  if (assigned === 0) return 'bg-slate-100 text-muted-foreground';
-  if (completed >= assigned) return 'bg-emerald-50 text-emerald-700';
+const fractionChipClass = (assigned: number, completed: number, signed: boolean) => {
+  if (signed || (assigned > 0 && completed >= assigned)) return 'bg-emerald-50 text-emerald-700';
   if (completed > 0) return 'bg-amber-50 text-amber-700';
   return 'bg-slate-100 text-muted-foreground';
 };
