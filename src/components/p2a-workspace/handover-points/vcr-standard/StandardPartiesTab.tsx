@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils';
 import { P2AHandoverPoint } from '../../hooks/useP2AHandoverPoints';
 import { useVCRPrerequisites } from '../../hooks/useVCRPrerequisites';
 import { useVCRHydrocarbonStatus } from '@/hooks/useVCRHydrocarbonStatus';
-import { PrereqStatus, standardPill, normalizeCategoryCode, CATEGORY_META } from './standardStatus';
+import { PrereqStatus, standardPill, effectivePill, effectiveBucket, normalizeCategoryCode, CATEGORY_META } from './standardStatus';
 import { PartyPerson, PartyItem, useVCRPartiesRollup } from './useVCRPartiesRollup';
 import { VCRItemDetailSheet, VCRItemBasic } from '@/components/widgets/VCRItemDetailSheet';
 import { formatVcrItemCode } from '@/lib/vcrItemCode';
