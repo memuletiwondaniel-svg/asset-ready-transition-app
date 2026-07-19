@@ -1343,14 +1343,13 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
         prereqToItemCode.set(s.id, `${cat}-${ord}`);
       }
       const first = hits[0];
-      const siblingCode = prereqToItemCode.get(first.vcr_prerequisite_id) || "sibling";
-      const label = first.assai_doc_no || first.file_name;
-      facts.push({
-        label: "Shared evidence on a returned item",
-        value: `${label} also cited on ${siblingCode}`,
-        tone: "amber",
-        confidence: "verified",
-      });
+      for (const f of computeSignal9({
+        hits: [{
+          assai_doc_no: first.assai_doc_no,
+          file_name: first.file_name,
+          siblingCode: prereqToItemCode.get(first.vcr_prerequisite_id) || null,
+        }],
+      })) facts.push(f as Fact);
     }
   }
 
