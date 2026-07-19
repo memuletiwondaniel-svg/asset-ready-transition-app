@@ -437,11 +437,6 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
         Icon={Building2}
         hoverIconClass="group-hover:text-blue-600"
         title="Project Overview"
-        subtitle={
-          project && (plant || station)
-            ? [resolvePlantLabel(plant?.name), station?.name].filter(Boolean).join(' · ')
-            : undefined
-        }
         onHeaderClick={onViewDetails}
         onEdit={onEdit}
         editLabel="Edit project"
