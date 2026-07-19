@@ -151,10 +151,14 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
   }, 0);
   const narrativeTone: 'ok' | 'attention' | 'critical' =
     overdueCount === 0 ? 'ok' : worstDaysLate > 35 ? 'critical' : 'attention';
-  const narrativeLead = overdueCount === 0
-    ? (inProgressCount > 0 ? 'On track' : (completedDeliverables === totalDeliverables && totalDeliverables > 0 ? 'All activities complete' : 'Not yet started'))
-    : `${overdueCount} activit${overdueCount === 1 ? 'y' : 'ies'} overdue`;
-  const narrativeSecondary = `${completedDeliverables} completed · ${inProgressCount} in progress · ${notStartedCount} not started`;
+  // Lead per spec: bold "N of M complete." — exception sentence follows on
+  // the secondary line when there are overdue activities.
+  const narrativeLead = totalDeliverables > 0
+    ? `${completedDeliverables} of ${totalDeliverables} complete.`
+    : 'No activities yet.';
+  const narrativeSecondary = overdueCount > 0
+    ? `${overdueCount} activit${overdueCount === 1 ? 'y' : 'ies'} overdue.`
+    : `${inProgressCount} in progress · ${notStartedCount} not started`;
   // Health-only bar colour: green when on track, amber for attention, red for critical.
   // Never blue anywhere (spec).
   const barColorClass = narrativeTone === 'critical'
