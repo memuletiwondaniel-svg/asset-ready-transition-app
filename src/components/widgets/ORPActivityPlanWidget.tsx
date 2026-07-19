@@ -47,56 +47,38 @@ const getActivityStatus = (activity: { end_date: string | null; status: string }
 const ActivityRow: React.FC<{ activity: ProjectORPActivity; isCompleted?: boolean; onClick?: () => void }> = ({ activity, isCompleted, onClick }) => {
   const actStatus = isCompleted ? 'completed' : getActivityStatus(activity);
   const daysToDue = activity.end_date ? differenceInCalendarDays(parseISO(activity.end_date), new Date()) : null;
-  const isDueSoon = !isCompleted && daysToDue !== null && daysToDue >= 0 && daysToDue <= 7;
   // Overdue severity per spec: red when >35 days overdue, amber below.
   const daysOverdue = daysToDue !== null && daysToDue < 0 ? Math.abs(daysToDue) : 0;
   const overdueSeverity: 'red' | 'amber' | null = actStatus === 'overdue'
     ? (daysOverdue > 35 ? 'red' : 'amber')
     : null;
 
-  // State-aware leading icon. Only render an icon when it carries signal.
-  let Icon: React.ElementType | null = null;
-  let iconColor = 'text-muted-foreground';
-  if (actStatus === 'completed') {
-    Icon = CheckCircle2;
-    iconColor = 'text-teal-600';
-  } else if (actStatus === 'overdue') {
-    Icon = AlertCircle;
-    iconColor = overdueSeverity === 'red' ? 'text-red-600' : 'text-amber-600';
-  } else if (isDueSoon) {
-    Icon = Clock;
-    iconColor = 'text-muted-foreground';
-  }
-
   return (
     <div
-      className="flex items-center gap-2 text-xs py-1.5 px-2 rounded-md bg-muted/40 hover:bg-muted/70 transition-colors cursor-pointer"
+      className="flex items-start justify-between gap-2 py-1.5 px-2 rounded-md hover:bg-muted/50 transition-colors cursor-pointer"
       onClick={onClick}
     >
-      {Icon ? (
-        <Icon className={cn("h-3.5 w-3.5 shrink-0", iconColor)} />
-      ) : (
-        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground/40 ml-1 mr-1" aria-hidden />
-      )}
-      <span className={cn("truncate flex-1 text-foreground/90", isCompleted && "text-muted-foreground")}>
-        {activity.name}
-      </span>
+      <div className="min-w-0 flex-1">
+        <div className={cn('text-[12.5px] leading-snug truncate', isCompleted ? 'text-muted-foreground' : 'text-foreground/90')}>
+          {activity.name}
+        </div>
+        {activity.end_date && (
+          <div className="text-[10.5px] text-muted-foreground leading-snug mt-0.5 tabular-nums">
+            Due {format(parseISO(activity.end_date), 'd MMM')}
+          </div>
+        )}
+      </div>
       {overdueSeverity && (
         <span
           className={cn(
-            'shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded tabular-nums',
+            'shrink-0 mt-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded tabular-nums',
             overdueSeverity === 'red'
               ? 'bg-red-500/10 text-red-600 border border-red-500/20'
               : 'bg-amber-500/10 text-amber-700 border border-amber-500/20',
           )}
           title={`${daysOverdue} day${daysOverdue === 1 ? '' : 's'} overdue`}
         >
-          {daysOverdue}d late
-        </span>
-      )}
-      {activity.end_date && (
-        <span className="text-[10px] shrink-0 text-muted-foreground tabular-nums">
-          Due {format(parseISO(activity.end_date), 'd MMM')}
+          {daysOverdue}d overdue
         </span>
       )}
     </div>
