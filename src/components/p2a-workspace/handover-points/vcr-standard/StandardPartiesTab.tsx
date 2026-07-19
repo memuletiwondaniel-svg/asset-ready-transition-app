@@ -311,7 +311,7 @@ export const PartyItemsDrawer: React.FC<{
   });
 
   const displayAssigned = party.assigned;
-  const displayCompleted = hasStatement ? Math.max(party.completed, party.assigned) : party.completed;
+  const displayCompleted = party.completed;
 
   return (
     <>
