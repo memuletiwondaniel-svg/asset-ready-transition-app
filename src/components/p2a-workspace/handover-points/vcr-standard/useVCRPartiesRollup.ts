@@ -219,6 +219,9 @@ export function useVCRPartiesRollup(
           .order('created_at', { ascending: false });
 
         (qualifications || []).forEach((q: any) => {
+          // WITHDRAWN rows are audit-only — skip so counters/pills read from
+          // the parent item's terminal status.
+          if (q.status === 'WITHDRAWN') return;
           if (q.vcr_prerequisite_id && !prereqQualificationStage.get(q.vcr_prerequisite_id)) {
             prereqQualificationStage.set(q.vcr_prerequisite_id, q.status as QualStage);
           }

@@ -18483,7 +18483,12 @@ export type Database = {
         | "PENDING_APPROVAL"
       p2a_punch_category: "A" | "B"
       p2a_punch_status: "Open" | "Closed"
-      p2a_qualification_status: "DRAFT" | "PENDING" | "APPROVED" | "REJECTED"
+      p2a_qualification_status:
+        | "DRAFT"
+        | "PENDING"
+        | "APPROVED"
+        | "REJECTED"
+        | "WITHDRAWN"
       p2a_register_activity_kind: "New" | "Update existing"
       p2a_register_kind: "Register" | "Logsheet"
       p2a_register_reviewer_decision: "pending" | "approved" | "rejected"
@@ -18898,7 +18903,13 @@ export const Constants = {
       ],
       p2a_punch_category: ["A", "B"],
       p2a_punch_status: ["Open", "Closed"],
-      p2a_qualification_status: ["DRAFT", "PENDING", "APPROVED", "REJECTED"],
+      p2a_qualification_status: [
+        "DRAFT",
+        "PENDING",
+        "APPROVED",
+        "REJECTED",
+        "WITHDRAWN",
+      ],
       p2a_register_activity_kind: ["New", "Update existing"],
       p2a_register_kind: ["Register", "Logsheet"],
       p2a_register_reviewer_decision: ["pending", "approved", "rejected"],

@@ -88,7 +88,11 @@ export const useVCRPrerequisites = (handoverPointId: string) => {
           .in('vcr_prerequisite_id', prereqIds)
           .order('submitted_at', { ascending: false });
         const stageByPrereq = new Map<string, VCRPrerequisite['qualification_stage']>();
+        // WITHDRAWN rows are audit-only — skip so the effective stage falls
+        // back to the parent item's terminal status (no stray Q · Pending /
+        // Q · Rework overlays after items-are-truth supersedes a qual row).
         for (const q of (quals || []) as any[]) {
+          if (q.status === 'WITHDRAWN') continue;
           if (q.vcr_prerequisite_id && !stageByPrereq.has(q.vcr_prerequisite_id)) {
             stageByPrereq.set(q.vcr_prerequisite_id, q.status);
           }
