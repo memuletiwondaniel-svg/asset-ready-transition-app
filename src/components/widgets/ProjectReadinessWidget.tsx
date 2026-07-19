@@ -245,221 +245,183 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
     );
   }
 
+  // Flatten all team holders (across REQUIRED_ROLES) into a de-duped list for
+  // the collapsed avatar stack. First-seen role wins as the sublabel.
+  const teamHolders: Array<RoleHolder & { role: string }> = [];
+  const seen = new Set<string>();
+  REQUIRED_ROLES.forEach(role => {
+    const holders = ((roleHolders as Record<string, RoleHolder[]>)[role] || [])
+      .slice()
+      .sort((a, b) => a.full_name.localeCompare(b.full_name, undefined, { sensitivity: 'base' }));
+    holders.forEach(h => {
+      if (!seen.has(h.user_id)) {
+        seen.add(h.user_id);
+        teamHolders.push({ ...h, role });
+      }
+    });
+  });
+  const AVATAR_STACK_LIMIT = 6;
+  const stackHolders = teamHolders.slice(0, AVATAR_STACK_LIMIT);
+  const overflowCount = Math.max(0, teamHolders.length - AVATAR_STACK_LIMIT);
+
+  // Body-level Location / Plant grid values (per approved header standard,
+  // the card header carries the title only — location goes in the body).
+  const locationValue = [
+    hub?.name ? `${hub.name} Hub` : null,
+    station?.name || null,
+  ].filter(Boolean).join(' · ') || null;
+  const plantValue = plant?.name ? resolvePlantLabel(plant.name) : null;
+
   const widgetContent = (
-    <div className="space-y-6">
-      {/* Scope */}
-      {project?.project_scope && (
-        <div className="pl-1">
-          <div className="p-4 rounded-xl bg-muted/30 border border-border/40 space-y-2">
-            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Scope
-            </h3>
-            <div>
-              {isHtmlScope(project.project_scope) ? (
-                <div
-                  className={`text-xs text-foreground/90 leading-relaxed prose prose-sm max-w-none prose-img:rounded-lg prose-img:my-2 [&_img]:max-w-full [&_img]:h-auto ${!isScopeExpanded ? 'line-clamp-4' : ''}`}
-                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(project.project_scope) }}
-                />
-              ) : (
-                <p className={`text-xs text-foreground/90 leading-relaxed ${!isScopeExpanded ? 'line-clamp-4' : ''}`}>
-                  {project.project_scope}
-                </p>
-              )}
-              {stripHtml(project.project_scope).length > 200 && (
-                <button
-                  type="button"
-                  data-testid="scope-read-more"
-                  data-scope-expanded={isScopeExpanded ? 'true' : 'false'}
-                  className="mt-2 text-[11px] font-medium text-primary/80 hover:text-primary hover:underline underline-offset-2 transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsScopeExpanded(!isScopeExpanded);
-                  }}
-                >
-                  {isScopeExpanded ? 'Show less' : 'Read more'}
-                </button>
-              )}
-            </div>
-          </div>
+    <div className="space-y-5">
+      {/* Location / Plant — aligned two-row field grid */}
+      {(locationValue || plantValue) && (
+        <div className="grid grid-cols-[80px_1fr] gap-x-3 gap-y-1.5 text-[12px]">
+          {locationValue && (
+            <>
+              <span className="text-muted-foreground">Location</span>
+              <span className="text-foreground truncate">{locationValue}</span>
+            </>
+          )}
+          {plantValue && (
+            <>
+              <span className="text-muted-foreground">Plant</span>
+              <span className="text-foreground truncate">{plantValue}</span>
+            </>
+          )}
         </div>
       )}
 
       {/* Project Image */}
       {project?.project_scope_image_url && (
-        <div className="space-y-3">
-          <div 
-            className="relative rounded-xl overflow-hidden border border-border/40 shadow-lg cursor-pointer group/image"
-            onClick={onViewDetails}
-          >
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover/image:opacity-100 transition-opacity z-10" />
-            <img 
-              src={project.project_scope_image_url} 
-              alt={project.project_title}
-              className="w-full h-48 object-cover group-hover/image:scale-105 transition-transform duration-500"
-            />
+        <div
+          className="relative rounded-xl overflow-hidden border border-border/40 shadow-sm cursor-pointer group/image"
+          onClick={onViewDetails}
+        >
+          <img
+            src={project.project_scope_image_url}
+            alt={project.project_title}
+            className="w-full h-40 object-cover group-hover/image:scale-105 transition-transform duration-500"
+          />
+        </div>
+      )}
+
+      {/* Scope — inline divider + plain clamped text with Read more */}
+      {project?.project_scope && (
+        <div className="space-y-2">
+          <InlineDivider label="Scope" />
+          <div>
+            {isHtmlScope(project.project_scope) ? (
+              <div
+                className={cn(
+                  'text-[12.5px] text-foreground/90 leading-relaxed prose prose-sm max-w-none prose-img:rounded-lg prose-img:my-2 [&_img]:max-w-full [&_img]:h-auto',
+                  !isScopeExpanded && 'line-clamp-4',
+                )}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(project.project_scope) }}
+              />
+            ) : (
+              <p className={cn('text-[12.5px] text-foreground/90 leading-relaxed', !isScopeExpanded && 'line-clamp-4')}>
+                {project.project_scope}
+              </p>
+            )}
+            {stripHtml(project.project_scope).length > 200 && (
+              <button
+                type="button"
+                data-testid="scope-read-more"
+                data-scope-expanded={isScopeExpanded ? 'true' : 'false'}
+                className="mt-1.5 text-[11px] font-medium text-primary/80 hover:text-primary hover:underline underline-offset-2 transition-colors"
+                onClick={(e) => { e.stopPropagation(); setIsScopeExpanded(!isScopeExpanded); }}
+              >
+                {isScopeExpanded ? 'Show less' : 'Read more'}
+              </button>
+            )}
           </div>
         </div>
       )}
 
-      {/* Team Members - Required Roles (live roster, PTM override wins) */}
-      {/*
-        PAIR RENDERING: one row per role. When a role resolves to multiple
-        holders (B2B pair), render the PRIMARY (deterministic: alphabetical
-        by full_name, case-insensitive — same on every load) with a B2B chip.
-        Clicking the chip cycles the displayed holder to the next partner
-        in alphabetical order (display-only, no write, no assignment change).
-        Solo holders render with no chip. Project Manager is intentionally
-        excluded from this panel; PM still resolves normally elsewhere.
-      */}
-      {(() => {
-        type Row =
-          | { kind: 'holders'; role: string; holders: RoleHolder[] }
-          | { kind: 'empty'; role: string };
-        const rows: Row[] = REQUIRED_ROLES.map(role => {
-          const holders = ((roleHolders as Record<string, RoleHolder[]>)[role] || [])
-            .slice()
-            .sort((a, b) => a.full_name.localeCompare(b.full_name, undefined, { sensitivity: 'base' }));
-          return holders.length === 0
-            ? { kind: 'empty' as const, role }
-            : { kind: 'holders' as const, role, holders };
-        });
-
-        return (
-          <div className="space-y-3">
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); setTeamExpanded(v => !v); }}
-              className="w-full font-semibold text-sm text-muted-foreground flex items-center gap-2 hover:text-foreground transition-colors"
-            >
-              <div className="p-1.5 rounded-lg bg-violet-500/10">
-                <Users className="h-4 w-4 text-violet-600" />
-              </div>
-              <span className="flex-1 text-left">Team Members</span>
-              {teamExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-            </button>
-            {teamExpanded && (
-              <div className="space-y-1.5 pl-1">
-                {rows.map((row) => {
-                  if (row.kind === 'empty') {
-                    return (
-                      <div
-                        key={`${row.role}-empty`}
-                        className="flex items-center gap-2.5 p-2 rounded-lg border bg-muted/10 border-dashed border-border/30"
-                      >
-                        <Avatar className="h-8 w-8 ring-2 ring-background shadow-sm">
-                          <AvatarFallback className="text-[11px] font-medium bg-muted text-muted-foreground">
-                            <UserCircle className="h-4 w-4" />
+      {/* Team — inline divider + collapsed avatar stack with +N overflow */}
+      <div className="space-y-2">
+        <InlineDivider label="Team" count={teamHolders.length} />
+        {teamHolders.length === 0 ? (
+          <p className="text-[11px] text-muted-foreground italic">No team members assigned yet.</p>
+        ) : (
+          <TooltipProvider delayDuration={150}>
+            <div className="flex items-center">
+              <div className="flex -space-x-2">
+                {stackHolders.map(h => (
+                  <Tooltip key={h.user_id}>
+                    <TooltipTrigger asChild>
+                      <Avatar className="h-8 w-8 ring-2 ring-background shadow-sm cursor-default">
+                        {h.avatar_url ? (
+                          <AvatarImage src={getAvatarUrl(h.avatar_url) || undefined} alt={h.full_name} />
+                        ) : (
+                          <AvatarFallback className="text-[10px] font-medium bg-primary/10 text-primary">
+                            {h.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                           </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-medium truncate leading-tight text-muted-foreground/60 italic">
-                            Unassigned
-                          </p>
-                          <p className="text-[10px] text-muted-foreground truncate leading-tight">{row.role}</p>
-                        </div>
-                      </div>
-                    );
-                  }
-                  return (
-                    <PairedRoleRow
-                      key={row.role}
-                      role={row.role}
-                      holders={row.holders}
-                      getAvatarUrl={getAvatarUrl}
-                    />
-                  );
-                })}
+                        )}
+                      </Avatar>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-xs">
+                      {h.full_name} · {h.role}
+                    </TooltipContent>
+                  </Tooltip>
+                ))}
+                {overflowCount > 0 && (
+                  <div className="h-8 w-8 rounded-full ring-2 ring-background bg-muted flex items-center justify-center text-[10px] font-semibold text-muted-foreground shadow-sm">
+                    +{overflowCount}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        );
-      })()}
-
-
-      {/* Milestones Timeline */}
-      <div className="space-y-3">
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); setMilestonesExpanded(v => !v); }}
-          className="w-full font-semibold text-sm text-muted-foreground flex items-center gap-2 hover:text-foreground transition-colors"
-        >
-          <div className="p-1.5 rounded-lg bg-rose-500/10">
-            <Target className="h-4 w-4 text-rose-600" />
-          </div>
-          <span className="flex-1 text-left">Milestones</span>
-          {milestonesExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-        </button>
-        {milestonesExpanded && (
-          <div className="pl-1">
-            <MilestonesTimeline milestones={milestones} />
-          </div>
+            </div>
+          </TooltipProvider>
         )}
       </div>
 
-      {/* Documents */}
-      <div className="space-y-3">
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); setDocumentsExpanded(v => !v); }}
-          className="w-full font-semibold text-sm text-muted-foreground flex items-center gap-2 hover:text-foreground transition-colors"
-        >
-          <div className="p-1.5 rounded-lg bg-blue-500/10">
-            <FileText className="h-4 w-4 text-blue-600" />
-          </div>
-          <span className="flex-1 text-left">Documents</span>
-          {documentsExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-        </button>
-        {documentsExpanded && (
-          <div className="space-y-1.5 pl-1">
-            {documents.length === 0 ? (
-              <p className="text-xs text-muted-foreground italic px-2 py-1.5">No documents uploaded yet.</p>
-            ) : (
-              documents.map((doc) => {
-                const isLink = doc.document_type === 'link';
-                const ext = (doc.file_extension || '').toLowerCase();
-                const Icon = isLink
-                  ? LinkIcon
-                  : ext === 'pdf' ? FileText
-                  : ['doc','docx'].includes(ext) ? FileText
-                  : ['xls','xlsx','csv'].includes(ext) ? FileSpreadsheet
-                  : ['ppt','pptx'].includes(ext) ? Presentation
-                  : ['jpg','jpeg','png','gif','webp'].includes(ext) ? FileImage
-                  : ['txt'].includes(ext) ? FileCode
-                  : File;
-                const href = isLink ? doc.link_url : doc.file_path;
-                const Wrapper: any = href ? 'button' : 'div';
-                const wrapperProps: any = href
-                  ? {
-                      type: 'button',
-                      onClick: async (e: React.MouseEvent) => {
-                        e.stopPropagation();
+      {/* Milestones — inline divider + 3-col grid rows */}
+      <div className="space-y-2">
+        <InlineDivider label="Milestones" count={milestones.length} />
+        <MilestonesTimeline milestones={milestones} />
+      </div>
 
-                        if (isLink) {
-                          window.open(href, '_blank', 'noopener,noreferrer');
-                          return;
-                        }
-
-                        await downloadDocument(doc);
-                      },
-                    }
-                  : {};
-                return (
-                  <Wrapper
-                    key={doc.id}
-                    {...wrapperProps}
-                    className={cn(
-                      "flex w-full items-center gap-2 px-2 py-1.5 rounded-md border bg-muted/30 border-border/40 text-left transition-all duration-200",
-                      href && "hover:bg-muted/50 hover:border-primary/20 cursor-pointer"
-                    )}
-                  >
-                    <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium truncate leading-tight">{doc.document_name}</p>
-                    </div>
-                  </Wrapper>
-                );
-              })
-            )}
+      {/* Documents — inline divider + plain link rows */}
+      <div className="space-y-2">
+        <InlineDivider label="Documents" count={documents.length} right={<span className="text-[10px] text-muted-foreground/70 tabular-nums">{documents.length} file{documents.length === 1 ? '' : 's'}</span>} />
+        {documents.length === 0 ? (
+          <p className="text-[11px] text-muted-foreground italic">No documents uploaded yet.</p>
+        ) : (
+          <div className="space-y-1">
+            {documents.map((doc) => {
+              const isLink = doc.document_type === 'link';
+              const ext = (doc.file_extension || '').toLowerCase();
+              const Icon = isLink
+                ? LinkIcon
+                : ext === 'pdf' ? FileText
+                : ['doc','docx'].includes(ext) ? FileText
+                : ['xls','xlsx','csv'].includes(ext) ? FileSpreadsheet
+                : ['ppt','pptx'].includes(ext) ? Presentation
+                : ['jpg','jpeg','png','gif','webp'].includes(ext) ? FileImage
+                : ['txt'].includes(ext) ? FileCode
+                : File;
+              const href = isLink ? doc.link_url : doc.file_path;
+              return (
+                <button
+                  key={doc.id}
+                  type="button"
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    if (!href) return;
+                    if (isLink) { window.open(href, '_blank', 'noopener,noreferrer'); return; }
+                    await downloadDocument(doc);
+                  }}
+                  className="flex w-full items-center gap-2 px-1 py-1 rounded text-left hover:bg-muted/40 transition-colors"
+                >
+                  <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <span className="text-[12px] font-medium truncate leading-tight text-foreground/90 hover:text-primary hover:underline underline-offset-2">
+                    {doc.document_name}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
