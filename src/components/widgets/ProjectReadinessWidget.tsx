@@ -348,19 +348,24 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
         </div>
       )}
 
-      {/* Team — inline divider + collapsed avatar stack with +N overflow */}
+      {/* Team — inline divider + collapsed avatar stack; click to open drawer */}
       <div className="space-y-2">
         <InlineDivider label="Team" count={teamHolders.length} />
         {teamHolders.length === 0 ? (
           <p className="text-[11px] text-muted-foreground italic">No team members assigned yet.</p>
         ) : (
           <TooltipProvider delayDuration={150}>
-            <div className="flex items-center">
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setTeamDrawerOpen(true); }}
+              className="flex items-center rounded-md -m-1 p-1 hover:bg-muted/40 transition-colors cursor-pointer"
+              aria-label="View team"
+            >
               <div className="flex -space-x-2">
                 {stackHolders.map(h => (
                   <Tooltip key={h.user_id}>
                     <TooltipTrigger asChild>
-                      <Avatar className="h-8 w-8 ring-2 ring-background shadow-sm cursor-default">
+                      <Avatar className="h-8 w-8 ring-2 ring-background shadow-sm">
                         {h.avatar_url ? (
                           <AvatarImage src={getAvatarUrl(h.avatar_url) || undefined} alt={h.full_name} />
                         ) : (
@@ -381,10 +386,62 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
                   </div>
                 )}
               </div>
-            </div>
+            </button>
           </TooltipProvider>
         )}
       </div>
+
+      {/* Team drawer — reuses the Party-drawer chrome for consistency */}
+      <Sheet open={teamDrawerOpen} onOpenChange={setTeamDrawerOpen}>
+        <SheetContent side="right" hideClose className="!z-modal-critical w-full sm:max-w-md p-0 flex flex-col">
+          <SheetHeader className="px-5 pt-5 pb-3 border-b shrink-0">
+            <SheetTitle className="text-[15px] leading-snug">Project team</SheetTitle>
+            <SheetDescription className="text-[12px] text-muted-foreground">
+              {teamHolders.length} role holder{teamHolders.length === 1 ? '' : 's'} across {REQUIRED_ROLES.length} required roles.
+            </SheetDescription>
+          </SheetHeader>
+          <ScrollArea className="flex-1">
+            <div className="divide-y divide-border/40">
+              {teamHolders.map(h => (
+                <div key={h.user_id} className="flex items-center gap-3 px-5 py-3">
+                  <Avatar className="h-10 w-10 flex-none ring-2 ring-background shadow-sm">
+                    {h.avatar_url ? (
+                      <AvatarImage src={getAvatarUrl(h.avatar_url) || undefined} alt={h.full_name} />
+                    ) : (
+                      <AvatarFallback className="text-[11px] font-semibold bg-primary/10 text-primary">
+                        {h.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[13px] font-medium truncate leading-tight flex items-center gap-1.5">
+                      {h.full_name}
+                      {h.partners.length > 0 && (
+                        <TooltipProvider delayDuration={150}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span
+                                className="text-[8px] font-semibold tracking-wider px-1 py-px rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0 leading-none"
+                                aria-label={`Back-to-back with ${h.partners.map(p => p.full_name).join(', ')}`}
+                              >
+                                B2B
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom" align="start" sideOffset={4} className="text-xs">
+                              Back-to-back with {h.partners.map(p => p.full_name).join(', ')}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </div>
+                    <div className="text-[11px] text-muted-foreground truncate">{h.role}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        </SheetContent>
+      </Sheet>
 
       {/* Milestones — inline divider + 3-col grid rows */}
       <div className="space-y-2">
