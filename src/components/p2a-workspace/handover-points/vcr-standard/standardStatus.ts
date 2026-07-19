@@ -109,10 +109,10 @@ export const qualificationPill = (stage: QualStage): QualPill => {
  * Otherwise the plain item pill is used.
  *
  * Label matrix:
- *   QUALIFICATION_REQUESTED + DRAFT     → grey  "Qualification raised"
- *   QUALIFICATION_REQUESTED + PENDING   → amber "Qualification submitted"
- *   QUALIFICATION_REQUESTED + REJECTED  → red   "Qualification rework"
- *   QUALIFICATION_APPROVED  + APPROVED  → green "Qualification approved"
+ *   QUALIFICATION_REQUESTED + DRAFT     → grey  "Q · Draft"
+ *   QUALIFICATION_REQUESTED + PENDING   → amber "Q · Under review"
+ *   QUALIFICATION_REQUESTED + REJECTED  → red   "Q · Rework"
+ *   QUALIFICATION_APPROVED  + APPROVED  → green "Q · Approved"
  */
 // Qualification lifecycle mirrors base item lifecycle wording — the small
 // "Q · " prefix is the ONLY differentiator, preventing collision with the
