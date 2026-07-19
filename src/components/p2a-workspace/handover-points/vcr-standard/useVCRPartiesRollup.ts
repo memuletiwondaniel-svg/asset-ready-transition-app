@@ -319,7 +319,11 @@ export function useVCRPartiesRollup(
         })
         .sort((a, b) => a.full_name.localeCompare(b.full_name));
 
-      /* -------- Approving party rows -------- */
+      /* -------- Approving party rows --------
+       * Counter is ROLE-SCOPED: aggregate assigned/completed across all
+       * holders that share the same canonical role_name (B2B seat). All
+       * holders of the same role therefore render the same fraction.
+       */
       const approvingByUser = new Map<string, PartyItem[]>();
       const approvingCompletedByUser = new Map<string, Set<string>>();
       const approvingByPrereq: Record<string, string[]> = {};
@@ -340,6 +344,24 @@ export function useVCRPartiesRollup(
           approvingCompletedByUser.set(uid, s);
         }
       });
+
+      // Role-scoped aggregation: union of assigned prereqs + union of
+      // completed prereqs across every user sharing the same role_name.
+      const roleAssigned = new Map<string, Set<string>>();
+      const roleCompleted = new Map<string, Set<string>>();
+      const userRoleKey = new Map<string, string>();
+      for (const uid of approvingByUser.keys()) {
+        const profile = profileMap.get(uid);
+        const key = (profile?.role_name || profile?.position || `__solo_${uid}`).trim().toLowerCase();
+        userRoleKey.set(uid, key);
+        const aSet = roleAssigned.get(key) || new Set<string>();
+        (approvingByUser.get(uid) || []).forEach((it) => aSet.add(it.prereq_id));
+        roleAssigned.set(key, aSet);
+        const cSet = roleCompleted.get(key) || new Set<string>();
+        (approvingCompletedByUser.get(uid) || new Set<string>()).forEach((id) => cSet.add(id));
+        roleCompleted.set(key, cSet);
+      }
+
       const approving: PartyPerson[] = [...approvingByUser.entries()]
         .map(([user_id, items]) => {
           const profile = profileMap.get(user_id);
@@ -355,14 +377,15 @@ export function useVCRPartiesRollup(
             if (!arr.includes(nm)) arr.push(nm);
             approvingByPrereq[it.prereq_id] = arr;
           });
+          const key = userRoleKey.get(user_id)!;
           return {
             user_id,
             full_name: profile?.full_name || 'Unknown',
             avatar_url: profile?.avatar_url ?? null,
             position: profile?.position ?? null,
             role_name: profile?.role_name ?? null,
-            assigned: dedup.length,
-            completed: approvingCompletedByUser.get(user_id)?.size ?? 0,
+            assigned: roleAssigned.get(key)?.size ?? dedup.length,
+            completed: roleCompleted.get(key)?.size ?? 0,
             items: dedup,
           } as PartyPerson;
         })
