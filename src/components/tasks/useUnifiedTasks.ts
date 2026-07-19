@@ -304,20 +304,10 @@ export function useUnifiedTasks(userId: string) {
         }
       }
 
-      // ─── Resolve effective due date (Step 1 policy) ───
-      // Precedence: real t.due_date → inherited ORA endDate (no SLA) → SLA fallback.
-      let slaKind: 'approval_review' | 'plan_creation' | 'none' = 'none';
-      if (isAdHocReview || source === 'p2a_handover' || t.type === 'ora_plan_review') {
-        slaKind = 'approval_review';
-      } else if (isOraPlanCreation || isP2aPlanCreation || action === 'create_vcr_delivery_plan' || t.type === 'vcr_delivery_plan') {
-        slaKind = 'plan_creation';
-      }
-      const realDueDate = t.due_date || undefined;
-      const inheritedEnd = endDate; // ORA activity end_date — keep as-is, no SLA
-      const slaDue = !realDueDate && !inheritedEnd
-        ? addBusinessDays(t.created_at, slaDaysFor(slaKind))
-        : undefined;
-      const resolvedDueDate = realDueDate || slaDue;
+      // ─── Resolve effective due date (MVP-D1: no SLA fiction) ───
+      // Strictly the real user_tasks.due_date. ORA endDate is exposed separately
+      // via UnifiedTask.endDate and taskUrgency falls back to it there.
+      const resolvedDueDate = t.due_date || undefined;
 
       const sp = computeSmartPriority({
         category,
@@ -396,7 +386,7 @@ export function useUnifiedTasks(userId: string) {
       const pssrId = item.pssr?.id;
       if (!pssrId) return;
       if (tasks.some(t => t.userTask?.metadata?.pssr_id === pssrId)) return;
-      const pssrDue = addBusinessDays(item.pendingSince, slaDaysFor('approval_review'));
+      const pssrDue: string | undefined = undefined; // MVP-D1: no SLA fiction
       const spPssr = computeSmartPriority({
         category: 'pssr', categoryLabel: 'PSSR Review',
         dueDate: pssrDue,
@@ -424,7 +414,7 @@ export function useUnifiedTasks(userId: string) {
 
     (approvals || []).forEach(item => {
       if (tasks.some(t => t.userTask?.metadata?.plan_id === item.handover_id)) return;
-      const p2aDue = addBusinessDays(item.created_at, slaDaysFor('approval_review'));
+      const p2aDue: string | undefined = undefined; // MVP-D1: no SLA fiction
       const spP2a = computeSmartPriority({
         category: 'p2a', categoryLabel: 'P2A Approval',
         dueDate: p2aDue,
@@ -459,14 +449,8 @@ export function useUnifiedTasks(userId: string) {
       // (See v_vcr_plan_approver_tasks definition.)
       const created: string | null = item.task_created_at ?? null;
       const createdForPriority = created || new Date().toISOString();
-      // SLA: 5 business days from the ACTIONABLE-FROM moment for this user
-      // (createdForPriority = task_created_at = fan-out moment for Phase-2).
-      // Only applied to still-open rows; decided rows keep neutral due date.
-      const rowStatusForDue = String(item.row_status || '').toUpperCase();
-      const isDecidedForDue = rowStatusForDue === 'APPROVED' || rowStatusForDue === 'REJECTED';
-      const vcrPlanDue = !isDecidedForDue
-        ? addBusinessDays(createdForPriority, slaDaysFor('approval_review'))
-        : undefined;
+      // MVP-D1: no SLA fiction. Real due date will be propagated in MVP-D2.
+      const vcrPlanDue: string | undefined = undefined;
       const sp = computeSmartPriority({
         category: 'vcr', categoryLabel: 'VCR Plan Approval',
         dueDate: vcrPlanDue,
@@ -561,7 +545,7 @@ export function useUnifiedTasks(userId: string) {
         const isApproving = g.role === 'approving';
         const projectLabel = normalizeProjectCode(g.projectCode || undefined) || g.projectTitle || 'Project';
         const createdAt = new Date().toISOString();
-        const due = addBusinessDays(createdAt, slaDaysFor('approval_review'));
+        const due: string | undefined = undefined; // MVP-D1: no SLA fiction
         const sp = computeSmartPriority({
           category: 'vcr',
           categoryLabel: isApproving ? 'VCR Item Approval' : 'VCR Items',
@@ -662,12 +646,8 @@ export function useUnifiedTasks(userId: string) {
       const bundleLabel = isPSSR
         ? (isApproval ? 'PSSR Review' : 'PSSR Checklist')
         : (isApproval ? 'VCR Review' : 'VCR Checklist');
-      // Approval bundles (vcr_approval_bundle / pssr_approval_bundle) are
-      // review work → 5 BD SLA from task.created_at. Checklist bundles get
-      // no SLA fallback (author work, no fabricated date).
-      const bundleDue = isApproval
-        ? addBusinessDays(task.created_at, slaDaysFor('approval_review'))
-        : undefined;
+      // MVP-D1: no SLA fiction. Bundles show no due date until real dates propagate (MVP-D2).
+      const bundleDue: string | undefined = undefined;
       const spBundle = computeSmartPriority({
         category: bundleCat, categoryLabel: bundleLabel,
         dueDate: bundleDue,
