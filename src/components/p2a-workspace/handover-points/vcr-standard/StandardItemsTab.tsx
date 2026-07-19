@@ -4,8 +4,6 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { Search, ArrowUpDown, ArrowUp, ArrowDown, Info } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { P2AHandoverPoint } from '../../hooks/useP2AHandoverPoints';
 import { useVCRPrerequisites } from '../../hooks/useVCRPrerequisites';
 import { useVCRPartiesRollup } from './useVCRPartiesRollup';
