@@ -552,19 +552,6 @@ export const StandardPartiesTab: React.FC<Props> = ({
 
   return (
     <div className="space-y-4">
-      {/* Narrative summary — canonical VCR-tab summary panel typography.
-       * H1 removed; left-nav is the single source of the tab name. */}
-      <div className="rounded-md bg-muted/40 px-4 py-3 text-[12.5px] leading-relaxed text-foreground/85">
-        {narrative.split(/(\*\*[^*]+\*\*)/g).map((chunk, i) =>
-          chunk.startsWith('**') ? (
-            <strong key={i} className="font-semibold text-foreground">
-              {chunk.slice(2, -2)}
-            </strong>
-          ) : (
-            <span key={i}>{chunk}</span>
-          ),
-        )}
-      </div>
       <div className="relative">
         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/70 pointer-events-none" />
         <Input
