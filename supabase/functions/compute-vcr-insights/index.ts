@@ -1115,14 +1115,7 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
   );
   const cs = (comments || []) as any[];
   const returned = cs.filter((c) => (c.action_tag || "").toLowerCase() === "returned");
-  if (returned.length >= 1) {
-    facts.push({
-      label: "Returned by approver",
-      value: `${returned.length}×`,
-      tone: returned.length >= 2 ? "red" : "amber",
-      confidence: "verified",
-    });
-  }
+  for (const f of computeSignal2({ returnedCount: returned.length })) facts.push(f as Fact);
 
   // Unanswered approver comment — resolve party membership via RLS helpers
   if (cs.length > 0) {
