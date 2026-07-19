@@ -346,47 +346,46 @@ export const SystemDrawer: React.FC<Props> = ({ system, handoverPoint, projectId
                   />
                   {subsOpen && (
                     <div className="mt-2 rounded-md border overflow-hidden">
-                      <table className="w-full text-[12px]">
+                      <table className="w-full text-[12px] table-fixed">
+                        <colgroup>
+                          <col style={{ width: '150px' }} />
+                          <col style={{ width: '68px' }} />
+                          <col style={{ width: '52px' }} />
+                          <col style={{ width: '68px' }} />
+                          <col />
+                        </colgroup>
                         <thead className="bg-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground">
                           <tr>
-                            <th className="text-left px-3 py-1.5">Subsystem</th>
-                            <th className="text-right px-3 py-1.5 w-20">Progress</th>
-                            <th className="text-right px-3 py-1.5 w-24">Outstanding ITRs</th>
-                            <th className="text-right px-3 py-1.5 w-24">Open Punchlist</th>
-                            <th className="text-right px-3 py-1.5 w-28">Milestone</th>
+                            <th className="text-left px-3 py-1">Subsystem</th>
+                            <th className="text-right px-2 py-1">Progress</th>
+                            <th className="text-center px-2 py-1">ITR</th>
+                            <th className="text-center px-2 py-1">Punchlist</th>
+                            <th className="text-left px-3 py-1 pl-6">Milestone</th>
                           </tr>
                         </thead>
                         <tbody>
                           {subs.map((s) => {
                             const agg = subAgg.get(s.id) || { outstandingItrs: 0, openPunch: 0 };
+                            const milestoneLabel = s.pcc_achieved ? 'PCC' : s.mcc_achieved ? 'MCC' : '';
                             return (
                               <tr key={s.id} className="border-t border-border/50">
-                                <td className="px-3 py-2">
-                                  <div>{s.name}</div>
-                                  <div className="font-mono text-[10.5px] text-muted-foreground">{s.subsystem_id}</div>
+                                <td className="px-3 py-1.5 min-w-0">
+                                  <div className="truncate leading-tight">{s.name}</div>
+                                  <div className="font-mono text-[10.5px] text-muted-foreground truncate leading-tight">{s.subsystem_id}</div>
                                 </td>
-                                <td className="px-3 py-2 text-right tabular-nums">{s.completion_percentage}%</td>
-                                <td className="px-3 py-2 text-right">
+                                <td className="px-2 py-1.5 text-right tabular-nums">{s.completion_percentage}%</td>
+                                <td className="px-2 py-1.5 text-center">
                                   <AccentLink onClick={() => deepLinkOutstandingItrs(s.subsystem_id)} disabled={agg.outstandingItrs === 0}>
                                     {agg.outstandingItrs}
                                   </AccentLink>
                                 </td>
-                                <td className="px-3 py-2 text-right">
+                                <td className="px-2 py-1.5 text-center">
                                   <AccentLink onClick={() => deepLinkOpenPunch(s.subsystem_id)} disabled={agg.openPunch === 0}>
                                     {agg.openPunch}
                                   </AccentLink>
                                 </td>
-                                <td className="px-3 py-2 text-right">
-                                  <span className="inline-flex gap-1.5 text-[10px] font-bold uppercase tracking-wider">
-                                    <span className={cn(
-                                      'rounded-full border px-1.5 py-0.5',
-                                      s.mcc_achieved ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-muted-foreground/60 border-slate-200',
-                                    )}>MCC</span>
-                                    <span className={cn(
-                                      'rounded-full border px-1.5 py-0.5',
-                                      s.pcc_achieved ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-muted-foreground/60 border-slate-200',
-                                    )}>PCC</span>
-                                  </span>
+                                <td className="px-3 py-1.5 pl-6 text-left text-[11.5px] font-semibold text-emerald-600 tabular-nums">
+                                  {milestoneLabel}
                                 </td>
                               </tr>
                             );
