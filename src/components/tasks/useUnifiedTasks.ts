@@ -545,7 +545,7 @@ export function useUnifiedTasks(userId: string) {
         const isApproving = g.role === 'approving';
         const projectLabel = normalizeProjectCode(g.projectCode || undefined) || g.projectTitle || 'Project';
         const createdAt = new Date().toISOString();
-        const due = addBusinessDays(createdAt, slaDaysFor('approval_review'));
+        const due: string | undefined = undefined; // MVP-D1: no SLA fiction
         const sp = computeSmartPriority({
           category: 'vcr',
           categoryLabel: isApproving ? 'VCR Item Approval' : 'VCR Items',
