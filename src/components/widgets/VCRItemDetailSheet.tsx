@@ -1605,43 +1605,56 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                   <p className="text-xs text-muted-foreground italic">No comments yet.</p>
                 ) : (
                   <div className="divide-y divide-border">
-                    {thread.map((c, idx) => {
-                      // Display-only author resolution.
-                      // Some legacy/seeded system-generated entries (e.g. the
-                      // auto "Submitted for approver review" marker) have a
-                      // null author_user_id even though the acting user is
-                      // implicit from the surrounding thread. To avoid the
-                      // misleading "Former member" label for a still-active
-                      // person, fall back to the nearest neighbouring author
-                      // on the same item's thread (prior first, then next).
-                      // We never mutate the underlying comment row.
-                      let effectiveAuthorId: string | null = c.author_user_id ?? null;
-                      if (!effectiveAuthorId) {
-                        for (let i = idx - 1; i >= 0; i--) {
-                          if (thread[i].author_user_id) { effectiveAuthorId = thread[i].author_user_id; break; }
-                        }
-                        if (!effectiveAuthorId) {
-                          for (let i = idx + 1; i < thread.length; i++) {
-                            if (thread[i].author_user_id) { effectiveAuthorId = thread[i].author_user_id; break; }
-                          }
-                        }
-                      }
-                      const prof = effectiveAuthorId ? authorById[effectiveAuthorId] : undefined;
-                      const isYou = effectiveAuthorId && user?.id && effectiveAuthorId === user.id;
-                      // Graceful fallback: never render literal "Unknown".
-                      // When the profile can't be resolved, omit the name and
-                      // let role/date carry the meta line; if nothing else is
-                      // available, show "Former member".
+                    {thread.map((c) => {
+                      // A null author_user_id on a seeded/system-generated
+                      // marker (e.g. the auto "Submitted for approver review
+                      // — evidence attached." event) should render as a
+                      // neutral SYSTEM EVENT — no avatar, no person name, no
+                      // "Former member" — so it's visually distinct from a
+                      // real user comment. Only fall back to "Former member"
+                      // for a real USER comment whose profile can't be
+                      // resolved (deleted / cross-tenant). No writes.
+                      const SYSTEM_MARKER_PATTERNS = [
+                        /^Submitted for approver review\b/i,
+                      ];
+                      const isSystemEvent =
+                        !c.author_user_id &&
+                        SYSTEM_MARKER_PATTERNS.some((rx) => rx.test((c.body || '').trim()));
+
+                      const prof = c.author_user_id ? authorById[c.author_user_id] : undefined;
+                      const isYou = c.author_user_id && user?.id && c.author_user_id === user.id;
                       const resolvedName = prof?.full_name || null;
                       const displayName = isYou ? (resolvedName || 'You') : resolvedName;
                       const roleName = prof?.role_name || '';
-                      const showFormerFallback = !displayName && !roleName;
+                      // Only genuinely orphaned USER rows (real author id
+                      // present but profile missing) get "Former member".
+                      const showFormerFallback = !isSystemEvent && !!c.author_user_id && !displayName && !roleName;
                       const tag = c.action_tag;
-                      // Delivering-side "Completed" tag is redundant next to
-                      // the person who marked the item complete — drop it.
-                      // Approver Accepted/Returned and Qualification raised
-                      // tags remain informative and stay.
-                      const showTag = !!tag && tag !== 'Completed';
+                      const showTag = !isSystemEvent && !!tag && tag !== 'Completed';
+
+                      if (isSystemEvent) {
+                        return (
+                          <div key={c.id} className="flex items-start gap-2.5 py-2.5">
+                            <div
+                              className="h-7 w-7 shrink-0 rounded-full bg-muted/60 border border-border flex items-center justify-center text-muted-foreground"
+                              aria-hidden
+                            >
+                              <Info className="h-3.5 w-3.5" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-[11px] text-muted-foreground">
+                                <span className="italic">System event</span>
+                                <span> · </span>
+                                <span>{format(new Date(c.created_at), 'd MMM')}</span>
+                              </div>
+                              <p className="text-[12.5px] italic text-muted-foreground mt-0.5 leading-relaxed whitespace-pre-wrap">
+                                {c.body}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      }
+
                       return (
                         <div key={c.id} className="flex items-start gap-2.5 py-2.5">
                           <Avatar className="h-7 w-7 shrink-0">
