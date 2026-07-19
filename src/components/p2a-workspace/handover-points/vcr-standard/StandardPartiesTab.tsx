@@ -470,10 +470,14 @@ export const StandardPartiesTab: React.FC<Props> = ({
   };
 
   const prereqCategoryMap = useMemo(() => {
-    const m = new Map<string, { catCode: string; displayOrder: number }>();
+    const m = new Map<string, { catCode: string; displayOrder: number; topic: string | null }>();
     prerequisites.forEach((p) => {
       const code = normalizeCategoryCode(p.category);
-      m.set(p.id, { catCode: code === 'XX' ? '??' : code, displayOrder: p.display_order ?? 0 });
+      m.set(p.id, {
+        catCode: code === 'XX' ? '??' : code,
+        displayOrder: p.display_order ?? 0,
+        topic: p.topic ?? null,
+      });
     });
     return m;
   }, [prerequisites]);
