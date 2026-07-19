@@ -1096,19 +1096,10 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
   );
   if (!pr) return facts;
 
-  // 1) Status + aging (always emitted)
+  // 1) Status + aging (always emitted) — pure via computeSignal1
   const status = (pr as any).status || "UNKNOWN";
   const anchor = (pr as any).submitted_at || (pr as any).updated_at || (pr as any).created_at;
-  const days = daysBetween(anchor ? new Date(anchor) : null, now);
-  let statusTone: Tone = "neutral";
-  if (status === "READY_FOR_REVIEW" && days > 7) statusTone = "amber";
-  else if (status === "IN_PROGRESS" && days > 21) statusTone = "amber";
-  facts.push({
-    label: "Status",
-    value: `${status} · ${days} days`,
-    tone: statusTone,
-    confidence: "verified",
-  });
+  for (const f of computeSignal1({ status, anchor, now })) facts.push(f as Fact);
 
   // 2, 3) Comment-based signals
   const { data: comments } = await bounded("workflow comments", DB_TIMEOUT_MS, { data: [] }, (signal) =>
