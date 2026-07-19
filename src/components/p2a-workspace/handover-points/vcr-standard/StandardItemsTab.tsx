@@ -323,9 +323,11 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
         ) : (
           <div className="divide-y divide-border/60">
             {rows.map(r => {
-              // Model A — ONE badge per row.
+              // Model A — ONE badge per row. Qualification sub-state carries its own
+              // label (raised / submitted / rework / approved); coloured accordingly.
               const badge = r.qual
-                ? { label: 'Qualification' as const, className: r.qual.className, title: `Qualification — ${r.qual.stageLabel}` }
+                ? { label: `Qualification ${({ DRAFT: 'raised', PENDING: 'submitted', REJECTED: 'rework', APPROVED: 'approved' } as const)[r.qual.stage]}`,
+                    className: r.qual.className, title: `Qualification — ${r.qual.stageLabel}` }
                 : { label: r.pill.label, className: r.pill.className, title: r.pill.label };
               return (
                 <button
