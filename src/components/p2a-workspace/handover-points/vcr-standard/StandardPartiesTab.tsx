@@ -297,7 +297,7 @@ const PartyItemsDrawer: React.FC<{
   onOpenChange: (o: boolean) => void;
   handoverPointId: string;
   projectId?: string;
-  prereqCategoryMap: Map<string, { catCode: string; displayOrder: number; topic: string | null }>;
+  prereqCategoryMap: Map<string, { catCode: string; displayOrder: number; topic: string | null; qualStage: 'DRAFT'|'PENDING'|'APPROVED'|'REJECTED'|null }>;
   disciplineStatement?: string | null;
   hasStatement?: boolean;
 }> = ({ party, isApprover, vcrCode, vcrName, onOpenChange, handoverPointId, projectId, prereqCategoryMap, disciplineStatement, hasStatement }) => {
@@ -306,22 +306,21 @@ const PartyItemsDrawer: React.FC<{
 
   // Drawer sort: status group (Rework → Not started → In progress/Under review
   // → Approved), then category (TI, OI, DI, MS, HS, XX), then serial.
-  const STATUS_ORDER: Record<string, number> = {
-    REJECTED: 0,
-    NOT_STARTED: 1,
-    IN_PROGRESS: 2,
-    READY_FOR_REVIEW: 3,
-    QUALIFICATION_REQUESTED: 4,
-    ACCEPTED: 5,
-    QUALIFICATION_APPROVED: 5,
+  // Qualification sub-states slot in per the effective bucket:
+  //   qual DRAFT → Not started · qual PENDING → Under review ·
+  //   qual REJECTED → Rework · qual APPROVED → Approved.
+  const BUCKET_ORDER: Record<string, number> = {
+    rework: 0, todeliver: 1, pipeline: 2, qualification: 2, terminal: 3,
   };
   const CAT_ORDER: Record<string, number> = { TI: 0, OI: 1, DI: 2, MS: 3, HS: 4, XX: 9, '??': 9 };
   const sortedItems = [...party.items].sort((a, b) => {
-    const sa = STATUS_ORDER[a.status] ?? 99;
-    const sb = STATUS_ORDER[b.status] ?? 99;
-    if (sa !== sb) return sa - sb;
     const ma = prereqCategoryMap.get(a.prereq_id);
     const mb = prereqCategoryMap.get(b.prereq_id);
+    const ba = effectiveBucket(a.status as PrereqStatus, ma?.qualStage ?? null);
+    const bb = effectiveBucket(b.status as PrereqStatus, mb?.qualStage ?? null);
+    const sa = BUCKET_ORDER[ba] ?? 99;
+    const sb = BUCKET_ORDER[bb] ?? 99;
+    if (sa !== sb) return sa - sb;
     const ca = CAT_ORDER[ma?.catCode ?? '??'] ?? 9;
     const cb = CAT_ORDER[mb?.catCode ?? '??'] ?? 9;
     if (ca !== cb) return ca - cb;
