@@ -1287,7 +1287,7 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
   const sameCategorySibVcrItemIds = sameCategorySibs.map((s) => s.vcr_item_id).filter(Boolean);
   const sameCategorySibPrereqIds = sameCategorySibs.map((s) => s.id).filter(Boolean);
 
-  // 8) Sibling rework pattern — one bounded count-style query over all sibling comments.
+  // 8) Sibling rework pattern — pure via computeSignal8 after DB resolve.
   if (sameCategorySibVcrItemIds.length > 0) {
     const { data: sibComments } = await bounded("workflow sib comments", DB_TIMEOUT_MS, { data: [] }, (signal) =>
       withAbort(
@@ -1299,23 +1299,16 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
         signal,
       ),
     );
-    const returnedByItem = new Map<string, number>();
+    const returnedItemIds = new Set<string>();
     for (const c of (sibComments || []) as any[]) {
-      if ((c.action_tag || "").toLowerCase() === "returned") {
-        returnedByItem.set(c.vcr_item_id, (returnedByItem.get(c.vcr_item_id) || 0) + 1);
-      }
+      if ((c.action_tag || "").toLowerCase() === "returned") returnedItemIds.add(c.vcr_item_id);
     }
-    const returnedCount = returnedByItem.size;
-    const total = sameCategorySibs.length;
-    if (total > 0 && (returnedCount >= 3 || returnedCount / total >= 0.5)) {
-      const catCode = sameCategorySibs[0]?.vcr_items?.category?.code || "category";
-      facts.push({
-        label: "Category rework pattern",
-        value: `${returnedCount} of ${total} ${catCode} items returned`,
-        tone: "amber",
-        confidence: "verified",
-      });
-    }
+    const catCode = sameCategorySibs[0]?.vcr_items?.category?.code || null;
+    for (const f of computeSignal8({
+      categoryCode: catCode,
+      sameCategorySibItemIds: sameCategorySibVcrItemIds,
+      returnedSibItemIds: Array.from(returnedItemIds),
+    })) facts.push(f as Fact);
   }
 
   // 9) Shared-evidence risk — this item's evidence also cited on a REJECTED sibling.
