@@ -10,8 +10,10 @@ export interface DeliverableRowProps {
   context?: string | null;
   chipLabel: string;
   chipTone: ChipTone;
+  chipSubtext?: string | null;
   nameBadge?: React.ReactNode;
   onClick?: () => void;
+  compact?: boolean;
 }
 
 const CHIP_TONES: Record<ChipTone, string> = {
@@ -22,20 +24,16 @@ const CHIP_TONES: Record<ChipTone, string> = {
   slate: 'bg-slate-100 text-muted-foreground',
 };
 
-/**
- * v8_1 shared deliverable row.
- *   name · muted context line · one live chip on right
- * Row is a button when onClick is provided; otherwise a plain <div>.
- */
 export const DeliverableRow: React.FC<DeliverableRowProps> = ({
-  name, context, chipLabel, chipTone, nameBadge, onClick,
+  name, context, chipLabel, chipTone, chipSubtext, nameBadge, onClick, compact,
 }) => {
   const Tag = onClick ? 'button' : 'div';
   return (
     <Tag
       onClick={onClick}
       className={cn(
-        'w-full flex items-start gap-3 px-4 py-3.5 text-left transition-colors',
+        'w-full flex items-start gap-3 px-4 text-left transition-colors',
+        compact ? 'py-2' : 'py-3.5',
         'hover:bg-blue-50/60',
         onClick && 'cursor-pointer',
       )}
@@ -46,19 +44,26 @@ export const DeliverableRow: React.FC<DeliverableRowProps> = ({
           {nameBadge}
         </div>
         {context && (
-          <div className="text-[11px] text-muted-foreground truncate mt-1">
+          <div className="text-[11px] text-muted-foreground truncate mt-0.5">
             {context}
           </div>
         )}
       </div>
-      <span
-        className={cn(
-          'flex-none text-[10.5px] font-bold rounded-full px-2 py-0.5 mt-0.5',
-          CHIP_TONES[chipTone],
+      <div className="flex-none flex flex-col items-end gap-0.5 mt-0.5">
+        <span
+          className={cn(
+            'text-[10.5px] font-bold rounded-full px-2 py-0.5',
+            CHIP_TONES[chipTone],
+          )}
+        >
+          {chipLabel}
+        </span>
+        {chipSubtext && (
+          <span className="text-[10px] tabular-nums text-muted-foreground">
+            {chipSubtext}
+          </span>
         )}
-      >
-        {chipLabel}
-      </span>
+      </div>
     </Tag>
   );
 };

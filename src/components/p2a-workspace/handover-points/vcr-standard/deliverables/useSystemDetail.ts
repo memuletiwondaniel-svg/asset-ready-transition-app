@@ -142,7 +142,8 @@ export const computeSystemMilestone = (
   completion_status: string | null,
   is_hydrocarbon: boolean,
   subsystems: Subsystem[],
-): { label: string; tone: 'emerald' | 'blue' | 'slate' } => {
+  completion_percentage: number | null = null,
+): { label: string; tone: 'emerald' | 'blue' | 'amber' | 'slate' } => {
   const s = (completion_status || '').toUpperCase();
   if (is_hydrocarbon && s === 'RFSU') return { label: 'RFSU', tone: 'emerald' };
   if (!is_hydrocarbon && s === 'RFO') return { label: 'RFO', tone: 'emerald' };
@@ -150,6 +151,8 @@ export const computeSystemMilestone = (
   if (subsystems.length > 0 && subsystems.every((x) => x.mcc_achieved)) {
     return { label: 'MC', tone: 'blue' };
   }
+  const pct = completion_percentage ?? 0;
+  if (pct > 0) return { label: 'In progress', tone: 'amber' };
   return { label: 'Not started', tone: 'slate' };
 };
 

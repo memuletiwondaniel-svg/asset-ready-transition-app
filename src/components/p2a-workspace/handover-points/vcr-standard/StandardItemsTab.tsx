@@ -324,7 +324,7 @@ export const StandardItemsTab: React.FC<Props> = ({ handoverPoint, projectId }) 
               // Model A — ONE badge per row. Qualification sub-state carries its own
               // label (raised / submitted / rework / approved); coloured accordingly.
               const badge = r.qual
-                ? { label: `Qualification ${({ DRAFT: 'raised', PENDING: 'submitted', REJECTED: 'rework', APPROVED: 'approved' } as const)[r.qual.stage]}`,
+                ? { label: ({ DRAFT: 'Q · Draft', PENDING: 'Q · Under review', REJECTED: 'Q · Rework', APPROVED: 'Q · Approved' } as const)[r.qual.stage],
                     className: r.qual.className, title: `Qualification — ${r.qual.stageLabel}` }
                 : { label: r.pill.label, className: r.pill.className, title: r.pill.label };
               return (

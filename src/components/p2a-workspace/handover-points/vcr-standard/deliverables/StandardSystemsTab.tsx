@@ -30,17 +30,15 @@ export const StandardSystemsTab: React.FC<{ handoverPoint: P2AHandoverPoint; pro
 
   const sorted = useMemo(() => {
     const rows = [...(systems as any[])].map((s) => {
-      const milestone = computeSystemMilestone(s.completion_status, s.is_hydrocarbon, []);
       const pct = s.completion_percentage ?? 0;
+      const milestone = computeSystemMilestone(s.completion_status, s.is_hydrocarbon, [], pct);
       return { s, milestone, pct };
     });
     rows.sort((a, b) => {
       const ba = bucketOrder(a.milestone.label);
       const bb = bucketOrder(b.milestone.label);
       if (ba !== bb) return ba - bb;
-      // In-progress: ascending by % (most at-risk first)
       if (ba < 3) return a.pct - b.pct;
-      // Terminal: keep stable
       return a.s.name.localeCompare(b.s.name);
     });
     return rows;
@@ -77,20 +75,23 @@ export const StandardSystemsTab: React.FC<{ handoverPoint: P2AHandoverPoint; pro
       ) : (
         <DeliverableList>
           {sorted.map(({ s, milestone, pct }) => {
-            const ctxBits: string[] = [];
-            if (s.system_id) ctxBits.push(s.system_id);
-            if (s.itr_total_count) ctxBits.push(`${s.itr_total_count} ITRs`);
-            if (milestone.label === 'Not started' || bucketOrder(milestone.label) === 1) {
-              ctxBits.push(`${pct}%`);
-            }
+            // Left context = system code only (compact). % + ITR count move
+            // under the status chip on the right so status stays the primary signal.
+            const context = s.system_id || null;
+            const subBits: string[] = [];
+            const isTerminal = bucketOrder(milestone.label) === 3;
+            if (!isTerminal) subBits.push(`${Math.round(pct)}%`);
+            if (s.itr_total_count) subBits.push(`${s.itr_total_count} ITRs`);
             return (
               <DeliverableRow
                 key={s.id}
+                compact
                 name={s.name}
                 nameBadge={s.is_hydrocarbon ? <HydrocarbonBadge /> : null}
-                context={ctxBits.join(' · ') || null}
+                context={context}
                 chipLabel={milestone.label}
                 chipTone={milestone.tone as ChipTone}
+                chipSubtext={subBits.length ? subBits.join(' · ') : null}
                 onClick={() => setSelected(s)}
               />
             );

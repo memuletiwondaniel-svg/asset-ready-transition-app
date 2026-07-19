@@ -320,73 +320,60 @@ export function useVCRPartiesRollup(
         .sort((a, b) => a.full_name.localeCompare(b.full_name));
 
       /* -------- Approving party rows --------
-       * Counter is ROLE-SCOPED: aggregate assigned/completed across all
-       * holders that share the same canonical role_name (B2B seat). All
-       * holders of the same role therefore render the same fraction.
+       * ROLE-SCOPED items + counter (items-are-truth):
+       * - items = union of all prereqs assigned to any holder of the same role
+       * - completed = count of those prereqs whose UNDERLYING ITEM status is
+       *   terminal (ACCEPTED / QUALIFICATION_APPROVED / READY_FOR_REVIEW),
+       *   NOT the approval-row status. This keeps the counter aligned with
+       *   what the drawer shows and prevents "10/10" when an item is Q·Rework.
        */
-      const approvingByUser = new Map<string, PartyItem[]>();
-      const approvingCompletedByUser = new Map<string, Set<string>>();
-      const approvingByPrereq: Record<string, string[]> = {};
-
+      const approvingRowsByUser = new Map<string, any[]>();
       approvingRows.forEach((r: any) => {
         if (!r.approver_user_id) return;
-        const uid = r.approver_user_id;
-        const list = approvingByUser.get(uid) || [];
-        list.push({
-          prereq_id: r.prerequisite_id,
-          summary: prereqSummary.get(r.prerequisite_id) || '',
-          status: prereqStatus.get(r.prerequisite_id) || '',
-        });
-        approvingByUser.set(uid, list);
-        if (APPROVED_APPROVAL_STATUSES.has(r.status || '')) {
-          const s = approvingCompletedByUser.get(uid) || new Set<string>();
-          s.add(r.prerequisite_id);
-          approvingCompletedByUser.set(uid, s);
-        }
+        const list = approvingRowsByUser.get(r.approver_user_id) || [];
+        list.push(r);
+        approvingRowsByUser.set(r.approver_user_id, list);
       });
 
-      // Role-scoped aggregation: union of assigned prereqs + union of
-      // completed prereqs across every user sharing the same role_name.
-      const roleAssigned = new Map<string, Set<string>>();
-      const roleCompleted = new Map<string, Set<string>>();
+      // Group prereqs by role_name key across all holders.
+      const rolePrereqIds = new Map<string, Set<string>>();
       const userRoleKey = new Map<string, string>();
-      for (const uid of approvingByUser.keys()) {
+      for (const uid of approvingRowsByUser.keys()) {
         const profile = profileMap.get(uid);
         const key = (profile?.role_name || profile?.position || `__solo_${uid}`).trim().toLowerCase();
         userRoleKey.set(uid, key);
-        const aSet = roleAssigned.get(key) || new Set<string>();
-        (approvingByUser.get(uid) || []).forEach((it) => aSet.add(it.prereq_id));
-        roleAssigned.set(key, aSet);
-        const cSet = roleCompleted.get(key) || new Set<string>();
-        (approvingCompletedByUser.get(uid) || new Set<string>()).forEach((id) => cSet.add(id));
-        roleCompleted.set(key, cSet);
+        const set = rolePrereqIds.get(key) || new Set<string>();
+        (approvingRowsByUser.get(uid) || []).forEach((r: any) => set.add(r.prerequisite_id));
+        rolePrereqIds.set(key, set);
       }
 
-      const approving: PartyPerson[] = [...approvingByUser.entries()]
-        .map(([user_id, items]) => {
+      const approvingByPrereq: Record<string, string[]> = {};
+      const approving: PartyPerson[] = [...approvingRowsByUser.entries()]
+        .map(([user_id]) => {
           const profile = profileMap.get(user_id);
-          // de-dupe items (an approver can appear on the same prereq more than once)
-          const seen = new Set<string>();
-          const dedup: PartyItem[] = [];
+          const key = userRoleKey.get(user_id)!;
+          const prereqSet = rolePrereqIds.get(key) || new Set<string>();
+          const items: PartyItem[] = [...prereqSet].map((pid) => ({
+            prereq_id: pid,
+            summary: prereqSummary.get(pid) || '',
+            status: prereqStatus.get(pid) || '',
+          }));
           items.forEach((it) => {
-            if (seen.has(it.prereq_id)) return;
-            seen.add(it.prereq_id);
-            dedup.push(it);
             const arr = approvingByPrereq[it.prereq_id] || [];
             const nm = profile?.full_name || 'Unknown';
             if (!arr.includes(nm)) arr.push(nm);
             approvingByPrereq[it.prereq_id] = arr;
           });
-          const key = userRoleKey.get(user_id)!;
+          const completed = items.filter((it) => TERMINAL_STATUSES.has(it.status)).length;
           return {
             user_id,
             full_name: profile?.full_name || 'Unknown',
             avatar_url: profile?.avatar_url ?? null,
             position: profile?.position ?? null,
             role_name: profile?.role_name ?? null,
-            assigned: roleAssigned.get(key)?.size ?? dedup.length,
-            completed: roleCompleted.get(key)?.size ?? 0,
-            items: dedup,
+            assigned: items.length,
+            completed,
+            items,
           } as PartyPerson;
         })
         .sort((a, b) => a.full_name.localeCompare(b.full_name));
