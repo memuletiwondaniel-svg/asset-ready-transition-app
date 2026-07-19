@@ -16,6 +16,9 @@ import {
   computeSignal1,
   computeSignal2,
   computeSignal4,
+  computeSignal6,
+  computeSignal8,
+  computeSignal9,
   computeSignal10,
 } from "../_shared/workflow-signals.ts";
 
