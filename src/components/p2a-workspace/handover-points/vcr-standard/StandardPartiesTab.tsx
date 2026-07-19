@@ -15,7 +15,7 @@ import {
   SheetDescription,
 } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Lock, Search } from 'lucide-react';
+import { ChevronDown, Lock, Search, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { P2AHandoverPoint } from '../../hooks/useP2AHandoverPoints';
 import { useVCRPrerequisites } from '../../hooks/useVCRPrerequisites';
@@ -44,10 +44,16 @@ const initials = (name: string) =>
     .join('')
     .toUpperCase() || '?';
 
+/** Health-token status dot for a seat. */
+const statusDotClass = (assigned: number, completed: number, signed: boolean) => {
+  if (signed || (assigned > 0 && completed >= assigned)) return 'bg-emerald-500';
+  if (completed > 0) return 'bg-amber-500';
+  return 'bg-slate-300';
+};
+
 /** Fraction chip tone: green when complete, amber while in progress, slate at zero. */
-const fractionChipClass = (assigned: number, completed: number) => {
-  if (assigned === 0) return 'bg-slate-100 text-muted-foreground';
-  if (completed >= assigned) return 'bg-emerald-50 text-emerald-700';
+const fractionChipClass = (assigned: number, completed: number, signed: boolean) => {
+  if (signed || (assigned > 0 && completed >= assigned)) return 'bg-emerald-50 text-emerald-700';
   if (completed > 0) return 'bg-amber-50 text-amber-700';
   return 'bg-slate-100 text-muted-foreground';
 };
@@ -64,7 +70,8 @@ const PartyRow: React.FC<{
   holders: PartyPerson[];
   onClick?: (p: PartyPerson) => void;
   clickable?: boolean;
-}> = ({ holders, onClick, clickable }) => {
+  signedRoleKeys?: Set<string>;
+}> = ({ holders, onClick, clickable, signedRoleKeys }) => {
   const [idx, setIdx] = useState(0);
   const safeIdx = idx % holders.length;
   const shown = holders[safeIdx];
@@ -74,6 +81,16 @@ const PartyRow: React.FC<{
     .map((p) => p.full_name)
     .join(', ');
 
+  // Statement-authoritative: if this seat's role has a discipline statement
+  // submitted, treat the review as complete (m of m) regardless of the
+  // underlying ledger. Also drives the "signed" glyph + green dot.
+  const roleKey = (shown.role_name || shown.position || '').trim().toLowerCase();
+  const hasStatement = !!(roleKey && signedRoleKeys?.has(roleKey));
+  const isSofPacSigned = !!shown.signed;
+  const displayAssigned = shown.assigned;
+  const displayCompleted = hasStatement ? Math.max(shown.completed, shown.assigned) : shown.completed;
+  const complete = hasStatement || isSofPacSigned || (displayAssigned > 0 && displayCompleted >= displayAssigned);
+
   return (
     <div
       className={cn(
@@ -81,6 +98,14 @@ const PartyRow: React.FC<{
         clickable ? 'hover:bg-muted/50' : '',
       )}
     >
+      {/* Status dot */}
+      <span
+        className={cn(
+          'w-2 h-2 rounded-full flex-none',
+          statusDotClass(displayAssigned, displayCompleted, isSofPacSigned || hasStatement),
+        )}
+        aria-hidden
+      />
       <button
         type="button"
         onClick={() => clickable && onClick?.(shown)}
@@ -99,6 +124,18 @@ const PartyRow: React.FC<{
         <div className="min-w-0 flex-1">
           <div className="text-[13px] font-medium truncate leading-tight flex items-center gap-1.5">
             {shown.full_name}
+            {hasStatement && (
+              <TooltipProvider delayDuration={150}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" aria-label="Discipline statement signed" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs">
+                    Discipline statement signed
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
             {isPaired && (
               <TooltipProvider delayDuration={150}>
                 <Tooltip>
@@ -130,12 +167,14 @@ const PartyRow: React.FC<{
       </button>
       <span
         className={cn(
-          'text-[10.5px] font-bold rounded-full px-2 py-0.5 flex-none',
-          fractionChipClass(shown.assigned, shown.completed),
+          'text-[11px] font-semibold rounded-full px-2 py-0.5 flex-none',
+          fractionChipClass(displayAssigned, displayCompleted, isSofPacSigned || hasStatement),
         )}
-        title={`${shown.completed} of ${shown.assigned} complete`}
+        title={complete ? 'Complete' : `${displayCompleted} of ${displayAssigned} items complete`}
       >
-        {shown.completed}/{shown.assigned}
+        {displayAssigned > 0
+          ? `${displayCompleted} of ${displayAssigned} items`
+          : (isSofPacSigned ? 'Signed' : '—')}
       </span>
     </div>
   );
@@ -170,20 +209,37 @@ interface SectionProps {
   onPersonClick?: (p: PartyPerson) => void;
   personClickable?: boolean;
   muted?: boolean;
+  defaultOpen?: boolean;
+  signedRoleKeys?: Set<string>;
 }
 
 /**
- * Section — inline labelled divider (uppercase label + count + hairline)
- * with person rows directly beneath. One flat surface, no card borders.
+ * Section — collapsible inline labelled divider (uppercase label + count +
+ * chevron + hairline) with person rows directly beneath. Default expansion
+ * is driven by VCR lifecycle phase.
  */
 const Section: React.FC<SectionProps> = ({
   title, count, locked, lockCaption, lockTooltip, emptyText,
-  people, onPersonClick, personClickable, muted,
+  people, onPersonClick, personClickable, muted, defaultOpen = true, signedRoleKeys,
 }) => {
   const seats = useMemo(() => groupHoldersByRole(people), [people]);
+  const [open, setOpen] = useState(defaultOpen);
+  // Sync when lifecycle-driven default changes
+  React.useEffect(() => { setOpen(defaultOpen); }, [defaultOpen]);
   return (
     <section className={cn(muted && 'opacity-[0.5]')}>
-      <div className="flex items-center gap-2 pt-1 pb-2">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center gap-2 pt-1 pb-2 group text-left"
+        aria-expanded={open}
+      >
+        <ChevronDown
+          className={cn(
+            'w-3.5 h-3.5 text-muted-foreground/70 flex-none transition-transform',
+            open ? '' : '-rotate-90',
+          )}
+        />
         {locked && (
           <TooltipProvider>
             <Tooltip>
@@ -206,22 +262,25 @@ const Section: React.FC<SectionProps> = ({
           <span className="text-[10.5px] text-muted-foreground/70 italic shrink-0">{lockCaption}</span>
         )}
         <div className="flex-1 h-px bg-border/60" />
-      </div>
-      {seats.length === 0 ? (
-        <div className="px-3 py-3 text-[12px] text-muted-foreground">
-          {emptyText || 'No members yet.'}
-        </div>
-      ) : (
-        <div className="divide-y divide-border/40">
-          {seats.map((holders) => (
-            <PartyRow
-              key={holders.map((h) => h.user_id).join('|')}
-              holders={holders}
-              onClick={onPersonClick}
-              clickable={personClickable}
-            />
-          ))}
-        </div>
+      </button>
+      {open && (
+        seats.length === 0 ? (
+          <div className="px-3 py-3 text-[12px] text-muted-foreground">
+            {emptyText || 'No members yet.'}
+          </div>
+        ) : (
+          <div className="divide-y divide-border/40">
+            {seats.map((holders) => (
+              <PartyRow
+                key={holders.map((h) => h.user_id).join('|')}
+                holders={holders}
+                onClick={onPersonClick}
+                clickable={personClickable}
+                signedRoleKeys={signedRoleKeys}
+              />
+            ))}
+          </div>
+        )
       )}
     </section>
   );
@@ -238,17 +297,44 @@ const PartyItemsDrawer: React.FC<{
   onOpenChange: (o: boolean) => void;
   handoverPointId: string;
   projectId?: string;
-  prereqCategoryMap: Map<string, { catCode: string; displayOrder: number }>;
+  prereqCategoryMap: Map<string, { catCode: string; displayOrder: number; topic: string | null }>;
   disciplineStatement?: string | null;
-}> = ({ party, isApprover, vcrCode, vcrName, onOpenChange, handoverPointId, projectId, prereqCategoryMap, disciplineStatement }) => {
+  hasStatement?: boolean;
+}> = ({ party, isApprover, vcrCode, vcrName, onOpenChange, handoverPointId, projectId, prereqCategoryMap, disciplineStatement, hasStatement }) => {
   const [openItem, setOpenItem] = useState<VCRItemBasic | null>(null);
   if (!party) return null;
+
+  // Drawer sort: status group (Rework → Not started → In progress/Under review
+  // → Approved), then category (TI, OI, DI, MS, HS, XX), then serial.
+  const STATUS_ORDER: Record<string, number> = {
+    REJECTED: 0,
+    NOT_STARTED: 1,
+    IN_PROGRESS: 2,
+    READY_FOR_REVIEW: 3,
+    QUALIFICATION_REQUESTED: 4,
+    ACCEPTED: 5,
+    QUALIFICATION_APPROVED: 5,
+  };
+  const CAT_ORDER: Record<string, number> = { TI: 0, OI: 1, DI: 2, MS: 3, HS: 4, XX: 9, '??': 9 };
+  const sortedItems = [...party.items].sort((a, b) => {
+    const sa = STATUS_ORDER[a.status] ?? 99;
+    const sb = STATUS_ORDER[b.status] ?? 99;
+    if (sa !== sb) return sa - sb;
+    const ma = prereqCategoryMap.get(a.prereq_id);
+    const mb = prereqCategoryMap.get(b.prereq_id);
+    const ca = CAT_ORDER[ma?.catCode ?? '??'] ?? 9;
+    const cb = CAT_ORDER[mb?.catCode ?? '??'] ?? 9;
+    if (ca !== cb) return ca - cb;
+    return (ma?.displayOrder ?? 0) - (mb?.displayOrder ?? 0);
+  });
+
+  const displayAssigned = party.assigned;
+  const displayCompleted = hasStatement ? Math.max(party.completed, party.assigned) : party.completed;
 
   return (
     <>
       <Sheet open={!!party} onOpenChange={onOpenChange}>
         <SheetContent side="right" hideClose className="!z-modal-critical w-full sm:max-w-lg p-0 flex flex-col">
-          {/* G1 header — name + role subtext only; VCR context removed per Daniel review; click-outside closes (no X) */}
           <SheetHeader className="px-5 pt-5 pb-3 border-b shrink-0">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-3 min-w-0 flex-1">
@@ -259,8 +345,11 @@ const PartyItemsDrawer: React.FC<{
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
-                  <SheetTitle className="text-[15px] leading-snug truncate">
+                  <SheetTitle className="text-[15px] leading-snug truncate flex items-center gap-1.5">
                     {party.full_name}
+                    {hasStatement && (
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" aria-label="Discipline statement signed" />
+                    )}
                   </SheetTitle>
                   <SheetDescription className="text-[12px] mt-0.5 truncate text-muted-foreground">
                     {party.role_name || party.position || '—'}
@@ -270,11 +359,11 @@ const PartyItemsDrawer: React.FC<{
 
               <span
                 className={cn(
-                  'flex-none text-[10.5px] font-bold rounded-full px-2 py-0.5',
-                  fractionChipClass(party.assigned, party.completed),
+                  'flex-none text-[11px] font-semibold rounded-full px-2 py-0.5',
+                  fractionChipClass(displayAssigned, displayCompleted, !!hasStatement || !!party.signed),
                 )}
               >
-                {party.completed} of {party.assigned}
+                {displayAssigned > 0 ? `${displayCompleted} of ${displayAssigned} items` : (party.signed ? 'Signed' : '—')}
               </span>
             </div>
           </SheetHeader>
@@ -291,26 +380,27 @@ const PartyItemsDrawer: React.FC<{
           )}
           <ScrollArea className="flex-1">
             <div className="divide-y divide-border/60">
-              {party.items.length === 0 ? (
+              {sortedItems.length === 0 ? (
                 <div className="p-6 text-sm text-muted-foreground text-center">
                   No VCR items assigned via this role.
                 </div>
               ) : (
-                party.items.map((it) => {
+                sortedItems.map((it) => {
                   const meta = prereqCategoryMap.get(it.prereq_id);
                   const code = meta ? formatVcrItemCode(meta.catCode, meta.displayOrder) : '';
                   const pill = standardPill(it.status as PrereqStatus);
+                  const catName = meta && meta.catCode in CATEGORY_META
+                    ? CATEGORY_META[meta.catCode as keyof typeof CATEGORY_META].name
+                    : 'Uncategorized';
+                  const subtext = [catName, meta?.topic].filter(Boolean).join(' · ');
                   return (
                     <button
                       key={it.prereq_id}
                       onClick={() => {
-                        const catName = meta && meta.catCode in CATEGORY_META
-                          ? CATEGORY_META[meta.catCode as keyof typeof CATEGORY_META].name
-                          : 'Uncategorized';
                         setOpenItem({
                           id: it.prereq_id,
                           vcr_item: it.summary,
-                          topic: null,
+                          topic: meta?.topic ?? null,
                           category_name: catName,
                           category_code: meta?.catCode ?? '??',
                           status: it.status,
@@ -318,13 +408,20 @@ const PartyItemsDrawer: React.FC<{
                           itemCode: code,
                         });
                       }}
-                      className="w-full flex items-baseline gap-3 px-4 py-2.5 text-left hover:bg-muted/40 transition"
+                      className="w-full flex items-start gap-3 px-4 py-2.5 text-left hover:bg-muted/40 transition"
                     >
-                      <div className="w-[52px] flex-none font-mono text-[11px] text-muted-foreground leading-tight">
+                      <div className="w-[52px] flex-none font-mono text-[11px] text-muted-foreground leading-tight pt-0.5">
                         {code || '—'}
                       </div>
-                      <div className="flex-1 text-[13px] leading-snug">{it.summary}</div>
-                      <div className={cn('w-[92px] flex-none text-center text-[10.5px] font-bold py-0.5 rounded-full', pill.className)}>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[13px] leading-snug text-foreground">{it.summary}</div>
+                        {subtext && (
+                          <div className="text-[11px] text-muted-foreground/80 mt-0.5 truncate">
+                            {subtext}
+                          </div>
+                        )}
+                      </div>
+                      <div className={cn('flex-none text-center text-[10.5px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap', pill.className)}>
                         {pill.label}
                       </div>
                     </button>
@@ -373,10 +470,14 @@ export const StandardPartiesTab: React.FC<Props> = ({
   };
 
   const prereqCategoryMap = useMemo(() => {
-    const m = new Map<string, { catCode: string; displayOrder: number }>();
+    const m = new Map<string, { catCode: string; displayOrder: number; topic: string | null }>();
     prerequisites.forEach((p) => {
       const code = normalizeCategoryCode(p.category);
-      m.set(p.id, { catCode: code === 'XX' ? '??' : code, displayOrder: p.display_order ?? 0 });
+      m.set(p.id, {
+        catCode: code === 'XX' ? '??' : code,
+        displayOrder: p.display_order ?? 0,
+        topic: p.topic ?? null,
+      });
     });
     return m;
   }, [prerequisites]);
@@ -387,10 +488,27 @@ export const StandardPartiesTab: React.FC<Props> = ({
     return m;
   }, [prereqCategoryMap]);
 
-  const openDelivery = lifecyclePhase
-    ? lifecyclePhase === 'IN_EXECUTION' || lifecyclePhase === 'DRAFT' || lifecyclePhase === 'AWAITING_SUMMARY'
-    : true;
-  const openApprover = lifecyclePhase === 'AWAITING_SUMMARY';
+  // Default-expand rules keyed to VCR lifecycle phase.
+  //   Delivery / acceptance phases → expand VCR DELIVERY + VCR APPROVERS,
+  //     collapse SoF + PAC.
+  //   AWAITING_SOF → expand SoF only.
+  //   AWAITING_PAC / HANDOVER_COMPLETE → expand PAC only.
+  const isSofPhase = lifecyclePhase === 'AWAITING_SOF';
+  const isPacPhase = lifecyclePhase === 'AWAITING_PAC' || lifecyclePhase === 'HANDOVER_COMPLETE';
+  const defaultOpenDelivery = !isSofPhase && !isPacPhase;
+  const defaultOpenApprover = !isSofPhase && !isPacPhase;
+  const defaultOpenSof = isSofPhase;
+  const defaultOpenPac = isPacPhase;
+
+  // Role-name keys of approvers with a submitted discipline statement.
+  const signedRoleKeys = useMemo(() => {
+    const s = new Set<string>();
+    (disciplineStatements || []).forEach((st) => {
+      if (st.discipline_role_name) s.add(st.discipline_role_name.trim().toLowerCase());
+    });
+    return s;
+  }, [disciplineStatements]);
+
 
 
 
@@ -453,10 +571,8 @@ export const StandardPartiesTab: React.FC<Props> = ({
 
   return (
     <div className="space-y-4">
-      {/* G2 tab header — title only, subtext removed per Daniel review */}
-      <div>
-        <h2 className="text-[16px] font-bold tracking-tight text-foreground">Parties</h2>
-      </div>
+      {/* Narrative summary — canonical VCR-tab summary panel typography.
+       * H1 removed; left-nav is the single source of the tab name. */}
       <div className="rounded-md bg-muted/40 px-4 py-3 text-[12.5px] leading-relaxed text-foreground/85">
         {narrative.split(/(\*\*[^*]+\*\*)/g).map((chunk, i) =>
           chunk.startsWith('**') ? (
@@ -486,6 +602,8 @@ export const StandardPartiesTab: React.FC<Props> = ({
           people={fDelivering}
           onPersonClick={setOpenParty}
           personClickable
+          defaultOpen={defaultOpenDelivery}
+          signedRoleKeys={signedRoleKeys}
         />
         <Section
           title="VCR Approvers"
@@ -494,6 +612,8 @@ export const StandardPartiesTab: React.FC<Props> = ({
           people={fApproving}
           onPersonClick={setOpenParty}
           personClickable
+          defaultOpen={defaultOpenApprover}
+          signedRoleKeys={signedRoleKeys}
         />
         {isHC && (
           <Section
@@ -505,6 +625,7 @@ export const StandardPartiesTab: React.FC<Props> = ({
             emptyText="No SoF approver role holders resolved yet."
             people={fSof}
             muted={!gateUnlocked}
+            defaultOpen={defaultOpenSof}
           />
         )}
         <Section
@@ -516,6 +637,7 @@ export const StandardPartiesTab: React.FC<Props> = ({
           emptyText="No PAC approver role holders resolved yet."
           people={fPac}
           muted={!gateUnlocked}
+          defaultOpen={defaultOpenPac}
         />
       </div>
 
@@ -530,6 +652,10 @@ export const StandardPartiesTab: React.FC<Props> = ({
         projectId={projectId}
         prereqCategoryMap={prereqCategoryMap}
         disciplineStatement={statementForParty(openParty)}
+        hasStatement={
+          !!openParty &&
+          signedRoleKeys.has(((openParty.role_name || openParty.position || '').trim().toLowerCase()))
+        }
       />
     </div>
   );

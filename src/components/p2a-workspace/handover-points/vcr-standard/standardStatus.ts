@@ -35,30 +35,34 @@ export interface StandardPill {
   className: string;
 }
 
-/** Enum → display mapping for the item status badge (universal colours). */
+/**
+ * Enum → display mapping for the item status badge (universal colours).
+ * Canonical label set — identical in approver and delivering-party contexts.
+ *   NOT_STARTED             = "Not started"             (grey)
+ *   IN_PROGRESS             = "In progress"             (amber)
+ *   READY_FOR_REVIEW        = "Under review"            (amber)
+ *   REJECTED                = "Rework requested"        (red)
+ *   QUALIFICATION_REQUESTED = "Qualification requested" (amber)
+ *   ACCEPTED                = "Approved"                (green)
+ *   QUALIFICATION_APPROVED  = "Qualified"               (green)
+ */
 export const standardPill = (status: PrereqStatus): StandardPill => {
   switch (status) {
     case 'ACCEPTED':
       return { bucket: 'terminal', label: 'Approved', className: 'bg-emerald-50 text-emerald-700 border border-emerald-200' };
     case 'QUALIFICATION_APPROVED':
-      // Item's parent status when its qualification was approved.
-      return { bucket: 'terminal', label: 'Approved', className: 'bg-emerald-50 text-emerald-700 border border-emerald-200' };
+      return { bucket: 'terminal', label: 'Qualified', className: 'bg-emerald-50 text-emerald-700 border border-emerald-200' };
     case 'READY_FOR_REVIEW':
-      return { bucket: 'pipeline', label: 'Under Review', className: 'bg-amber-50 text-amber-700 border border-amber-200' };
+      return { bucket: 'pipeline', label: 'Under review', className: 'bg-amber-50 text-amber-700 border border-amber-200' };
     case 'IN_PROGRESS':
-      // Distinct from READY_FOR_REVIEW — item is being worked on but has NOT
-      // yet been submitted for approver review. Shares the amber "pipeline"
-      // bucket for filter parity with the drawer's copy.
-      return { bucket: 'pipeline', label: 'In Progress', className: 'bg-amber-50 text-amber-700 border border-amber-200' };
+      return { bucket: 'pipeline', label: 'In progress', className: 'bg-amber-50 text-amber-700 border border-amber-200' };
     case 'REJECTED':
-      return { bucket: 'rework', label: 'Rework', className: 'bg-red-50 text-red-700 border border-red-200' };
+      return { bucket: 'rework', label: 'Rework requested', className: 'bg-red-50 text-red-700 border border-red-200' };
     case 'QUALIFICATION_REQUESTED':
-      // Parent item shows amber "Under Review" while a qualification is in flight;
-      // the qualification overlay carries the finer-grained stage.
-      return { bucket: 'qualification', label: 'Under Review', className: 'bg-amber-50 text-amber-700 border border-amber-200' };
+      return { bucket: 'qualification', label: 'Qualification requested', className: 'bg-amber-50 text-amber-700 border border-amber-200' };
     case 'NOT_STARTED':
     default:
-      return { bucket: 'todeliver', label: 'To Deliver', className: 'bg-slate-100 text-slate-600 border border-slate-200' };
+      return { bucket: 'todeliver', label: 'Not started', className: 'bg-slate-100 text-slate-600 border border-slate-200' };
   }
 };
 

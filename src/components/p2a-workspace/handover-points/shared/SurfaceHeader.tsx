@@ -19,26 +19,22 @@ export interface SurfaceHeaderProps {
 }
 
 export const SurfaceHeader: React.FC<SurfaceHeaderProps> = ({
-  title, vcrCode, vcrName, narrative, right, className,
+  narrative, right, className,
 }) => {
-  const subtext = [vcrCode, vcrName].filter(Boolean).join(' · ');
+  // In-body tab title removed app-wide — the left nav is the single source of
+  // the tab name. Each tab surface now leads with its narrative summary panel
+  // followed by content. `title` + `subtext` are retained on the props for
+  // back-compat but no longer render. `right` slot stays for tab-level actions.
   return (
     <div className={cn('space-y-4', className)}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h2 className="text-[16px] font-bold tracking-tight text-foreground">{title}</h2>
-          {subtext && (
-            <div className="text-[12px] text-muted-foreground mt-0.5 truncate">{subtext}</div>
-          )}
-        </div>
-        {right}
-      </div>
+      {right && (
+        <div className="flex items-center justify-end">{right}</div>
+      )}
       {narrative && (
         <div className="rounded-md bg-muted/40 px-4 py-3 text-[12.5px] leading-relaxed text-foreground/85">
           {typeof narrative === 'string' ? renderInlineBold(narrative) : narrative}
         </div>
       )}
-      <div className="h-px bg-border/60" />
     </div>
   );
 };
