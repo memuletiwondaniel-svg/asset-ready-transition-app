@@ -18,6 +18,7 @@ import { ClipboardList, Plus, Trash2, User, Calendar, Search, X, RefreshCw, Spar
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { RlmuStatusBadge, DmsStatusBadge, DocumentNumberChip, RlmuUploadButton } from './shared/DmsStatusBadges';
+import { useLiveRegisterAuthors } from '@/hooks/useLiveRegisterAuthors';
 
 interface OperationalRegistersStepProps {
   vcrId: string;
@@ -76,6 +77,8 @@ export const OperationalRegistersStep: React.FC<OperationalRegistersStepProps> =
       queryClient.invalidateQueries({ queryKey: ['vcr-register-selections', vcrId] });
     },
   });
+
+  const { data: liveAuthors } = useLiveRegisterAuthors(items);
 
   const showSearch = items.length > 5;
   const filtered = showSearch && search.trim()
@@ -194,9 +197,19 @@ export const OperationalRegistersStep: React.FC<OperationalRegistersStepProps> =
                         {item.document_number && (
                           <DocumentNumberChip number={item.document_number} />
                         )}
-                        {item.responsible_person && (
-                          <span className="flex items-center gap-1"><User className="w-3 h-3" />{item.responsible_person}</span>
-                        )}
+                        {(() => {
+                          const live = liveAuthors?.get(item.id);
+                          const author = live ?? item.responsible_person;
+                          return author ? (
+                            <span
+                              className="flex items-center gap-1"
+                              title={item.author_role_id ? 'Live-resolved via role assignment' : undefined}
+                            >
+                              <User className="w-3 h-3" />
+                              {author}
+                            </span>
+                          ) : null;
+                        })()}
                         {item.target_date && (
                           <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{item.target_date}</span>
                         )}
