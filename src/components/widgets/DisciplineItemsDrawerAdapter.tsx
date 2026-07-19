@@ -84,8 +84,8 @@ export const DisciplineItemsDrawerAdapter: React.FC<Props> = ({
     <PartyItemsDrawer
       party={open ? shown : null}
       isApprover={true}
-      vcrCode={vcrCode}
-      vcrName={vcrName}
+      vcrCode={vcrCode ?? ''}
+      vcrName={vcrName ?? ''}
       onOpenChange={onOpenChange}
       handoverPointId={handoverPointId}
       projectId={projectId}
