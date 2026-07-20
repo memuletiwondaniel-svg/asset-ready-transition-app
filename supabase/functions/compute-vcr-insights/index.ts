@@ -1120,7 +1120,8 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
   const returned = cs.filter((c) => (c.action_tag || "").toLowerCase() === "returned");
   for (const f of computeSignal2({ returnedCount: returned.length })) facts.push(f as Fact);
 
-  // Unanswered approver comment — resolve party membership via RLS helpers
+  // Unanswered approver comment — pre-resolve party membership, delegate to computeSignal3
+  let unansweredApproverCommentAt: string | null = null;
   if (cs.length > 0) {
     const last = cs[cs.length - 1];
     const authorId = last.author_user_id;
@@ -1133,7 +1134,6 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
         }),
       );
       if (isApprover === true) {
-        // Any later delivering-party reply?
         let hasReply = false;
         for (const c of cs.filter((c) => new Date(c.created_at) > new Date(last.created_at))) {
           const { data: isDeliv } = await bounded("is deliv check", DB_TIMEOUT_MS, { data: false }, () =>
@@ -1145,18 +1145,12 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
           );
           if (isDeliv === true) { hasReply = true; break; }
         }
-        if (!hasReply) {
-          const d = daysBetween(new Date(last.created_at), now);
-          facts.push({
-            label: "Approver comment awaiting reply",
-            value: `${d} days`,
-            tone: "amber",
-            confidence: "verified",
-          });
-        }
+        if (!hasReply) unansweredApproverCommentAt = last.created_at;
       }
     }
   }
+  for (const f of computeSignal3({ unansweredApproverCommentAt, now })) facts.push(f as Fact);
+
 
   // 4) Open qualification (join through vcr_prerequisite_id; status stands in for stage)
   const { data: quals } = await bounded("workflow quals", DB_TIMEOUT_MS, { data: [] }, (signal) =>
