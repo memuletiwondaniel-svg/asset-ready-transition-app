@@ -17128,6 +17128,17 @@ export type Database = {
       }
     }
     Views: {
+      insight_precision_by_signal: {
+        Row: {
+          insight_state: string | null
+          signal_id: number | null
+          thumb_down: number | null
+          thumb_up: number | null
+          thumb_up_rate: number | null
+          total: number | null
+        }
+        Relationships: []
+      }
       ora_activity_plan_v: {
         Row: {
           confirmed_at: string | null
