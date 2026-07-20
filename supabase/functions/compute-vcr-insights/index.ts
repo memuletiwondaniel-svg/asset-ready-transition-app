@@ -1948,10 +1948,18 @@ serve(async (req) => {
             itrsValue: renderedFacts.find((f) => f.label === "ITRs complete (A+B)")?.value,
           };
           const summary = composeSummary(renderedFacts, severity, summaryCtx);
-          const nextStep = severity === "green" ? null : nextStepForFact(topFact, renderedFacts);
 
           const deliveringAction = actionTemplates[`delivering:${deliverKey}`] || defaultDeliver;
           const approverCheck = actionTemplates[`approver:${approverKey}`] || defaultApprover;
+          const nextActions = computeNextActions(topFact?.label || "", deliveringAction, approverCheck);
+          // P4-4: Bob reads next_actions[] to keep the SME-voice "Next" text and
+          // the action buttons on a single source of truth. When a delivering
+          // next_action is present, next_step mirrors its verb; otherwise falls
+          // back to the deterministic nextStepForFact composer.
+          const deliveringVerb = nextActions?.find((a) => a.role === "delivering")?.verb;
+          const nextStep = severity === "green"
+            ? null
+            : (deliveringVerb ?? nextStepForFact(topFact, renderedFacts));
           return {
             state: "ready",
             severity,
@@ -1961,7 +1969,7 @@ serve(async (req) => {
             facts: renderedFacts,
             delivering_action: deliveringAction,
             approver_check: approverCheck,
-            next_actions: computeNextActions(topFact?.label || "", deliveringAction, approverCheck),
+            next_actions: nextActions,
           };
         })();
 
