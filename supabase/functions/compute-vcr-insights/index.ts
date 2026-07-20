@@ -7,6 +7,7 @@ import {
   SCHEMA_SU_NOTIFICATION_OI,
   SCHEMA_LOLC_OI16,
   SCHEMA_AUDIT_ACTIONS_HS06,
+  SCHEMA_PUNCHLIST_TI,
   tableRowExtract as sharedTableRowExtract,
   isRowClosed as sharedIsRowClosed,
   isRowClosedForSchema as sharedIsRowClosedForSchema,
@@ -756,6 +757,7 @@ const REGISTER_SCHEMAS: Record<string, RegisterSchema> = {
   su_notification: SCHEMA_SU_NOTIFICATION_OI,
   lolc: SCHEMA_LOLC_OI16,
   audit_actions: SCHEMA_AUDIT_ACTIONS_HS06,
+  punchlist: SCHEMA_PUNCHLIST_TI,
 };
 
 const tableRowExtract = (
