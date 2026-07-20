@@ -5,8 +5,10 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 import { PDFDocument } from "npm:pdf-lib@1.17.1";
 import {
   SCHEMA_SU_NOTIFICATION_OI,
+  SCHEMA_LOLC_OI16,
   tableRowExtract as sharedTableRowExtract,
   isRowClosed as sharedIsRowClosed,
+  isRowClosedForSchema as sharedIsRowClosedForSchema,
   type RegisterSchema as SharedRegisterSchema,
   type TableRowSchema as SharedTableRowSchema,
   type PageRegisterSchema as SharedPageRegisterSchema,
@@ -751,6 +753,7 @@ const SCHEMA_HEMP_DI03: PageRegisterSchema = {
 const REGISTER_SCHEMAS: Record<string, RegisterSchema> = {
   hemp_di03: SCHEMA_HEMP_DI03,
   su_notification: SCHEMA_SU_NOTIFICATION_OI,
+  lolc: SCHEMA_LOLC_OI16,
 };
 
 const tableRowExtract = (
@@ -840,9 +843,11 @@ async function registerReaderTableRow(
     }];
   }
 
-  const closedOpts = { requiresDate: !!schema.requires_date };
-  const closed = rows.filter((r) => isRowClosed(r, schema.closed_field, closedOpts));
-  const outstanding = rows.filter((r) => !isRowClosed(r, schema.closed_field, closedOpts));
+  // Schema-aware close-out (Option B). Uses schema.closed_predicate when set
+  // (LOLC compound check), falls back to closed_field + requires_date otherwise.
+  const isClosed = (r: Record<string, any>) => sharedIsRowClosedForSchema(r, schema);
+  const closed = rows.filter(isClosed);
+  const outstanding = rows.filter((r) => !isClosed(r));
   const firstOutstandingPage =
     typeof outstanding[0]?.source_page === "number" ? outstanding[0].source_page : undefined;
 

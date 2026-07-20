@@ -8,7 +8,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 import {
   TABLE_ROW_SCHEMAS,
   tableRowExtract,
-  isRowClosed,
+  isRowClosedForSchema,
   dedupeByKey,
 } from "../_shared/register-reader.ts";
 import {
@@ -50,16 +50,23 @@ const EVIDENCE_BUCKET = "p2a-attachments";
 const MAX_PDF_BYTES = 15 * 1024 * 1024;
 
 type GroundRecord = {
-  unit: string;
-  acknowledged: string;
-  source_page: number;
-  expected_ack: boolean;
+  /** Extraction key (unit for SU, tag_no for LOLC, …). Legacy fixtures used
+   *  `unit`; new fixtures set `key` OR the schema-specific field directly.  */
+  unit?: string;
+  key?: string;
+  [k: string]: any;
+  source_page?: number;
+  expected_ack?: boolean;   // legacy
+  expected_closed?: boolean; // new
 };
 type GroundTruth = {
   key_field: string;
   total: number;
-  acknowledged_count: number;
-  outstanding_units: string[];
+  /** New key (Phase 3B). Backwards-compat shim also accepts acknowledged_count. */
+  closed_count?: number;
+  acknowledged_count?: number;
+  outstanding_units?: string[];
+  outstanding_keys?: string[];
   records: GroundRecord[];
 };
 
@@ -228,8 +235,23 @@ Deno.serve(async (req) => {
 
   for (const c of cases as Array<{ id: string; fixture_path: string; ground_truth: GroundTruth; description: string }>) {
     const gt = c.ground_truth;
+    // Backwards-compat shim: legacy fixtures used `acknowledged_count`, new
+    // fixtures use `closed_count`. Accept BOTH during the transition.
+    const gtClosedCount = (gt.closed_count ?? gt.acknowledged_count ?? 0) as number;
+    // Ground-truth key by schema record_key (falls back to legacy `unit`).
     const gtByKey = new Map<string, GroundRecord>();
-    for (const r of gt.records) gtByKey.set(norm(r.unit), r);
+    for (const r of gt.records) {
+      const k = norm(r[schema.record_key] ?? r.key ?? r.unit);
+      gtByKey.set(k, r);
+    }
+    // Ground-truth closed flag: prefer `expected_closed`, fall back to legacy
+    // `expected_ack`.
+    const gtClosedOf = (r: GroundRecord | undefined): boolean | null => {
+      if (!r) return null;
+      if (typeof r.expected_closed === "boolean") return r.expected_closed;
+      if (typeof r.expected_ack === "boolean") return r.expected_ack;
+      return null;
+    };
 
     const pdfBytes = await downloadPdf(sb, c.fixture_path);
     if (!pdfBytes) {
@@ -255,32 +277,32 @@ Deno.serve(async (req) => {
 
     const rows = dedupeByKey(raw, schema.record_key);
     const total = rows.length;
-    const closedOpts = { requiresDate: !!schema.requires_date };
-    const closed = rows.filter((r) => isRowClosed(r, schema.closed_field, closedOpts)).length;
+    const closed = rows.filter((r) => isRowClosedForSchema(r, schema)).length;
 
-    // Per-record scoring against ground truth by unit.
-    // Precision: extracted units that (a) exist in GT AND (b) whose
-    // closed-flag matches GT.expected_ack.
-    // Recall: GT units found among extracted with matching closed-flag.
+    // Per-record scoring against ground truth by record_key.
+    // Precision: extracted rows that (a) exist in GT AND (b) whose closed
+    // flag matches ground truth.
+    // Recall:    GT rows found among extracted with matching closed flag.
     let tp = 0;
     const perRecord: any[] = [];
     for (const r of rows) {
       const key = norm(r[schema.record_key]);
       const gtRec = gtByKey.get(key);
-      const extractedClosed = isRowClosed(r, schema.closed_field, closedOpts);
-      if (gtRec && extractedClosed === gtRec.expected_ack) tp += 1;
+      const extractedClosed = isRowClosedForSchema(r, schema);
+      const gtClosed = gtClosedOf(gtRec);
+      if (gtRec && gtClosed !== null && extractedClosed === gtClosed) tp += 1;
       perRecord.push({
-        unit: r[schema.record_key],
-        extracted_ack: r[schema.closed_field] ?? "",
+        key: r[schema.record_key],
+        extracted_closed_cell: r[schema.closed_field] ?? "",
         extracted_closed: extractedClosed,
-        gt_expected_ack: gtRec ? gtRec.expected_ack : null,
-        matched: !!gtRec && extractedClosed === (gtRec?.expected_ack),
+        gt_expected_closed: gtClosed,
+        matched: !!gtRec && gtClosed !== null && extractedClosed === gtClosed,
       });
     }
     const precision = total > 0 ? tp / total : 0;
     const recall = gt.total > 0 ? tp / gt.total : 0;
 
-    const headline_exact = total === gt.total && closed === gt.acknowledged_count;
+    const headline_exact = total === gt.total && closed === gtClosedCount;
     if (!headline_exact) allHeadlineExact = false;
     totalPrecisionNum += precision;
     totalRecall += recall;
@@ -299,7 +321,7 @@ Deno.serve(async (req) => {
         total,
         closed,
         gt_total: gt.total,
-        gt_ack: gt.acknowledged_count,
+        gt_closed: gtClosedCount,
         rows,
         per_record: perRecord,
       },
@@ -312,7 +334,7 @@ Deno.serve(async (req) => {
       extracted_total: total,
       extracted_closed: closed,
       gt_total: gt.total,
-      gt_ack: gt.acknowledged_count,
+      gt_closed: gtClosedCount,
       precision: Number(precision.toFixed(4)),
       recall: Number(recall.toFixed(4)),
       headline_exact,
