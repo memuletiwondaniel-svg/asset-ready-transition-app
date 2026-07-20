@@ -1477,6 +1477,8 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                 <InsightsBlock
                   insights={effectiveInsights}
                   viewer={viewer}
+                  vcrId={vcrId}
+                  vcrItemId={item?.id}
                   onRecompute={insights ? undefined : () => recompute.mutate()}
                   recomputing={recompute.isPending}
                 />
