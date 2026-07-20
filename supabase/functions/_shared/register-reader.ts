@@ -152,9 +152,81 @@ export const SCHEMA_LOLC_OI16: TableRowSchema = {
     '"source_page":number}]}',
 };
 
+// ─────────────────────────────────────────────────────────────────────────
+// AUDIT_ACTIONS — Fire & Safety Audit action-tracker register (HS-06).
+// One row per audit finding / action. A line is CLOSED iff:
+//   • status cell reads closed / complete / verified (not open/in progress),
+//   • close-out cell has BOTH a signer name AND a date token,
+//   • no placeholder ("pending", "tbd", …) in close-out,
+//   • overdue/anomaly cell is empty / none / n/a.
+// Option B: schema-level closed_predicate is the ONLY authority so a row
+// showing "Closed" but missing signer+date, or carrying an overdue flag,
+// never counts as closed.
+// ─────────────────────────────────────────────────────────────────────────
+const AUDIT_STATUS_CLOSED = /(^|[^a-z])(closed|complete[d]?|verified|resolved|actioned)([^a-z]|$)/i;
+const AUDIT_STATUS_OPEN = /(open|in[\s_-]*progress|outstanding|ongoing|deferred|pending)/i;
+
+function auditActionRowClosed(row: Record<string, any>): boolean {
+  const status = String(row?.status ?? "").trim();
+  if (!status) return false;
+  if (AUDIT_STATUS_OPEN.test(status.toLowerCase())) return false;
+  if (!AUDIT_STATUS_CLOSED.test(status)) return false;
+  const closeout = String(row?.close_out ?? "").trim();
+  if (!closeout) return false;
+  if (!NAME_TOKEN.test(closeout)) return false;
+  if (!DATE_TOKEN.test(closeout)) return false;
+  const lower = closeout.toLowerCase();
+  for (const p of PLACEHOLDER_SUBSTRINGS) {
+    if (lower.includes(p)) return false;
+  }
+  const overdue = String(row?.overdue ?? "").trim();
+  if (overdue && !ANOMALY_EMPTY.test(overdue)) return false;
+  return true;
+}
+
+export const SCHEMA_AUDIT_ACTIONS_HS06: TableRowSchema = {
+  schema_key: "audit_actions",
+  doc_match: /(fire[\s_&-]*safety.*audit|audit.*action|safety[\s_-]*audit.*(register|tracker|log))/i,
+  row_unit: "table_row",
+  record_key: "action_no",
+  closed_field: "close_out",
+  closed_predicate: auditActionRowClosed,
+  labels: {
+    docType: "Fire & Safety Audit action register",
+    countLabel: "Actions closed",
+    countUnit: "actions",
+    outstandingLabel: "Open audit actions",
+    outstandingItem: "close-out",
+  },
+  record_shape:
+    '{"action_no":"string (action id, e.g. FSA-001)",' +
+    '"finding":"string (short description of the audit finding)",' +
+    '"responsible":"string (name or discipline)",' +
+    '"target_date":"string (target date, or empty)",' +
+    '"status":"string (Open / In Progress / Closed / Verified / etc.)",' +
+    '"close_out":"string (closer name + date, or empty if outstanding)",' +
+    '"overdue":"string (any overdue/anomaly flag, or empty)",' +
+    '"source_page":"integer (1-based page in the PDF)"}',
+  system_prompt:
+    'You are extracting a FIRE & SAFETY AUDIT action-tracker register from a ' +
+    'PDF. Each row is one audit finding / action. Typical columns: ACTION NO, ' +
+    'FINDING / DESCRIPTION, RESPONSIBLE, TARGET DATE, STATUS (Open / In ' +
+    'Progress / Closed / Verified), CLOSE-OUT (closer name + date), and any ' +
+    'OVERDUE or ANOMALY / REMARKS flag. An action counts as CLOSED only when ' +
+    'the status cell reads closed/complete/verified, the close-out cell has a ' +
+    'real closer name AND date, and no overdue flag is written. Placeholders ' +
+    'such as "—", "-", "N/A", "TBD", "pending", or blank in close-out count ' +
+    'as OPEN. Do not invent actions. source_page is the 1-based page where ' +
+    'you read the row. Return STRICT JSON, no prose, no markdown:\n' +
+    '{"records":[{"action_no":"string","finding":"string",' +
+    '"responsible":"string","target_date":"string","status":"string",' +
+    '"close_out":"string","overdue":"string","source_page":number}]}',
+};
+
 export const TABLE_ROW_SCHEMAS: Record<string, TableRowSchema> = {
   su_notification: SCHEMA_SU_NOTIFICATION_OI,
   lolc: SCHEMA_LOLC_OI16,
+  audit_actions: SCHEMA_AUDIT_ACTIONS_HS06,
 };
 
 const PLACEHOLDER_SUBSTRINGS = [

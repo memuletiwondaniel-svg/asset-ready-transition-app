@@ -6,6 +6,7 @@ import { PDFDocument } from "npm:pdf-lib@1.17.1";
 import {
   SCHEMA_SU_NOTIFICATION_OI,
   SCHEMA_LOLC_OI16,
+  SCHEMA_AUDIT_ACTIONS_HS06,
   tableRowExtract as sharedTableRowExtract,
   isRowClosed as sharedIsRowClosed,
   isRowClosedForSchema as sharedIsRowClosedForSchema,
@@ -754,6 +755,7 @@ const REGISTER_SCHEMAS: Record<string, RegisterSchema> = {
   hemp_di03: SCHEMA_HEMP_DI03,
   su_notification: SCHEMA_SU_NOTIFICATION_OI,
   lolc: SCHEMA_LOLC_OI16,
+  audit_actions: SCHEMA_AUDIT_ACTIONS_HS06,
 };
 
 const tableRowExtract = (
