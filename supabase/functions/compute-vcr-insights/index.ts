@@ -15,7 +15,12 @@ import { computeSignal7 } from "../_shared/signal7.ts";
 import {
   computeSignal1,
   computeSignal2,
+  computeSignal3,
   computeSignal4,
+  computeSignal5,
+  computeSignal6,
+  computeSignal8,
+  computeSignal9,
   computeSignal10,
 } from "../_shared/workflow-signals.ts";
 
@@ -1117,7 +1122,8 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
   const returned = cs.filter((c) => (c.action_tag || "").toLowerCase() === "returned");
   for (const f of computeSignal2({ returnedCount: returned.length })) facts.push(f as Fact);
 
-  // Unanswered approver comment — resolve party membership via RLS helpers
+  // Unanswered approver comment — pre-resolve party membership, delegate to computeSignal3
+  let unansweredApproverCommentAt: string | null = null;
   if (cs.length > 0) {
     const last = cs[cs.length - 1];
     const authorId = last.author_user_id;
@@ -1130,7 +1136,6 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
         }),
       );
       if (isApprover === true) {
-        // Any later delivering-party reply?
         let hasReply = false;
         for (const c of cs.filter((c) => new Date(c.created_at) > new Date(last.created_at))) {
           const { data: isDeliv } = await bounded("is deliv check", DB_TIMEOUT_MS, { data: false }, () =>
@@ -1142,18 +1147,12 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
           );
           if (isDeliv === true) { hasReply = true; break; }
         }
-        if (!hasReply) {
-          const d = daysBetween(new Date(last.created_at), now);
-          facts.push({
-            label: "Approver comment awaiting reply",
-            value: `${d} days`,
-            tone: "amber",
-            confidence: "verified",
-          });
-        }
+        if (!hasReply) unansweredApproverCommentAt = last.created_at;
       }
     }
   }
+  for (const f of computeSignal3({ unansweredApproverCommentAt, now })) facts.push(f as Fact);
+
 
   // 4) Open qualification (join through vcr_prerequisite_id; status stands in for stage)
   const { data: quals } = await bounded("workflow quals", DB_TIMEOUT_MS, { data: [] }, (signal) =>
@@ -1195,29 +1194,17 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
     return { has: r != null, roleName };
   };
   if (projectId) {
+    const roles: { side: "delivering" | "approving"; roleName: string | null; has: boolean }[] = [];
     const deliv = await checkRole((itemRoles as any)?.delivering_party_role_id);
-    if (!deliv.has) {
-      facts.push({
-        label: "Unassigned role",
-        value: deliv.roleName ? `Delivering: ${deliv.roleName}` : "Delivering party",
-        tone: "red",
-        confidence: "verified",
-      });
-    }
+    roles.push({ side: "delivering", roleName: deliv.roleName, has: deliv.has });
     for (const rid of ((itemRoles as any)?.approving_party_role_ids || []) as string[]) {
       const ap = await checkRole(rid);
-      if (!ap.has) {
-        facts.push({
-          label: "Unassigned role",
-          value: ap.roleName ? `Approving: ${ap.roleName}` : "Approving party",
-          tone: "red",
-          confidence: "verified",
-        });
-      }
+      roles.push({ side: "approving", roleName: ap.roleName, has: ap.has });
     }
+    for (const f of computeSignal5({ roles })) facts.push(f as Fact);
   }
 
-  // 6) Evidence provenance
+  // 6) Evidence provenance — pure via computeSignal6
   const { data: ev } = await bounded("workflow evidence", DB_TIMEOUT_MS, { data: [] }, (signal) =>
     withAbort(
       sb
@@ -1228,29 +1215,11 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
     ),
   );
   const evRows = (ev || []) as any[];
-  const assaiPending = evRows.filter(
-    (e) => String(e.source || "").toLowerCase() === "assai" && e.confirmed === false,
-  );
-  if (assaiPending.length > 0) {
-    facts.push({
-      label: "Assai evidence awaiting confirmation",
-      value: String(assaiPending.length),
-      tone: "amber",
-      confidence: "verified",
-    });
-  }
-  const submittedAt = (pr as any).submitted_at ? new Date((pr as any).submitted_at) : null;
-  if (submittedAt && status === "READY_FOR_REVIEW") {
-    const lateFiles = evRows.filter((e) => new Date(e.created_at) > submittedAt);
-    if (lateFiles.length > 0) {
-      facts.push({
-        label: "Evidence added after submission",
-        value: `${lateFiles.length} file(s)`,
-        tone: "red",
-        confidence: "verified",
-      });
-    }
-  }
+  for (const f of computeSignal6({
+    status,
+    submittedAt: (pr as any).submitted_at || null,
+    evidence: evRows,
+  })) facts.push(f as Fact);
 
   // Signal 7 (EXE-1b) — per-item task completion signal.
   // DB fetch here; fact synthesis is delegated to the pure computeSignal7()
@@ -1302,7 +1271,7 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
   const sameCategorySibVcrItemIds = sameCategorySibs.map((s) => s.vcr_item_id).filter(Boolean);
   const sameCategorySibPrereqIds = sameCategorySibs.map((s) => s.id).filter(Boolean);
 
-  // 8) Sibling rework pattern — one bounded count-style query over all sibling comments.
+  // 8) Sibling rework pattern — pure via computeSignal8 after DB resolve.
   if (sameCategorySibVcrItemIds.length > 0) {
     const { data: sibComments } = await bounded("workflow sib comments", DB_TIMEOUT_MS, { data: [] }, (signal) =>
       withAbort(
@@ -1314,23 +1283,16 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
         signal,
       ),
     );
-    const returnedByItem = new Map<string, number>();
+    const returnedItemIds = new Set<string>();
     for (const c of (sibComments || []) as any[]) {
-      if ((c.action_tag || "").toLowerCase() === "returned") {
-        returnedByItem.set(c.vcr_item_id, (returnedByItem.get(c.vcr_item_id) || 0) + 1);
-      }
+      if ((c.action_tag || "").toLowerCase() === "returned") returnedItemIds.add(c.vcr_item_id);
     }
-    const returnedCount = returnedByItem.size;
-    const total = sameCategorySibs.length;
-    if (total > 0 && (returnedCount >= 3 || returnedCount / total >= 0.5)) {
-      const catCode = sameCategorySibs[0]?.vcr_items?.category?.code || "category";
-      facts.push({
-        label: "Category rework pattern",
-        value: `${returnedCount} of ${total} ${catCode} items returned`,
-        tone: "amber",
-        confidence: "verified",
-      });
-    }
+    const catCode = sameCategorySibs[0]?.vcr_items?.category?.code || null;
+    for (const f of computeSignal8({
+      categoryCode: catCode,
+      total: sameCategorySibs.length,
+      returnedCount: returnedItemIds.size,
+    })) facts.push(f as Fact);
   }
 
   // 9) Shared-evidence risk — this item's evidence also cited on a REJECTED sibling.
@@ -1365,14 +1327,13 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
         prereqToItemCode.set(s.id, `${cat}-${ord}`);
       }
       const first = hits[0];
-      const siblingCode = prereqToItemCode.get(first.vcr_prerequisite_id) || "sibling";
-      const label = first.assai_doc_no || first.file_name;
-      facts.push({
-        label: "Shared evidence on a returned item",
-        value: `${label} also cited on ${siblingCode}`,
-        tone: "amber",
-        confidence: "verified",
-      });
+      for (const f of computeSignal9({
+        hits: [{
+          assai_doc_no: first.assai_doc_no,
+          file_name: first.file_name,
+          siblingCode: prereqToItemCode.get(first.vcr_prerequisite_id) || null,
+        }],
+      })) facts.push(f as Fact);
     }
   }
 
