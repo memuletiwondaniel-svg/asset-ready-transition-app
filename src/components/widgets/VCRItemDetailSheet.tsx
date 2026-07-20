@@ -96,6 +96,7 @@ export interface VCRInsights {
   sources?: { label: string; href: string }[];
   origin?: 'computed' | 'synthetic';
   computed_at?: string;
+  inputs_hash?: string;
   readiness_label?: string;
   terminal?: boolean;
 }
