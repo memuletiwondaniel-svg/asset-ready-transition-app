@@ -1950,6 +1950,8 @@ serve(async (req) => {
           const summary = composeSummary(renderedFacts, severity, summaryCtx);
           const nextStep = severity === "green" ? null : nextStepForFact(topFact, renderedFacts);
 
+          const deliveringAction = actionTemplates[`delivering:${deliverKey}`] || defaultDeliver;
+          const approverCheck = actionTemplates[`approver:${approverKey}`] || defaultApprover;
           return {
             state: "ready",
             severity,
@@ -1957,8 +1959,9 @@ serve(async (req) => {
             summary,
             next_step: nextStep,
             facts: renderedFacts,
-            delivering_action: actionTemplates[`delivering:${deliverKey}`] || defaultDeliver,
-            approver_check: actionTemplates[`approver:${approverKey}`] || defaultApprover,
+            delivering_action: deliveringAction,
+            approver_check: approverCheck,
+            next_actions: computeNextActions(topFact?.label || "", deliveringAction, approverCheck),
           };
         })();
 
