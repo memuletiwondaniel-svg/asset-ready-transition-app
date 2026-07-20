@@ -108,8 +108,11 @@ const CASES: Case[] = [CASE_1, CASE_2, CASE_3];
 const NAME_RE = /[A-Za-z]{2,}/;
 const DATE_RE =
   /(\b\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4}\b|\b\d{4}-\d{2}-\d{2}\b|\b\d{1,2}[\s\-\/](?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*[\s\-\/]?\d{2,4}\b|\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\s+\d{1,2},?\s*\d{2,4}\b)/i;
-const ANOMALY_EMPTY = /^(|none|n\/?a|nil|no anomaly|no anomalies|-|—|not applicable)$/i;
-const PLACEHOLDER = /(pending|tbd|awaiting|to follow|n\/?a|not yet|outstanding)/i;
+// Prod uses substring matching on these tokens (register-reader.ts). Use the
+// same list here so ground truth is byte-consistent with the extractor.
+const PLACEHOLDER_SUBSTRINGS = [
+  "pending", "tbd", "awaiting", "to follow", "n/a", "not yet", "outstanding", "none",
+];
 
 function isClosedGT(r: Row): boolean {
   const v = (r.verification || "").trim();
