@@ -15964,6 +15964,45 @@ export type Database = {
           },
         ]
       }
+      vcr_insight_feedback: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          inputs_hash: string
+          insight_state: string | null
+          signal_ids: number[] | null
+          thumb: number
+          user_id: string
+          vcr_id: string
+          vcr_item_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          inputs_hash: string
+          insight_state?: string | null
+          signal_ids?: number[] | null
+          thumb: number
+          user_id: string
+          vcr_id: string
+          vcr_item_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          inputs_hash?: string
+          insight_state?: string | null
+          signal_ids?: number[] | null
+          thumb?: number
+          user_id?: string
+          vcr_id?: string
+          vcr_item_id?: string
+        }
+        Relationships: []
+      }
       vcr_insights_agent_config: {
         Row: {
           category_code: string
