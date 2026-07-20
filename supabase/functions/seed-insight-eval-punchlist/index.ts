@@ -142,23 +142,24 @@ async function buildPdf(c: Case): Promise<Uint8Array> {
   const rowsPerPage = Math.ceil(c.rows.length / totalPages);
 
   for (let p = 0; p < totalPages; p++) {
-    const page = doc.addPage([595, 842]);
-    const draw = (t: string, x: number, y: number, size = 7, f = font) =>
+    // Landscape A4 (842 x 595) — wider columns so name + full date fit.
+    const page = doc.addPage([842, 595]);
+    const draw = (t: string, x: number, y: number, size = 8, f = font) =>
       page.drawText(t, { x, y, size, font: f, color: rgb(0, 0, 0) });
-    draw(c.title, 40, 800, 13, bold);
-    draw(`${c.subtitle}  ·  Page ${p + 1} of ${totalPages}`, 40, 782, 8);
+    draw(c.title, 40, 560, 13, bold);
+    draw(`${c.subtitle}  ·  Page ${p + 1} of ${totalPages}`, 40, 542, 8);
 
-    const hy = 750;
-    draw("ITEM",      40,  hy, 7, bold);
-    draw("DESCRIPTION", 80, hy, 7, bold);
-    draw("CAT",       220, hy, 7, bold);
-    draw("DISC",      240, hy, 7, bold);
-    draw("RAISED BY", 275, hy, 7, bold);
-    draw("TARGET",    355, hy, 7, bold);
-    draw("STATUS",    400, hy, 7, bold);
-    draw("CLOSED BY", 445, hy, 7, bold);
-    draw("REMARKS",   525, hy, 7, bold);
-    page.drawLine({ start: { x: 35, y: hy - 4 }, end: { x: 575, y: hy - 4 }, thickness: 0.6 });
+    const hy = 510;
+    draw("ITEM",        40,  hy, 8, bold);
+    draw("DESCRIPTION", 90,  hy, 8, bold);
+    draw("CAT",         290, hy, 8, bold);
+    draw("DISC",        315, hy, 8, bold);
+    draw("RAISED BY",   360, hy, 8, bold);
+    draw("TARGET",      475, hy, 8, bold);
+    draw("STATUS",      540, hy, 8, bold);
+    draw("CLOSED BY",   610, hy, 8, bold);
+    draw("REMARKS",     730, hy, 8, bold);
+    page.drawLine({ start: { x: 35, y: hy - 4 }, end: { x: 810, y: hy - 4 }, thickness: 0.6 });
 
     const start = p * rowsPerPage;
     const end = Math.min(start + rowsPerPage, c.rows.length);
@@ -166,17 +167,17 @@ async function buildPdf(c: Case): Promise<Uint8Array> {
     for (let i = start; i < end; i++) {
       const r = c.rows[i];
       draw(r.item_no, 40, y);
-      draw(r.description.slice(0, 26), 80, y);
-      draw(r.category, 220, y);
-      draw(r.discipline.slice(0, 6), 240, y);
-      draw(r.raised_by.slice(0, 16), 275, y);
-      draw(r.target_close, 355, y);
-      draw(r.status, 400, y);
-      draw((r.closed_by || "—").slice(0, 16), 445, y);
-      draw((r.remarks || "").slice(0, 14), 525, y);
+      draw(r.description.slice(0, 32), 90, y);
+      draw(r.category, 290, y);
+      draw(r.discipline.slice(0, 7), 315, y);
+      draw(r.raised_by, 360, y);            // full string — needs date + year
+      draw(r.target_close, 475, y);
+      draw(r.status, 540, y);
+      draw(r.closed_by || "—", 610, y);     // full string — predicate needs year
+      draw((r.remarks || "").slice(0, 20), 730, y);
       y -= 18;
     }
-    draw("Signed: Commissioning Lead (redacted) — Construction Manager (redacted)", 40, 120, 8);
+    draw("Signed: Commissioning Lead (redacted) — Construction Manager (redacted)", 40, 60, 8);
   }
   return await doc.save();
 }
