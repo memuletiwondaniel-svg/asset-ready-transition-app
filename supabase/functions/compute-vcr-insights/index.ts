@@ -1192,26 +1192,14 @@ async function workflowSignalsEngine(sb: any, item: any, prereq: any): Promise<F
     return { has: r != null, roleName };
   };
   if (projectId) {
+    const roles: { side: "delivering" | "approving"; roleName: string | null; has: boolean }[] = [];
     const deliv = await checkRole((itemRoles as any)?.delivering_party_role_id);
-    if (!deliv.has) {
-      facts.push({
-        label: "Unassigned role",
-        value: deliv.roleName ? `Delivering: ${deliv.roleName}` : "Delivering party",
-        tone: "red",
-        confidence: "verified",
-      });
-    }
+    roles.push({ side: "delivering", roleName: deliv.roleName, has: deliv.has });
     for (const rid of ((itemRoles as any)?.approving_party_role_ids || []) as string[]) {
       const ap = await checkRole(rid);
-      if (!ap.has) {
-        facts.push({
-          label: "Unassigned role",
-          value: ap.roleName ? `Approving: ${ap.roleName}` : "Approving party",
-          tone: "red",
-          confidence: "verified",
-        });
-      }
+      roles.push({ side: "approving", roleName: ap.roleName, has: ap.has });
     }
+    for (const f of computeSignal5({ roles })) facts.push(f as Fact);
   }
 
   // 6) Evidence provenance — pure via computeSignal6
