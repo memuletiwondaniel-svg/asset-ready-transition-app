@@ -413,8 +413,8 @@ const InsightsBlock: React.FC<{
                         </TooltipProvider>
                       )}
                       <InsightFeedbackChip
-                        vcrId={vcrIdForFeedback}
-                        vcrItemId={vcrItemIdForFeedback}
+                        vcrId={vcrId}
+                        vcrItemId={vcrItemId}
                         inputsHash={insights?.inputs_hash}
                         insightState={insights?.severity ?? insights?.state ?? null}
                       />
