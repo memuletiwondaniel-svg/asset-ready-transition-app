@@ -754,6 +754,7 @@ const REGISTER_SCHEMAS: Record<string, RegisterSchema> = {
   hemp_di03: SCHEMA_HEMP_DI03,
   su_notification: SCHEMA_SU_NOTIFICATION_OI,
   lolc: SCHEMA_LOLC_OI16,
+  audit_actions: SCHEMA_AUDIT_ACTIONS_HS06,
 };
 
 const tableRowExtract = (
