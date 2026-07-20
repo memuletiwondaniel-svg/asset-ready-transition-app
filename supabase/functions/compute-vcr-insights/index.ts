@@ -38,6 +38,11 @@ interface Fact {
   confidence?: Confidence;
   sourceHref?: string;
 }
+interface NextAction {
+  role: "delivering" | "approving";
+  verb: string;
+  href?: string;
+}
 interface Insights {
   state: "ready" | "pending" | "unavailable";
   severity?: "green" | "amber" | "red";
@@ -47,9 +52,44 @@ interface Insights {
   facts?: Fact[];
   delivering_action?: string;
   approver_check?: string;
+  next_actions?: NextAction[];
   sources?: { label: string; href: string }[];
   readiness_label?: string;
   terminal?: boolean;
+}
+
+// P4-3: derive structured next_actions from a top fact label. Additive —
+// mirrors the existing string emitters (delivering_action / approver_check),
+// which continue to ship unchanged. Only S1/S2/S4/S7/S10 actionable labels
+// are populated here; other tops leave next_actions unset (FE falls back to
+// the plain string). Where no clean in-app target exists, href is omitted
+// (per Daniel's rule — never fabricate an href).
+function computeNextActions(
+  topLabel: string,
+  deliveringVerb: string,
+  approverVerb: string,
+): NextAction[] | undefined {
+  const l = (topLabel || "").toLowerCase();
+  let href: string | undefined;
+  let matched = true;
+  if (l.includes("returned by approver")) href = "#insight-comments";                  // S2
+  else if (l.includes("approver comment awaiting reply")) href = "#insight-comments";  // S3 (deterministic)
+  else if (l.includes("evidence added after submission")) href = undefined;            // S4 — no clean anchor
+  else if (l.includes("open review task") || l.includes("open review tasks")) href = "#insight-tasks"; // S7
+  else if (l.includes("open delivery task")) href = "#insight-tasks";                  // S7
+  else if (l.includes("orphan item-tasks")) href = "#insight-tasks";                   // S7
+  else if (l.includes("vcr target approaching")) href = undefined;                     // S10 — no in-app target
+  else if (l.includes("punch items open")) href = "#insight-punch";                    // secondary
+  else if (l.includes("required evidence attached")) href = "#insight-evidence";       // secondary
+  else if (l.includes("qualification open")) href = "#insight-qualification";          // secondary
+  else if (l.includes("unassigned role")) href = undefined;                            // S5 non-actionable link
+  else matched = false;
+  if (!matched) return undefined;
+  const out: NextAction[] = [
+    { role: "delivering", verb: deliveringVerb, ...(href ? { href } : {}) },
+    { role: "approving", verb: approverVerb, ...(href ? { href } : {}) },
+  ];
+  return out;
 }
 
 const sha = async (s: string) => {
@@ -1910,6 +1950,8 @@ serve(async (req) => {
           const summary = composeSummary(renderedFacts, severity, summaryCtx);
           const nextStep = severity === "green" ? null : nextStepForFact(topFact, renderedFacts);
 
+          const deliveringAction = actionTemplates[`delivering:${deliverKey}`] || defaultDeliver;
+          const approverCheck = actionTemplates[`approver:${approverKey}`] || defaultApprover;
           return {
             state: "ready",
             severity,
@@ -1917,8 +1959,9 @@ serve(async (req) => {
             summary,
             next_step: nextStep,
             facts: renderedFacts,
-            delivering_action: actionTemplates[`delivering:${deliverKey}`] || defaultDeliver,
-            approver_check: actionTemplates[`approver:${approverKey}`] || defaultApprover,
+            delivering_action: deliveringAction,
+            approver_check: approverCheck,
+            next_actions: computeNextActions(topFact?.label || "", deliveringAction, approverCheck),
           };
         })();
 

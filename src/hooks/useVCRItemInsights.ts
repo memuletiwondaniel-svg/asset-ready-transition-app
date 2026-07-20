@@ -31,7 +31,7 @@ async function readCachedInsights(vcrId: string, vcrItemId: string): Promise<Cac
   try {
     const { data, error } = await supabase
       .from('vcr_item_insights')
-      .select('payload, origin, computed_at')
+      .select('payload, origin, computed_at, inputs_hash')
       .eq('vcr_id', vcrId)
       .eq('vcr_item_id', vcrItemId)
       .abortSignal(controller.signal)
@@ -45,6 +45,7 @@ async function readCachedInsights(vcrId: string, vcrItemId: string): Promise<Cac
       ...payload,
       origin: (data as { origin?: 'computed' | 'synthetic' }).origin ?? payload.origin ?? 'computed',
       computed_at: (data as { computed_at?: string }).computed_at ?? payload.computed_at,
+      inputs_hash: (data as { inputs_hash?: string }).inputs_hash ?? payload.inputs_hash,
     };
     return { status: 'hit', payload: merged };
   } catch (error) {
