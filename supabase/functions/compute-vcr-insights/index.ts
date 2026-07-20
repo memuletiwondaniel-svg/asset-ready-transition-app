@@ -15,7 +15,9 @@ import { computeSignal7 } from "../_shared/signal7.ts";
 import {
   computeSignal1,
   computeSignal2,
+  computeSignal3,
   computeSignal4,
+  computeSignal5,
   computeSignal6,
   computeSignal8,
   computeSignal9,
