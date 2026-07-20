@@ -321,14 +321,63 @@ const InsightsBlock: React.FC<{
                   </p>
                 )}
 
-                {nextText && (
-                  <div className="mt-2 pt-2 border-t border-sky-100/70 dark:border-sky-950/50 text-[12.5px] leading-relaxed">
-                    <span className="font-medium text-foreground">{isApproving ? 'Check: ' : 'Next: '}</span>
-                    <span className="text-foreground/70">{nextText}</span>
-                  </div>
-                )}
+                {(() => {
+                  const roleActions = (insights?.next_actions ?? []).filter((a) =>
+                    isDelivering ? a.role === 'delivering' : isApproving ? a.role === 'approving' : false,
+                  );
+                  if (roleActions.length > 0) {
+                    return (
+                      <div className="mt-2 pt-2 border-t border-sky-100/70 dark:border-sky-950/50 flex items-baseline gap-2 flex-wrap text-[12.5px] leading-relaxed">
+                        <span className="font-medium text-foreground">{isApproving ? 'Check:' : 'Next:'}</span>
+                        {roleActions.map((a, i) => {
+                          const isAnchor = !!a.href && a.href.startsWith('#');
+                          if (isAnchor) {
+                            return (
+                              <a
+                                key={i}
+                                href={a.href}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  const id = a.href!.slice(1);
+                                  const el = document.getElementById(id);
+                                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                }}
+                                className="inline-flex items-center gap-1 text-primary hover:underline"
+                              >
+                                {a.verb}
+                              </a>
+                            );
+                          }
+                          if (a.href) {
+                            return (
+                              <a
+                                key={i}
+                                href={a.href}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 text-primary hover:underline"
+                              >
+                                {a.verb}
+                                <ExternalLink className="h-3 w-3" />
+                              </a>
+                            );
+                          }
+                          return (
+                            <span key={i} className="text-foreground/70">{a.verb}</span>
+                          );
+                        })}
+                      </div>
+                    );
+                  }
+                  return nextText ? (
+                    <div className="mt-2 pt-2 border-t border-sky-100/70 dark:border-sky-950/50 text-[12.5px] leading-relaxed">
+                      <span className="font-medium text-foreground">{isApproving ? 'Check: ' : 'Next: '}</span>
+                      <span className="text-foreground/70">{nextText}</span>
+                    </div>
+                  ) : null;
+                })()}
 
-                {(factCount > 0 || insights?.computed_at) && (
+                {(factCount > 0 || insights?.computed_at || insights?.inputs_hash) && (
                   <div className="mt-3 pt-2 border-t border-sky-100/70 dark:border-sky-950/50 flex items-center justify-between gap-3">
                     {factCount > 0 ? (
                       <button
@@ -348,18 +397,26 @@ const InsightsBlock: React.FC<{
                     ) : (
                       <span />
                     )}
-                    {insights?.computed_at && (
-                      <TooltipProvider delayDuration={200}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="text-[11px] text-muted-foreground">
-                              checked {formatDistanceToNow(new Date(insights.computed_at), { addSuffix: false })} ago
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent side="top">{format(new Date(insights.computed_at), 'PPpp')}</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {insights?.computed_at && (
+                        <TooltipProvider delayDuration={200}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="text-[11px] text-muted-foreground">
+                                checked {formatDistanceToNow(new Date(insights.computed_at), { addSuffix: false })} ago
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">{format(new Date(insights.computed_at), 'PPpp')}</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                      <InsightFeedbackChip
+                        vcrId={vcrIdForFeedback}
+                        vcrItemId={vcrItemIdForFeedback}
+                        inputsHash={insights?.inputs_hash}
+                        insightState={insights?.severity ?? insights?.state ?? null}
+                      />
+                    </div>
                   </div>
                 )}
                 {factCount > 0 && (
