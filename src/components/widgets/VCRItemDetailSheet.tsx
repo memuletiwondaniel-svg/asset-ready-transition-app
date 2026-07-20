@@ -211,9 +211,11 @@ const sanitizeFile = (name: string) =>
 const InsightsBlock: React.FC<{
   insights?: VCRInsights;
   viewer: 'delivering' | 'approving' | 'observer';
+  vcrId?: string;
+  vcrItemId?: string;
   onRecompute?: () => void;
   recomputing?: boolean;
-}> = ({ insights, viewer, onRecompute, recomputing }) => {
+}> = ({ insights, viewer, vcrId, vcrItemId, onRecompute, recomputing }) => {
   const [open, setOpen] = useState(true);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const state = insights?.state ?? 'unavailable';
