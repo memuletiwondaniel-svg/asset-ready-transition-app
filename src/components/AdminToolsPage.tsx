@@ -54,6 +54,7 @@ const CustomerJourneyMaps = lazy(() => import("./admin-tools/CustomerJourneyMaps
 const ProcessFlowMaps = lazy(() => import("./admin-tools/ProcessFlowMaps"));
 const DocumentManagementSystem = lazy(() => import("./admin-tools/DocumentManagementSystem"));
 const AIAgentStrategyDocument = lazy(() => import("./admin-tools/AIAgentStrategyDocument"));
+const InsightPrecisionCard = lazy(() => import("./admin-tools/InsightPrecisionCard"));
 
 
 const TenantSetupWizardLazy = lazy(() => import("./tenant-setup/TenantSetupWizard").then(m => ({ default: m.TenantSetupWizard })));
