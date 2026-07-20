@@ -51,6 +51,7 @@ import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { useVCRItemInsights } from '@/hooks/useVCRItemInsights';
 import { useProjectRoleHolders } from '@/hooks/useProjectRoleHolders';
 import { resolveVCRMode } from '@/components/p2a-workspace/handover-points/vcr-standard/vcrMode';
+import { InsightFeedbackChip } from '@/components/widgets/InsightFeedbackChip';
 
 // ─── Public contract ─────────────────────────────────────────────────
 export interface VCRItemBasic {
