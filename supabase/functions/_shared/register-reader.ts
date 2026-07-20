@@ -15,6 +15,15 @@ export interface TableRowSchema extends RegisterSchemaBase {
   closed_field: string;
   /** Schema-level: closed cell must contain a recognisable date token */
   requires_date?: boolean;
+  /**
+   * Option B — schema-level compound close-out predicate.
+   * When provided, this is the ONLY authority on whether a row counts as
+   * closed. Avoids false-greens on anomaly rows (name+date present but the
+   * as-left position is wrong, or there's a written anomaly). Row is closed
+   * iff the predicate returns true. Falls back to the generic closed_field
+   * check when absent.
+   */
+  closed_predicate?: (row: Record<string, any>) => boolean;
   labels: {
     docType: string;
     countLabel: string;
@@ -60,8 +69,92 @@ export const SCHEMA_SU_NOTIFICATION_OI: TableRowSchema = {
     '"source_page":number}]}',
 };
 
+// ─────────────────────────────────────────────────────────────────────────
+// LOLC — Locked Open / Locked Closed valve register (Phase 3B pilot).
+// One row per valve. A line is CLOSED iff:
+//   • verification cell carries BOTH a verifier name AND a date token,
+//   • as_left_position is non-empty and matches required_position
+//     (LO↔"open"/"locked open" and LC↔"closed"/"locked closed") when a
+//     required_position was given by the source register,
+//   • anomaly cell is empty / "none" / "n/a" (any real text = anomaly).
+// Option B: schema-level closed_predicate — the ONLY authority so a row
+// with a name+date but the WRONG position or a written anomaly never counts
+// as closed. Rejects false-greens.
+// ─────────────────────────────────────────────────────────────────────────
+const NAME_TOKEN = /[A-Za-z]{2,}/;
+const ANOMALY_EMPTY = /^(|none|n\/?a|nil|no anomaly|no anomalies|-|—|not applicable)$/i;
+
+function positionsMatch(required: string, asLeft: string): boolean {
+  const r = (required || "").trim().toLowerCase();
+  const a = (asLeft || "").trim().toLowerCase();
+  if (!a) return false;
+  if (!r) return true; // no required position specified → any non-empty as-left is fine
+  const wantOpen = /(^|[^a-z])(lo|open)([^a-z]|$)/.test(r) && !/closed/.test(r);
+  const wantClosed = /(^|[^a-z])(lc|closed)([^a-z]|$)/.test(r);
+  const isOpen = /(^|[^a-z])(lo|open)([^a-z]|$)/.test(a) && !/closed/.test(a);
+  const isClosed = /(^|[^a-z])(lc|closed)([^a-z]|$)/.test(a);
+  if (wantOpen && isOpen) return true;
+  if (wantClosed && isClosed) return true;
+  return false;
+}
+
+function lolcRowClosed(row: Record<string, any>): boolean {
+  const verification = String(row?.verification ?? "").trim();
+  if (!verification) return false;
+  if (!NAME_TOKEN.test(verification)) return false;
+  if (!DATE_TOKEN.test(verification)) return false;
+  const s = verification.toLowerCase();
+  for (const p of PLACEHOLDER_SUBSTRINGS) {
+    if (s.includes(p)) return false;
+  }
+  const required = String(row?.required_position ?? "").trim();
+  const asLeft = String(row?.as_left_position ?? "").trim();
+  if (!positionsMatch(required, asLeft)) return false;
+  const anomaly = String(row?.anomaly ?? "").trim();
+  if (anomaly && !ANOMALY_EMPTY.test(anomaly)) return false;
+  return true;
+}
+
+export const SCHEMA_LOLC_OI16: TableRowSchema = {
+  schema_key: "lolc",
+  doc_match: /(lolc|locked[\s_-]*(open|closed)|l\.o\.l\.c|car[\s_-]*seal)/i,
+  row_unit: "table_row",
+  record_key: "tag_no",
+  closed_field: "verification",
+  closed_predicate: lolcRowClosed,
+  labels: {
+    docType: "LOLC valve register",
+    countLabel: "Valves verified",
+    countUnit: "valves",
+    outstandingLabel: "Outstanding valves",
+    outstandingItem: "verification",
+  },
+  record_shape:
+    '{"tag_no":"string (valve tag)",' +
+    '"required_position":"string (LO / LC / Locked Open / Locked Closed / empty)",' +
+    '"as_left_position":"string (LO / LC / Open / Closed / empty)",' +
+    '"verification":"string (verifier name + date, or empty if outstanding)",' +
+    '"anomaly":"string (any noted anomaly, or empty/None)",' +
+    '"source_page":"integer (1-based page in the PDF)"}',
+  system_prompt:
+    'You are extracting a LOCKED OPEN / LOCKED CLOSED (LOLC) valve register ' +
+    'from a PDF. Each row is one valve. Typical columns: VALVE TAG NO, ' +
+    'REQUIRED POSITION (LO=Locked Open, LC=Locked Closed), AS-LEFT POSITION ' +
+    '(what the field verifier found), VERIFICATION (verifier name + date), ' +
+    'and ANOMALY / REMARKS. A row counts as VERIFIED only when the verification ' +
+    'cell has a real verifier name AND date, the as-left position matches the ' +
+    'required position, and no anomaly is written. Placeholders such as "—", ' +
+    '"-", "N/A", "TBD", "pending", or blank in verification count as ' +
+    'OUTSTANDING. Do not invent valves. source_page is the 1-based page where ' +
+    'you read the row. Return STRICT JSON, no prose, no markdown:\n' +
+    '{"records":[{"tag_no":"string","required_position":"string",' +
+    '"as_left_position":"string","verification":"string","anomaly":"string",' +
+    '"source_page":number}]}',
+};
+
 export const TABLE_ROW_SCHEMAS: Record<string, TableRowSchema> = {
   su_notification: SCHEMA_SU_NOTIFICATION_OI,
+  lolc: SCHEMA_LOLC_OI16,
 };
 
 const PLACEHOLDER_SUBSTRINGS = [
@@ -90,6 +183,20 @@ export function isRowClosed(
     if (!DATE_TOKEN.test(raw)) return false;
   }
   return true;
+}
+
+/**
+ * Schema-aware close-out. Uses the schema's closed_predicate when set
+ * (Option B), otherwise falls back to the generic closed_field/requires_date
+ * check. Callers (production + eval harness) go through here so behaviour
+ * stays identical across both.
+ */
+export function isRowClosedForSchema(
+  row: Record<string, any>,
+  schema: TableRowSchema,
+): boolean {
+  if (schema.closed_predicate) return schema.closed_predicate(row);
+  return isRowClosed(row, schema.closed_field, { requiresDate: !!schema.requires_date });
 }
 
 function bytesToBase64(bytes: Uint8Array): string {
