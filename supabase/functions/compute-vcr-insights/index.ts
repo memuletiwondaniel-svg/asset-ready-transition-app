@@ -6,6 +6,7 @@ import { PDFDocument } from "npm:pdf-lib@1.17.1";
 import {
   SCHEMA_SU_NOTIFICATION_OI,
   SCHEMA_LOLC_OI16,
+  SCHEMA_AUDIT_ACTIONS_HS06,
   tableRowExtract as sharedTableRowExtract,
   isRowClosed as sharedIsRowClosed,
   isRowClosedForSchema as sharedIsRowClosedForSchema,
