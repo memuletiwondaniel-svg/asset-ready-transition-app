@@ -72,6 +72,17 @@ export interface VCRInsightFact {
   confidence?: 'verified' | 'ai_read' | 'unavailable';
   sourceHref?: string;
 }
+/**
+ * P4-1 (additive): structured next-action shape. Server does not yet emit
+ * this — populated in P4-3 when signal emitters are migrated. Strings
+ * `delivering_action` / `approver_check` remain the source of truth today.
+ */
+export interface NextAction {
+  role: 'delivering' | 'approving';
+  verb: string;
+  href?: string;
+}
+
 export interface VCRInsights {
   state: 'ready' | 'pending' | 'unavailable';
   severity?: 'green' | 'amber' | 'red';
@@ -81,6 +92,7 @@ export interface VCRInsights {
   facts?: VCRInsightFact[];
   delivering_action?: string;
   approver_check?: string;
+  next_actions?: NextAction[];
   sources?: { label: string; href: string }[];
   origin?: 'computed' | 'synthetic';
   computed_at?: string;
