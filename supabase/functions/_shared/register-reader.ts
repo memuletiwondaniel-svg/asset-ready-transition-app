@@ -223,10 +223,87 @@ export const SCHEMA_AUDIT_ACTIONS_HS06: TableRowSchema = {
     '"close_out":"string","overdue":"string","source_page":number}]}',
 };
 
+// ─────────────────────────────────────────────────────────────────────────
+// PUNCHLIST — Construction / Commissioning punchlist register (TI Scope).
+// One row per punch item. A line is CLOSED iff:
+//   • status cell reads closed / complete / cleared / accepted / signed-off,
+//   • closed_by cell carries BOTH a signer name AND a date token,
+//   • no placeholder ("pending", "tbd", "awaiting", …) in closed_by,
+//   • remarks/anomaly cell is empty / none / n/a (any real text = anomaly).
+// Punch category (A / B) does NOT affect the closed predicate — both A and
+// B items are individually signed off; category only drives readiness gates
+// elsewhere.
+// Option B: schema-level closed_predicate is the ONLY authority.
+// ─────────────────────────────────────────────────────────────────────────
+const PUNCH_STATUS_CLOSED = /(^|[^a-z])(closed|complete[d]?|cleared|accepted|signed[\s_-]*off|resolved|actioned)([^a-z]|$)/i;
+const PUNCH_STATUS_OPEN = /(open|in[\s_-]*progress|outstanding|ongoing|deferred|pending|raised)/i;
+
+function punchlistRowClosed(row: Record<string, any>): boolean {
+  const status = String(row?.status ?? "").trim();
+  if (!status) return false;
+  if (PUNCH_STATUS_OPEN.test(status.toLowerCase())) return false;
+  if (!PUNCH_STATUS_CLOSED.test(status)) return false;
+  const closer = String(row?.closed_by ?? "").trim();
+  if (!closer) return false;
+  if (!NAME_TOKEN.test(closer)) return false;
+  if (!DATE_TOKEN.test(closer)) return false;
+  const lower = closer.toLowerCase();
+  for (const p of PLACEHOLDER_SUBSTRINGS) {
+    if (lower.includes(p)) return false;
+  }
+  const remarks = String(row?.remarks ?? "").trim();
+  if (remarks && !ANOMALY_EMPTY.test(remarks)) return false;
+  return true;
+}
+
+export const SCHEMA_PUNCHLIST_TI: TableRowSchema = {
+  schema_key: "punchlist",
+  doc_match: /(punch[\s_-]*list|punch[\s_-]*item|punch[\s_-]*register|outstanding[\s_-]*work|snag[\s_-]*list)/i,
+  row_unit: "table_row",
+  record_key: "item_no",
+  closed_field: "closed_by",
+  closed_predicate: punchlistRowClosed,
+  labels: {
+    docType: "punchlist register",
+    countLabel: "Punch items cleared",
+    countUnit: "items",
+    outstandingLabel: "Open punch items",
+    outstandingItem: "close-out",
+  },
+  record_shape:
+    '{"item_no":"string (punch item id, e.g. P-001)",' +
+    '"description":"string (short punch description)",' +
+    '"category":"string (A / B or empty)",' +
+    '"discipline":"string (Mech / Elec / Instr / Piping / etc., or empty)",' +
+    '"raised_by":"string (raiser name + date, or empty)",' +
+    '"target_close":"string (target date, or empty)",' +
+    '"status":"string (Open / In Progress / Closed / Cleared / Signed-Off / etc.)",' +
+    '"closed_by":"string (closer name + date, or empty if outstanding)",' +
+    '"remarks":"string (any anomaly / remarks, or empty)",' +
+    '"source_page":"integer (1-based page in the PDF)"}',
+  system_prompt:
+    'You are extracting a CONSTRUCTION / COMMISSIONING PUNCHLIST register ' +
+    'from a PDF. Each row is one punch item. Typical columns: ITEM NO, ' +
+    'DESCRIPTION, CATEGORY (A/B), DISCIPLINE, RAISED BY, TARGET CLOSE, ' +
+    'STATUS (Open / In Progress / Closed / Cleared / Signed-Off), CLOSED BY ' +
+    '(closer name + date), and REMARKS. An item counts as CLOSED only when ' +
+    'the status cell reads closed/cleared/signed-off, the closed-by cell has ' +
+    'a real closer name AND date, and no outstanding remark is written. ' +
+    'Placeholders such as "—", "-", "N/A", "TBD", "pending", or blank in ' +
+    'closed-by count as OPEN. Do not invent items. source_page is the ' +
+    '1-based page where you read the row. Return STRICT JSON, no prose, no ' +
+    'markdown:\n' +
+    '{"records":[{"item_no":"string","description":"string",' +
+    '"category":"string","discipline":"string","raised_by":"string",' +
+    '"target_close":"string","status":"string","closed_by":"string",' +
+    '"remarks":"string","source_page":number}]}',
+};
+
 export const TABLE_ROW_SCHEMAS: Record<string, TableRowSchema> = {
   su_notification: SCHEMA_SU_NOTIFICATION_OI,
   lolc: SCHEMA_LOLC_OI16,
   audit_actions: SCHEMA_AUDIT_ACTIONS_HS06,
+  punchlist: SCHEMA_PUNCHLIST_TI,
 };
 
 const PLACEHOLDER_SUBSTRINGS = [
