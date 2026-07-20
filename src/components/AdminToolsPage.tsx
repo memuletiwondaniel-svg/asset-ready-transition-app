@@ -302,6 +302,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
         { id: 'incident-response', title: 'Incident Response', description: 'Severity classification, SLAs', icon: AlertTriangle, gradient: 'from-red-600 to-rose-700', onClick: () => setActiveView('incident-response') },
         { id: 'feature-flags', title: 'Feature Flags', description: 'Per-tenant module toggles', icon: Flag, gradient: 'from-amber-500 to-orange-600', onClick: () => setActiveView('feature-flags') },
         { id: 'deployment-configs', title: 'Deployment Configs', description: 'Docker, CI/CD pipelines', icon: Container, gradient: 'from-cyan-600 to-blue-700', onClick: () => setActiveView('deployment-configs') },
+        { id: 'insight-precision', title: 'Insight Precision', description: 'Signal thumb-up/down feedback', icon: ShieldCheck, gradient: 'from-emerald-500 to-teal-600', onClick: () => setActiveView('insight-precision') },
       ],
     },
     {
