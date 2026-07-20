@@ -556,6 +556,114 @@ export const SIGNAL9_GOLDEN_CASES: WorkflowGoldenCase<Signal9Input>[] = [
   },
 ];
 
+// ─── Signal 3 — Unanswered approver comment ───────────────────────────────
+// Caller pre-resolves party membership. Provide the last-approver-comment
+// timestamp only when it is unanswered by any later delivering-party comment.
+// If null (no such unanswered comment) → no fact. Else amber "N days".
+export interface Signal3Input {
+  unansweredApproverCommentAt: string | Date | null | undefined;
+  now?: Date;
+}
+export function computeSignal3(input: Signal3Input): WorkflowFact[] {
+  const at = input.unansweredApproverCommentAt;
+  if (!at) return [];
+  const now = input.now ?? new Date();
+  const d = daysBetween(at instanceof Date ? at : new Date(at), now);
+  return [{
+    label: "Approver comment awaiting reply",
+    value: `${d} days`,
+    tone: "amber",
+    confidence: "verified",
+  }];
+}
+
+// ─── Signal 5 — Party health (unassigned effective roles) ─────────────────
+// Caller pre-resolves each delivering/approving role_id to
+// { side, roleName, has } via resolve_project_role_user. Emit one red fact
+// per unassigned role, matching legacy value strings exactly.
+export type Signal5Side = "delivering" | "approving";
+export interface Signal5Role {
+  side: Signal5Side;
+  roleName: string | null;
+  has: boolean;
+}
+export interface Signal5Input {
+  roles: Signal5Role[];
+}
+export function computeSignal5(input: Signal5Input): WorkflowFact[] {
+  const out: WorkflowFact[] = [];
+  for (const r of input.roles || []) {
+    if (r.has) continue;
+    const prefix = r.side === "delivering" ? "Delivering" : "Approving";
+    const fallback = r.side === "delivering" ? "Delivering party" : "Approving party";
+    out.push({
+      label: "Unassigned role",
+      value: r.roleName ? `${prefix}: ${r.roleName}` : fallback,
+      tone: "red",
+      confidence: "verified",
+    });
+  }
+  return out;
+}
+
+export const SIGNAL3_GOLDEN_CASES: WorkflowGoldenCase<Signal3Input>[] = [
+  {
+    id: "s3_unanswered_5_days",
+    description: "Unanswered approver comment 5 days ago → amber 5 days",
+    input: { unansweredApproverCommentAt: "2026-01-01T00:00:00Z", now: new Date("2026-01-06T00:00:00Z") },
+    expected: [{ label: "Approver comment awaiting reply", value: "5 days", tone: "amber", confidence: "verified" }],
+  },
+  {
+    id: "s3_none",
+    description: "No unanswered approver comment → no fact",
+    input: { unansweredApproverCommentAt: null, now: new Date("2026-01-06T00:00:00Z") },
+    expected: [],
+  },
+  {
+    id: "s3_same_day",
+    description: "Same-day unanswered comment → amber 0 days",
+    input: { unansweredApproverCommentAt: "2026-01-06T02:00:00Z", now: new Date("2026-01-06T05:00:00Z") },
+    expected: [{ label: "Approver comment awaiting reply", value: "0 days", tone: "amber", confidence: "verified" }],
+  },
+];
+
+export const SIGNAL5_GOLDEN_CASES: WorkflowGoldenCase<Signal5Input>[] = [
+  {
+    id: "s5_no_roles",
+    description: "No unresolved roles → no fact",
+    input: { roles: [{ side: "delivering", roleName: "Author", has: true }] },
+    expected: [],
+  },
+  {
+    id: "s5_delivering_unassigned_named",
+    description: "Delivering role named but unassigned → red 'Delivering: Author'",
+    input: { roles: [{ side: "delivering", roleName: "Snr ORA Engr – Central", has: false }] },
+    expected: [{ label: "Unassigned role", value: "Delivering: Snr ORA Engr – Central", tone: "red", confidence: "verified" }],
+  },
+  {
+    id: "s5_approving_unassigned_null_name",
+    description: "Approving role with null name and unassigned → fallback 'Approving party'",
+    input: { roles: [{ side: "approving", roleName: null, has: false }] },
+    expected: [{ label: "Unassigned role", value: "Approving party", tone: "red", confidence: "verified" }],
+  },
+  {
+    id: "s5_mixed",
+    description: "Mixed: one delivering unassigned, one approving assigned, one approving unassigned",
+    input: {
+      roles: [
+        { side: "delivering", roleName: "LOLC Reviewer", has: false },
+        { side: "approving", roleName: "PAC Signer", has: true },
+        { side: "approving", roleName: "SoF Signer", has: false },
+      ],
+    },
+    expected: [
+      { label: "Unassigned role", value: "Delivering: LOLC Reviewer", tone: "red", confidence: "verified" },
+      { label: "Unassigned role", value: "Approving: SoF Signer", tone: "red", confidence: "verified" },
+    ],
+  },
+];
+
+
 export function factsEqualStrict(a: WorkflowFact[], b: WorkflowFact[]): boolean {
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i++) {
