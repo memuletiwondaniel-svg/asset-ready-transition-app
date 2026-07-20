@@ -113,13 +113,15 @@ const DATE_RE =
 const PLACEHOLDER_SUBSTRINGS = [
   "pending", "tbd", "awaiting", "to follow", "n/a", "not yet", "outstanding", "none",
 ];
+const ANOMALY_EMPTY = /^(|none|n\/?a|nil|no anomaly|no anomalies|-|—|not applicable)$/i;
 
 function isClosedGT(r: Row): boolean {
   const v = (r.verification || "").trim();
   if (!v) return false;
-  if (PLACEHOLDER.test(v)) return false;
   if (!NAME_RE.test(v)) return false;
   if (!DATE_RE.test(v)) return false;
+  const lower = v.toLowerCase();
+  for (const p of PLACEHOLDER_SUBSTRINGS) if (lower.includes(p)) return false;
   const req = (r.required_position || "").trim().toLowerCase();
   const asL = (r.as_left_position || "").trim().toLowerCase();
   if (!asL) return false;
