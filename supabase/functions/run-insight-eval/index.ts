@@ -8,7 +8,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 import {
   TABLE_ROW_SCHEMAS,
   tableRowExtract,
-  isRowClosed,
+  isRowClosedForSchema,
   dedupeByKey,
 } from "../_shared/register-reader.ts";
 import {
@@ -50,16 +50,23 @@ const EVIDENCE_BUCKET = "p2a-attachments";
 const MAX_PDF_BYTES = 15 * 1024 * 1024;
 
 type GroundRecord = {
-  unit: string;
-  acknowledged: string;
-  source_page: number;
-  expected_ack: boolean;
+  /** Extraction key (unit for SU, tag_no for LOLC, …). Legacy fixtures used
+   *  `unit`; new fixtures set `key` OR the schema-specific field directly.  */
+  unit?: string;
+  key?: string;
+  [k: string]: any;
+  source_page?: number;
+  expected_ack?: boolean;   // legacy
+  expected_closed?: boolean; // new
 };
 type GroundTruth = {
   key_field: string;
   total: number;
-  acknowledged_count: number;
-  outstanding_units: string[];
+  /** New key (Phase 3B). Backwards-compat shim also accepts acknowledged_count. */
+  closed_count?: number;
+  acknowledged_count?: number;
+  outstanding_units?: string[];
+  outstanding_keys?: string[];
   records: GroundRecord[];
 };
 
