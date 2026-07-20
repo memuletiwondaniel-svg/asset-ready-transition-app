@@ -100,7 +100,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   const location = useLocation();
 
   // State management - consolidated for cleaner code
-  type AdminView = 'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'integration-hub' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout' | 'brute-force' | 'data-export' | 'audit-retention' | 'disaster-recovery' | 'api-keys' | 'webhook-security' | 'integration-health' | 'user-offboarding' | 'permission-review' | 'deployment-log' | 'feature-flags' | 'security-document' | 'platform-guide' | 'northstar-document' | 'incident-response' | 'deployment-configs' | 'journey-maps' | 'process-flows' | 'document-management' | 'ai-agent-strategy' | 'tenant-setup';
+  type AdminView = 'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'integration-hub' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout' | 'brute-force' | 'data-export' | 'audit-retention' | 'disaster-recovery' | 'api-keys' | 'webhook-security' | 'integration-health' | 'user-offboarding' | 'permission-review' | 'deployment-log' | 'feature-flags' | 'security-document' | 'platform-guide' | 'northstar-document' | 'incident-response' | 'deployment-configs' | 'journey-maps' | 'process-flows' | 'document-management' | 'ai-agent-strategy' | 'tenant-setup' | 'insight-precision';
   const [activeView, setActiveView] = useState<AdminView>(() => {
     const state = location.state as { activeView?: string } | null;
     if (isLegacyAiAgentView(state?.activeView)) {
