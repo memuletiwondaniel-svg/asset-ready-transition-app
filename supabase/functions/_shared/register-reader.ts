@@ -235,7 +235,7 @@ export const SCHEMA_AUDIT_ACTIONS_HS06: TableRowSchema = {
 // elsewhere.
 // Option B: schema-level closed_predicate is the ONLY authority.
 // ─────────────────────────────────────────────────────────────────────────
-const PUNCH_STATUS_CLOSED = /(^|[^a-z])(closed|complete[d]?|cleared|accepted|signed[\s_-]*off|resolved|actioned)([^a-z]|$)/i;
+const PUNCH_STATUS_CLOSED = /(^|[^a-z])(closed|complete[d]?|cleared|accepted|signed[\s_-]*off|resolved|actioned|verified)([^a-z]|$)/i;
 const PUNCH_STATUS_OPEN = /(open|in[\s_-]*progress|outstanding|ongoing|deferred|pending|raised)/i;
 
 function punchlistRowClosed(row: Record<string, any>): boolean {
