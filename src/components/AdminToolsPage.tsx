@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Users, Settings, CheckCircle, Home, Search, X, Activity, Sliders, SlidersHorizontal, Building2, LayoutTemplate, Key, Loader2, Upload, Plug, Shield, FileSearch, Timer, ShieldAlert, Database, Archive, BookOpen, KeyRound, Webhook, HeartPulse, UserMinus, ClipboardCheck, Rocket, Flag, FileText, Compass, AlertTriangle, Container, MapPin, GitBranch, Files, Brain, ChevronDown, Star, FlaskConical, GraduationCap } from 'lucide-react';
+import { Users, Settings, CheckCircle, Home, Search, X, Activity, Sliders, SlidersHorizontal, Building2, LayoutTemplate, Key, Loader2, Upload, Plug, Shield, ShieldCheck, FileSearch, Timer, ShieldAlert, Database, Archive, BookOpen, KeyRound, Webhook, HeartPulse, UserMinus, ClipboardCheck, Rocket, Flag, FileText, Compass, AlertTriangle, Container, MapPin, GitBranch, Files, Brain, ChevronDown, Star, FlaskConical, GraduationCap } from 'lucide-react';
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
@@ -54,6 +54,7 @@ const CustomerJourneyMaps = lazy(() => import("./admin-tools/CustomerJourneyMaps
 const ProcessFlowMaps = lazy(() => import("./admin-tools/ProcessFlowMaps"));
 const DocumentManagementSystem = lazy(() => import("./admin-tools/DocumentManagementSystem"));
 const AIAgentStrategyDocument = lazy(() => import("./admin-tools/AIAgentStrategyDocument"));
+const InsightPrecisionCard = lazy(() => import("./admin-tools/InsightPrecisionCard"));
 
 
 const TenantSetupWizardLazy = lazy(() => import("./tenant-setup/TenantSetupWizard").then(m => ({ default: m.TenantSetupWizard })));
@@ -99,7 +100,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   const location = useLocation();
 
   // State management - consolidated for cleaner code
-  type AdminView = 'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'integration-hub' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout' | 'brute-force' | 'data-export' | 'audit-retention' | 'disaster-recovery' | 'api-keys' | 'webhook-security' | 'integration-health' | 'user-offboarding' | 'permission-review' | 'deployment-log' | 'feature-flags' | 'security-document' | 'platform-guide' | 'northstar-document' | 'incident-response' | 'deployment-configs' | 'journey-maps' | 'process-flows' | 'document-management' | 'ai-agent-strategy' | 'tenant-setup';
+  type AdminView = 'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'integration-hub' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout' | 'brute-force' | 'data-export' | 'audit-retention' | 'disaster-recovery' | 'api-keys' | 'webhook-security' | 'integration-health' | 'user-offboarding' | 'permission-review' | 'deployment-log' | 'feature-flags' | 'security-document' | 'platform-guide' | 'northstar-document' | 'incident-response' | 'deployment-configs' | 'journey-maps' | 'process-flows' | 'document-management' | 'ai-agent-strategy' | 'tenant-setup' | 'insight-precision';
   const [activeView, setActiveView] = useState<AdminView>(() => {
     const state = location.state as { activeView?: string } | null;
     if (isLegacyAiAgentView(state?.activeView)) {
@@ -301,6 +302,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
         { id: 'incident-response', title: 'Incident Response', description: 'Severity classification, SLAs', icon: AlertTriangle, gradient: 'from-red-600 to-rose-700', onClick: () => setActiveView('incident-response') },
         { id: 'feature-flags', title: 'Feature Flags', description: 'Per-tenant module toggles', icon: Flag, gradient: 'from-amber-500 to-orange-600', onClick: () => setActiveView('feature-flags') },
         { id: 'deployment-configs', title: 'Deployment Configs', description: 'Docker, CI/CD pipelines', icon: Container, gradient: 'from-cyan-600 to-blue-700', onClick: () => setActiveView('deployment-configs') },
+        { id: 'insight-precision', title: 'Insight Precision', description: 'Signal thumb-up/down feedback', icon: ShieldCheck, gradient: 'from-emerald-500 to-teal-600', onClick: () => setActiveView('insight-precision') },
       ],
     },
     {
@@ -616,6 +618,14 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
         </Suspense>
       </div>;
   }
+  if (activeView === 'insight-precision') {
+    return <div className="flex-1 overflow-y-auto animate-fade-in">
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <InsightPrecisionCard onBack={() => setActiveView('dashboard')} />
+        </Suspense>
+      </div>;
+  }
+  
   
   // Show skeleton while initial data is loading
   if (isInitialLoading) {
