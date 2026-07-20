@@ -618,6 +618,14 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
         </Suspense>
       </div>;
   }
+  if (activeView === 'insight-precision') {
+    return <div className="flex-1 overflow-y-auto animate-fade-in">
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <InsightPrecisionCard onBack={() => setActiveView('dashboard')} />
+        </Suspense>
+      </div>;
+  }
+  
   
   // Show skeleton while initial data is loading
   if (isInitialLoading) {
