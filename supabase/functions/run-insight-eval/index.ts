@@ -141,7 +141,9 @@ Deno.serve(async (req) => {
   > = {
     vcr_workflow_signal_1: { cases: SIGNAL1_GOLDEN_CASES, run: computeSignal1 },
     vcr_workflow_signal_2: { cases: SIGNAL2_GOLDEN_CASES, run: computeSignal2 },
+    vcr_workflow_signal_3: { cases: SIGNAL3_GOLDEN_CASES, run: computeSignal3 },
     vcr_workflow_signal_4: { cases: SIGNAL4_GOLDEN_CASES, run: computeSignal4 },
+    vcr_workflow_signal_5: { cases: SIGNAL5_GOLDEN_CASES, run: computeSignal5 },
     vcr_workflow_signal_6: { cases: SIGNAL6_GOLDEN_CASES, run: computeSignal6 },
     vcr_workflow_signal_8: { cases: SIGNAL8_GOLDEN_CASES, run: computeSignal8 },
     vcr_workflow_signal_9: { cases: SIGNAL9_GOLDEN_CASES, run: computeSignal9 },
