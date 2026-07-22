@@ -962,7 +962,19 @@ async function selmaRevisionPass(sb: any, item: any): Promise<Fact[]> {
     }
 
     if (!d) {
-      facts.push({ label: `Doc: ${a.file_name}`, value: "Not tracked in DMS", confidence: "unavailable" });
+      // Phase D — honest gap. Only speak up when currency truly cannot be
+      // determined: no dms_external_sync row AND no local assai_rev captured
+      // on the evidence row. Neutral fact — no tone, no severity — so it
+      // renders as a plain informational line, not a red/amber signal.
+      if (((a as any).assai_rev || "").toString().trim()) {
+        // Row carries its own rev — silent, we know something.
+        continue;
+      }
+      facts.push({
+        label: `Doc: ${a.file_name}`,
+        value: "Revision currency not tracked",
+        confidence: "unavailable",
+      });
       continue;
     }
     const isCurrent = (d.metadata as any)?.is_current_revision !== false;
@@ -1789,6 +1801,21 @@ serve(async (req) => {
       .map(([k, v]) => `${k}:${v}`)
       .join("|");
 
+    // Phase D — dms_external_sync fingerprint. When Assai wiring lands and
+    // starts populating revision rows, this makes the E4 currency_check
+    // agent's cache invalidate the moment a doc's revision changes.
+    let dmsFingerprint = "";
+    try {
+      const { data: dmsRows } = await sb
+        .from("dms_external_sync")
+        .select("document_number, revision, last_synced_at, updated_at")
+        .order("updated_at", { ascending: false })
+        .limit(500);
+      dmsFingerprint = (dmsRows || [])
+        .map((r: any) => `${r.document_number}:${r.revision || ""}:${r.last_synced_at || r.updated_at || ""}`)
+        .join("|");
+    } catch (_e) { /* dms table optional — silent gap */ }
+
     const hashInput = JSON.stringify({
       configVersion,
       templateVersion,
@@ -1802,6 +1829,7 @@ serve(async (req) => {
       evidenceFingerprint,
       prereqStatus,
       readerStatusFingerprint,
+      dmsFingerprint,
     });
 
     const inputsHash = await sha(hashInput);

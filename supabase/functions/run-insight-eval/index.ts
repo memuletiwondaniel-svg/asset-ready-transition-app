@@ -17,6 +17,11 @@ import {
   SIGNAL7_GOLDEN_CASES,
 } from "../_shared/signal7.ts";
 import {
+  computeE1PromotionVerdict,
+  e1FactsEqual,
+  E1_PROMOTION_GOLDEN_CASES,
+} from "../_shared/evidence-promotion.ts";
+import {
   computeSignal1,
   computeSignal2,
   computeSignal3,
@@ -140,6 +145,49 @@ Deno.serve(async (req) => {
     }, null, 2), { headers: { ...cors, "Content-Type": "application/json" } });
   }
 
+  // ── vcr_evidence_promotion_v1: pure-function eval, in-memory golden
+  // cases proving lifecycle-promoted evidence rows produce the correct E1
+  // verdict (silent when promoted+confirmed satisfies requirements,
+  // amber gap when promoted rows are soft-hidden / absent).
+  if (schemaKey === "vcr_evidence_promotion_v1") {
+    const sb = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+    const perCase = E1_PROMOTION_GOLDEN_CASES.map((gc) => {
+      const actual = computeE1PromotionVerdict(
+        gc.input.evidenceRows, gc.input.requiredLabelCount,
+      );
+      return {
+        case_id: gc.id,
+        description: gc.description,
+        expected: gc.expected,
+        actual,
+        pass: e1FactsEqual(actual, gc.expected),
+      };
+    });
+    const passedCount = perCase.filter((c) => c.pass).length;
+    const allPass = passedCount === perCase.length;
+    const aggregate = {
+      cases: perCase.length,
+      passed: passedCount,
+      all_pass: allPass,
+      gate: { all_pass: true },
+      ran_at: new Date().toISOString(),
+    };
+    await sb.from("insight_schema_status").upsert({
+      schema_key: "vcr_evidence_promotion_v1",
+      eval_status: allPass ? "passed" : "unproven",
+      aggregate,
+      updated_at: new Date().toISOString(),
+    });
+    return new Response(JSON.stringify({
+      schema_key: schemaKey,
+      eval_status: allPass ? "passed" : "unproven",
+      aggregate,
+      cases: perCase,
+    }, null, 2), { headers: { ...cors, "Content-Type": "application/json" } });
+  }
 
   // ── Generic pure workflow-signal branch (S1/S2/S4/S10 …)
   const WORKFLOW_RUNNERS: Record<
