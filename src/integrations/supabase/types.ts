@@ -8827,6 +8827,7 @@ export type Database = {
           file_path: string
           file_size: number | null
           id: string
+          promoted_evidence_id: string | null
           updated_at: string
           uploaded_by: string | null
         }
@@ -8840,6 +8841,7 @@ export type Database = {
           file_path: string
           file_size?: number | null
           id?: string
+          promoted_evidence_id?: string | null
           updated_at?: string
           uploaded_by?: string | null
         }
@@ -8853,6 +8855,7 @@ export type Database = {
           file_path?: string
           file_size?: number | null
           id?: string
+          promoted_evidence_id?: string | null
           updated_at?: string
           uploaded_by?: string | null
         }
@@ -8869,6 +8872,13 @@ export type Database = {
             columns: ["deliverable_id"]
             isOneToOne: false
             referencedRelation: "p2a_vcr_maintenance_deliverables"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_maint_attachments_promoted_evidence_id_fkey"
+            columns: ["promoted_evidence_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_vcr_evidence"
             referencedColumns: ["id"]
           },
           {
@@ -9483,6 +9493,7 @@ export type Database = {
           linked_approver_id: string | null
           mime_type: string | null
           procedure_id: string
+          promoted_evidence_id: string | null
           updated_at: string
           uploaded_by: string | null
         }
@@ -9496,6 +9507,7 @@ export type Database = {
           linked_approver_id?: string | null
           mime_type?: string | null
           procedure_id: string
+          promoted_evidence_id?: string | null
           updated_at?: string
           uploaded_by?: string | null
         }
@@ -9509,6 +9521,7 @@ export type Database = {
           linked_approver_id?: string | null
           mime_type?: string | null
           procedure_id?: string
+          promoted_evidence_id?: string | null
           updated_at?: string
           uploaded_by?: string | null
         }
@@ -9533,6 +9546,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_procedure_workflow_state"
             referencedColumns: ["procedure_id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_procedure_attachments_promoted_evidence_id_fkey"
+            columns: ["promoted_evidence_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_vcr_evidence"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "p2a_vcr_procedure_attachments_uploaded_by_fkey"
@@ -9832,6 +9852,7 @@ export type Database = {
           file_path: string
           file_size: number | null
           id: string
+          promoted_evidence_id: string | null
           register_id: string
           updated_at: string
           uploaded_by: string | null
@@ -9844,6 +9865,7 @@ export type Database = {
           file_path: string
           file_size?: number | null
           id?: string
+          promoted_evidence_id?: string | null
           register_id: string
           updated_at?: string
           uploaded_by?: string | null
@@ -9856,11 +9878,19 @@ export type Database = {
           file_path?: string
           file_size?: number | null
           id?: string
+          promoted_evidence_id?: string | null
           register_id?: string
           updated_at?: string
           uploaded_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "p2a_vcr_register_attachments_promoted_evidence_id_fkey"
+            columns: ["promoted_evidence_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_vcr_evidence"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "p2a_vcr_register_attachments_register_id_fkey"
             columns: ["register_id"]
@@ -10403,6 +10433,7 @@ export type Database = {
           id: string
           kind: string
           linked_reviewer_id: string | null
+          promoted_evidence_id: string | null
           training_id: string
           uploaded_at: string
           uploaded_by: string | null
@@ -10416,6 +10447,7 @@ export type Database = {
           id?: string
           kind: string
           linked_reviewer_id?: string | null
+          promoted_evidence_id?: string | null
           training_id: string
           uploaded_at?: string
           uploaded_by?: string | null
@@ -10429,6 +10461,7 @@ export type Database = {
           id?: string
           kind?: string
           linked_reviewer_id?: string | null
+          promoted_evidence_id?: string | null
           training_id?: string
           uploaded_at?: string
           uploaded_by?: string | null
@@ -10439,6 +10472,13 @@ export type Database = {
             columns: ["linked_reviewer_id"]
             isOneToOne: false
             referencedRelation: "p2a_vcr_training_reviewers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_training_attachments_promoted_evidence_id_fkey"
+            columns: ["promoted_evidence_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_vcr_evidence"
             referencedColumns: ["id"]
           },
           {
@@ -17955,6 +17995,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      find_oi_prereq: {
+        Args: { p_handover_point_id: string; p_topic: string }
+        Returns: string
+      }
       flag_stale_accounts: {
         Args: { days_threshold?: number }
         Returns: number
@@ -18236,6 +18280,15 @@ export type Database = {
       orp_plan_is_approved: { Args: { _plan_id: string }; Returns: boolean }
       p2a_plan_is_approved: { Args: { _plan_id: string }; Returns: boolean }
       project_is_test: { Args: { _project_id: string }; Returns: boolean }
+      promote_attachment_to_evidence: {
+        Args: {
+          p_attachment_id: string
+          p_evidence_kind: Database["public"]["Enums"]["p2a_evidence_kind"]
+          p_kind: string
+          p_prerequisite_id: string
+        }
+        Returns: string
+      }
       purge_old_audit_logs: {
         Args: { retention_days_param?: number }
         Returns: number
