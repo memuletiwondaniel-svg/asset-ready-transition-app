@@ -10,8 +10,6 @@ export interface P2AHandoverPrerequisite {
   handover_id: string;
   pac_prerequisite_id: string;
   status: PrerequisiteStatus;
-  /** @deprecated INT-1 Phase A — retired; p2a_vcr_evidence is the single source of truth. */
-  evidence_links?: string[] | null;
   comments: string | null;
   receiving_party_user_id: string | null;
   deviation_reason: string | null;
