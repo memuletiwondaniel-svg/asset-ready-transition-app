@@ -1,0 +1,1 @@
+ALTER TABLE public.p2a_vcr_evidence DROP CONSTRAINT IF EXISTS p2a_vcr_evidence_source_check;

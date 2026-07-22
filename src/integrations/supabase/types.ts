@@ -8551,13 +8551,14 @@ export type Database = {
           confirmed_by: string | null
           created_at: string
           description: string | null
+          evidence_kind: Database["public"]["Enums"]["p2a_evidence_kind"]
           evidence_type: string | null
           file_name: string
           file_path: string
           file_size: number | null
           file_type: string | null
           id: string
-          source: string
+          source: Database["public"]["Enums"]["p2a_evidence_source"]
           uploaded_by: string | null
           vcr_prerequisite_id: string
         }
@@ -8569,13 +8570,14 @@ export type Database = {
           confirmed_by?: string | null
           created_at?: string
           description?: string | null
+          evidence_kind?: Database["public"]["Enums"]["p2a_evidence_kind"]
           evidence_type?: string | null
           file_name: string
           file_path: string
           file_size?: number | null
           file_type?: string | null
           id?: string
-          source?: string
+          source?: Database["public"]["Enums"]["p2a_evidence_source"]
           uploaded_by?: string | null
           vcr_prerequisite_id: string
         }
@@ -8587,13 +8589,14 @@ export type Database = {
           confirmed_by?: string | null
           created_at?: string
           description?: string | null
+          evidence_kind?: Database["public"]["Enums"]["p2a_evidence_kind"]
           evidence_type?: string | null
           file_name?: string
           file_path?: string
           file_size?: number | null
           file_type?: string | null
           id?: string
-          source?: string
+          source?: Database["public"]["Enums"]["p2a_evidence_source"]
           uploaded_by?: string | null
           vcr_prerequisite_id?: string
         }
@@ -17899,6 +17902,10 @@ export type Database = {
         Args: { plan_id: string; user_id: string }
         Returns: boolean
       }
+      classify_evidence_kind: {
+        Args: { p_evidence_type: string; p_file_name: string; p_source: string }
+        Returns: Database["public"]["Enums"]["p2a_evidence_kind"]
+      }
       cleanup_expired_password_reset_tokens: { Args: never; Returns: number }
       cleanup_old_api_request_logs: { Args: never; Returns: number }
       cms_recalc_competency_progress: {
@@ -18542,6 +18549,24 @@ export type Database = {
         | "BEHIND_SCHEDULE"
         | "COMPLETED"
         | "NOT_APPLICABLE"
+      p2a_evidence_kind:
+        | "red_line_markup"
+        | "signed_procedure"
+        | "attendance_list"
+        | "punchlist_register"
+        | "lolc_register"
+        | "audit_actions_register"
+        | "qualification_letter"
+        | "assai_document"
+        | "other"
+      p2a_evidence_source:
+        | "manual"
+        | "uploaded"
+        | "assai"
+        | "promoted_procedure"
+        | "promoted_training"
+        | "promoted_register"
+        | "promoted_maintenance"
       p2a_handover_point_status: "PENDING" | "IN_PROGRESS" | "READY" | "SIGNED"
       p2a_itr_discipline: "INS" | "ELE" | "MEC" | "PIP" | "CIV"
       p2a_itr_phase: "A" | "B"
@@ -18958,6 +18983,26 @@ export const Constants = {
         "BEHIND_SCHEDULE",
         "COMPLETED",
         "NOT_APPLICABLE",
+      ],
+      p2a_evidence_kind: [
+        "red_line_markup",
+        "signed_procedure",
+        "attendance_list",
+        "punchlist_register",
+        "lolc_register",
+        "audit_actions_register",
+        "qualification_letter",
+        "assai_document",
+        "other",
+      ],
+      p2a_evidence_source: [
+        "manual",
+        "uploaded",
+        "assai",
+        "promoted_procedure",
+        "promoted_training",
+        "promoted_register",
+        "promoted_maintenance",
       ],
       p2a_handover_point_status: ["PENDING", "IN_PROGRESS", "READY", "SIGNED"],
       p2a_itr_discipline: ["INS", "ELE", "MEC", "PIP", "CIV"],
