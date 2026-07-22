@@ -89,6 +89,7 @@ Deno.serve(async (req) => {
     uploaded_by: UPLOADED_BY,
     evidence_type: "SU Notification email",
     source: "manual",
+    evidence_kind: "other",
     confirmed: true,
   }).select("id").maybeSingle();
 
