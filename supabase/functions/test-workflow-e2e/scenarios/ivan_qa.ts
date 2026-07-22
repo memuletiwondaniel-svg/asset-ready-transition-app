@@ -138,6 +138,8 @@ async function ensureSeed(
       file_path: fixturePath,
       file_type: "application/pdf",
       evidence_type: "HEMP/HAZOP Action Register Close-Out",
+      evidence_kind: "lolc_register",
+      source: "manual",
       uploaded_by: sr.id,
     }).select("id").single();
   if (evErr) throw new Error(`ensureSeed evidence: ${evErr.message}`);
@@ -418,6 +420,8 @@ const runI6: Scenario["run"] = async (ctx) => {
       file_path: `test-fixtures/extra-${ctx.runId}.txt`,
       file_type: "text/plain",
       evidence_type: "Other",
+      evidence_kind: "other",
+      source: "manual",
       uploaded_by: ctx.users["Snr ORA Engr"].id,
     }).select("id").single();
     // 3rd compute (force=false → fingerprint changed, should NOT be a cache hit)

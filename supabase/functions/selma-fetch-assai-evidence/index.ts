@@ -213,6 +213,7 @@ serve(async (req) => {
         file_size: fileBytes.length,
         file_type: "application/pdf",
         evidence_type: "Register",
+        evidence_kind: "assai_document",
         uploaded_by: userId,
         source: "assai",
         assai_doc_no: docNumber,
