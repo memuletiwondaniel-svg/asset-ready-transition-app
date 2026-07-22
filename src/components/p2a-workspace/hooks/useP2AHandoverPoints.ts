@@ -541,7 +541,7 @@ export const useP2AHandoverPoints = (handoverPlanId: string) => {
             delivering_party_name: p.delivering_party_name,
             receiving_party_id: p.receiving_party_id,
             receiving_party_name: p.receiving_party_name,
-            evidence_links: p.evidence_links,
+            // INT-1 Phase A — evidence_links denorm dropped; p2a_vcr_evidence is the single source of truth.
             comments: p.comments,
             display_order: idx,
             // E-1a: carry catalog FK so R23 reads approving roles from vcr_items.
