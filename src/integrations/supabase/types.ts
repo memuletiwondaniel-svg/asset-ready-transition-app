@@ -7128,7 +7128,6 @@ export type Database = {
           completed_by: string | null
           created_at: string | null
           deviation_reason: string | null
-          evidence_links: string[] | null
           follow_up_action: string | null
           handover_id: string
           id: string
@@ -7145,7 +7144,6 @@ export type Database = {
           completed_by?: string | null
           created_at?: string | null
           deviation_reason?: string | null
-          evidence_links?: string[] | null
           follow_up_action?: string | null
           handover_id: string
           id?: string
@@ -7162,7 +7160,6 @@ export type Database = {
           completed_by?: string | null
           created_at?: string | null
           deviation_reason?: string | null
-          evidence_links?: string[] | null
           follow_up_action?: string | null
           handover_id?: string
           id?: string
