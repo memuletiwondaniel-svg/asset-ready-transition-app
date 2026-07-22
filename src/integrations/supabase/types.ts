@@ -9247,7 +9247,6 @@ export type Database = {
           delivering_party_name: string | null
           description: string | null
           display_order: number
-          evidence_links: Json | null
           handover_point_id: string
           id: string
           pac_prerequisite_id: string | null
@@ -9269,7 +9268,6 @@ export type Database = {
           delivering_party_name?: string | null
           description?: string | null
           display_order?: number
-          evidence_links?: Json | null
           handover_point_id: string
           id?: string
           pac_prerequisite_id?: string | null
@@ -9291,7 +9289,6 @@ export type Database = {
           delivering_party_name?: string | null
           description?: string | null
           display_order?: number
-          evidence_links?: Json | null
           handover_point_id?: string
           id?: string
           pac_prerequisite_id?: string | null
