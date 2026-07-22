@@ -13,7 +13,7 @@ export interface VCRPrerequisite {
   delivering_party_name?: string;
   receiving_party_id?: string;
   receiving_party_name?: string;
-  evidence_links?: any[];
+  // INT-1 Phase A: evidence_links denorm retired — p2a_vcr_evidence is the single source of truth.
   comments?: string;
   display_order: number;
   submitted_at?: string;
