@@ -148,70 +148,26 @@ export function useP2AHandoverPrerequisites(handoverId: string | null) {
     }
   });
 
-  // Add evidence link
+  // INT-1 Phase A — evidence_links denorm retired.
+  // Legacy addEvidenceLink / removeEvidenceLink mutations formerly wrote to
+  // p2a_handover_prerequisites.evidence_links. That path is dead (0 rows across
+  // all projects) and p2a_vcr_evidence is now the single source of truth for
+  // VCR item evidence. These stubs remain as no-ops for callsite compatibility
+  // and warn loudly if invoked so any live callers surface immediately.
   const addEvidenceLink = useMutation({
-    mutationFn: async ({ id, link }: { id: string; link: string }) => {
-      // First get current links
-      const { data: current, error: fetchError } = await supabase
-        .from('p2a_handover_prerequisites')
-        .select('evidence_links')
-        .eq('id', id)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      const currentLinks = current.evidence_links || [];
-      const newLinks = [...currentLinks, link];
-
-      const { data, error } = await supabase
-        .from('p2a_handover_prerequisites')
-        .update({ evidence_links: newLinks })
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+    mutationFn: async (_args: { id: string; link: string }) => {
+      console.warn('[useP2AHandoverPrerequisites] addEvidenceLink is retired (INT-1 Phase A). Use p2a_vcr_evidence.');
+      return null;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['p2a-handover-prerequisites', handoverId] });
-    },
-    onError: (error: Error) => {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
-    }
   });
 
-  // Remove evidence link
   const removeEvidenceLink = useMutation({
-    mutationFn: async ({ id, link }: { id: string; link: string }) => {
-      const { data: current, error: fetchError } = await supabase
-        .from('p2a_handover_prerequisites')
-        .select('evidence_links')
-        .eq('id', id)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      const currentLinks = current.evidence_links || [];
-      const newLinks = currentLinks.filter((l: string) => l !== link);
-
-      const { data, error } = await supabase
-        .from('p2a_handover_prerequisites')
-        .update({ evidence_links: newLinks })
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+    mutationFn: async (_args: { id: string; link: string }) => {
+      console.warn('[useP2AHandoverPrerequisites] removeEvidenceLink is retired (INT-1 Phase A). Use p2a_vcr_evidence.');
+      return null;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['p2a-handover-prerequisites', handoverId] });
-    },
-    onError: (error: Error) => {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
-    }
   });
+
 
   // Update receiving party
   const updateReceivingParty = useMutation({
