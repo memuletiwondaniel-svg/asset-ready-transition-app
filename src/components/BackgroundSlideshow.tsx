@@ -278,6 +278,7 @@ interface KenBurnsImageProps {
   to: string;
   motionMs: number;
   style: React.CSSProperties;
+  flipX?: boolean;
 }
 
 /**
@@ -293,15 +294,17 @@ const KenBurnsImage: React.FC<KenBurnsImageProps> = ({
   to,
   motionMs,
   style,
+  flipX,
 }) => {
-  const [transform, setTransform] = useState(from);
+  const prefix = flipX ? 'scaleX(-1) ' : '';
+  const [transform, setTransform] = useState(prefix + from);
   useEffect(() => {
     if (motionMs === 0) return;
     const id = requestAnimationFrame(() => {
-      requestAnimationFrame(() => setTransform(to));
+      requestAnimationFrame(() => setTransform(prefix + to));
     });
     return () => cancelAnimationFrame(id);
-  }, [to, motionMs]);
+  }, [to, motionMs, prefix]);
   return (
     <img
       src={url}
