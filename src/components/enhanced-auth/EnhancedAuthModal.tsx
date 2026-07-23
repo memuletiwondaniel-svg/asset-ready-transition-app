@@ -11,6 +11,8 @@ import { useTenantContext } from '@/contexts/TenantContext';
 import { useTenantSSOConfigPublic } from '@/hooks/useTenantSSOConfig';
 import EnhancedRegistrationForm from '@/components/user-management/EnhancedRegistrationForm';
 import OrshLogo from '@/components/ui/OrshLogo';
+import gulfGasLogo from '@/assets/gulf-gas-company-logo.png';
+import { ArrowRight } from 'lucide-react';
 
 interface EnhancedAuthModalProps {
   isOpen: boolean;
@@ -30,7 +32,7 @@ const inputCls =
   "pl-10 h-11 text-sm rounded-[10px] border border-[#e6e4de] bg-[#fafaf8] text-gray-900 placeholder:text-gray-400 focus-visible:border-[#2563eb] focus-visible:ring-0 focus-visible:shadow-[0_0_0_3px_rgba(37,99,235,0.12)] transition-all";
 
 const ssoBtnCls =
-  "w-full h-11 text-sm font-medium rounded-[10px] bg-white border border-[#e6e4de] text-gray-800 shadow-none transition-all duration-150 ease-out hover:bg-[#f5f4f0] hover:border-[#d8d6cf] hover:shadow-[0_2px_8px_rgba(0,0,0,0.08)] hover:-translate-y-px hover:scale-100 active:translate-y-0 active:shadow-none active:scale-100";
+  "w-full h-11 text-sm font-medium rounded-[10px] bg-white border border-[#e6e4de] text-gray-800 shadow-none transition-all duration-150 ease-out hover:bg-[#f7f8fa] hover:border-[#c7ccd2] hover:shadow-[0_4px_10px_rgba(0,0,0,0.06)] hover:-translate-y-px active:translate-y-0 active:shadow-none";
 
 const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   isOpen,
@@ -122,12 +124,12 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
         
         <div className="absolute inset-0 z-[5]" onClick={onClose} aria-hidden="true" />
         
-        <div className="w-screen h-screen flex items-center justify-center p-4 relative z-10 pointer-events-none">
-          <div className="w-full max-w-sm relative z-10 pointer-events-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="rounded-[18px] shadow-[0_12px_40px_rgba(0,0,0,0.16)] p-8 relative overflow-hidden bg-white supports-[backdrop-filter]:bg-white/[0.93] supports-[backdrop-filter]:backdrop-blur-[12px] [-webkit-backdrop-filter:blur(12px)]">
+        <div className="w-screen h-screen flex items-center justify-start p-4 md:pl-[6vw] lg:pl-[8vw] relative z-10 pointer-events-none">
+          <div className="w-full max-w-[360px] relative z-10 pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="rounded-[16px] shadow-[0_12px_40px_rgba(0,0,0,0.18)] p-8 relative overflow-hidden bg-white supports-[backdrop-filter]:bg-white/[0.96] supports-[backdrop-filter]:backdrop-blur-[12px] [-webkit-backdrop-filter:blur(12px)]">
 
               <div className="relative z-10">
-                {/* Header */}
+                {/* Header — logo centered + single muted welcome line */}
                 <div className="text-center mb-6">
                   <div className="flex justify-center mb-3">
                     {subdomainTenant?.logo_url ? (
@@ -136,12 +138,13 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                       <OrshLogo className="h-12 w-auto text-gray-900" />
                     )}
                   </div>
-                  {subdomainTenant && (
-                    <p className="text-xs font-medium text-[#2563eb] mb-1">{subdomainTenant.name}</p>
+                  {activeTab === 'reset' ? (
+                    <p className="text-gray-500 text-[13px]">Reset your password</p>
+                  ) : (
+                    <p className="whitespace-nowrap" style={{ color: '#9aa0a8', fontSize: '12.5px' }}>
+                      Welcome back — access your ORSH workspace.
+                    </p>
                   )}
-                  <p className="text-gray-500 text-[13px]">
-                    {activeTab === 'reset' ? 'Reset your password' : 'Sign in to your ORSH account'}
-                  </p>
                 </div>
 
                 {/* Tenant mismatch warning */}
@@ -222,27 +225,27 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                         </div>
                       ) : (
                         <div className="space-y-2">
-                          <Button 
-                            onClick={() => handleSSO('azure')} 
-                            disabled={loading} 
+                          <Button
+                            onClick={() => handleSSO('azure')}
+                            disabled={loading}
+                            variant="outline"
+                            className={ssoBtnCls}
+                          >
+                            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (
+                              <img src={gulfGasLogo} alt="" aria-hidden className="w-5 h-5 mr-2 object-contain" />
+                            )}
+                            Continue with Gulf Gas
+                          </Button>
+                          <Button
+                            onClick={() => handleSSO('google')}
+                            disabled={loading}
                             variant="outline"
                             className={ssoBtnCls}
                           >
                             {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (
                               <Shield className="w-5 h-5 mr-2 text-gray-500" />
                             )}
-                            Continue with Gulf Gas Company
-                          </Button>
-                          <Button 
-                            onClick={() => handleSSO('google')} 
-                            disabled={loading} 
-                            variant="outline"
-                            className={ssoBtnCls}
-                          >
-                            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (
-                              <img src="/lovable-uploads/dc6cee89-84f7-416a-b996-ec5cbb00d683.png" alt="Kent Logo" className="w-5 h-5 mr-2" />
-                            )}
-                            Continue with Kent
+                            Continue with EPCM
                           </Button>
                         </div>
                       )}
@@ -262,7 +265,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
 
                       <form onSubmit={handleSignIn} className="space-y-4">
                         <div className="space-y-1.5">
-                          <Label htmlFor="signin-email" className="text-sm font-medium text-gray-700">Email</Label>
+                          <Label htmlFor="signin-email" className="uppercase tracking-wider" style={{ color: '#aab0b8', fontSize: '11px', fontWeight: 500 }}>Email</Label>
                           <div className="relative">
                             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <Input
@@ -281,7 +284,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                         </div>
 
                         <div className="space-y-1.5">
-                          <Label htmlFor="signin-password" className="text-sm font-medium text-gray-700">Password</Label>
+                          <Label htmlFor="signin-password" className="uppercase tracking-wider" style={{ color: '#aab0b8', fontSize: '11px', fontWeight: 500 }}>Password</Label>
                           <div className="relative">
                             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <Input
@@ -328,10 +331,15 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
 
                         <Button
                           type="submit"
-                          className="w-full h-[46px] text-sm font-medium rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] text-white transition-colors disabled:opacity-100 disabled:bg-[#2563eb]/40 disabled:hover:bg-[#2563eb]/40 disabled:cursor-not-allowed"
+                          className="group w-full h-[46px] text-sm font-medium rounded-[10px] bg-[#0c0f16] hover:bg-[#0c0f16] text-white shadow-lg hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-150 ease-out disabled:opacity-100 disabled:bg-[#0c0f16]/40 disabled:hover:bg-[#0c0f16]/40 disabled:cursor-not-allowed disabled:shadow-lg disabled:translate-y-0"
                           disabled={loading || !signInData.email.trim() || !signInData.password}
                         >
-                          {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Signing in...</> : 'Sign In'}
+                          {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Signing in...</> : (
+                            <span className="inline-flex items-center justify-center gap-2">
+                              Sign in
+                              <ArrowRight className="h-4 w-4 transition-transform duration-150 ease-out group-hover:translate-x-[3px]" />
+                            </span>
+                          )}
                         </Button>
                       </form>
 
