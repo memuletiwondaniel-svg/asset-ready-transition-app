@@ -190,7 +190,7 @@ const Index = () => {
               >
                 <button
                   onClick={() => setShowAuth(true)}
-                  className="group inline-flex items-center gap-2 font-semibold px-7 py-4 text-[15px] shadow-lg hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+                  className="group inline-flex items-center gap-2 font-semibold shadow-lg hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 px-5 py-2.5 text-[13px] min-h-[40px] md:px-5 md:py-2.5 md:text-[13px] md:min-h-[40px] max-md:px-7 max-md:py-3.5 max-md:text-[16px] max-md:min-h-[48px]"
                   style={{
                     backgroundColor: "#ffffff",
                     color: "#0c0f16",
@@ -228,6 +228,15 @@ const Index = () => {
               "linear-gradient(180deg, rgba(7,12,18,0) 0%, rgba(7,12,18,0.55) 100%)",
           }}
         >
+          {/* Left-anchored top hairline — fades out by ~48% width so it never streaks over the photo */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute top-0 left-0 right-0 h-px"
+            style={{
+              background:
+                "linear-gradient(90deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.18) 20%, rgba(255,255,255,0.10) 38%, rgba(255,255,255,0) 50%)",
+            }}
+          />
           <div className="max-w-[1400px] mx-auto px-6 md:px-10 pb-3">
             <ul className="flex flex-nowrap overflow-x-auto md:overflow-visible items-stretch">
               {MODULES.map((m, i) => {
