@@ -11,6 +11,8 @@ import { useTenantContext } from '@/contexts/TenantContext';
 import { useTenantSSOConfigPublic } from '@/hooks/useTenantSSOConfig';
 import EnhancedRegistrationForm from '@/components/user-management/EnhancedRegistrationForm';
 import OrshLogo from '@/components/ui/OrshLogo';
+import gulfGasLogo from '@/assets/gulf-gas-company-logo.png';
+import { ArrowRight } from 'lucide-react';
 
 interface EnhancedAuthModalProps {
   isOpen: boolean;
