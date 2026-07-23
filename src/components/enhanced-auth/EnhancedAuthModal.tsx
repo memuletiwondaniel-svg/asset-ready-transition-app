@@ -225,27 +225,27 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                         </div>
                       ) : (
                         <div className="space-y-2">
-                          <Button 
-                            onClick={() => handleSSO('azure')} 
-                            disabled={loading} 
+                          <Button
+                            onClick={() => handleSSO('azure')}
+                            disabled={loading}
+                            variant="outline"
+                            className={ssoBtnCls}
+                          >
+                            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (
+                              <img src={gulfGasLogo} alt="" aria-hidden className="w-5 h-5 mr-2 object-contain" />
+                            )}
+                            Continue with Gulf Gas
+                          </Button>
+                          <Button
+                            onClick={() => handleSSO('google')}
+                            disabled={loading}
                             variant="outline"
                             className={ssoBtnCls}
                           >
                             {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (
                               <Shield className="w-5 h-5 mr-2 text-gray-500" />
                             )}
-                            Continue with Gulf Gas Company
-                          </Button>
-                          <Button 
-                            onClick={() => handleSSO('google')} 
-                            disabled={loading} 
-                            variant="outline"
-                            className={ssoBtnCls}
-                          >
-                            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (
-                              <img src="/lovable-uploads/dc6cee89-84f7-416a-b996-ec5cbb00d683.png" alt="Kent Logo" className="w-5 h-5 mr-2" />
-                            )}
-                            Continue with Kent
+                            Continue with EPCM
                           </Button>
                         </div>
                       )}
