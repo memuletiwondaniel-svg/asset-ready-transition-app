@@ -128,6 +128,7 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = () => {
   const [layerB, setLayerB] = useState<LayerState | null>(null);
   const [frontLayer, setFrontLayer] = useState<'A' | 'B'>('A');
   const [overlayOn, setOverlayOn] = useState(false);
+  const frontLayerRef = useRef<'A' | 'B'>('A');
 
   useEffect(() => {
     if (!SLIDES.length) return;
