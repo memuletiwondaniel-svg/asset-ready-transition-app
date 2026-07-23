@@ -206,6 +206,19 @@ const Index = () => {
         </main>
       )}
 
+      {/* Bottom-up dark vignette for legibility over bright/sunset slides */}
+      {!showAuth && (
+        <div
+          aria-hidden
+          className="pointer-events-none fixed bottom-0 left-0 right-0 -z-[4]"
+          style={{
+            height: 220,
+            background:
+              "linear-gradient(180deg, rgba(7,12,18,0) 0%, rgba(7,12,18,0.35) 45%, rgba(7,12,18,0.60) 100%)",
+          }}
+        />
+      )}
+
       {/* Module rail */}
       {!showAuth && (
         <div
@@ -216,7 +229,7 @@ const Index = () => {
               "linear-gradient(180deg, rgba(7,12,18,0) 0%, rgba(7,12,18,0.55) 100%)",
           }}
         >
-          <div className="max-w-[1400px] mx-auto px-6 md:px-10">
+          <div className="max-w-[1400px] mx-auto px-6 md:px-10 pb-3">
             <ul className="flex flex-nowrap overflow-x-auto md:overflow-visible items-stretch">
               {MODULES.map((m, i) => {
                 const isActive = activeModule === m.key;
@@ -272,7 +285,7 @@ const Index = () => {
                       </span>
                     </button>
 
-                    {/* Popover */}
+                    {/* Popover — informational tooltip only, no CTA, no arrow */}
                     {isActive && (
                       <div
                         role="tooltip"
@@ -308,31 +321,7 @@ const Index = () => {
                           >
                             {m.narrative}
                           </p>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(m.href);
-                            }}
-                            className="mt-3 inline-flex items-center gap-1 font-semibold hover:underline"
-                            style={{ color: "#34d399", fontSize: 12 }}
-                          >
-                            Open <ArrowRight className="h-3 w-3" />
-                          </button>
                         </div>
-                        {/* downward arrow */}
-                        <div
-                          aria-hidden
-                          className="mx-auto"
-                          style={{
-                            width: 0,
-                            height: 0,
-                            borderLeft: "6px solid transparent",
-                            borderRight: "6px solid transparent",
-                            borderTop: "6px solid rgba(14,20,28,0.96)",
-                            marginTop: -1,
-                          }}
-                        />
                       </div>
                     )}
                   </li>
@@ -342,6 +331,7 @@ const Index = () => {
           </div>
         </div>
       )}
+
 
       <EnhancedAuthModal
         isOpen={showAuth}
