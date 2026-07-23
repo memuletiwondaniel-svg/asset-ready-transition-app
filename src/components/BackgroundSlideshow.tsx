@@ -18,7 +18,6 @@ type Category = 'vessel' | 'offshore_platform' | 'tank' | 'aerial_plant' | 'huma
  */
 const CATEGORY_BY_STEM: Record<string, Category> = {
   'login-bg-01': 'tank',             // white land storage tanks + curved staircases
-  'login-bg-02': 'offshore_platform',// aerial offshore drilling platform w/ helipad
   'login-bg-03': 'aerial_plant',     // top-down 4 spheres on fenced lawn
   'login-bg-04': 'vessel',           // LNG carrier w/ spheres at sunset
   'login-bg-05': 'vessel',           // aerial LNG carrier docked at pier
@@ -29,7 +28,6 @@ const CATEGORY_BY_STEM: Record<string, Category> = {
   'login-bg-11': 'human',            // worker w/ tablet at refinery sunset
   'login-bg-12': 'offshore_platform',// offshore platform w/ walkway at sunset
   'login-bg-13': 'aerial_plant',     // top-down refinery piping + tanks
-  'login-bg-14': 'vessel',           // aerial LNG tanker docked
   'login-bg-15': 'vessel',           // aerial LNG carrier docked at long pier
 };
 
