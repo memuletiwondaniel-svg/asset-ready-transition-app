@@ -236,7 +236,7 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
       {/* Overlay for better text readability */}
       <div className="absolute inset-0 bg-black/30" />
       
-      {/* BGC Fun Facts Overlay - Only show when showFunFacts is true */}
+      {/* Fun Facts Overlay - Only show when showFunFacts is true */}
       {showFunFacts && (
         <div className="absolute inset-0 flex items-center justify-center z-10 px-8">
           <div className="bg-black/20 backdrop-blur-sm rounded-lg p-12 text-white max-w-5xl ml-80">
