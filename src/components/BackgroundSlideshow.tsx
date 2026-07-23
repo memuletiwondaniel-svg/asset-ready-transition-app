@@ -55,7 +55,7 @@ const OBJECT_POSITION_BY_STEM: Record<string, string> = {
   'login-bg-07': '75% center',
   'login-bg-08': '75% center',
   'login-bg-09': '75% center',
-  'login-bg-11': '82% center', // worker at refinery sunset — subject right
+  'login-bg-11': '18% center', // worker at refinery sunset — flipped horizontally so subject sits right
   'login-bg-12': '75% center',
   'login-bg-13': '60% center',
   'login-bg-14': '78% center',
@@ -244,14 +244,17 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = () => {
     const isFront = frontLayer === role;
     // Front layer is always fully opaque; back layer fades 0 -> 1 while overlayOn.
     const opacity = isFront ? 1 : overlayOn ? 1 : 0;
+    const slide = SLIDES[state.idx];
+    const flipX = slide.stem === 'login-bg-11';
     return (
       <KenBurnsImage
         key={`${role}-${state.motionId}`}
-        url={SLIDES[state.idx].url}
-        objectPosition={SLIDES[state.idx].objectPosition}
+        url={slide.url}
+        objectPosition={slide.objectPosition}
         from={state.from}
         to={state.to}
         motionMs={motionMs}
+        flipX={flipX}
         style={{
           opacity,
           transition: `opacity ${fadeMs}ms ease-in-out`,
@@ -275,6 +278,7 @@ interface KenBurnsImageProps {
   to: string;
   motionMs: number;
   style: React.CSSProperties;
+  flipX?: boolean;
 }
 
 /**
@@ -290,15 +294,17 @@ const KenBurnsImage: React.FC<KenBurnsImageProps> = ({
   to,
   motionMs,
   style,
+  flipX,
 }) => {
-  const [transform, setTransform] = useState(from);
+  const prefix = flipX ? 'scaleX(-1) ' : '';
+  const [transform, setTransform] = useState(prefix + from);
   useEffect(() => {
     if (motionMs === 0) return;
     const id = requestAnimationFrame(() => {
-      requestAnimationFrame(() => setTransform(to));
+      requestAnimationFrame(() => setTransform(prefix + to));
     });
     return () => cancelAnimationFrame(id);
-  }, [to, motionMs]);
+  }, [to, motionMs, prefix]);
   return (
     <img
       src={url}

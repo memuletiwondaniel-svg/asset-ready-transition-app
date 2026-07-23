@@ -126,68 +126,97 @@ const Index = () => {
 
       {/* Hero — left-aligned editorial */}
       {!showAuth && (
-        <main className="relative z-10 min-h-screen flex items-center px-6 md:px-10 pt-28 pb-40">
+        <main className="relative z-10 min-h-screen flex items-center px-6 md:px-10 pt-28 pb-52">
           <div className="max-w-[1400px] mx-auto w-full">
-            <div className="w-full md:max-w-[58%] animate-fade-in">
+            <div className="w-full md:max-w-[58%]">
               <div
-                className="text-white/70 text-[11px] font-medium mb-6"
-                style={{ letterSpacing: "0.22em", textTransform: "uppercase" }}
+                className="text-white/70 text-[11px] font-medium mb-6 animate-fade-in"
+                style={{ letterSpacing: "0.22em", textTransform: "uppercase", animationDelay: "0ms", animationFillMode: "both", animationDuration: "500ms" }}
               >
                 Operations Readiness Platform
               </div>
 
               <h1
-                className="text-white"
+                className="text-white animate-fade-in"
                 style={{
-                  fontSize: "clamp(32px, 5vw, 46px)",
-                  fontWeight: 500,
-                  lineHeight: 1.05,
+                  fontSize: "clamp(32px, 4.6vw, 54px)",
+                  fontWeight: 600,
+                  lineHeight: 1.04,
                   letterSpacing: "-0.02em",
+                  animationDelay: "80ms",
+                  animationFillMode: "both",
+                  animationDuration: "500ms",
                 }}
               >
                 Operations Readiness
               </h1>
               <div
-                className="mt-2"
+                className="mt-2 animate-fade-in"
                 style={{
                   color: "rgba(255,255,255,0.72)",
-                  fontSize: "clamp(20px, 2.6vw, 26px)",
+                  fontSize: "clamp(22px, 2.9vw, 30px)",
                   fontWeight: 300,
                   letterSpacing: "-0.01em",
+                  animationDelay: "160ms",
+                  animationFillMode: "both",
+                  animationDuration: "500ms",
                 }}
               >
                 Start-Up &amp; Handover
               </div>
 
               <p
-                className="mt-8 max-w-xl"
+                className="mt-8 max-w-xl animate-fade-in"
                 style={{
                   color: "rgba(255,255,255,0.80)",
                   fontSize: "15px",
                   lineHeight: 1.6,
                   fontWeight: 300,
+                  animationDelay: "240ms",
+                  animationFillMode: "both",
+                  animationDuration: "500ms",
                 }}
               >
                 Integrating people and systems to deliver business outcomes.
               </p>
 
-              <div className="mt-10">
-                <Button
+              <div
+                className="mt-10 animate-fade-in"
+                style={{
+                  animationDelay: "320ms",
+                  animationFillMode: "both",
+                  animationDuration: "500ms",
+                }}
+              >
+                <button
                   onClick={() => setShowAuth(true)}
-                  size="lg"
-                  className="text-white font-semibold px-7 py-6 text-[15px] shadow-xl hover:opacity-95 transition"
+                  className="group inline-flex items-center gap-2 font-semibold px-7 py-4 text-[15px] shadow-lg hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
                   style={{
-                    backgroundColor: "#2f6df6",
-                    borderRadius: 8,
+                    backgroundColor: "#ffffff",
+                    color: "#0c0f16",
+                    borderRadius: 10,
                   }}
                 >
                   Access ORSH
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
+                  <ArrowRight className="h-4 w-4 transition-transform duration-150 ease-out group-hover:translate-x-[3px]" />
+                </button>
               </div>
             </div>
           </div>
         </main>
+      )}
+
+      {/* Bottom-up dark vignette for legibility over bright/sunset slides */}
+      {!showAuth && (
+        <div
+          aria-hidden
+          className="pointer-events-none fixed bottom-0 left-0 right-0 -z-[4]"
+          style={{
+            height: 220,
+            background:
+              "linear-gradient(180deg, rgba(7,12,18,0) 0%, rgba(7,12,18,0.35) 45%, rgba(7,12,18,0.60) 100%)",
+          }}
+        />
       )}
 
       {/* Module rail */}
@@ -200,7 +229,7 @@ const Index = () => {
               "linear-gradient(180deg, rgba(7,12,18,0) 0%, rgba(7,12,18,0.55) 100%)",
           }}
         >
-          <div className="max-w-[1400px] mx-auto px-6 md:px-10">
+          <div className="max-w-[1400px] mx-auto px-6 md:px-10 pb-3">
             <ul className="flex flex-nowrap overflow-x-auto md:overflow-visible items-stretch">
               {MODULES.map((m, i) => {
                 const isActive = activeModule === m.key;
@@ -256,7 +285,7 @@ const Index = () => {
                       </span>
                     </button>
 
-                    {/* Popover */}
+                    {/* Popover — informational tooltip only, no CTA, no arrow */}
                     {isActive && (
                       <div
                         role="tooltip"
@@ -292,31 +321,7 @@ const Index = () => {
                           >
                             {m.narrative}
                           </p>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(m.href);
-                            }}
-                            className="mt-3 inline-flex items-center gap-1 font-semibold hover:underline"
-                            style={{ color: "#34d399", fontSize: 12 }}
-                          >
-                            Open <ArrowRight className="h-3 w-3" />
-                          </button>
                         </div>
-                        {/* downward arrow */}
-                        <div
-                          aria-hidden
-                          className="mx-auto"
-                          style={{
-                            width: 0,
-                            height: 0,
-                            borderLeft: "6px solid transparent",
-                            borderRight: "6px solid transparent",
-                            borderTop: "6px solid rgba(14,20,28,0.96)",
-                            marginTop: -1,
-                          }}
-                        />
                       </div>
                     )}
                   </li>
@@ -326,6 +331,7 @@ const Index = () => {
           </div>
         </div>
       )}
+
 
       <EnhancedAuthModal
         isOpen={showAuth}
