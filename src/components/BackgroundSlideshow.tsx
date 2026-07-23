@@ -270,6 +270,7 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = () => {
 
 interface KenBurnsImageProps {
   url: string;
+  objectPosition: string;
   from: string;
   to: string;
   motionMs: number;
@@ -284,6 +285,7 @@ interface KenBurnsImageProps {
  */
 const KenBurnsImage: React.FC<KenBurnsImageProps> = ({
   url,
+  objectPosition,
   from,
   to,
   motionMs,
@@ -302,9 +304,10 @@ const KenBurnsImage: React.FC<KenBurnsImageProps> = ({
       src={url}
       alt=""
       aria-hidden
-      className="absolute inset-0 w-full h-full object-cover object-center"
+      className="absolute inset-0 w-full h-full object-cover"
       style={{
         ...style,
+        objectPosition,
         transform,
         transition: `${style.transition ?? ''}${style.transition ? ', ' : ''}transform ${motionMs}ms ease-in-out`,
         willChange: 'transform, opacity',
