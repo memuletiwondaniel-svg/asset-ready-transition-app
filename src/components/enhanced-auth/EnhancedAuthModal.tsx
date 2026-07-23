@@ -124,12 +124,12 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
         
         <div className="absolute inset-0 z-[5]" onClick={onClose} aria-hidden="true" />
         
-        <div className="w-screen h-screen flex items-center justify-center p-4 relative z-10 pointer-events-none">
-          <div className="w-full max-w-sm relative z-10 pointer-events-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="rounded-[18px] shadow-[0_12px_40px_rgba(0,0,0,0.16)] p-8 relative overflow-hidden bg-white supports-[backdrop-filter]:bg-white/[0.93] supports-[backdrop-filter]:backdrop-blur-[12px] [-webkit-backdrop-filter:blur(12px)]">
+        <div className="w-screen h-screen flex items-center justify-start p-4 md:pl-[6vw] lg:pl-[8vw] relative z-10 pointer-events-none">
+          <div className="w-full max-w-[360px] relative z-10 pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="rounded-[16px] shadow-[0_12px_40px_rgba(0,0,0,0.18)] p-8 relative overflow-hidden bg-white supports-[backdrop-filter]:bg-white/[0.96] supports-[backdrop-filter]:backdrop-blur-[12px] [-webkit-backdrop-filter:blur(12px)]">
 
               <div className="relative z-10">
-                {/* Header */}
+                {/* Header — logo centered + single muted welcome line */}
                 <div className="text-center mb-6">
                   <div className="flex justify-center mb-3">
                     {subdomainTenant?.logo_url ? (
@@ -138,12 +138,13 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                       <OrshLogo className="h-12 w-auto text-gray-900" />
                     )}
                   </div>
-                  {subdomainTenant && (
-                    <p className="text-xs font-medium text-[#2563eb] mb-1">{subdomainTenant.name}</p>
+                  {activeTab === 'reset' ? (
+                    <p className="text-gray-500 text-[13px]">Reset your password</p>
+                  ) : (
+                    <p className="whitespace-nowrap" style={{ color: '#9aa0a8', fontSize: '12.5px' }}>
+                      Welcome back — access your ORSH workspace.
+                    </p>
                   )}
-                  <p className="text-gray-500 text-[13px]">
-                    {activeTab === 'reset' ? 'Reset your password' : 'Sign in to your ORSH account'}
-                  </p>
                 </div>
 
                 {/* Tenant mismatch warning */}
