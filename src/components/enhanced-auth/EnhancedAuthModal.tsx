@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContentNoOverlay, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -50,6 +50,27 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
   const [loginFailed, setLoginFailed] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
+
+  // Modal mount/unmount + transition states for a premium open/close animation
+  const [isVisible, setIsVisible] = useState(isOpen);
+  const [isEntered, setIsEntered] = useState(false);
+
+  useEffect(() => {
+    let enterTimer: ReturnType<typeof setTimeout>;
+    let exitTimer: ReturnType<typeof setTimeout>;
+    if (isOpen) {
+      setIsVisible(true);
+      setIsEntered(false);
+      enterTimer = setTimeout(() => setIsEntered(true), 20);
+    } else {
+      setIsEntered(false);
+      exitTimer = setTimeout(() => setIsVisible(false), 220);
+    }
+    return () => {
+      clearTimeout(enterTimer);
+      clearTimeout(exitTimer);
+    };
+  }, [isOpen]);
 
   const [signInData, setSignInData] = useState({ email: '', password: '' });
   const [signUpData, setSignUpData] = useState({
@@ -115,18 +136,22 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   const hasSSOButtons = !!ssoConfig || !ssoConfig; // always true — fallback buttons shown
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContentNoOverlay className="max-w-none max-h-none w-screen h-screen p-0 bg-transparent border-none shadow-none overflow-hidden [&>button]:hidden" aria-describedby="enhanced-auth-description">
+    <Dialog open={isVisible} onOpenChange={onClose}>
+      <DialogContentNoOverlay className="max-w-none max-h-none w-screen h-screen p-0 bg-transparent border-none shadow-none overflow-hidden [&>button]:hidden data-[state=open]:animate-none data-[state=closed]:animate-none" aria-describedby="enhanced-auth-description">
         <DialogHeader className="sr-only">
           <DialogTitle>Authentication</DialogTitle>
           <DialogDescription id="enhanced-auth-description">Sign in or register</DialogDescription>
         </DialogHeader>
-        
-        <div className="absolute inset-0 z-[5]" onClick={onClose} aria-hidden="true" />
-        
+
+        <div
+          className={`absolute inset-0 z-[5] bg-black/25 backdrop-blur-[1px] motion-safe:transition-opacity motion-safe:duration-220 motion-safe:ease-out ${isEntered ? 'motion-safe:opacity-100' : 'motion-safe:opacity-0'}`}
+          onClick={onClose}
+          aria-hidden="true"
+        />
+
         <div className="w-screen h-screen flex items-center justify-start p-4 md:pl-[6vw] lg:pl-[8vw] relative z-10 pointer-events-none">
           <div className="w-full max-w-[360px] relative z-10 pointer-events-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="rounded-[16px] shadow-[0_12px_40px_rgba(0,0,0,0.18)] p-8 relative overflow-hidden bg-white supports-[backdrop-filter]:bg-white/[0.96] supports-[backdrop-filter]:backdrop-blur-[12px] [-webkit-backdrop-filter:blur(12px)]">
+            <div className={`rounded-[16px] shadow-[0_12px_40px_rgba(0,0,0,0.18)] p-8 relative overflow-hidden bg-white supports-[backdrop-filter]:bg-white/[0.96] supports-[backdrop-filter]:backdrop-blur-[12px] [-webkit-backdrop-filter:blur(12px)] motion-safe:transition-all motion-safe:duration-220 motion-safe:ease-out will-change-transform ${isEntered ? 'motion-safe:opacity-100 motion-safe:scale-100' : 'motion-safe:opacity-0 motion-safe:scale-[0.96]'}`}>
 
               <div className="relative z-10">
                 {/* Header — logo centered + single muted welcome line */}
