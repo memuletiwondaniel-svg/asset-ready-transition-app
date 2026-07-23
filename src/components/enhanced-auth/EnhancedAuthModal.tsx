@@ -265,7 +265,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
 
                       <form onSubmit={handleSignIn} className="space-y-4">
                         <div className="space-y-1.5">
-                          <Label htmlFor="signin-email" className="text-sm font-medium text-gray-700">Email</Label>
+                          <Label htmlFor="signin-email" className="uppercase tracking-wider" style={{ color: '#aab0b8', fontSize: '11px', fontWeight: 500 }}>Email</Label>
                           <div className="relative">
                             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <Input
