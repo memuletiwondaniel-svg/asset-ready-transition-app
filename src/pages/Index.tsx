@@ -224,7 +224,6 @@ const Index = () => {
         <div
           className="fixed bottom-0 left-0 right-0 z-20"
           style={{
-            borderTop: "1px solid rgba(255,255,255,0.10)",
             background:
               "linear-gradient(180deg, rgba(7,12,18,0) 0%, rgba(7,12,18,0.55) 100%)",
           }}
