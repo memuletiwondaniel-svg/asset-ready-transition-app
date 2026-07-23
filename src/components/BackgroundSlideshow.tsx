@@ -55,7 +55,7 @@ const OBJECT_POSITION_BY_STEM: Record<string, string> = {
   'login-bg-07': '75% center',
   'login-bg-08': '75% center',
   'login-bg-09': '75% center',
-  'login-bg-11': '82% center', // worker at refinery sunset — subject right
+  'login-bg-11': '18% center', // worker at refinery sunset — flipped horizontally so subject sits right
   'login-bg-12': '75% center',
   'login-bg-13': '60% center',
   'login-bg-14': '78% center',
