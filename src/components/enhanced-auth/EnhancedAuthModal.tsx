@@ -284,7 +284,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                         </div>
 
                         <div className="space-y-1.5">
-                          <Label htmlFor="signin-password" className="text-sm font-medium text-gray-700">Password</Label>
+                          <Label htmlFor="signin-password" className="uppercase tracking-wider" style={{ color: '#aab0b8', fontSize: '11px', fontWeight: 500 }}>Password</Label>
                           <div className="relative">
                             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <Input
