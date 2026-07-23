@@ -126,64 +126,80 @@ const Index = () => {
 
       {/* Hero — left-aligned editorial */}
       {!showAuth && (
-        <main className="relative z-10 min-h-screen flex items-center px-6 md:px-10 pt-28 pb-40">
+        <main className="relative z-10 min-h-screen flex items-center px-6 md:px-10 pt-28 pb-52">
           <div className="max-w-[1400px] mx-auto w-full">
-            <div className="w-full md:max-w-[58%] animate-fade-in">
+            <div className="w-full md:max-w-[58%]">
               <div
-                className="text-white/70 text-[11px] font-medium mb-6"
-                style={{ letterSpacing: "0.22em", textTransform: "uppercase" }}
+                className="text-white/70 text-[11px] font-medium mb-6 animate-fade-in"
+                style={{ letterSpacing: "0.22em", textTransform: "uppercase", animationDelay: "0ms", animationFillMode: "both", animationDuration: "500ms" }}
               >
                 Operations Readiness Platform
               </div>
 
               <h1
-                className="text-white"
+                className="text-white animate-fade-in"
                 style={{
-                  fontSize: "clamp(32px, 5vw, 46px)",
-                  fontWeight: 500,
-                  lineHeight: 1.05,
+                  fontSize: "clamp(32px, 4.6vw, 54px)",
+                  fontWeight: 600,
+                  lineHeight: 1.04,
                   letterSpacing: "-0.02em",
+                  animationDelay: "80ms",
+                  animationFillMode: "both",
+                  animationDuration: "500ms",
                 }}
               >
                 Operations Readiness
               </h1>
               <div
-                className="mt-2"
+                className="mt-2 animate-fade-in"
                 style={{
                   color: "rgba(255,255,255,0.72)",
-                  fontSize: "clamp(20px, 2.6vw, 26px)",
+                  fontSize: "clamp(22px, 2.9vw, 30px)",
                   fontWeight: 300,
                   letterSpacing: "-0.01em",
+                  animationDelay: "160ms",
+                  animationFillMode: "both",
+                  animationDuration: "500ms",
                 }}
               >
                 Start-Up &amp; Handover
               </div>
 
               <p
-                className="mt-8 max-w-xl"
+                className="mt-8 max-w-xl animate-fade-in"
                 style={{
                   color: "rgba(255,255,255,0.80)",
                   fontSize: "15px",
                   lineHeight: 1.6,
                   fontWeight: 300,
+                  animationDelay: "240ms",
+                  animationFillMode: "both",
+                  animationDuration: "500ms",
                 }}
               >
                 Integrating people and systems to deliver business outcomes.
               </p>
 
-              <div className="mt-10">
-                <Button
+              <div
+                className="mt-10 animate-fade-in"
+                style={{
+                  animationDelay: "320ms",
+                  animationFillMode: "both",
+                  animationDuration: "500ms",
+                }}
+              >
+                <button
                   onClick={() => setShowAuth(true)}
-                  size="lg"
-                  className="text-white font-semibold px-7 py-6 text-[15px] shadow-xl hover:opacity-95 transition"
+                  className="group inline-flex items-center gap-2 font-semibold px-7 py-4 text-[15px] shadow-lg hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
                   style={{
-                    backgroundColor: "#2f6df6",
-                    borderRadius: 8,
+                    backgroundColor: "#ffffff",
+                    color: "#0c0f16",
+                    borderRadius: 10,
                   }}
                 >
                   Access ORSH
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
+                  <ArrowRight className="h-4 w-4 transition-transform duration-150 ease-out group-hover:translate-x-[3px]" />
+                </button>
               </div>
             </div>
           </div>
