@@ -88,7 +88,7 @@ const Index = () => {
         className="pointer-events-none fixed inset-0 -z-[5]"
         style={{
           background:
-            "linear-gradient(90deg, rgba(7,12,18,0.93) 0%, rgba(7,12,18,0.78) 32%, rgba(7,12,18,0.30) 54%, rgba(7,12,18,0) 66%)",
+            "linear-gradient(90deg, rgba(7,12,18,0.92) 0%, rgba(7,12,18,0.80) 25%, rgba(7,12,18,0.55) 45%, rgba(7,12,18,0.28) 62%, rgba(7,12,18,0.10) 78%, rgba(7,12,18,0) 90%)",
         }}
       />
       <div
