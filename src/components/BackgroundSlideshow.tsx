@@ -37,7 +37,30 @@ interface Slide {
   url: string;
   category: Category;
   stem: string;
+  objectPosition: string;
 }
+
+/**
+ * Per-image object-position so the subject sits on the RIGHT of the frame
+ * (text panel occupies the left ~58%). Never flip — some frames carry
+ * hull markings / plant signage.
+ */
+const OBJECT_POSITION_BY_STEM: Record<string, string> = {
+  'login-bg-01': '78% center',
+  'login-bg-02': '72% center',
+  'login-bg-03': '65% center',
+  'login-bg-04': '80% center', // LNG carrier w/ spheres — keep subject right, no flip
+  'login-bg-05': '78% center', // LNG carrier docked
+  'login-bg-06': '82% center', // worker w/ tablet — keep on the right
+  'login-bg-07': '75% center',
+  'login-bg-08': '75% center',
+  'login-bg-09': '75% center',
+  'login-bg-11': '82% center', // worker at refinery sunset — subject right
+  'login-bg-12': '75% center',
+  'login-bg-13': '60% center',
+  'login-bg-14': '78% center',
+  'login-bg-15': '80% center',
+};
 
 const SLIDES: Slide[] = Object.keys(assetModules)
   .sort()
@@ -47,6 +70,7 @@ const SLIDES: Slide[] = Object.keys(assetModules)
       url: assetModules[k].default.url,
       category: CATEGORY_BY_STEM[stem] ?? 'aerial_plant',
       stem,
+      objectPosition: OBJECT_POSITION_BY_STEM[stem] ?? '75% center',
     };
   });
 
