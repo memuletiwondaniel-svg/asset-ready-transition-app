@@ -244,14 +244,17 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = () => {
     const isFront = frontLayer === role;
     // Front layer is always fully opaque; back layer fades 0 -> 1 while overlayOn.
     const opacity = isFront ? 1 : overlayOn ? 1 : 0;
+    const slide = SLIDES[state.idx];
+    const flipX = slide.stem === 'login-bg-11';
     return (
       <KenBurnsImage
         key={`${role}-${state.motionId}`}
-        url={SLIDES[state.idx].url}
-        objectPosition={SLIDES[state.idx].objectPosition}
+        url={slide.url}
+        objectPosition={slide.objectPosition}
         from={state.from}
         to={state.to}
         motionMs={motionMs}
+        flipX={flipX}
         style={{
           opacity,
           transition: `opacity ${fadeMs}ms ease-in-out`,
