@@ -228,6 +228,15 @@ const Index = () => {
               "linear-gradient(180deg, rgba(7,12,18,0) 0%, rgba(7,12,18,0.55) 100%)",
           }}
         >
+          {/* Left-anchored top hairline — fades out by ~48% width so it never streaks over the photo */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute top-0 left-0 right-0 h-px"
+            style={{
+              background:
+                "linear-gradient(90deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.18) 20%, rgba(255,255,255,0.10) 38%, rgba(255,255,255,0) 50%)",
+            }}
+          />
           <div className="max-w-[1400px] mx-auto px-6 md:px-10 pb-3">
             <ul className="flex flex-nowrap overflow-x-auto md:overflow-visible items-stretch">
               {MODULES.map((m, i) => {
