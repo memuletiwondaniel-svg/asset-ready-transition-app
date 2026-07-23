@@ -190,7 +190,7 @@ const Index = () => {
               >
                 <button
                   onClick={() => setShowAuth(true)}
-                  className="group inline-flex items-center gap-2 font-semibold px-7 py-4 text-[15px] shadow-lg hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+                  className="group inline-flex items-center gap-2 font-semibold shadow-lg hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 px-5 py-2.5 text-[13px] min-h-[40px] md:px-5 md:py-2.5 md:text-[13px] md:min-h-[40px] max-md:px-7 max-md:py-3.5 max-md:text-[16px] max-md:min-h-[48px]"
                   style={{
                     backgroundColor: "#ffffff",
                     color: "#0c0f16",
