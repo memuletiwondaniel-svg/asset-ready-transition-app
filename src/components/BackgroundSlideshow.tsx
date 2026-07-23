@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 interface BackgroundSlideshowProps {
-  /** Legacy prop, kept for API compat. */
   showFunFacts?: boolean;
 }
 
@@ -10,37 +9,34 @@ const assetModules = import.meta.glob<{ default: { url: string } }>(
   { eager: true }
 );
 
-/**
- * Category tagging so two visually-similar frames never play back-to-back
- * (e.g. tanker after tanker). Keys are the filename stem (login-bg-NN).
- */
-type Category =
-  | 'ship_tanker'
-  | 'platform_rig'
-  | 'tank_sphere'
-  | 'aerial_plant'
-  | 'human';
+type Category = 'vessel' | 'offshore_platform' | 'tank' | 'aerial_plant' | 'human';
 
+/**
+ * EXPLICIT per-image category map. Do NOT infer from filename or contents.
+ * Anything on water that is a hull (LNG carrier, tanker, accommodation vessel)
+ * is `vessel` — even if it carries spherical tanks on deck.
+ */
 const CATEGORY_BY_STEM: Record<string, Category> = {
-  'login-bg-01': 'tank_sphere',
-  'login-bg-02': 'platform_rig',
-  'login-bg-03': 'aerial_plant',
-  'login-bg-04': 'ship_tanker',
-  'login-bg-05': 'ship_tanker',
-  'login-bg-06': 'human',
-  'login-bg-07': 'platform_rig',
-  'login-bg-08': 'platform_rig',
-  'login-bg-09': 'platform_rig',
-  'login-bg-11': 'human',
-  'login-bg-12': 'platform_rig',
-  'login-bg-13': 'aerial_plant',
-  'login-bg-14': 'ship_tanker',
-  'login-bg-15': 'ship_tanker',
+  'login-bg-01': 'tank',             // white land storage tanks + curved staircases
+  'login-bg-02': 'offshore_platform',// aerial offshore drilling platform w/ helipad
+  'login-bg-03': 'aerial_plant',     // top-down 4 spheres on fenced lawn
+  'login-bg-04': 'vessel',           // LNG carrier w/ spheres at sunset
+  'login-bg-05': 'vessel',           // aerial LNG carrier docked at pier
+  'login-bg-06': 'human',            // worker w/ tablet in factory
+  'login-bg-07': 'offshore_platform',// interconnected offshore platforms
+  'login-bg-08': 'offshore_platform',// platform on concrete pillar
+  'login-bg-09': 'offshore_platform',// platform w/ yellow legs, orange lifeboats
+  'login-bg-11': 'human',            // worker w/ tablet at refinery sunset
+  'login-bg-12': 'offshore_platform',// offshore platform w/ walkway at sunset
+  'login-bg-13': 'aerial_plant',     // top-down refinery piping + tanks
+  'login-bg-14': 'vessel',           // aerial LNG tanker docked
+  'login-bg-15': 'vessel',           // aerial LNG carrier docked at long pier
 };
 
 interface Slide {
   url: string;
   category: Category;
+  stem: string;
 }
 
 const SLIDES: Slide[] = Object.keys(assetModules)
@@ -50,80 +46,98 @@ const SLIDES: Slide[] = Object.keys(assetModules)
     return {
       url: assetModules[k].default.url,
       category: CATEGORY_BY_STEM[stem] ?? 'aerial_plant',
+      stem,
     };
   });
 
 const DISPLAY_MS = 8000;
 const FADE_MS = 2500;
+// Ken-Burns runs across the full visible life of a slide (fade-in + display + fade-out)
+// so the transform never snaps mid-view.
+const MOTION_MS = DISPLAY_MS + FADE_MS * 2 + 500;
 
 const prefersReducedMotion = () =>
   typeof window !== 'undefined' &&
   window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
-/**
- * Preload + decode an image. Resolves only when the browser has the
- * pixels ready to paint, so the fade never starts on an empty layer.
- */
 const preloadAndDecode = (src: string): Promise<void> =>
   new Promise((resolve) => {
     const img = new Image();
     const done = () => resolve();
     img.onload = () => {
-      if (typeof img.decode === 'function') {
-        img.decode().then(done, done);
-      } else {
-        done();
-      }
+      if (typeof img.decode === 'function') img.decode().then(done, done);
+      else done();
     };
     img.onerror = () => done();
     img.src = src;
   });
 
-/** Pick the next index whose category differs from the current index. */
 const pickNextIndex = (currentIdx: number): number => {
   if (SLIDES.length < 2) return 0;
   const currentCat = SLIDES[currentIdx].category;
-  // Candidates in a different category.
   const candidates: number[] = [];
   for (let i = 0; i < SLIDES.length; i++) {
     if (i === currentIdx) continue;
     if (SLIDES[i].category !== currentCat) candidates.push(i);
   }
-  const pool = candidates.length ? candidates : SLIDES.map((_, i) => i).filter((i) => i !== currentIdx);
+  const pool = candidates.length
+    ? candidates
+    : SLIDES.map((_, i) => i).filter((i) => i !== currentIdx);
   return pool[Math.floor(Math.random() * pool.length)];
 };
+
+/** Generate a fresh random Ken-Burns from/to transform pair (larger, slower motion). */
+const randomKenBurns = () => {
+  const rand = (min: number, max: number) => min + Math.random() * (max - min);
+  const sign = () => (Math.random() < 0.5 ? -1 : 1);
+  const startScale = rand(1.0, 1.05);
+  const endScale = rand(1.18, 1.28);
+  const startX = sign() * rand(0, 2);
+  const startY = sign() * rand(0, 2);
+  const endX = sign() * rand(3, 6);
+  const endY = sign() * rand(3, 6);
+  return {
+    from: `scale(${startScale}) translate(${startX}%, ${startY}%)`,
+    to: `scale(${endScale}) translate(${endX}%, ${endY}%)`,
+  };
+};
+
+interface LayerState {
+  idx: number;
+  motionId: number; // increments each time this layer receives a new image
+  from: string;
+  to: string;
+}
 
 const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = () => {
   const reduced = useMemo(prefersReducedMotion, []);
   const startIndex = useMemo(
-    () => (SLIDES.length ? Math.floor(Math.random() * SLIDES.length) : 0),
+     () => (SLIDES.length ? Math.floor(Math.random() * SLIDES.length) : 0),
     []
   );
 
-  // Two stacked layers: base (always visible at opacity 1) and overlay
-  // (fades 0 -> 1 on top). After the fade completes, overlay becomes
-  // the new base. This guarantees at least one layer is always opaque.
-  const [baseIndex, setBaseIndex] = useState(startIndex);
-  const [overlayIndex, setOverlayIndex] = useState<number | null>(null);
+  // Two persistent layers (A/B) that swap roles. Whichever is "front" is at
+  // opacity 1; the other fades from 0 -> 1 on top, then becomes the new front.
+  const initialKB = useMemo(randomKenBurns, []);
+  const [layerA, setLayerA] = useState<LayerState>({
+    idx: startIndex,
+    motionId: 0,
+    from: initialKB.from,
+    to: initialKB.to,
+  });
+  const [layerB, setLayerB] = useState<LayerState | null>(null);
+  const [frontLayer, setFrontLayer] = useState<'A' | 'B'>('A');
   const [overlayOn, setOverlayOn] = useState(false);
-  const [, setReadySet] = useState<Set<number>>(new Set());
+  const frontLayerRef = useRef<'A' | 'B'>('A');
 
-  const cycleRef = useRef<number | null>(null);
-  const nextRef = useRef<number>(pickNextIndex(startIndex));
-
-  // Eager preload every image up front — only ~14 compressed files.
   useEffect(() => {
     if (!SLIDES.length) return;
     let cancelled = false;
     (async () => {
       await preloadAndDecode(SLIDES[startIndex].url);
       if (cancelled) return;
-      setReadySet((p) => new Set(p).add(startIndex));
       SLIDES.forEach((s, i) => {
-        if (i === startIndex) return;
-        preloadAndDecode(s.url).then(() => {
-          if (!cancelled) setReadySet((p) => new Set(p).add(i));
-        });
+        if (i !== startIndex) preloadAndDecode(s.url);
       });
     })();
     return () => {
@@ -131,22 +145,35 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = () => {
     };
   }, [startIndex]);
 
-  // Rotation loop. Only advances when the next image is fully decoded.
   useEffect(() => {
     if (SLIDES.length < 2) return;
-
     let stopped = false;
-    let fadeTimer: number | null = null;
+    let cycle: number | null = null;
+    let fade: number | null = null;
+
+    let currentIdx = startIndex;
 
     const scheduleNext = () => {
       if (stopped) return;
-      cycleRef.current = window.setTimeout(async () => {
+      cycle = window.setTimeout(async () => {
         if (stopped) return;
-        const nextIdx = nextRef.current;
+        const nextIdx = pickNextIndex(currentIdx);
         await preloadAndDecode(SLIDES[nextIdx].url);
         if (stopped) return;
 
-        setOverlayIndex(nextIdx);
+        const back: 'A' | 'B' = frontLayerRef.current === 'A' ? 'B' : 'A';
+        const kb = randomKenBurns();
+        const setter = back === 'A' ? setLayerA : setLayerB;
+        setter((prev) => ({
+          idx: nextIdx,
+          motionId: (prev?.motionId ?? 0) + 1,
+          from: kb.from,
+          to: kb.to,
+        }));
+        setOverlayOn(false);
+
+        // Two RAFs so the new image mounts at opacity 0 (and starts its
+        // Ken-Burns from `from`) before we flip to opacity 1 / `to`.
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             if (stopped) return;
@@ -155,24 +182,26 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = () => {
         });
 
         const fadeMs = reduced ? 0 : FADE_MS;
-        fadeTimer = window.setTimeout(() => {
+        fade = window.setTimeout(() => {
           if (stopped) return;
-          setBaseIndex(nextIdx);
+          setFrontLayer(back);
+          frontLayerRef.current = back;
           setOverlayOn(false);
-          setOverlayIndex(null);
-          nextRef.current = pickNextIndex(nextIdx);
+          currentIdx = nextIdx;
           scheduleNext();
-        }, fadeMs + 50);
+        }, fadeMs + 60);
       }, DISPLAY_MS);
     };
 
     scheduleNext();
     return () => {
       stopped = true;
-      if (cycleRef.current) window.clearTimeout(cycleRef.current);
-      if (fadeTimer) window.clearTimeout(fadeTimer);
+      if (cycle) clearTimeout(cycle);
+      if (fade) clearTimeout(fade);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reduced]);
+
 
   if (!SLIDES.length) {
     return (
@@ -181,37 +210,82 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = () => {
   }
 
   const fadeMs = reduced ? 0 : FADE_MS;
-  const kenBurns = !reduced;
+  const motionMs = reduced ? 0 : MOTION_MS;
+
+  const renderLayer = (
+    state: LayerState | null,
+    role: 'A' | 'B'
+  ) => {
+    if (!state) return null;
+    const isFront = frontLayer === role;
+    // Front layer is always fully opaque; back layer fades 0 -> 1 while overlayOn.
+    const opacity = isFront ? 1 : overlayOn ? 1 : 0;
+    return (
+      <KenBurnsImage
+        key={`${role}-${state.motionId}`}
+        url={SLIDES[state.idx].url}
+        from={state.from}
+        to={state.to}
+        motionMs={motionMs}
+        style={{
+          opacity,
+          transition: `opacity ${fadeMs}ms ease-in-out`,
+        }}
+      />
+    );
+  };
 
   return (
     <div className="fixed inset-0 -z-10 overflow-hidden bg-slate-900">
-      {/* Base layer — always fully opaque. */}
-      <img
-        key={`base-${baseIndex}`}
-        src={SLIDES[baseIndex].url}
-        alt=""
-        aria-hidden
-        className={`absolute inset-0 w-full h-full object-cover object-center ${kenBurns ? 'animate-ken-burns' : ''}`}
-        style={{ opacity: 1, willChange: 'transform' }}
-      />
-      {/* Overlay layer — fades 0 -> 1 on top of base, then promoted. */}
-      {overlayIndex !== null && (
-        <img
-          key={`overlay-${overlayIndex}`}
-          src={SLIDES[overlayIndex].url}
-          alt=""
-          aria-hidden
-          className={`absolute inset-0 w-full h-full object-cover object-center ${kenBurns ? 'animate-ken-burns' : ''}`}
-          style={{
-            opacity: overlayOn ? 1 : 0,
-            transition: `opacity ${fadeMs}ms ease-in-out`,
-            willChange: 'opacity',
-          }}
-        />
-      )}
-      {/* Legibility overlay */}
+      {renderLayer(layerA, 'A')}
+      {renderLayer(layerB, 'B')}
       <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/60" />
     </div>
+  );
+};
+
+interface KenBurnsImageProps {
+  url: string;
+  from: string;
+  to: string;
+  motionMs: number;
+  style: React.CSSProperties;
+}
+
+/**
+ * Renders an <img> that continuously transitions its transform from `from`
+ * to `to` over `motionMs` using ease-in-out. Because each new image mounts
+ * with a fresh key, there is no keyframe loop and therefore no snap-back
+ * at the boundary — the outgoing layer keeps drifting during the crossfade.
+ */
+const KenBurnsImage: React.FC<KenBurnsImageProps> = ({
+  url,
+  from,
+  to,
+  motionMs,
+  style,
+}) => {
+  const [transform, setTransform] = useState(from);
+  useEffect(() => {
+    if (motionMs === 0) return;
+    const id = requestAnimationFrame(() => {
+      requestAnimationFrame(() => setTransform(to));
+    });
+    return () => cancelAnimationFrame(id);
+  }, [to, motionMs]);
+  return (
+    <img
+      src={url}
+      alt=""
+      aria-hidden
+      className="absolute inset-0 w-full h-full object-cover object-center"
+      style={{
+        ...style,
+        transform,
+        transition: `${style.transition ?? ''}${style.transition ? ', ' : ''}transform ${motionMs}ms ease-in-out`,
+        willChange: 'transform, opacity',
+      }}
+    />
   );
 };
 
