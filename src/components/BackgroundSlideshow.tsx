@@ -248,6 +248,7 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = () => {
       <KenBurnsImage
         key={`${role}-${state.motionId}`}
         url={SLIDES[state.idx].url}
+        objectPosition={SLIDES[state.idx].objectPosition}
         from={state.from}
         to={state.to}
         motionMs={motionMs}
@@ -263,7 +264,6 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = () => {
     <div className="fixed inset-0 -z-10 overflow-hidden bg-slate-900">
       {renderLayer(layerA, 'A')}
       {renderLayer(layerB, 'B')}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/60" />
     </div>
   );
 };
