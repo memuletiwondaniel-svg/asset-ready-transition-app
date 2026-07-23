@@ -377,17 +377,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { error: null };
       }
 
-      // Legacy demo SSO for BGC/Kent buttons
+      // Legacy demo SSO for Gulf Gas/EPCM buttons
       if (provider === 'azure' || provider === 'google') {
         const mockUser = {
           id: 'sso-user-id',
           email: 'user@company.com',
           user_metadata: {
-            full_name: provider === 'azure' ? 'BGC User' : 'Kent User',
+            full_name: provider === 'azure' ? 'Gulf Gas User' : 'EPCM User',
             provider: provider
           }
         };
-        
+
         setUser(mockUser as any);
         setSession({
           access_token: 'mock-sso-token',
@@ -397,8 +397,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           expires_in: 3600,
           token_type: 'bearer'
         } as any);
-        
-        toast.success(`Successfully signed in with ${provider === 'azure' ? 'BGC' : 'Kent'}!`);
+
+        toast.success(`Successfully signed in with ${provider === 'azure' ? 'Gulf Gas' : 'EPCM'}!`);
         return { error: null };
       }
 
