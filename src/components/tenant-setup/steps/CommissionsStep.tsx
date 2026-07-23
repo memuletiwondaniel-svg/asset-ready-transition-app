@@ -36,7 +36,7 @@ export const CommissionsStep: React.FC<CommissionsStepProps> = ({ onComplete }) 
         if (!exists) await supabase.from('commission').insert({ name: c.name, description: c.description, is_active: true });
       }
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['setup-commissions'] }); toast.success('BGC default commissions added'); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['setup-commissions'] }); toast.success('Default commissions added'); },
   });
 
   const addMutation = useMutation({
@@ -71,7 +71,7 @@ export const CommissionsStep: React.FC<CommissionsStepProps> = ({ onComplete }) 
           <p className="text-sm text-muted-foreground">No commissions configured yet.</p>
           <Button variant="outline" size="sm" onClick={() => seedMutation.mutate()} disabled={seedMutation.isPending}>
             {seedMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-            Load BGC Defaults
+            Load Defaults
           </Button>
         </div>
       )}

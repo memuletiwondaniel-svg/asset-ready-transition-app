@@ -36,7 +36,7 @@ export const HubsStep: React.FC<HubsStepProps> = ({ onComplete }) => {
         if (!exists) await supabase.from('hubs').insert({ name: h.name, description: h.description, is_active: true });
       }
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['setup-hubs'] }); toast.success('BGC default hubs added'); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['setup-hubs'] }); toast.success('Default hubs added'); },
   });
 
   const addMutation = useMutation({
@@ -71,7 +71,7 @@ export const HubsStep: React.FC<HubsStepProps> = ({ onComplete }) => {
           <p className="text-sm text-muted-foreground">No hubs configured yet.</p>
           <Button variant="outline" size="sm" onClick={() => seedMutation.mutate()} disabled={seedMutation.isPending}>
             {seedMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-            Load BGC Defaults
+            Load Defaults
           </Button>
         </div>
       )}
