@@ -16,7 +16,7 @@ import { CategoryItemsOverlay } from '@/components/pssr/CategoryItemsOverlay';
 import { FullChecklistOverlay } from '@/components/pssr/FullChecklistOverlay';
 import { SortableWidget } from '@/components/widgets/SortableWidget';
 import { WidgetSettings } from '@/components/widgets/WidgetCustomizationToolbar';
-import BackgroundSlideshow from '@/components/BackgroundSlideshow';
+
 import { DndContext, DragEndEvent, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useToast } from '@/hooks/use-toast';
