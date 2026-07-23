@@ -42,10 +42,11 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = () => {
     first.onload = () => setLoaded((p) => new Set(p).add(startIndex));
     first.src = IMAGES[startIndex];
 
+    const w = window as unknown as {
+      requestIdleCallback?: (cb: () => void) => number;
+    };
     const idle = (cb: () => void) =>
-      'requestIdleCallback' in window
-        ? (window as any).requestIdleCallback(cb)
-        : window.setTimeout(cb, 500);
+      w.requestIdleCallback ? w.requestIdleCallback(cb) : window.setTimeout(cb, 500);
 
     idle(() => {
       IMAGES.forEach((src, i) => {
