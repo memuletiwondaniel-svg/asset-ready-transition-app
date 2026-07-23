@@ -32,7 +32,7 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({
     role: userRoleData?.role || userRoleData?.position || 'User',
     avatar: '',
     initials: userEmail?.slice(0, 2).toUpperCase() || 'U',
-    company: 'Basrah Gas Company',
+    company: 'Gulf Gas Company',
     department: userRoleData?.position || ''
   };
   const handleSignOut = async () => {

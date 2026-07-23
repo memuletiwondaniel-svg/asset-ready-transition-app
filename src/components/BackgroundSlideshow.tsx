@@ -45,7 +45,7 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = ({ showFunFacts 
     [
       "CREATING THOUSANDS",
       "OF LOCAL JOBS",
-      "IN BASRAH REGION"
+      "IN THE GULF REGION"
     ],
     [
       "WORLD-CLASS TECHNOLOGY",

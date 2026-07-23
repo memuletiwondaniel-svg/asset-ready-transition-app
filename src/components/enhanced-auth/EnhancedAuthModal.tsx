@@ -182,7 +182,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                             <Input
                               id="reset-email"
                               type="email"
-                              placeholder="your.email@bgc.com"
+                              placeholder="your.email@company.com"
                               value={resetEmail}
                               onChange={(e) => setResetEmail(e.target.value)}
                               className="pl-10 h-10 text-sm border-border bg-input"
@@ -229,9 +229,9 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                             className={ssoBtnCls}
                           >
                             {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (
-                              <img src="/lovable-uploads/6e3cd7e2-9a08-4d20-88f7-d3a2ab9f4f7b.png" alt="BGC Logo" className="w-5 h-5 mr-2" />
+                              <Shield className="w-5 h-5 mr-2 text-gray-500" />
                             )}
-                            Continue with BGC
+                            Continue with Gulf Gas Company
                           </Button>
                           <Button 
                             onClick={() => handleSSO('google')} 
@@ -268,7 +268,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                             <Input
                               id="signin-email"
                               type="email"
-                              placeholder="your.email@bgc.com"
+                              placeholder="your.email@company.com"
                               value={signInData.email}
                               onChange={e => { setSignInData({ ...signInData, email: e.target.value }); setLoginFailed(false); }}
                               className={inputCls}
