@@ -45,7 +45,6 @@ interface Slide {
  */
 const OBJECT_POSITION_BY_STEM: Record<string, string> = {
   'login-bg-01': '78% center',
-  'login-bg-02': '72% center',
   'login-bg-03': '65% center',
   'login-bg-04': '80% center', // LNG carrier w/ spheres — keep subject right, no flip
   'login-bg-05': '78% center', // LNG carrier docked
@@ -56,7 +55,6 @@ const OBJECT_POSITION_BY_STEM: Record<string, string> = {
   'login-bg-11': '18% center', // worker at refinery sunset — flipped horizontally so subject sits right
   'login-bg-12': '75% center',
   'login-bg-13': '60% center',
-  'login-bg-14': '78% center',
   'login-bg-15': '80% center',
 };
 
