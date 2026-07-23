@@ -51,6 +51,27 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   const [loginFailed, setLoginFailed] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
 
+  // Modal mount/unmount + transition states for a premium open/close animation
+  const [isVisible, setIsVisible] = useState(isOpen);
+  const [isEntered, setIsEntered] = useState(false);
+
+  useEffect(() => {
+    let enterTimer: ReturnType<typeof setTimeout>;
+    let exitTimer: ReturnType<typeof setTimeout>;
+    if (isOpen) {
+      setIsVisible(true);
+      setIsEntered(false);
+      enterTimer = setTimeout(() => setIsEntered(true), 20);
+    } else {
+      setIsEntered(false);
+      exitTimer = setTimeout(() => setIsVisible(false), 220);
+    }
+    return () => {
+      clearTimeout(enterTimer);
+      clearTimeout(exitTimer);
+    };
+  }, [isOpen]);
+
   const [signInData, setSignInData] = useState({ email: '', password: '' });
   const [signUpData, setSignUpData] = useState({
     email: '', password: '', confirmPassword: '',
