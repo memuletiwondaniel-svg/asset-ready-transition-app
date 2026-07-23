@@ -10,12 +10,51 @@ const assetModules = import.meta.glob<{ default: { url: string } }>(
   { eager: true }
 );
 
-const IMAGES: string[] = Object.keys(assetModules)
-  .sort()
-  .map((k) => assetModules[k].default.url);
+/**
+ * Category tagging so two visually-similar frames never play back-to-back
+ * (e.g. tanker after tanker). Keys are the filename stem (login-bg-NN).
+ */
+type Category =
+  | 'ship_tanker'
+  | 'platform_rig'
+  | 'tank_sphere'
+  | 'aerial_plant'
+  | 'human';
 
-const DISPLAY_MS = 7000;
-const FADE_MS = 1500;
+const CATEGORY_BY_STEM: Record<string, Category> = {
+  'login-bg-01': 'tank_sphere',
+  'login-bg-02': 'platform_rig',
+  'login-bg-03': 'aerial_plant',
+  'login-bg-04': 'ship_tanker',
+  'login-bg-05': 'ship_tanker',
+  'login-bg-06': 'human',
+  'login-bg-07': 'platform_rig',
+  'login-bg-08': 'platform_rig',
+  'login-bg-09': 'platform_rig',
+  'login-bg-11': 'human',
+  'login-bg-12': 'platform_rig',
+  'login-bg-13': 'aerial_plant',
+  'login-bg-14': 'ship_tanker',
+  'login-bg-15': 'ship_tanker',
+};
+
+interface Slide {
+  url: string;
+  category: Category;
+}
+
+const SLIDES: Slide[] = Object.keys(assetModules)
+  .sort()
+  .map((k) => {
+    const stem = k.split('/').pop()!.replace(/\..*$/, '');
+    return {
+      url: assetModules[k].default.url,
+      category: CATEGORY_BY_STEM[stem] ?? 'aerial_plant',
+    };
+  });
+
+const DISPLAY_MS = 8000;
+const FADE_MS = 2500;
 
 const prefersReducedMotion = () =>
   typeof window !== 'undefined' &&
@@ -40,10 +79,24 @@ const preloadAndDecode = (src: string): Promise<void> =>
     img.src = src;
   });
 
+/** Pick the next index whose category differs from the current index. */
+const pickNextIndex = (currentIdx: number): number => {
+  if (SLIDES.length < 2) return 0;
+  const currentCat = SLIDES[currentIdx].category;
+  // Candidates in a different category.
+  const candidates: number[] = [];
+  for (let i = 0; i < SLIDES.length; i++) {
+    if (i === currentIdx) continue;
+    if (SLIDES[i].category !== currentCat) candidates.push(i);
+  }
+  const pool = candidates.length ? candidates : SLIDES.map((_, i) => i).filter((i) => i !== currentIdx);
+  return pool[Math.floor(Math.random() * pool.length)];
+};
+
 const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = () => {
   const reduced = useMemo(prefersReducedMotion, []);
   const startIndex = useMemo(
-    () => (IMAGES.length ? Math.floor(Math.random() * IMAGES.length) : 0),
+    () => (SLIDES.length ? Math.floor(Math.random() * SLIDES.length) : 0),
     []
   );
 
@@ -53,24 +106,22 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = () => {
   const [baseIndex, setBaseIndex] = useState(startIndex);
   const [overlayIndex, setOverlayIndex] = useState<number | null>(null);
   const [overlayOn, setOverlayOn] = useState(false);
-  const [readySet, setReadySet] = useState<Set<number>>(new Set());
+  const [, setReadySet] = useState<Set<number>>(new Set());
 
   const cycleRef = useRef<number | null>(null);
-  const nextRef = useRef<number>((startIndex + 1) % Math.max(IMAGES.length, 1));
+  const nextRef = useRef<number>(pickNextIndex(startIndex));
 
-  // Eager preload every image up front — only ~15 compressed files.
+  // Eager preload every image up front — only ~14 compressed files.
   useEffect(() => {
-    if (!IMAGES.length) return;
+    if (!SLIDES.length) return;
     let cancelled = false;
     (async () => {
-      // Prioritise the first frame.
-      await preloadAndDecode(IMAGES[startIndex]);
+      await preloadAndDecode(SLIDES[startIndex].url);
       if (cancelled) return;
       setReadySet((p) => new Set(p).add(startIndex));
-      // Then the rest, in parallel.
-      IMAGES.forEach((src, i) => {
+      SLIDES.forEach((s, i) => {
         if (i === startIndex) return;
-        preloadAndDecode(src).then(() => {
+        preloadAndDecode(s.url).then(() => {
           if (!cancelled) setReadySet((p) => new Set(p).add(i));
         });
       });
@@ -82,7 +133,7 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = () => {
 
   // Rotation loop. Only advances when the next image is fully decoded.
   useEffect(() => {
-    if (IMAGES.length < 2) return;
+    if (SLIDES.length < 2) return;
 
     let stopped = false;
     let fadeTimer: number | null = null;
@@ -92,12 +143,10 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = () => {
       cycleRef.current = window.setTimeout(async () => {
         if (stopped) return;
         const nextIdx = nextRef.current;
-        // Ensure the next image is decoded before starting the fade.
-        await preloadAndDecode(IMAGES[nextIdx]);
+        await preloadAndDecode(SLIDES[nextIdx].url);
         if (stopped) return;
 
         setOverlayIndex(nextIdx);
-        // Next tick: flip opacity to trigger transition.
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             if (stopped) return;
@@ -108,11 +157,10 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = () => {
         const fadeMs = reduced ? 0 : FADE_MS;
         fadeTimer = window.setTimeout(() => {
           if (stopped) return;
-          // Promote overlay -> base atomically, then hide overlay.
           setBaseIndex(nextIdx);
           setOverlayOn(false);
           setOverlayIndex(null);
-          nextRef.current = (nextIdx + 1) % IMAGES.length;
+          nextRef.current = pickNextIndex(nextIdx);
           scheduleNext();
         }, fadeMs + 50);
       }, DISPLAY_MS);
@@ -126,7 +174,7 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = () => {
     };
   }, [reduced]);
 
-  if (!IMAGES.length) {
+  if (!SLIDES.length) {
     return (
       <div className="fixed inset-0 -z-10 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900" />
     );
@@ -140,7 +188,7 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = () => {
       {/* Base layer — always fully opaque. */}
       <img
         key={`base-${baseIndex}`}
-        src={IMAGES[baseIndex]}
+        src={SLIDES[baseIndex].url}
         alt=""
         aria-hidden
         className={`absolute inset-0 w-full h-full object-cover object-center ${kenBurns ? 'animate-ken-burns' : ''}`}
@@ -150,7 +198,7 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = () => {
       {overlayIndex !== null && (
         <img
           key={`overlay-${overlayIndex}`}
-          src={IMAGES[overlayIndex]}
+          src={SLIDES[overlayIndex].url}
           alt=""
           aria-hidden
           className={`absolute inset-0 w-full h-full object-cover object-center ${kenBurns ? 'animate-ken-burns' : ''}`}
