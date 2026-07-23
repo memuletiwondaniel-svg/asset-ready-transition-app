@@ -32,7 +32,7 @@ const inputCls =
   "pl-10 h-11 text-sm rounded-[10px] border border-[#e6e4de] bg-[#fafaf8] text-gray-900 placeholder:text-gray-400 focus-visible:border-[#2563eb] focus-visible:ring-0 focus-visible:shadow-[0_0_0_3px_rgba(37,99,235,0.12)] transition-all";
 
 const ssoBtnCls =
-  "w-full h-11 text-sm font-medium rounded-[10px] bg-white border border-[#e6e4de] text-gray-800 shadow-none transition-all duration-150 ease-out hover:bg-[#f5f4f0] hover:border-[#d8d6cf] hover:shadow-[0_2px_8px_rgba(0,0,0,0.08)] hover:-translate-y-px hover:scale-100 active:translate-y-0 active:shadow-none active:scale-100";
+  "w-full h-11 text-sm font-medium rounded-[10px] bg-white border border-[#e6e4de] text-gray-800 shadow-none transition-all duration-150 ease-out hover:bg-[#f7f8fa] hover:border-[#c7ccd2] hover:shadow-[0_4px_10px_rgba(0,0,0,0.06)] hover:-translate-y-px active:translate-y-0 active:shadow-none";
 
 const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   isOpen,
