@@ -202,7 +202,6 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reduced]);
 
-  const frontLayerRef = useRef<'A' | 'B'>('A');
 
   if (!SLIDES.length) {
     return (
