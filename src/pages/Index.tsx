@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Shield, Users, Network, Target, ClipboardCheck, Key } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useAuth } from "@/components/enhanced-auth/AuthProvider";
 import { useTenantContext } from "@/contexts/TenantContext";
 import EnhancedAuthModal from "@/components/enhanced-auth/EnhancedAuthModal";
@@ -10,161 +10,328 @@ import OrshLogo from "@/components/ui/OrshLogo";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LandingLanguageSelector from "@/components/LandingLanguageSelector";
 
+interface ModuleItem {
+  key: string;
+  label: string;
+  tag: string;
+  narrative: string;
+  href: string;
+}
+
+const MODULES: ModuleItem[] = [
+  {
+    key: "pssr",
+    label: "PSSR",
+    tag: "Pre-start-up safety",
+    narrative:
+      "Clear the safe introduction of hydrocarbons with structured, auditable pre-start-up checklists.",
+    href: "/pssr",
+  },
+  {
+    key: "p2a",
+    label: "P2A",
+    tag: "Construction to asset",
+    narrative:
+      "Drive every deliverable from construction and commissioning through to a live, operating asset.",
+    href: "/p2a",
+  },
+  {
+    key: "vcr",
+    label: "VCR",
+    tag: "Completion verification",
+    narrative:
+      "Verify completion records item-by-item with role-based, evidence-backed approvals.",
+    href: "/vcr",
+  },
+  {
+    key: "sof",
+    label: "SoF / PAC",
+    tag: "Final acceptance",
+    narrative:
+      "Sign off statements of fitness and provisional acceptance with a clean audit trail.",
+    href: "/sof",
+  },
+];
+
 const Index = () => {
   const [showAuth, setShowAuth] = useState(false);
+  const [activeModule, setActiveModule] = useState<string | null>(null);
   const { session, loading } = useAuth();
   const { subdomainTenant } = useTenantContext();
   const isAuthenticated = !!session;
   const navigate = useNavigate();
   const location = useLocation();
-  const { language, setLanguage, translations: t } = useLanguage();
-  
-  const handleAuthenticated = () => {
-    setShowAuth(false);
-  };
+  const { language, setLanguage } = useLanguage();
+
+  const handleAuthenticated = () => setShowAuth(false);
 
   useEffect(() => {
-    if (session && showAuth) {
-      setShowAuth(false);
-    }
+    if (session && showAuth) setShowAuth(false);
   }, [session, showAuth]);
 
-  // Redirect authenticated users from '/' to '/home' to ensure sidebar is visible
   useEffect(() => {
-    if (isAuthenticated && location.pathname === '/') {
-      navigate('/home', { replace: true });
+    if (isAuthenticated && location.pathname === "/") {
+      navigate("/home", { replace: true });
     }
   }, [isAuthenticated, location.pathname, navigate]);
 
-  // While auth is loading, show nothing for non-root paths (AuthenticatedLayout handles this)
-  // For root path, we can show the welcome screen once loading is complete
-  if (loading && location.pathname !== '/') {
-    return null; // AuthenticatedLayout shows the loading state
-  }
+  if (loading && location.pathname !== "/") return null;
+  if (isAuthenticated) return null;
 
-  // If we're at the root '/' and NOT authenticated (and not loading), show the welcome screen
-  if (location.pathname === '/' && !isAuthenticated && !loading) {
-    // Fall through to the welcome screen return statement below
-  } else if (isAuthenticated) {
-    return null;
-  }
-
-  // Show welcome screen before authentication
   return (
     <div className="min-h-screen relative overflow-hidden">
       <BackgroundSlideshow showFunFacts={false} />
-      
-      {/* Fixed Header */}
-      <header className="fixed top-0 left-0 right-0 z-30 px-6 py-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between">
-            {/* ORSH Logo - Left */}
-            {!showAuth && (
-              <div className="flex items-center">
-                <OrshLogo size="large" className="text-white" surface="dark" />
-              </div>
-            )}
-            
-            {/* Language Selector - Right */}
+
+      {/* Left-to-right legibility scrim + warm top-right glow */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 -z-[5]"
+        style={{
+          background:
+            "linear-gradient(90deg, rgba(7,12,18,0.93) 0%, rgba(7,12,18,0.78) 32%, rgba(7,12,18,0.30) 54%, rgba(7,12,18,0) 66%)",
+        }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 -z-[5]"
+        style={{
+          background:
+            "radial-gradient(60% 55% at 85% 12%, rgba(244,186,124,0.26) 0%, rgba(244,186,124,0) 70%)",
+        }}
+      />
+
+      {/* Top bar */}
+      {!showAuth && (
+        <header className="fixed top-0 left-0 right-0 z-30 px-6 md:px-10 py-5">
+          <div className="max-w-[1400px] mx-auto flex items-center justify-between">
+            <div className="flex items-center">
+              <OrshLogo size="large" className="text-white" surface="dark" />
+            </div>
             <div className="flex items-center gap-4">
-              <LandingLanguageSelector 
-                selectedLanguage={language}
-                onLanguageChange={setLanguage}
-              />
               {subdomainTenant?.logo_url && (
-                <img 
-                  src={subdomainTenant.logo_url} 
-                  alt={subdomainTenant.name} 
+                <img
+                  src={subdomainTenant.logo_url}
+                  alt={subdomainTenant.name}
                   className="h-8 w-auto drop-shadow-lg"
                 />
               )}
+              <LandingLanguageSelector
+                selectedLanguage={language}
+                onLanguageChange={setLanguage}
+              />
             </div>
           </div>
-        </div>
-      </header>
-      
-      {/* Main Content - hidden when auth modal is shown, but slideshow continues */}
+        </header>
+      )}
+
+      {/* Hero — left-aligned editorial */}
       {!showAuth && (
-        <main className="relative z-10 flex items-center justify-center min-h-screen pt-24 pb-12 px-6">
-          <div className="max-w-4xl mx-auto text-center space-y-10">
-            
-            {/* Hero Text */}
-            <div className="space-y-8 animate-fade-in">
-              <h1 className="text-white leading-tight">
-                <span className="block text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight drop-shadow-2xl">
-                  {t.welcomeTitle}
-                </span>
-                <span className="block text-2xl md:text-3xl lg:text-4xl font-normal text-white/80 mt-2 drop-shadow-xl">
-                  {t.welcomeSubtitle}
-                </span>
-              </h1>
-              
-              <p className="text-lg md:text-xl lg:text-2xl text-white/85 font-light leading-relaxed mx-auto md:whitespace-nowrap">
-                {t.welcomeDescription}
-              </p>
-            </div>
-            
-            {/* Feature Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
-              {/* PSSR Card */}
-              <div className="group relative p-6 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 hover:bg-white/15 hover:border-white/30 hover:scale-[1.02] transition-all duration-300 shadow-xl">
-                <div className="flex flex-col items-center text-center space-y-4">
-                  <div className="w-14 h-14 bg-gradient-to-br from-red-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                    <ClipboardCheck className="w-7 h-7 text-white" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-white">{t.safeStartup}</h3>
-                  <p className="text-white/75 text-sm leading-relaxed">{t.safeStartupDesc}</p>
-                </div>
-              </div>
-              
-              {/* P2O Card */}
-              <div className="group relative p-6 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 hover:bg-white/15 hover:border-white/30 hover:scale-[1.02] transition-all duration-300 shadow-xl">
-                <div className="flex flex-col items-center text-center space-y-4">
-                  <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                    <Key className="w-7 h-7 text-white" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-white">{t.p2oHandover}</h3>
-                  <p className="text-white/75 text-sm leading-relaxed">{t.p2oHandoverDesc}</p>
-                </div>
-              </div>
-            </div>
-            
-            {/* CTA Button */}
-            <div className="space-y-6">
-              <Button 
-                onClick={() => setShowAuth(true)} 
-                size="lg" 
-                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white px-10 py-6 text-lg font-semibold shadow-2xl hover:shadow-blue-500/25 hover:scale-105 transition-all duration-300 rounded-xl"
+        <main className="relative z-10 min-h-screen flex items-center px-6 md:px-10 pt-28 pb-40">
+          <div className="max-w-[1400px] mx-auto w-full">
+            <div className="w-full md:max-w-[58%] animate-fade-in">
+              <div
+                className="text-white/70 text-[11px] font-medium mb-6"
+                style={{ letterSpacing: "0.22em", textTransform: "uppercase" }}
               >
-                {t.accessButton}
-                <ArrowRight className="h-5 w-5 ml-3" />
-              </Button>
-              
-              {/* Trust Indicators */}
-              <div className="flex flex-wrap items-center justify-center gap-6 text-white/75">
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-cyan-400" />
-                  <span className="text-sm font-medium">{t.connectedPeople}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Network className="w-4 h-4 text-purple-400" />
-                  <span className="text-sm font-medium">{t.connectedSystems}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Target className="w-4 h-4 text-rose-400" />
-                  <span className="text-sm font-medium">{t.integratedDelivery}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-green-400" />
-                  <span className="text-sm font-medium">{t.enterpriseSecure}</span>
-                </div>
+                Operations Readiness Platform
+              </div>
+
+              <h1
+                className="text-white"
+                style={{
+                  fontSize: "clamp(32px, 5vw, 46px)",
+                  fontWeight: 500,
+                  lineHeight: 1.05,
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                Operations Readiness
+              </h1>
+              <div
+                className="mt-2"
+                style={{
+                  color: "rgba(255,255,255,0.72)",
+                  fontSize: "clamp(20px, 2.6vw, 26px)",
+                  fontWeight: 300,
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                Start-Up &amp; Handover
+              </div>
+
+              <p
+                className="mt-8 max-w-xl"
+                style={{
+                  color: "rgba(255,255,255,0.80)",
+                  fontSize: "15px",
+                  lineHeight: 1.6,
+                  fontWeight: 300,
+                }}
+              >
+                Integrating people and systems to deliver business outcomes.
+              </p>
+
+              <div className="mt-10">
+                <Button
+                  onClick={() => setShowAuth(true)}
+                  size="lg"
+                  className="text-white font-semibold px-7 py-6 text-[15px] shadow-xl hover:opacity-95 transition"
+                  style={{
+                    backgroundColor: "#2f6df6",
+                    borderRadius: 8,
+                  }}
+                >
+                  Access ORSH
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
               </div>
             </div>
           </div>
         </main>
       )}
 
-      <EnhancedAuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} onAuthenticated={handleAuthenticated} />
+      {/* Module rail */}
+      {!showAuth && (
+        <div
+          className="fixed bottom-0 left-0 right-0 z-20"
+          style={{
+            borderTop: "1px solid rgba(255,255,255,0.10)",
+            background:
+              "linear-gradient(180deg, rgba(7,12,18,0) 0%, rgba(7,12,18,0.55) 100%)",
+          }}
+        >
+          <div className="max-w-[1400px] mx-auto px-6 md:px-10">
+            <ul className="flex flex-nowrap overflow-x-auto md:overflow-visible items-stretch">
+              {MODULES.map((m, i) => {
+                const isActive = activeModule === m.key;
+                return (
+                  <li
+                    key={m.key}
+                    className="relative flex-shrink-0"
+                    style={{
+                      borderLeft:
+                        i === 0 ? "none" : "1px solid rgba(255,255,255,0.10)",
+                    }}
+                    onMouseEnter={() => setActiveModule(m.key)}
+                    onMouseLeave={() =>
+                      setActiveModule((cur) => (cur === m.key ? null : cur))
+                    }
+                  >
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setActiveModule((cur) => (cur === m.key ? null : m.key))
+                      }
+                      className="group text-left px-6 md:px-8 py-5 flex flex-col gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                      style={{
+                        transform: isActive
+                          ? "translateY(-2px)"
+                          : "translateY(0)",
+                        transition: "transform 160ms ease",
+                      }}
+                    >
+                      <span
+                        aria-hidden
+                        className="absolute left-3 right-3 top-0 h-[2px] rounded-full"
+                        style={{
+                          background: "#34d399",
+                          opacity: isActive ? 1 : 0,
+                          transition: "opacity 160ms ease",
+                        }}
+                      />
+                      <span
+                        className="text-white font-bold"
+                        style={{ fontSize: "12.5px", letterSpacing: "0.02em" }}
+                      >
+                        {m.label}
+                      </span>
+                      <span
+                        style={{
+                          color: "rgba(255,255,255,0.55)",
+                          fontSize: "10.5px",
+                          letterSpacing: "0.04em",
+                        }}
+                      >
+                        {m.tag}
+                      </span>
+                    </button>
+
+                    {/* Popover */}
+                    {isActive && (
+                      <div
+                        role="tooltip"
+                        className="absolute left-1/2 -translate-x-1/2 z-30"
+                        style={{
+                          bottom: "calc(100% + 12px)",
+                          width: 236,
+                        }}
+                      >
+                        <div
+                          style={{
+                            background: "rgba(14,20,28,0.96)",
+                            border: "0.5px solid rgba(255,255,255,0.18)",
+                            borderRadius: 10,
+                            boxShadow:
+                              "0 20px 40px -12px rgba(0,0,0,0.6), 0 8px 16px -8px rgba(0,0,0,0.4)",
+                            padding: "14px 14px 12px",
+                            backdropFilter: "blur(12px)",
+                          }}
+                        >
+                          <div
+                            className="text-white font-semibold mb-2"
+                            style={{ fontSize: 12.5, letterSpacing: "0.02em" }}
+                          >
+                            {m.label}
+                          </div>
+                          <p
+                            style={{
+                              color: "rgba(255,255,255,0.82)",
+                              fontSize: 12,
+                              lineHeight: 1.5,
+                            }}
+                          >
+                            {m.narrative}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(m.href);
+                            }}
+                            className="mt-3 inline-flex items-center gap-1 font-semibold hover:underline"
+                            style={{ color: "#34d399", fontSize: 12 }}
+                          >
+                            Open <ArrowRight className="h-3 w-3" />
+                          </button>
+                        </div>
+                        {/* downward arrow */}
+                        <div
+                          aria-hidden
+                          className="mx-auto"
+                          style={{
+                            width: 0,
+                            height: 0,
+                            borderLeft: "6px solid transparent",
+                            borderRight: "6px solid transparent",
+                            borderTop: "6px solid rgba(14,20,28,0.96)",
+                            marginTop: -1,
+                          }}
+                        />
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </div>
+      )}
+
+      <EnhancedAuthModal
+        isOpen={showAuth}
+        onClose={() => setShowAuth(false)}
+        onAuthenticated={handleAuthenticated}
+      />
     </div>
   );
 };

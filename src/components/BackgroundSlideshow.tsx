@@ -37,7 +37,30 @@ interface Slide {
   url: string;
   category: Category;
   stem: string;
+  objectPosition: string;
 }
+
+/**
+ * Per-image object-position so the subject sits on the RIGHT of the frame
+ * (text panel occupies the left ~58%). Never flip — some frames carry
+ * hull markings / plant signage.
+ */
+const OBJECT_POSITION_BY_STEM: Record<string, string> = {
+  'login-bg-01': '78% center',
+  'login-bg-02': '72% center',
+  'login-bg-03': '65% center',
+  'login-bg-04': '80% center', // LNG carrier w/ spheres — keep subject right, no flip
+  'login-bg-05': '78% center', // LNG carrier docked
+  'login-bg-06': '82% center', // worker w/ tablet — keep on the right
+  'login-bg-07': '75% center',
+  'login-bg-08': '75% center',
+  'login-bg-09': '75% center',
+  'login-bg-11': '82% center', // worker at refinery sunset — subject right
+  'login-bg-12': '75% center',
+  'login-bg-13': '60% center',
+  'login-bg-14': '78% center',
+  'login-bg-15': '80% center',
+};
 
 const SLIDES: Slide[] = Object.keys(assetModules)
   .sort()
@@ -47,6 +70,7 @@ const SLIDES: Slide[] = Object.keys(assetModules)
       url: assetModules[k].default.url,
       category: CATEGORY_BY_STEM[stem] ?? 'aerial_plant',
       stem,
+      objectPosition: OBJECT_POSITION_BY_STEM[stem] ?? '75% center',
     };
   });
 
@@ -224,6 +248,7 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = () => {
       <KenBurnsImage
         key={`${role}-${state.motionId}`}
         url={SLIDES[state.idx].url}
+        objectPosition={SLIDES[state.idx].objectPosition}
         from={state.from}
         to={state.to}
         motionMs={motionMs}
@@ -239,13 +264,13 @@ const BackgroundSlideshow: React.FC<BackgroundSlideshowProps> = () => {
     <div className="fixed inset-0 -z-10 overflow-hidden bg-slate-900">
       {renderLayer(layerA, 'A')}
       {renderLayer(layerB, 'B')}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/60" />
     </div>
   );
 };
 
 interface KenBurnsImageProps {
   url: string;
+  objectPosition: string;
   from: string;
   to: string;
   motionMs: number;
@@ -260,6 +285,7 @@ interface KenBurnsImageProps {
  */
 const KenBurnsImage: React.FC<KenBurnsImageProps> = ({
   url,
+  objectPosition,
   from,
   to,
   motionMs,
@@ -278,9 +304,10 @@ const KenBurnsImage: React.FC<KenBurnsImageProps> = ({
       src={url}
       alt=""
       aria-hidden
-      className="absolute inset-0 w-full h-full object-cover object-center"
+      className="absolute inset-0 w-full h-full object-cover"
       style={{
         ...style,
+        objectPosition,
         transform,
         transition: `${style.transition ?? ''}${style.transition ? ', ' : ''}transform ${motionMs}ms ease-in-out`,
         willChange: 'transform, opacity',
