@@ -397,8 +397,7 @@ const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({ isOpen, onClo
                     <SelectContent>
                       <SelectItem value="BGC">
                         <div className="flex items-center gap-2">
-                          <img src="/lovable-uploads/5d0026a9-ed76-4745-9f0f-6a8a5e37993c.png" alt="BGC" className="w-4 h-4" />
-                          Asset Owner (BGC)
+                          Asset Owner (GCC)
                         </div>
                       </SelectItem>
                       <SelectItem value="KENT">

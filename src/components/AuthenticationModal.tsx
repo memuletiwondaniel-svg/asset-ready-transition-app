@@ -78,8 +78,8 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                     variant="secondary"
                     onClick={() => handleSSOLogin('BGC')}
                   >
-                    <img src="/lovable-uploads/a89a5227-480d-4e3c-abc1-9c6c3ced9d5f.png" alt="BGC Logo" className="h-4 w-4 mr-2" />
-                    Login with BGC
+                    <User className="h-4 w-4 mr-2" />
+                    Login with Gulf Gas Company
                   </Button>
                   <Button 
                     className="w-full transition-all duration-200 hover:scale-105 hover:shadow-lg text-sm py-2" 
@@ -163,7 +163,7 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                         onClick={() => setShowRegistrationModal(true)}
                       >
                         <span>Create Your Account</span>
-                        <span className="text-[8px] opacity-75 -mt-0.5">approval required by BGC</span>
+                        <span className="text-[8px] opacity-75 -mt-0.5">approval required by admin</span>
                       </Button>
                       <Button
                         variant="ghost"

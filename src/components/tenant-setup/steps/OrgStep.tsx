@@ -45,7 +45,7 @@ export const OrgStep: React.FC<OrgStepProps> = ({ onComplete }) => {
       <div className="rounded-lg bg-muted/50 border border-border/40 p-4">
         <p className="text-sm text-muted-foreground">
           💡 <strong>Next steps:</strong> You'll configure plants, fields, hubs, commissions, roles, and invite your first users.
-          Each step comes pre-populated with BGC defaults that you can customise.
+          Each step comes pre-populated with sensible defaults that you can customise.
         </p>
       </div>
     </div>

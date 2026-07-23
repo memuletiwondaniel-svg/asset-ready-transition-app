@@ -110,7 +110,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
     isFunctionalEmail: false,
     personalEmail: '',
     phoneNumbers: [{ countryCode: '+964', number: '' }],
-    company: '',
+    company: 'BGC',
     customCompany: '',
     function: '',
     role: '',
@@ -228,7 +228,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
   ];
 
   const companies = [
-    { value: 'BGC', label: 'BGC', logo: '/lovable-uploads/5d0026a9-ed76-4745-9f0f-6a8a5e37993c.png' },
+    { value: 'BGC', label: 'Gulf Gas Company (GCC)' },
     { value: 'Kent', label: 'Kent', logo: '/lovable-uploads/96910863-cffb-404b-b5f0-149d393a07df.png' },
     { value: 'Others', label: 'Others' }
   ];

@@ -143,7 +143,7 @@ export const translations = {
     // User Management
     manageUser: 'Manage User',
     manageUsers: 'Manage Users',
-    manageUserDesc: 'Manage users, roles, permissions, and access control across the ORSH application with SSO integration for BGC and Kent employees',
+    manageUserDesc: 'Manage users, roles, permissions, and access control across the ORSH application with SSO integration for GCC and Kent employees',
     userManagement: 'User Management',
     totalUsers: 'Total Users',
     activeUsers: 'Active Users',
@@ -183,7 +183,7 @@ export const translations = {
     // Project Management
     manageProject: 'Manage Project',
     manageProjects: 'Manage Projects',
-    manageProjectDesc: 'Manage project timelines, resources, and deliverables across all BGC operations with comprehensive tracking and reporting',
+    manageProjectDesc: 'Manage project timelines, resources, and deliverables across all GCC operations with comprehensive tracking and reporting',
     projectManagement: 'Project Management',
     projectsOverview: 'Projects Overview',
     totalProjects: 'Total Projects',
@@ -358,9 +358,9 @@ export const translations = {
     chatHistory: 'Chat History',
     
     // Company Info
-    basrahGasCompany: 'Basrah Gas Company',
+    basrahGasCompany: 'Gulf Gas Company',
     platform: 'ORSH Platform',
-    poweredBy: 'Powered by Microsoft Fluent Design • Basrah Gas Company © 2024',
+    poweredBy: 'Powered by Microsoft Fluent Design • Gulf Gas Company © 2024',
     
     // Language
     language: 'Language',
@@ -1100,9 +1100,9 @@ export const translations = {
     chatHistory: 'سجل المحادثات',
     
     // Company Info
-    basrahGasCompany: 'شركة غاز البصرة',
+    basrahGasCompany: 'شركة غاز الخليج',
     platform: 'منصة ORSH',
-    poweredBy: 'مدعوم من Microsoft Fluent Design • شركة غاز البصرة © 2024',
+    poweredBy: 'مدعوم من Microsoft Fluent Design • شركة غاز الخليج © 2024',
     
     // Language
     language: 'اللغة',
@@ -1828,9 +1828,9 @@ export const translations = {
     chatHistory: 'Historique des Conversations',
     
     // Company Info
-    basrahGasCompany: 'Basrah Gas Company',
+    basrahGasCompany: 'Gulf Gas Company',
     platform: 'Plateforme ORSH',
-    poweredBy: 'Propulsé par Microsoft Fluent Design • Basrah Gas Company © 2024',
+    poweredBy: 'Propulsé par Microsoft Fluent Design • Gulf Gas Company © 2024',
     
     // Language
     language: 'Langue',
@@ -2556,9 +2556,9 @@ export const translations = {
     chatHistory: 'Sejarah Perbualan',
     
     // Company Info
-    basrahGasCompany: 'Basrah Gas Company',
+    basrahGasCompany: 'Gulf Gas Company',
     platform: 'Platform ORSH',
-    poweredBy: 'Dikuasakan oleh Microsoft Fluent Design • Basrah Gas Company © 2024',
+    poweredBy: 'Dikuasakan oleh Microsoft Fluent Design • Gulf Gas Company © 2024',
     
     // Language
     language: 'Bahasa',
@@ -3284,9 +3284,9 @@ export const translations = {
     chatHistory: 'Чат тарихы',
     
     // Company Info
-    basrahGasCompany: 'Басра Газ Компаниясы',
+    basrahGasCompany: 'Парсы шығанағы Газ Компаниясы',
     platform: 'ORSH платформасы',
-    poweredBy: 'Microsoft Fluent Design негізінде • Basrah Gas Company © 2024',
+    poweredBy: 'Microsoft Fluent Design негізінде • Gulf Gas Company © 2024',
     
     // Language
     language: 'Тіл',
@@ -3798,7 +3798,7 @@ export const translations = {
     // User Management
     manageUser: '管理用户',
     manageUsers: '管理用户',
-    manageUserDesc: '管理 ORSH 应用程序中的用户、角色、权限和访问控制，支持 BGC 和 Kent 员工的 SSO 集成',
+    manageUserDesc: '管理 ORSH 应用程序中的用户、角色、权限和访问控制，支持 GCC 和 Kent 员工的 SSO 集成',
     userManagement: '用户管理',
     totalUsers: '用户总数',
     activeUsers: '活跃用户',
@@ -3838,7 +3838,7 @@ export const translations = {
     // Project Management
     manageProject: '管理项目',
     manageProjects: '管理项目',
-    manageProjectDesc: '管理所有 BGC 运营中的项目时间表、资源和可交付成果，具有全面的跟踪和报告功能',
+    manageProjectDesc: '管理所有 GCC 运营中的项目时间表、资源和可交付成果，具有全面的跟踪和报告功能',
     projectManagement: '项目管理',
     projectsOverview: '项目概览',
     totalProjects: '项目总数',
@@ -4012,9 +4012,9 @@ export const translations = {
     chatHistory: '对话历史',
     
     // Company Info
-    basrahGasCompany: '巴士拉天然气公司',
+    basrahGasCompany: '海湾天然气公司',
     platform: 'ORSH 平台',
-    poweredBy: '由 Microsoft Fluent Design 提供支持 • 巴士拉天然气公司 © 2024',
+    poweredBy: '由 Microsoft Fluent Design 提供支持 • 海湾天然气公司 © 2024',
     
     // Language
     language: '语言',

@@ -72,7 +72,7 @@ export const FieldsStep: React.FC<FieldsStepProps> = ({ onComplete }) => {
           <p className="text-sm text-muted-foreground">No fields configured yet.</p>
           <Button variant="outline" size="sm" onClick={() => seedMutation.mutate()} disabled={seedMutation.isPending}>
             {seedMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-            Load BGC Defaults
+            Load Defaults
           </Button>
         </div>
       )}
