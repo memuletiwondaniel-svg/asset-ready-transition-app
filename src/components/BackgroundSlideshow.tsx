@@ -20,7 +20,6 @@ const CATEGORY_BY_STEM: Record<string, Category> = {
   'login-bg-01': 'tank',             // white land storage tanks + curved staircases
   'login-bg-03': 'aerial_plant',     // top-down 4 spheres on fenced lawn
   'login-bg-04': 'vessel',           // LNG carrier w/ spheres at sunset
-  'login-bg-05': 'vessel',           // aerial LNG carrier docked at pier
   'login-bg-06': 'human',            // worker w/ tablet in factory
   'login-bg-07': 'offshore_platform',// interconnected offshore platforms
   'login-bg-08': 'offshore_platform',// platform on concrete pillar
