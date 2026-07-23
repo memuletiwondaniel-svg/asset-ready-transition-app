@@ -331,10 +331,15 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
 
                         <Button
                           type="submit"
-                          className="w-full h-[46px] text-sm font-medium rounded-[10px] bg-[#2563eb] hover:bg-[#1d4ed8] text-white transition-colors disabled:opacity-100 disabled:bg-[#2563eb]/40 disabled:hover:bg-[#2563eb]/40 disabled:cursor-not-allowed"
+                          className="group w-full h-[46px] text-sm font-medium rounded-[10px] bg-[#0c0f16] hover:bg-[#0c0f16] text-white shadow-lg hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-150 ease-out disabled:opacity-100 disabled:bg-[#0c0f16]/40 disabled:hover:bg-[#0c0f16]/40 disabled:cursor-not-allowed disabled:shadow-lg disabled:translate-y-0"
                           disabled={loading || !signInData.email.trim() || !signInData.password}
                         >
-                          {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Signing in...</> : 'Sign In'}
+                          {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Signing in...</> : (
+                            <span className="inline-flex items-center justify-center gap-2">
+                              Sign in
+                              <ArrowRight className="h-4 w-4 transition-transform duration-150 ease-out group-hover:translate-x-[3px]" />
+                            </span>
+                          )}
                         </Button>
                       </form>
 
