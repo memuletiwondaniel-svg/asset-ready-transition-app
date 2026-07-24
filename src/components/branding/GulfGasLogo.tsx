@@ -31,7 +31,7 @@ export const GulfGasMark: React.FC<React.SVGProps<SVGSVGElement>> = ({
  */
 export const GulfGasLockup: React.FC<{ className?: string; markHeight?: number }> = ({
   className,
-  markHeight = 40,
+  markHeight = 50,
 }) => (
   <div
     className={className}
@@ -43,10 +43,10 @@ export const GulfGasLockup: React.FC<{ className?: string; markHeight?: number }
       style={{
         display: 'inline-block',
         width: 1,
-        height: 44,
+        height: 46,
         background: '#d8dde3',
-        marginLeft: 9,
-        marginRight: 9,
+        marginLeft: 8,
+        marginRight: 10,
       }}
     />
     <div style={{ textAlign: 'right', lineHeight: 1.15 }}>
