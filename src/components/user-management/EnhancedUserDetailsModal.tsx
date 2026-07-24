@@ -535,8 +535,8 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
   ];
 
   const companies = [
-    { value: "BGC", label: "GCC" },
-    { value: "KENT", label: "Kent", logo: "/lovable-uploads/96910863-cffb-404b-b5f0-149d393a07df.png" },
+    { value: "BGC", label: "Gulf Gas Company" },
+    { value: "KENT", label: "EPCM Company" },
     { value: "Others", label: "Others" }
   ];
 
