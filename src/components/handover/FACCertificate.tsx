@@ -201,13 +201,8 @@ const FACCertificate: React.FC<FACCertificateProps> = ({
         <CardContent className="p-8" ref={certificateRef}>
           {/* Header */}
           <div className="text-center mb-6">
-            <img
-              src={gulfGasLogo}
-              alt="Gulf Gas Company"
-              className="h-28 w-auto max-w-[448px] mx-auto mb-6 object-contain"
-              loading="lazy"
-              onError={(e) => { e.currentTarget.style.display = 'none'; }}
-            />
+            <GulfGasLockup className="mx-auto mb-6" markHeight={40} />
+
             <h1 className="text-2xl font-bold text-foreground tracking-wide mb-2">
               FINAL ACCEPTANCE CERTIFICATE (FAC)
             </h1>
