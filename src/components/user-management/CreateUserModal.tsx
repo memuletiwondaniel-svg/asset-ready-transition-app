@@ -859,13 +859,8 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                     {companies.map((company) => (
                       <SelectItem key={company.value} value={company.value}>
                         <div className="flex items-center gap-2">
-                          {company.logo && (
-                            <img 
-                              src={company.logo} 
-                              alt={`${company.label} logo`} 
-                              className="w-5 h-5 object-contain"
-                            />
-                          )}
+                          {company.value === 'BGC' && <GulfGasMark className="w-5 h-5" />}
+                          {company.value === 'KENT' && <EpcmMark className="w-5 h-5" />}
                           <span>{company.label}</span>
                         </div>
                       </SelectItem>
