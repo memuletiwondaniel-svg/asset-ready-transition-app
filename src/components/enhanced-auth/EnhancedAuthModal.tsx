@@ -265,7 +265,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                             className={ssoBtnCls}
                           >
                             {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (
-                              <GulfGasMark className="w-5 h-5 mr-2" />
+                              <GulfGasMark className="w-7 h-7 mr-2" />
                             )}
                             Continue with Gulf Gas
                           </Button>
@@ -276,7 +276,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                             className={ssoBtnCls}
                           >
                             {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (
-                              <EpcmMark className="w-5 h-5 mr-2" />
+                              <EpcmMark className="w-6 h-6 mr-2" />
                             )}
                             Continue with EPCM
                           </Button>

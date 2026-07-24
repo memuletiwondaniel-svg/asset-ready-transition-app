@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useVCRSoFApprovers } from '@/hooks/useVCRSoFApprovers';
-import gulfGasLogo from '@/assets/gulf-gas-company-logo.png';
+import { GulfGasLockup } from '@/components/branding/GulfGasLogo';
 
 interface SOFApprover {
   id: string;
@@ -250,13 +250,8 @@ const SOFCertificate: React.FC<SOFCertificateProps> = ({
         <CardContent className="p-8" ref={certificateRef}>
           {/* Header */}
           <div className="text-center mb-6">
-            <img
-              src={gulfGasLogo}
-              alt="Gulf Gas Company"
-              className="h-28 w-auto max-w-[448px] mx-auto mb-6 object-contain"
-              loading="lazy"
-              onError={(e) => { e.currentTarget.style.display = 'none'; }}
-            />
+            <GulfGasLockup className="mx-auto mb-6" markHeight={40} />
+
             <h1 className="text-2xl font-bold text-foreground tracking-wide mb-2">
               STATEMENT OF FITNESS (SoF)
             </h1>
