@@ -14,7 +14,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Plus, Pencil, Trash2, Building2, MapPin, Factory, ChevronRight, ChevronDown, LayoutGrid, GitBranch, Search, X, Maximize2, Minimize2, Layers } from 'lucide-react';
 import { useLocations, Plant, Field, Station } from '@/hooks/useLocations';
-import BGCIcon from './BGCIcon';
+import { GulfGasMark } from '@/components/branding/GulfGasLogo';
 
 type LocationType = 'plant' | 'field' | 'station';
 
@@ -501,7 +501,7 @@ const LocationManagement: React.FC = () => {
       {/* Brand */}
       <div className="flex items-center gap-3 min-w-0">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-background shadow-sm ring-1 ring-border/60 shrink-0">
-          <BGCIcon size={28} />
+          <GulfGasMark style={{ height: 28, width: 'auto' }} />
         </div>
         <div className="flex flex-col min-w-0">
           <span className="text-base font-semibold tracking-tight truncate">Gulf Gas Company</span>
