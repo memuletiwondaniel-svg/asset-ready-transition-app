@@ -475,7 +475,8 @@ const EnhancedRegistrationForm: React.FC<RegistrationFormProps> = ({
                 {companies.map((company) => (
                   <SelectItem key={company.value} value={company.value}>
                     <div className="flex items-center gap-2">
-                      {company.logo && <img src={company.logo} alt={company.value} className="w-4 h-4" />}
+                      {company.value === 'BGC' && <GulfGasMark className="w-4 h-4" />}
+                      {company.value === 'KENT' && <EpcmMark className="w-4 h-4" />}
                       {company.label}
                     </div>
                   </SelectItem>
