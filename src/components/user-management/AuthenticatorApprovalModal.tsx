@@ -91,7 +91,7 @@ const AuthenticatorApprovalModal: React.FC<AuthenticatorApprovalModalProps> = ({
     'Create or Approve FAC or FAC line Item'
   ];
 
-  const companies = ['BGC', 'Kent', 'Others'];
+  const companies = ['Gulf Gas Company', 'EPCM Company', 'Others'];
   const roles = [
     'Project Manager',
     'Commissioning Lead',
