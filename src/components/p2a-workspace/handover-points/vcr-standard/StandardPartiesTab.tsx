@@ -44,13 +44,6 @@ const initials = (name: string) =>
     .join('')
     .toUpperCase() || '?';
 
-/** Health-token status dot for a seat. */
-const statusDotClass = (assigned: number, completed: number, signed: boolean) => {
-  if (signed || (assigned > 0 && completed >= assigned)) return 'bg-emerald-500';
-  if (completed > 0) return 'bg-amber-500';
-  return 'bg-slate-300';
-};
-
 /** Fraction chip tone: green when complete, amber while in progress, slate at zero. */
 const fractionChipClass = (assigned: number, completed: number, signed: boolean) => {
   if (signed || (assigned > 0 && completed >= assigned)) return 'bg-emerald-50 text-emerald-700';
@@ -58,104 +51,203 @@ const fractionChipClass = (assigned: number, completed: number, signed: boolean)
   return 'bg-slate-100 text-muted-foreground';
 };
 
+const isComplete = (p: PartyPerson) =>
+  !!p.signed || (p.assigned > 0 && p.completed >= p.assigned);
+
+/** Teams-style green tick badge pinned to avatar bottom-right when a seat is complete. */
+const CompletionTick: React.FC<{ show: boolean; size?: 'sm' | 'md' }> = ({ show, size = 'sm' }) => {
+  if (!show) return null;
+  const dim = size === 'md' ? 'w-4 h-4' : 'w-3.5 h-3.5';
+  return (
+    <span
+      className={cn(
+        'absolute -bottom-0.5 -right-0.5 rounded-full bg-emerald-500 ring-2 ring-background flex items-center justify-center text-white',
+        dim,
+      )}
+      aria-label="Complete"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-2 h-2">
+        <polyline points="20 6 9 17 4 12" />
+      </svg>
+    </span>
+  );
+};
+
+/** Small avatar helper used by rows and stacked B2B cluster. */
+const SeatAvatar: React.FC<{ p: PartyPerson; className?: string; ring?: boolean }> = ({ p, className, ring }) => (
+  <Avatar className={cn('h-8 w-8 flex-none', ring && 'ring-2 ring-background', className)}>
+    {p.avatar_url && <AvatarImage src={p.avatar_url} alt={p.full_name} />}
+    <AvatarFallback className="text-[10px] font-semibold bg-slate-200 text-slate-700">
+      {initials(p.full_name)}
+    </AvatarFallback>
+  </Avatar>
+);
+
+const ProgressChip: React.FC<{ p: PartyPerson }> = ({ p }) => {
+  const complete = isComplete(p);
+  return (
+    <span
+      className={cn(
+        'text-[11px] font-semibold rounded-full px-2 py-0.5 flex-none w-[96px] text-center tabular-nums',
+        fractionChipClass(p.assigned, p.completed, !!p.signed),
+      )}
+      title={complete ? 'Complete' : `${p.completed} of ${p.assigned} items complete`}
+    >
+      {p.assigned > 0
+        ? `${p.completed} of ${p.assigned}`
+        : (p.signed ? 'Signed' : '—')}
+    </span>
+  );
+};
+
 /**
- * PartyRow — one seat per canonical role. When the role has 2+ holders
- * (a B2B pair), we show the primary and expose a "B2B" chip that cycles
- * to the partner. Clicking the row opens the drawer for the currently
- * displayed holder. Root-cause fix for the previous B2B defect: pairing
- * is now grouped by role (not by profiles.position string), so two
- * holders of the same canonical role always collapse to one seat.
+ * PartyRow — one seat per canonical role.
+ *  • Solo holder: single row with tick badge when complete.
+ *  • B2B pair: COLLAPSED by default → primary avatar with the partner
+ *    stacked/overlapping, a “+1 back-to-back” hint, and one progress
+ *    chip for the seat. Expanding reveals both people cleanly with
+ *    Primary / Back-to-back chips and their own tick badges.
  */
 const PartyRow: React.FC<{
   holders: PartyPerson[];
   onClick?: (p: PartyPerson) => void;
   clickable?: boolean;
   signedRoleKeys?: Set<string>;
-}> = ({ holders, onClick, clickable, signedRoleKeys }) => {
-  const [idx, setIdx] = useState(0);
-  const safeIdx = idx % holders.length;
-  const shown = holders[safeIdx];
+}> = ({ holders, onClick, clickable }) => {
+  const [expanded, setExpanded] = useState(false);
   const isPaired = holders.length > 1;
-  const partnerNames = holders
-    .filter((_, i) => i !== safeIdx)
-    .map((p) => p.full_name)
-    .join(', ');
+  // Primary = first alphabetically (already sorted by groupHoldersByRole).
+  // The accountable primary drives the seat's completion state.
+  const primary = holders[0];
+  const partner = holders[1];
+  const seatComplete = isPaired
+    ? holders.every(isComplete)
+    : isComplete(primary);
 
-  // Items are truth: a signed discipline statement is shown as context, but
-  // never overrides the effective item counter. Rework / Q·Rework stay open.
-  const roleKey = (shown.role_name || shown.position || '').trim().toLowerCase();
-  const hasStatement = !!(roleKey && signedRoleKeys?.has(roleKey));
-  const isSofPacSigned = !!shown.signed;
-  const displayAssigned = shown.assigned;
-  const displayCompleted = shown.completed;
-  const complete = isSofPacSigned || (displayAssigned > 0 && displayCompleted >= displayAssigned);
+  if (!isPaired) {
+    return (
+      <div className={cn('w-full flex items-center gap-3 px-3 py-2 transition-colors', clickable && 'hover:bg-muted/50')}>
+        <button
+          type="button"
+          onClick={() => clickable && onClick?.(primary)}
+          disabled={!clickable}
+          className={cn('flex items-center gap-3 flex-1 min-w-0 text-left', clickable ? 'cursor-pointer' : 'cursor-default')}
+        >
+          <div className="relative flex-none">
+            <SeatAvatar p={primary} />
+            <CompletionTick show={seatComplete} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-[13px] font-medium truncate leading-tight">{primary.full_name}</div>
+            <div className="text-[11px] text-muted-foreground truncate">
+              {primary.role_name || primary.position || '—'}
+            </div>
+          </div>
+        </button>
+        <ProgressChip p={primary} />
+      </div>
+    );
+  }
 
+  // ---- B2B COLLAPSED ----
+  if (!expanded) {
+    return (
+      <div className={cn('w-full flex items-center gap-3 px-3 py-2 transition-colors', clickable && 'hover:bg-muted/50')}>
+        <button
+          type="button"
+          onClick={() => clickable && onClick?.(primary)}
+          disabled={!clickable}
+          className={cn('flex items-center gap-3 flex-1 min-w-0 text-left', clickable ? 'cursor-pointer' : 'cursor-default')}
+        >
+          {/* stacked avatar cluster */}
+          <div className="relative flex-none w-[46px] h-8">
+            <div className="absolute left-3 top-0">
+              <SeatAvatar p={partner} ring className="opacity-90" />
+            </div>
+            <div className="absolute left-0 top-0">
+              <div className="relative">
+                <SeatAvatar p={primary} ring />
+                <CompletionTick show={seatComplete} />
+              </div>
+            </div>
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-[13px] font-medium truncate leading-tight flex items-center gap-1.5">
+              {primary.full_name}
+              <span className="text-[9px] font-semibold tracking-wider px-1 py-px rounded bg-muted text-muted-foreground border border-border/60 shrink-0 leading-none">
+                +{holders.length - 1} back-to-back
+              </span>
+            </div>
+            <div className="text-[11px] text-muted-foreground truncate">
+              {primary.role_name || primary.position || '—'}
+            </div>
+          </div>
+        </button>
+        <ProgressChip p={primary} />
+        <button
+          type="button"
+          onClick={() => setExpanded(true)}
+          className="flex-none w-6 h-6 rounded-md hover:bg-muted/60 flex items-center justify-center text-muted-foreground/70"
+          aria-label="Expand back-to-back partners"
+          aria-expanded={false}
+        >
+          <ChevronDown className="w-4 h-4" />
+        </button>
+      </div>
+    );
+  }
+
+  // ---- B2B EXPANDED ----
   return (
-    <div
-      className={cn(
-        'w-full flex items-center gap-3 px-3 py-2 transition-colors',
-        clickable ? 'hover:bg-muted/50' : '',
-      )}
-    >
-      <button
-        type="button"
-        onClick={() => clickable && onClick?.(shown)}
-        disabled={!clickable}
-        className={cn(
-          'flex items-center gap-3 flex-1 min-w-0 text-left',
-          clickable ? 'cursor-pointer' : 'cursor-default',
-        )}
-      >
-        <Avatar className="h-8 w-8 flex-none">
-          {shown.avatar_url && <AvatarImage src={shown.avatar_url} alt={shown.full_name} />}
-          <AvatarFallback className="text-[10px] font-semibold bg-slate-200 text-slate-700">
-            {initials(shown.full_name)}
-          </AvatarFallback>
-        </Avatar>
-        <div className="min-w-0 flex-1">
-          <div className="text-[13px] font-medium truncate leading-tight flex items-center gap-1.5">
-            {shown.full_name}
-            {isPaired && (
-              <TooltipProvider delayDuration={150}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        setIdx((i) => (i + 1) % holders.length);
-                      }}
-                      className="text-[8px] font-semibold tracking-wider px-1 py-px rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0 leading-none cursor-pointer hover:bg-amber-200 dark:hover:bg-amber-900/60 transition-colors"
-                      aria-label={`Back-to-back with ${partnerNames}. Click to view partner.`}
-                    >
-                      B2B
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" align="start" sideOffset={4} className="text-xs">
-                    Back-to-back with {partnerNames} — click to swap
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-          </div>
-          <div className="text-[11px] text-muted-foreground truncate">
-            {shown.role_name || shown.position || '—'}
-          </div>
-        </div>
-      </button>
-      {/* Uniform-width progress label — right aligned, tabular numerals */}
-      <span
-        className={cn(
-          'text-[11px] font-semibold rounded-full px-2 py-0.5 flex-none w-[92px] text-center tabular-nums',
-          fractionChipClass(displayAssigned, displayCompleted, isSofPacSigned),
-        )}
-        title={complete ? 'Complete' : `${displayCompleted} of ${displayAssigned} items complete`}
-      >
-        {displayAssigned > 0
-          ? `${displayCompleted} of ${displayAssigned}`
-          : (isSofPacSigned ? 'Signed' : '—')}
-      </span>
+    <div className="w-full">
+      <div className="flex items-center justify-end px-3 pt-1">
+        <button
+          type="button"
+          onClick={() => setExpanded(false)}
+          className="flex-none w-6 h-6 rounded-md hover:bg-muted/60 flex items-center justify-center text-muted-foreground/70"
+          aria-label="Collapse back-to-back partners"
+          aria-expanded={true}
+        >
+          <ChevronDown className="w-4 h-4 rotate-180" />
+        </button>
+      </div>
+      <div className="divide-y divide-border/30">
+        {holders.map((h, i) => {
+          const chip = i === 0
+            ? { label: 'Primary', cls: 'bg-blue-50 text-blue-700 border-blue-200' }
+            : { label: 'Back-to-back', cls: 'bg-amber-50 text-amber-700 border-amber-200' };
+          return (
+            <div
+              key={h.user_id}
+              className={cn('w-full flex items-center gap-3 px-3 py-2', clickable && 'hover:bg-muted/50')}
+            >
+              <button
+                type="button"
+                onClick={() => clickable && onClick?.(h)}
+                disabled={!clickable}
+                className={cn('flex items-center gap-3 flex-1 min-w-0 text-left', clickable ? 'cursor-pointer' : 'cursor-default')}
+              >
+                <div className="relative flex-none">
+                  <SeatAvatar p={h} />
+                  <CompletionTick show={isComplete(h)} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[13px] font-medium truncate leading-tight flex items-center gap-1.5">
+                    {h.full_name}
+                    <span className={cn('text-[9px] font-semibold tracking-wider px-1 py-px rounded border shrink-0 leading-none', chip.cls)}>
+                      {chip.label}
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-muted-foreground truncate">
+                    {h.role_name || h.position || '—'}
+                  </div>
+                </div>
+              </button>
+              <ProgressChip p={h} />
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };
