@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { GulfGasMark, EpcmMark } from "@/components/enhanced-auth/SsoMarks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -106,8 +107,8 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
   const disciplineNames = disciplines?.map(discipline => discipline.name) || [];
 
   const companies = [
-    { value: "BGC", label: "Asset Owner (GCC)" },
-    { value: "KENT", label: "Kent Engineering", logo: "/lovable-uploads/ce220599-66e9-4a0a-8a13-da52ebf6ca14.png" },
+    { value: "BGC", label: "Gulf Gas Company" },
+    { value: "KENT", label: "EPCM Company" },
     { value: "Others", label: "Others (specify)" },
   ];
 
@@ -858,13 +859,8 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
                     {companies.map((company) => (
                       <SelectItem key={company.value} value={company.value}>
                         <div className="flex items-center gap-2">
-                          {company.logo && (
-                            <img 
-                              src={company.logo} 
-                              alt={`${company.label} logo`} 
-                              className="w-5 h-5 object-contain"
-                            />
-                          )}
+                          {company.value === 'BGC' && <GulfGasMark className="w-5 h-5" />}
+                          {company.value === 'KENT' && <EpcmMark className="w-5 h-5" />}
                           <span>{company.label}</span>
                         </div>
                       </SelectItem>

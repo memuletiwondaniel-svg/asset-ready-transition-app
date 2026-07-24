@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { GulfGasMark, EpcmMark } from '@/components/enhanced-auth/SsoMarks';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -87,8 +88,8 @@ const EnhancedRegistrationForm: React.FC<RegistrationFormProps> = ({
   ];
 
   const companies = [
-    { value: 'BGC', label: 'Gulf Gas Company (GCC)' },
-    { value: 'KENT', label: 'Kent Engineering', logo: '/lovable-uploads/96910863-cffb-404b-b5f0-149d393a07df.png' },
+    { value: 'BGC', label: 'Gulf Gas Company' },
+    { value: 'KENT', label: 'EPCM Company' },
     { value: 'OTHER', label: 'Others (specify)' }
   ];
 
@@ -474,7 +475,8 @@ const EnhancedRegistrationForm: React.FC<RegistrationFormProps> = ({
                 {companies.map((company) => (
                   <SelectItem key={company.value} value={company.value}>
                     <div className="flex items-center gap-2">
-                      {company.logo && <img src={company.logo} alt={company.value} className="w-4 h-4" />}
+                      {company.value === 'BGC' && <GulfGasMark className="w-4 h-4" />}
+                      {company.value === 'KENT' && <EpcmMark className="w-4 h-4" />}
                       {company.label}
                     </div>
                   </SelectItem>

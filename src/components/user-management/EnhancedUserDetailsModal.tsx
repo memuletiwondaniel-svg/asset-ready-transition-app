@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { GulfGasMark, EpcmMark } from '@/components/enhanced-auth/SsoMarks';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -534,8 +535,8 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
   ];
 
   const companies = [
-    { value: "BGC", label: "GCC" },
-    { value: "KENT", label: "Kent", logo: "/lovable-uploads/96910863-cffb-404b-b5f0-149d393a07df.png" },
+    { value: "BGC", label: "Gulf Gas Company" },
+    { value: "KENT", label: "EPCM Company" },
     { value: "Others", label: "Others" }
   ];
 
@@ -1703,7 +1704,8 @@ const EnhancedUserDetailsModal: React.FC<EnhancedUserDetailsModalProps> = ({
                             {companies.map((company) => (
                               <SelectItem key={company.value} value={company.value}>
                                 <div className="flex items-center gap-2">
-                                  {company.logo && <img src={company.logo} alt={company.value} className="w-4 h-4" />}
+                                  {company.value === 'BGC' && <GulfGasMark className="w-4 h-4" />}
+                                  {company.value === 'KENT' && <EpcmMark className="w-4 h-4" />}
                                   {company.label}
                                 </div>
                               </SelectItem>

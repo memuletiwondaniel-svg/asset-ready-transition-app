@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { GulfGasMark, EpcmMark } from '@/components/enhanced-auth/SsoMarks';
 import { BackgroundThemeSelector } from '@/components/BackgroundThemeSelector';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -397,13 +398,14 @@ const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({ isOpen, onClo
                     <SelectContent>
                       <SelectItem value="BGC">
                         <div className="flex items-center gap-2">
-                          Asset Owner (GCC)
+                          <GulfGasMark className="w-4 h-4" />
+                          Gulf Gas Company
                         </div>
                       </SelectItem>
                       <SelectItem value="KENT">
                         <div className="flex items-center gap-2">
-                          <img src="/lovable-uploads/96910863-cffb-404b-b5f0-149d393a07df.png" alt="KENT" className="w-4 h-4" />
-                          Kent Engineering
+                          <EpcmMark className="w-4 h-4" />
+                          EPCM Company
                         </div>
                       </SelectItem>
                       <SelectItem value="CONTRACTOR">Contractor</SelectItem>
