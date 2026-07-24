@@ -2,6 +2,41 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  .auth-modal-backdrop {
+    opacity: 0;
+    transition: opacity 420ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .auth-modal-backdrop[data-entered="true"] {
+    opacity: 1;
+  }
+
+  .auth-modal-card {
+    opacity: 0;
+    transform: translateY(22px) scale(0.9);
+    transform-origin: center left;
+    transition:
+      opacity 520ms cubic-bezier(0.16, 1, 0.3, 1),
+      transform 520ms cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+  }
+
+  .auth-modal-card[data-entered="true"] {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .auth-modal-backdrop,
+    .auth-modal-card {
+      transform: none;
+      transition: opacity 260ms ease-out;
+      will-change: opacity;
+    }
+  }
+}
+
 /* Mobile scroll and safe area helpers */
 .-webkit-overflow-scrolling-touch {
   -webkit-overflow-scrolling: touch;
