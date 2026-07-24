@@ -144,7 +144,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
         </DialogHeader>
 
         <div
-          className={`absolute inset-0 z-[5] bg-black/25 backdrop-blur-[1px] motion-safe:transition-opacity motion-safe:ease-out motion-reduce:transition-opacity motion-reduce:duration-300 ${isEntered ? 'motion-safe:duration-200' : 'motion-safe:duration-[280ms]'} ${isEntered ? 'motion-safe:opacity-100 motion-reduce:opacity-100' : 'motion-safe:opacity-0 motion-reduce:opacity-0'}`}
+          className={`absolute inset-0 z-[5] bg-black/25 backdrop-blur-[1px] motion-safe:transition-opacity motion-safe:ease-out motion-reduce:transition-opacity motion-reduce:duration-300 ${isEntered ? 'motion-safe:duration-[280ms]' : 'motion-safe:duration-200'} ${isEntered ? 'motion-safe:opacity-100 motion-reduce:opacity-100' : 'motion-safe:opacity-0 motion-reduce:opacity-0'}`}
           onClick={onClose}
           aria-hidden="true"
         />
