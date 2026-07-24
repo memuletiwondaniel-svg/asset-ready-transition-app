@@ -56,18 +56,22 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   const [isEntered, setIsEntered] = useState(false);
 
   useEffect(() => {
-    let enterTimer: ReturnType<typeof setTimeout>;
+    let enterFrame: number;
+    let enterFrameInner: number;
     let exitTimer: ReturnType<typeof setTimeout>;
     if (isOpen) {
       setIsVisible(true);
       setIsEntered(false);
-      enterTimer = setTimeout(() => setIsEntered(true), 30);
+      enterFrame = window.requestAnimationFrame(() => {
+        enterFrameInner = window.requestAnimationFrame(() => setIsEntered(true));
+      });
     } else {
       setIsEntered(false);
-      exitTimer = setTimeout(() => setIsVisible(false), 220);
+      exitTimer = setTimeout(() => setIsVisible(false), 240);
     }
     return () => {
-      clearTimeout(enterTimer);
+      if (enterFrame) window.cancelAnimationFrame(enterFrame);
+      if (enterFrameInner) window.cancelAnimationFrame(enterFrameInner);
       clearTimeout(exitTimer);
     };
   }, [isOpen]);
@@ -144,14 +148,18 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
         </DialogHeader>
 
         <div
-          className={`absolute inset-0 z-[5] bg-black/25 backdrop-blur-[1px] motion-safe:transition-opacity motion-safe:ease-out motion-reduce:transition-opacity motion-reduce:duration-300 ${isEntered ? 'motion-safe:duration-modal-backdrop' : 'motion-safe:duration-modal-close'} ${isEntered ? 'motion-safe:opacity-100 motion-reduce:opacity-100' : 'motion-safe:opacity-0 motion-reduce:opacity-0'}`}
+          className="auth-modal-backdrop absolute inset-0 z-[5] bg-black/25 backdrop-blur-[1px]"
+          data-entered={isEntered ? 'true' : 'false'}
           onClick={onClose}
           aria-hidden="true"
         />
 
         <div className="w-screen h-screen flex items-center justify-start p-4 md:pl-[6vw] lg:pl-[8vw] relative z-10 pointer-events-none">
           <div className="w-full max-w-[360px] relative z-10 pointer-events-auto" onClick={(e) => e.stopPropagation()}>
-            <div className={`rounded-[16px] shadow-[0_12px_40px_rgba(0,0,0,0.18)] p-8 relative overflow-hidden bg-white supports-[backdrop-filter]:bg-white/[0.96] supports-[backdrop-filter]:backdrop-blur-[12px] [-webkit-backdrop-filter:blur(12px)] motion-safe:transition-all motion-safe:ease-modal-in motion-reduce:transition-opacity motion-reduce:duration-300 will-change-transform ${isEntered ? 'motion-safe:duration-modal' : 'motion-safe:duration-modal-close'} ${isEntered ? 'motion-safe:opacity-100 motion-safe:scale-100 motion-safe:translate-y-0 motion-reduce:opacity-100' : 'motion-safe:opacity-0 motion-safe:scale-[0.92] motion-safe:translate-y-[14px] motion-reduce:opacity-0'}`}>
+            <div
+              className="auth-modal-card rounded-[16px] shadow-[0_12px_40px_rgba(0,0,0,0.18)] p-8 relative overflow-hidden bg-white supports-[backdrop-filter]:bg-white/[0.96] supports-[backdrop-filter]:backdrop-blur-[12px] [-webkit-backdrop-filter:blur(12px)]"
+              data-entered={isEntered ? 'true' : 'false'}
+            >
 
               <div className="relative z-10">
                 {/* Header — logo centered + single muted welcome line */}
