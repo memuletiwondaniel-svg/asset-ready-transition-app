@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { UserPlus, User } from 'lucide-react';
+import { GulfGasMark, EpcmMark } from '@/components/enhanced-auth/SsoMarks';
 import P2ALogo from '@/components/P2ALogo';
 import EnhancedCreateUserModal from '@/components/user-management/EnhancedCreateUserModal';
 import { useUsers } from '@/hooks/useUsers';
