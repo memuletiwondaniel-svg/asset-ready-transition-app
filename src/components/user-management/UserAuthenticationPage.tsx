@@ -73,8 +73,8 @@ const UserAuthenticationPage: React.FC<UserAuthenticationPageProps> = ({ token, 
   ];
 
   const companies = [
-    { value: 'BGC', label: 'Gulf Gas Company (GCC)' },
-    { value: 'KENT', label: 'Kent Engineering', logo: '/lovable-uploads/96910863-cffb-404b-b5f0-149d393a07df.png' },
+    { value: 'BGC', label: 'Gulf Gas Company' },
+    { value: 'KENT', label: 'EPCM Company' },
     { value: 'OTHER', label: 'Others' }
   ];
 
