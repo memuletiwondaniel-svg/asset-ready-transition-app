@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { GulfGasMark, EpcmMark } from '@/components/enhanced-auth/SsoMarks';
 import { BackgroundThemeSelector } from '@/components/BackgroundThemeSelector';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
