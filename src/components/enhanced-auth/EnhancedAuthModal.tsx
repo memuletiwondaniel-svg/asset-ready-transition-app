@@ -67,7 +67,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
       });
     } else {
       setIsEntered(false);
-      exitTimer = setTimeout(() => setIsVisible(false), 240);
+      exitTimer = setTimeout(() => setIsVisible(false), 500);
     }
     return () => {
       if (enterFrame) window.cancelAnimationFrame(enterFrame);
