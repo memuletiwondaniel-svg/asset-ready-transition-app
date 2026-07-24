@@ -107,8 +107,8 @@ const CreateUserModal = ({ isOpen, onClose, onCreateUser, onUserCreated }: Creat
   const disciplineNames = disciplines?.map(discipline => discipline.name) || [];
 
   const companies = [
-    { value: "BGC", label: "Asset Owner (GCC)" },
-    { value: "KENT", label: "Kent Engineering", logo: "/lovable-uploads/ce220599-66e9-4a0a-8a13-da52ebf6ca14.png" },
+    { value: "BGC", label: "Gulf Gas Company" },
+    { value: "KENT", label: "EPCM Company" },
     { value: "Others", label: "Others (specify)" },
   ];
 
