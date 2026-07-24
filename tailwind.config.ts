@@ -130,6 +130,9 @@ export default {
 				'fluent': '30px',
 				'xs': '2px',
 			},
+			transitionTimingFunction: {
+				'modal-in': 'cubic-bezier(0.16, 1, 0.3, 1)',
+			},
 			// Centralized overlay/z-index scale — see src/lib/z-index.ts for docs.
 			zIndex: {
 				'sticky': '20',
