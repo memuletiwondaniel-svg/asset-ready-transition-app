@@ -9,9 +9,7 @@ import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useVCRPACApprovers } from '@/hooks/useVCRPACApprovers';
-// PREVIEW CANDIDATE — Gulf Gas Company anonymized brand mark.
-// Rolled only onto PAC preview for Daniel's approval before cascading to SoF/FAC.
-import gulfGasLogo from '@/assets/gulf-gas-company-logo.png';
+import { GulfGasLockup } from '@/components/branding/GulfGasLogo';
 
 interface PACApprover {
   id: string;
@@ -280,15 +278,8 @@ const PACCertificate: React.FC<PACCertificateProps> = ({
         <CardContent className="p-8" ref={certificateRef}>
           {/* Header */}
           <div className="text-center mb-6">
-            <img
-              src={gulfGasLogo}
-              alt="Gulf Gas Company"
-              className="h-28 w-auto max-w-[448px] mx-auto mb-6 object-contain"
-              loading="lazy"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-              }}
-            />
+            <GulfGasLockup className="mx-auto mb-6" markHeight={40} />
+
 
             <h1 className="text-2xl font-bold text-foreground tracking-wide mb-2">
               PROVISIONAL ACCEPTANCE CERTIFICATE (PAC)
