@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { GulfGasLockup } from '@/components/branding/GulfGasLogo';
 
 interface SOFApprover {
   id: string;
