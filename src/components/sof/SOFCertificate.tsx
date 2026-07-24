@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { GulfGasLockup } from '@/components/branding/GulfGasLogo';
 
 interface SOFApprover {
   id: string;
@@ -190,12 +191,11 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
       >
         {/* Header with Logo */}
         <div className="text-center border-b-2 border-black pb-4 mb-6">
-          <img
-            src="/images/bgc-logo.png"
-            alt="Company Logo"
-            className="h-12 mx-auto mb-4"
-          />
+          <div className="flex justify-center mb-4">
+            <GulfGasLockup markHeight={40} />
+          </div>
           <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-gray-800 to-transparent mb-2" />
+
           <h3 className="text-2xl font-bold tracking-wide text-gray-900">STATEMENT OF FITNESS</h3>
           <p className="text-sm text-gray-600 mt-1">Certificate No: {certificateNumber}</p>
         </div>
