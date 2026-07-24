@@ -61,7 +61,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
     if (isOpen) {
       setIsVisible(true);
       setIsEntered(false);
-      enterTimer = setTimeout(() => setIsEntered(true), 20);
+      enterTimer = setTimeout(() => setIsEntered(true), 30);
     } else {
       setIsEntered(false);
       exitTimer = setTimeout(() => setIsVisible(false), 220);
