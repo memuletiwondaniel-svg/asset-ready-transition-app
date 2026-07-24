@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useVCRSoFApprovers } from '@/hooks/useVCRSoFApprovers';
-import gulfGasLogo from '@/assets/gulf-gas-company-logo.png';
+import { GulfGasLockup } from '@/components/branding/GulfGasLogo';
 
 interface SOFApprover {
   id: string;
