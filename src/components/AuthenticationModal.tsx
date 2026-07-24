@@ -79,16 +79,16 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                     variant="secondary"
                     onClick={() => handleSSOLogin('BGC')}
                   >
-                    <User className="h-4 w-4 mr-2" />
-                    Login with Gulf Gas Company
+                    <GulfGasMark className="h-4 w-4 mr-2" />
+                    Continue with Gulf Gas
                   </Button>
                   <Button 
                     className="w-full transition-all duration-200 hover:scale-105 hover:shadow-lg text-sm py-2" 
                     variant="secondary"
                     onClick={() => handleSSOLogin('Kent')}
                   >
-                    <img src="/lovable-uploads/08d85d46-7571-49db-977b-a806bd1c91e5.png" alt="Kent Logo" className="h-4 w-4 mr-2" />
-                    Login with Kent
+                    <EpcmMark className="h-4 w-4 mr-2" />
+                    Continue with EPCM
                   </Button>
                 </CardContent>
               </Card>
